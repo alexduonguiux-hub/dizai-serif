@@ -1,5 +1,8 @@
 # Dizai Serif — Đặc tả cân bằng visual weight (v0.2, 04/11/2026)
 
+> **Đã duyệt 04/11/2026** (lời designer: "ngang số để 40, vòng tăng lên 106"):
+> Hf = 40 cho 2 3 4 5 7; Vr = 106 cho O Q C G D. Các luật S2-Vr và S2-Hf đã chốt.
+
 Ghi đè `02-so-do-va-qa-regular.md` ở các điểm dưới đây. Mọi điểm khác vẫn đúng.
 
 **Sửa số đo v0.1.** Lần trước, nét chéo và nét tròn được đo bằng một đường cắt ngang,
@@ -27,7 +30,7 @@ nên số bị phóng to. Lần này đo **vuông góc nét** bằng `tools/perp
 
 → **Số đậm hơn chữ khoảng 15–20 %.** Đây là lỗi visual weight lớn nhất.
 
-## 2. Đặc tả chỉnh (đề xuất, chờ duyệt)
+## 2. Đặc tả chỉnh (Vr và Hf đã duyệt; các mục khác theo bảng nét)
 
 Bảng nét đích (Regular), đo vuông góc:
 
@@ -70,7 +73,7 @@ Kèm theo:
 Bản Bold: dùng cùng các tỉ lệ trên với bảng nét Bold, sau khi đo được ảnh hoặc nguồn
 Bold. Lòng A trên thanh giữ chiều cao tính theo đơn vị Regular.
 
-## 3. Hai điểm cần anh/chị quyết
+## 3. Hai điểm đã quyết (giữ lại để tham khảo lý do)
 
 1. **Nét ngang của số (91 → 40).** Ngang dày làm 2, 3, 5, 7 có dáng đậm, kiểu
    "poster". Đưa về 40 thì số cùng màu với chữ, nhưng dáng số đổi khá nhiều.

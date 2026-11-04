@@ -44,12 +44,13 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   | Ký hiệu | Phần | Giá trị |
   |---|---|---|
   | V | thân đứng dày | 101 |
-  | Vr | chỗ dày nhất của vòng | 106 (1.05 V) |
+  | Vr | chỗ dày nhất của vòng (O Q C G D) | 106 (1.05 V) — duyệt 04/11 |
   | D | chéo dày (nét \ theo bút) | 98 (0.97 V); X 95 là ngoại lệ |
   | t | nét mảnh: chéo /, thân mảnh của M N | 44 (0.44 V) |
   | H | ngang mảnh: thanh, tay, đỉnh/đáy bụng | 42 (0.42 V) |
   | Sp | sống S | 104 (1.03 V) |
-  | Vf / Hf | thân, vòng / ngang của số | 0.95 × chữ (chờ duyệt) |
+  | Vf | thân, vòng của số | 0.95 × chữ: thân 96, vòng 101 |
+  | Hf | ngang của số (2 3 4 5 7) | 40 — duyệt 04/11 ("ngang số để 40"); bản ngang dày có thể làm `.ss01` |
 
   Mọi số trong bảng ĐO VUÔNG GÓC NÉT (`tools/perp_thickness.py`). Đặc tả chi tiết:
   `docs/03-dac-ta-can-bang-visual-weight.md`.
@@ -99,7 +100,7 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   - Dấu hoa dùng bộ `.case`. Khe dấu–dấu ≥ 30, dấu–chữ ≥ 36.
   - Sừng ơ ư dùng chung một tấm.
   - Phủ đủ 134 chữ Việt và dấu tổ hợp.
-- **S12 Số.** Lining cao bằng cap. 1 có cờ, cùng góc ở mọi weight. 3 và 5 chung bụng
+- **S12 Số.** Ngang số Hf = 40, cùng màu với chữ. Lining cao bằng cap. 1 có cờ, cùng góc ở mọi weight. 3 và 5 chung bụng
   dưới. 6 và 9 chung bụng (xoay 180°). 8 có vòng trên nhỏ hơn. 4 có thanh ~0.25 cap.
   Có tnum.
 - **S13 Tiến triển weight.** Một khung xương; mỗi weight khác nhau ở bảng nét. Dùng
