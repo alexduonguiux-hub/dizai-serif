@@ -15,15 +15,18 @@ Bold = luật Bold của chữ hoa (docs/08), cùng số với chữ hoa:
 import sys, re, os, json
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
 import pathops
-from src_lower import SHAPES, GLYPH, S, BASE
+from src_lower import SHAPES, GLYPH, GLYPH_BOLD, S, BASE
+import math
 import vn_punct as V
 
 XH, OV_T, OV_B = 495.0, 503.4, -11.3          # guide chữ thường (khung 2107:5 / 2112:126)
-B_IN = 37.0                                    # Bold: thân dày thêm vào phía lòng (139 − 102)
-B_RING = 35.0                                  # Bold: lòng vòng co đều (vòng đã giãn ngang nên vách dày thêm ~ +40, như O D)
-B_WIDE = {'e': 36.0}                           # Bold: vòng giãn ngang (u) như chữ hoa (C G +36, B +31, D +51); mặc định 40
-B_WIDE_DEFAULT = 40.0
-B_H = 28.0                                     # Bold: nét ngang mảnh dày thêm (68 − 40)
+# Bold — rút từ MẪU a Bold của designer (2115:384), so với a Regular (đo bằng SVD elip lòng):
+B_STEM = 28.0                  # thân 102 → 130 (46 px): dày RA PHÍA NGOÀI; mép trong giữ khoảng chồng với vòng
+B_WIDE = 20.0                  # vòng (mép ngoài) giãn ngang +20 quanh tâm (bụng a 141 → 148 px)
+B_MAJ, B_MIN = 14.3, 17.6      # lòng elip co: bán trục dài −14.3, bán trục ngắn −17.6 (a: 144.5/96.4 → 130.2/78.8)
+B_SHIFT = 33.0                 # lòng dời về phía thân 33 (vách đối diện thân — nét dày theo bút — dày thêm ~47)
+B_BAR = 16.0                   # nét ngang mảnh (thanh e) +16, nở đều hai phía (nét mảnh của mẫu tăng 6–18)
+B_THIN = 8.0                   # nét nối / tai g: nở đều mỗi phía 8
 TOK = r'[MLCZ]|-?[\d.]+(?:e-?\d+)?'
 
 # ---------- khối (px cục bộ) ----------
@@ -35,15 +38,8 @@ def _map_pts(dstr, f):
     return ' '.join(out)
 
 def _bold_px(key, dstr):
-    dv, dh = B_IN/S, B_H/S
-    if key == 'stem':                          # mép trái (x ≤ 8, cả loe) là phía lòng: dời ra ngoài thân
-        return _map_pts(dstr, lambda x, y: (x - dv, y) if x <= 8.01 else (x, y))
-    if key == 'a_stem':
-        def f(x, y):
-            if 84.9 <= x <= 93.01: x -= dv                                    # mép trong thân a (kèm loe trái chân)
-            if (x, y) in ((14.5005, 38.2495), (0.0, 71.249)) or abs(y + 19.7501) < 1e-3: y += dh   # vai a dày xuống
-            return x, y
-        return _map_pts(dstr, f)
+    if key == 'stem':                          # mép phải (x ≥ 44, cả loe ngoài) là phía ngoài: dời ra +B_STEM
+        return _map_pts(dstr, lambda x, y: (x + B_STEM/S, y) if x >= 43.99 else (x, y))
     return dstr
 
 def piece(key, m, weight):
@@ -76,49 +72,105 @@ def _q2c(p):
                 out.cubicTo(*c1, *c2, *end); cur = end
         elif v == 'closePath': out.close()
     return out
-def _outer(p):
-    best = max(p.contours, key=lambda c: abs(c.area)); out = pathops.Path(); out.addPath(best)
-    return pathops.op(out, out, pathops.PathOp.UNION)
+import numpy as np
 def _dil(p, d):
     st = pathops.Path(); st.addPath(p); st.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.ROUND_JOIN, 4)
-    st.convertConicsToQuads(); return V.U(p, st)
-def ring_bold(p, mask=None):
-    """vòng / bụng: mực nở đều B_IN vào lòng; mép ngoài (hình bao) giữ nguyên"""
-    return V.I(_dil(p, B_RING), mask if mask is not None else _outer(p))
+    st.convertConicsToQuads(); return _q2c(V.U(p, st))
+def _first_contour(dstr):
+    return 'M' + dstr.split('M')[1]
+def _ell_from_pts(pts):
+    """elip qua điểm mẫu (bình phương tối thiểu, conic): → (tâm, M 2×2) với elip = tâm + M·(cos t, sin t)"""
+    P = np.array(pts); x, y = P[:, 0], P[:, 1]
+    A = np.column_stack([x*x, x*y, y*y, x, y]); sol = np.linalg.lstsq(A, np.ones(len(x)), rcond=None)[0]
+    a, b, c, d, e = sol; Q = np.array([[a, b/2], [b/2, c]]); ctr = np.linalg.solve(2*Q, -np.array([d, e]))
+    k = 1 + ctr @ Q @ ctr; w, V_ = np.linalg.eigh(Q/k)
+    return ctr, V_ @ np.diag(1/np.sqrt(w))
+def _ell_path(ctr, M, dmaj=0.0, dmin=0.0, shift=(0.0, 0.0)):
+    U, Sg, _ = np.linalg.svd(M); rot = math.degrees(math.atan2(U[1, 0], U[0, 0]))
+    return V.ellipse((ctr[0] + shift[0], ctr[1] + shift[1]), Sg[0] - dmaj, Sg[1] - dmin, rot)
+def _samples(p, n=12):
+    pts = []; cur = None
+    for v, ps in p.segments:
+        if v in ('moveTo', 'lineTo'): cur = ps[-1]
+        elif v == 'curveTo':
+            c = (cur, *ps); pts += [V.bez(c, j/n) for j in range(n + 1)]; cur = ps[2]
+    return pts
+def _tr(m, weight='Regular'):
+    a, b, c, d, e, f = m
+    return lambda x, y: ((a*x + b*y + c)*S, (BASE - (d*x + e*y + f))*S)
+def _path(dstr, m):
+    tr = _tr(m); toks = re.findall(TOK, dstr); p = pathops.Path(); i = 0
+    while i < len(toks):
+        cmd = toks[i]; i += 1; n = {'M': 1, 'L': 1, 'C': 3, 'Z': 0}[cmd]
+        pts = [tr(float(toks[i + 2*j]), float(toks[i + 2*j + 1])) for j in range(n)]; i += 2*n
+        if cmd == 'M': p.moveTo(*pts[0])
+        elif cmd == 'L': p.lineTo(*pts[0])
+        elif cmd == 'C': p.cubicTo(*pts[0], *pts[1], *pts[2])
+        else: p.close()
+    return pathops.op(p, p, pathops.PathOp.UNION)
+def _inner_pts(dstr, m, sel):
+    """điểm mẫu trên cung lòng (các đoạn cong có điểm cuối thoả sel, toạ độ px cục bộ) → toạ độ font"""
+    tr = _tr(m); toks = re.findall(TOK, dstr); i = 0; cur = None; pts = []
+    while i < len(toks):
+        cmd = toks[i]; i += 1; n = {'M': 1, 'L': 1, 'C': 3, 'Z': 0}[cmd]
+        q = [(float(toks[i + 2*j]), float(toks[i + 2*j + 1])) for j in range(n)]; i += 2*n
+        if cmd == 'C' and sel(cur) and sel(q[-1]):
+            pts += [tr(*V.bez((cur, *q), j/16)) for j in range(17)]
+        if n: cur = q[-1]
+    return pts
 
-def e_bold(pcs):
-    """e: vòm + bụng nở vào lòng B_IN (chỉ tới mép dưới thanh Bold, mép ngoài và mặt đầu cắt giữ); thanh nở đều hai phía +B_H"""
-    ink = V.U(pcs['e_arch'], pcs['e_bowl']); bar = pcs['e_bar']; bx0, by0, bx1, by1 = bar.bounds
-    bw = pcs['e_bowl']; x_cut = bw.bounds[2]
-    y_tt = max(q[1] for _, ps in bw.segments for q in ps if abs(q[0] - x_cut) < 0.5)      # mặt trên đầu cắt
-    cy = (by0 + by1)/2; hb = (by1 - by0) + B_H; yb = cy - hb/2                             # mép dưới thanh Bold
-    x_in = bw.bounds[0] + 60
-    mask = _outer(V.U(ink, bar, V.rect(x_in, y_tt, x_cut, yb)))
-    grown = V.U(V.I(_dil(pcs['e_arch'], B_RING), V.I(mask, V.halfplane(yb))), V.I(_dil(pcs['e_bowl'], B_RING), mask))
-    barB = V.xform(bar, lambda x, y: (x, cy + (y - cy)*hb/(by1 - by0)))
-    fill = V.rect(bx1 - 40, yb, bx1, by0)       # đầu phải thanh (vát) lấp thẳng đứng tới mép ngoài phần thò dưới mặt nối
-    return V.U(grown, barB, fill)
-
-RINGS = {'a': ['a_bowl'], 'e': ['e_arch', 'e_bowl', 'e_bar']}
 def raw(ch, weight):
-    pcs = {k: piece(k, m, weight) for k, m in GLYPH[ch]}
-    if weight == 'Bold':
-        # 1. vòng giãn ngang B_WIDE quanh tâm của nó (như chữ hoa Bold: chữ rộng ra, lòng không bị bóp)
-        rk = RINGS.get(ch, ['bowl']); ring = V.U(*[pcs[k] for k in rk]); x0, _, x1, _ = ring.bounds; c = (x0 + x1)/2
-        k = (x1 - x0 + B_WIDE.get(ch, B_WIDE_DEFAULT))/(x1 - x0)
-        for kk in rk: pcs[kk] = V.xform(pcs[kk], lambda x, y: (c + (x - c)*k, y))
-        # 2. thân (và vai a) giữ hình, trượt theo mép vòng phía nó
-        for kk in [q for q in pcs if q not in rk]:
-            sx0, _, sx1, _ = pcs[kk].bounds; edge = x1 if (sx0 + sx1)/2 > c else x0
-            pcs[kk] = V.move(pcs[kk], (k - 1)*(edge - c), 0)
-        # 3. lòng co đều B_RING (mép ngoài giữ); thân đã dày vào lòng B_IN ở bước khối (_bold_px)
-        if ch == 'e': o = e_bold(pcs)
-        elif ch == 'a': o = V.U(pcs['a_stem'], ring_bold(pcs['a_bowl']))
-        else: o = V.U(pcs['stem'], ring_bold(pcs['bowl']))
-        o = _q2c(o)
-    else:
-        o = V.U(*pcs.values())
-    return V.move(o, -o.bounds[0], 0)
+    spec = GLYPH_BOLD.get(ch) if weight == 'Bold' else None
+    if spec:                                                   # bản vẽ Bold của designer
+        o = V.U(*[_path(SHAPES[k], m) for k, m in spec]); return V.move(o, -o.bounds[0], 0)
+    if weight == 'Regular':
+        o = V.U(*[piece(k, m, weight) for k, m in GLYPH[ch]]); return V.move(o, -o.bounds[0], 0)
+    o = _q2c(bold(ch)); return V.move(o, -o.bounds[0], 0)
+
+def _stretch(ring_bounds):
+    x0, _, x1, _ = ring_bounds; c = (x0 + x1)/2; k = (x1 - x0 + B_WIDE)/(x1 - x0)
+    return c, k, (lambda x, y: (c + (x - c)*k, y))
+
+def bold(ch):
+    """Bold theo mẫu a: vòng giãn +B_WIDE; lòng (elip) co B_MAJ/B_MIN, dời về phía thân B_SHIFT; thân +B_STEM ra ngoài"""
+    G = dict(GLYPH[ch])
+    if ch in 'dbqp':
+        bm, sm = G['bowl'], G['stem']
+        outer = _path(_first_contour(SHAPES['bowl']), bm); c, k, st = _stretch(outer.bounds)
+        cpts = [st(*q) for q in _samples(_path('M' + SHAPES['bowl'].split('M')[2], bm))]
+        ctr, M = _ell_from_pts(cpts)
+        stem = piece('stem', sm, 'Bold'); sx = (stem.bounds[0] + stem.bounds[2])/2; side = 1 if sx > c else -1
+        x0, _, x1, _ = outer.bounds; edge = x1 if side > 0 else x0
+        bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN, (side*B_SHIFT, 0)))
+        return V.U(bowl, V.move(stem, (k - 1)*(edge - c), 0))
+    if ch == 'g':
+        allp = V.U(*[_path(SHAPES[kk], m) for kk, m in GLYPH['g']]); c, k, st = _stretch(_path(_first_contour(SHAPES['g_bowl']), G['g_bowl']).bounds)
+        out = []
+        for kk in ('g_bowl', 'g_loop'):
+            m = G[kk]; outer = _path(_first_contour(SHAPES[kk]), m)
+            cpts = [st(*q) for q in _samples(_path('M' + SHAPES[kk].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
+            out.append(V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN)))
+        for kk in ('g_link', 'g_ear'):
+            p = _path(SHAPES[kk], G[kk]); px = (p.bounds[0] + p.bounds[2])/2
+            q = _dil(p, B_THIN)
+            if kk == 'g_ear': q = _q2c(V.I(q, V.rect(-9999, -9999, p.bounds[2], 9999)))   # mặt cắt tai giữ phẳng
+            out.append(V.move(q, (k - 1)*(px - c), 0))
+        return V.U(*out)
+    if ch == 'e':
+        arch_m, bowl_m, bar_m = G['e_arch'], G['e_bowl'], G['e_bar']
+        arch_o = _path("M86 0 C133.496 0 172 38.8865 172 86.8555 L172 89 L0 89 L0 86.8555 C0 38.8865 38.5035 0 86 0 Z", arch_m)
+        bowl_o = _path("M88.5 0 C114.943 0 138.677 11.6383 154.894 30.0879 L154.894 91 L0 91 L0 88.8076 C0 39.7607 39.6228 0 88.5 0 Z", bowl_m)
+        c, k, st = _stretch(V.U(arch_o, bowl_o).bounds)
+        e1 = _ell_from_pts([st(*q) for q in _inner_pts(SHAPES['e_arch'], arch_m, lambda p: 30 < p[0] < 140 and p[1] < 89.5)])
+        e2 = _ell_from_pts([st(*q) for q in _inner_pts(SHAPES['e_bowl'], bowl_m, lambda p: 32 < p[0] < 155 and 15 < p[1] < 91.5)])
+        bar = V.xform(_path(SHAPES['e_bar'], bar_m), st); bx0, by0, bx1, by1 = bar.bounds; cy = (by0 + by1)/2; hb = by1 - by0 + B_BAR
+        barB = V.xform(bar, lambda x, y: (x, cy + (y - cy)*hb/(by1 - by0)))
+        arch = V.D(V.xform(arch_o, st), _ell_path(*e1, B_MAJ, B_MIN))
+        bowl = V.D(V.xform(bowl_o, st), _ell_path(*e2, B_MAJ, B_MIN))
+        # đầu phải thanh lấp thẳng đứng tới mép ngoài phần thò dưới mặt nối vòm–bụng
+        fill = V.rect(bx1 - 40, cy - hb/2, bx1, by0)
+        return V.U(arch, bowl, barB, fill)
+    raise KeyError(ch)
 
 # ---------- chốt đường vượt ----------
 def _extreme(path, top):
@@ -129,8 +181,9 @@ def _extreme(path, top):
         elif v == 'curveTo':
             c = (cur, *ps)
             for k in range(41):
-                q = V.bez(c, k/40)
-                if not (-60 < q[1] < XH + 60): continue
+                q = V.bez(c, k/40); dq = V.dbez(c, k/40)
+                if not (-30 < q[1] < XH + 30): continue
+                if abs(dq[1]) > 0.15*math.hypot(*dq): continue        # chỉ điểm tiếp tuyến ngang (đỉnh/đáy vòng thật)
                 if best is None or (q[1] > best[1] if top else q[1] < best[1]): best = q
             cur = ps[2]
     return best
@@ -155,7 +208,7 @@ def clean(p):
     from tidy import tidy
     def ok(p):
         t, b = _extreme(p, True), _extreme(p, False)
-        return abs(t[1] - OV_T) < 0.05 and (b[1] > -2 or abs(b[1] - OV_B) < 0.05)
+        return abs(t[1] - OV_T) < 0.05 and (b is None or b[1] > -2 or abs(b[1] - OV_B) < 0.05)
     for _ in range(12):
         p = snap(p)
         if ok(p): break
@@ -165,7 +218,7 @@ def clean(p):
         p = snap(p)
     return p
 
-CHARS = 'aedbqp'
+CHARS = 'aedbqpg'
 if __name__ == '__main__':
     out = {}
     for c in CHARS:
