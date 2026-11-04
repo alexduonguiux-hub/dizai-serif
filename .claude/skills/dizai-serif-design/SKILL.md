@@ -36,24 +36,26 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
 
 ## 2. Rule book v0.1 (Regular, UPM 1000)
 
-- **S1 Lưới.** Cap 700. Overshoot: tròn +9 / −10 (đề xuất, chờ đo nguồn), đỉnh nhọn
+- **S1 Lưới.** Cap 700 (Figma: cap line và baseline khớp với H; v0.1 có P R lệch 2 px, M Bold lệch 2 px). Overshoot: tròn +9 / −10 (đề xuất, chờ đo nguồn), đỉnh nhọn
   +12…+16. Số cao bằng cap (lining). Ascender, x-height và descender chốt khi viết
   luật chữ thường (S10).
-- **S2 Bảng nét (Regular).**
+- **S2 Bảng nét (v0.2, đã áp trong Figma — `docs/04-v0.2-thay-doi-trong-figma.md`).**
 
-  | Ký hiệu | Phần | Giá trị |
-  |---|---|---|
-  | V | thân đứng dày | 101 |
-  | Vr | chỗ dày nhất của vòng (O Q C G D) | 106 (1.05 V) — duyệt 04/11 |
-  | D | chéo dày (nét \ theo bút) | 98 (0.97 V); X 95 là ngoại lệ |
-  | t | nét mảnh: chéo /, thân mảnh của M N | 44 (0.44 V) |
-  | H | ngang mảnh: thanh, tay, đỉnh/đáy bụng | 42 (0.42 V) |
-  | Sp | sống S | 104 (1.03 V) |
-  | Vf | thân, vòng của số | 0.95 × chữ: thân 96, vòng 101 |
-  | Hf | ngang của số (2 3 4 5 7) | 40 — duyệt 04/11 ("ngang số để 40"); bản ngang dày có thể làm `.ss01` |
+  | Ký hiệu | Phần | Regular u (Figma px) | Bold u (px) |
+  |---|---|---|---|
+  | V | thân đứng | 102 (36) | 139 (49) |
+  | Vr | chỗ dày nhất của vòng và bụng (O Q C G D B P R) | 106 (37.5) = 1.05 V — duyệt 04/11 | 146 (51.5) |
+  | D | chéo dày (nét \\ theo bút) = chéo của A | 100 (35.2); X 95 (33.5) là ngoại lệ | 146 (51.5) |
+  | t | nét mảnh: chéo /, thân mảnh của M N | 44 (15.5) | 74 (26) |
+  | H | ngang mảnh: thanh, tay, đỉnh/đáy bụng | 40 (14) | 68 (24) |
+  | Sp | sống S / thành bụng S | 104 (36.7) / 96 (34) | 143 (50.3) / 130 (46) |
+  | Vf | thân số | 96 (34) = 0.95 V | — |
+  | Hf | ngang số (2 3 4 5 7) = H | 40 (14) — duyệt 04/11 ("ngang số để 40") | — |
+  | Loe đầu thanh | một hình duy nhất (chân L): nhô 19 px trên đoạn 14 px | | |
 
-  Mọi số trong bảng ĐO VUÔNG GÓC NÉT (`tools/perp_thickness.py`). Đặc tả chi tiết:
-  `docs/03-dac-ta-can-bang-visual-weight.md`.
+  Cap = 247 px trong Figma = 700 u (1 px = 2.834 u). Số chính thức đo trên vector Figma,
+  không đo trên ảnh: răng cưa của ảnh từng làm nét 14 px đọc thành 33 u.
+  Mọi số trong bảng là độ dày ĐO VUÔNG GÓC NÉT.
 
   Mọi số khác suy ra từ bảng này. Khớp được mỏng hơn nét (~0.8). Không cố định số của
   Bold. Mỗi weight có một bảng riêng.
