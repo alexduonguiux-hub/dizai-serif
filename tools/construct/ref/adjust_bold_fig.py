@@ -9,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys
 import pathops
 from make_ref import outline
 import diff
-YMIN = {'0': -11.3, '1': 0, '3': -11.3, '2': 0, '5': -11.3, '6': -11.3, '9': -11.3, '7': 0}
+YMIN = {'0': -11.3, '4': 0, '8': -11.3, '1': 0, '3': -11.3, '2': 0, '5': -11.3, '6': -11.3, '9': -11.3, '7': 0}
 
 def segs_of(p):
     """pathops → list contour; mỗi contour = list đoạn ('L', P0, P1) / ('C', P0, P1, P2, P3)"""
@@ -205,18 +205,19 @@ if __name__ == '__main__':
         if ch in '08' and ch not in raw:   # chỉ khi chưa có bản vẽ
             cur = round_bold(ch); x0 = bbox(cur)[0]; cur = [[[s_[0]] + [(p[0] - x0, p[1]) for p in s_[1:]] for s_ in c] for c in cur]
             B[f'{ch}-Bold'] = [d_of(cur)]; continue
-        if ch == '0' and ch in raw:   # 0 của designer: vòng ngoài giữ nguyên, lòng (elip) phóng/co quanh tâm tới mật độ mục tiêu
+        if ch in '08' and ch in raw:   # 0, 8 của designer: vòng ngoài giữ nguyên, các lòng kín phóng/co quanh tâm của chúng tới mật độ mục tiêu
             cs = segs_of(pathops.simplify(shift(outline(raw[ch]), YMIN[ch]), fix_winding=True))
             big = max(cs, key=lambda c: (bbox([c])[2] - bbox([c])[0]))
-            inner = [c for c in cs if c is not big][0]; ib = bbox([inner]); cx, cy = (ib[0] + ib[2]) / 2, (ib[1] + ib[3]) / 2
-            target = dens(L('0-Regular')) * ratio; lo, hi = 0.9, 1.2
+            inners = [c for c in cs if c is not big]; ctr = []
+            for c in inners: ib = bbox([c]); ctr.append(((ib[0] + ib[2]) / 2, (ib[1] + ib[3]) / 2))
+            target = dens(L(f'{ch}-Regular')) * ratio; lo, hi = 0.85, 1.2
             for it in range(18):
                 f = (lo + hi) / 2
-                cur = [big, [[s_[0]] + [(cx + (p[0] - cx) * f, cy + (p[1] - cy) * f) for p in s_[1:]] for s_ in inner]]
+                cur = [big] + [[[s_[0]] + [(cx + (p[0] - cx) * f, cy + (p[1] - cy) * f) for p in s_[1:]] for s_ in c] for c, (cx, cy) in zip(inners, ctr)]
                 if dens(to_path(cur)) > target: lo = f
                 else: hi = f
             x0 = bbox(cur)[0]; cur = [[[s_[0]] + [(p[0] - x0, p[1]) for p in s_[1:]] for s_ in c] for c in cur]
-            B['0-Bold'] = [d_of(cur)]; print('0 lòng × %.3f, mật độ %.3f (mục tiêu %.3f)' % (f, dens(to_path(cur)), target)); continue
+            B[f'{ch}-Bold'] = [d_of(cur)]; print(ch, 'lòng × %.3f, mật độ %.3f (mục tiêu %.3f)' % (f, dens(to_path(cur)), target)); continue
         if ch == '1':
             cs = segs_of(pathops.simplify(shift(outline(raw[ch]), YMIN[ch]), fix_winding=True)); B['1-Bold'] = [d_of([tidy(g1(c)) for c in cs])]; continue
         src = shift(outline(raw[ch]), YMIN[ch]) if ch in raw else L(f'{ch}-Bold')
