@@ -60,11 +60,11 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | `,` | chấm và đuôi thon cong xuống-trái tới −1.25 Ø |
 | `: ;` | chấm trên có đỉnh ở 480 (x-height tạm, chờ luật S10) |
 | `!` | nét thon, đỉnh cắt ngang rộng 0.98 V, chân rộng 0.42 V, hai cạnh lõm nhẹ như loe |
-| `?` | một nét bút chữ: đầu trái dày, vòng phải, thân đứng xuống |
+| `?` | **lấy phần đầu số 2 của designer** (vòng móc + đầu nét trái), cắt ở y 400; thân là một cung Hermite liền tiếp tuyến với sống 2, thon về 0.78 V, cắt ngang; chấm cùng họ dấu chấm (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn") |
 | `' "` | nét thon từ 711 xuống 455, rộng 0.86 V → 0.34 V |
 | `’ ‘ ” “` | dấu phẩy nâng lên (‘ là ’ xoay 180°) |
 | `- – —` | dày 0.58 V (giữa H và V), tâm ở 330; `-` dài 250, `–` dài 420, `—` dài 920 |
-| `( )` | một nét bút cong: dày ở giữa, mảnh ở hai đầu; từ −150 tới 860 |
+| `( )` | **lưỡi liềm serif**: hai elip đồng tâm, dày nhất ở giữa 0.85 V, thon về hai đầu ≈ 0.55 H, hai đầu cong vào (ry ngoài chỉ hơn nửa chiều cao 8 %), cắt ngang ở −150 và 860 (designer 04/11: "( ) nên có glyph phổ biến của dòng serif") |
 | `[ ]` | thân 0.86 V, tay 1.15 H dài 150 |
 | `/` | dày 0.58 V, từ −130 tới 830 |
 | `+ = ×` | nét đứng 0.62 V, nét ngang 0.55 V (ngang dày như bộ số, Hf); `×` dày 0.6 V; tâm ở 330 |
@@ -72,14 +72,29 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | `%` | hai vòng kiểu O (lòng xoay 30°) và nét chéo 0.6 V |
 | `$` | S của designer và nét đứng dày 1.1 H, vươn từ −100 tới 800 |
 | `€` | C của designer và hai thanh dày 1.05 H, ở 300 và 430 |
-| `&` | **dựng từ số 8 của designer, theo dáng & serif cổ điển** (designer 04/11: "ký tự & cũng lỗi", "không giống glyph phổ biến cùng dòng"): vòng trên chảy thành **chân dày (\\)** D 100 / 146 xuống chân phải; bụng dưới cắt ở góc −40° rồi đi tiếp thành **tay mảnh (/)** t 44 / 74 lên tới 0.52 cap bên phải, cắt chéo qua chân thành chữ X (đúng logic bút: / mảnh, \\ dày). Tay đi trùng nét bụng từ −62° tới −40° nên mối nối liền |
+| `&` | **dựng từ số 8 của designer, theo dáng & serif cổ điển** (designer 04/11: "ký tự & cũng lỗi", "không giống glyph phổ biến cùng dòng"): vòng trên chảy thành **chân dày (\\)** D 100 / 146 xuống chân phải; bụng dưới cắt ở góc −40° rồi đi tiếp thành **tay mảnh (/)** t 44 / 74 lên tới 0.52 cap bên phải, cắt chéo qua chân thành chữ X (đúng logic bút: / mảnh, \\ dày). Tay đi trùng nét bụng từ −62° tới −40° nên mối nối liền. **Loe S5** ở hai góc chân và hai góc đầu tay (compa r 112, chìa 23 u), như chân K, X (designer 04/11: "& thiếu module loe như glyph chữ") |
 | `@` | vòng ngoài là nét bút từ 0° tới 300°; bên trong là a một tầng, thân a cong chữ U nhập vào vòng ngoài |
+
+## QA nét thừa và lỗi (designer 04/11: "QA/QC lại hết các nét thừa và lỗi")
+
+- **Dọn tự động** (`tools/construct/ref/tidy.py`, chạy trong `make_ref.py`):
+  - Gộp mẩu thừa và khấc dưới 2.5 u; độ lệch hình dưới 1.3 u.
+  - Bỏ điểm trùng và điểm thừa nằm thẳng hàng.
+  - Bỏ gai do mẩu ngắn quay ngược.
+  - Nắn gãy dưới 20° giữa hai đoạn cong cho liền mạch G1, kể cả tay nắm suy biến.
+  - Bỏ vòng kín dưới 400 u².
+  - Với bản vẽ designer: chỉ dọn nút thừa và nắn gãy nhỏ; giữ mọi mũi nhọn chủ ý (mỏ E, đầu S và C, mũi loe).
+- **Kiểm tra** (`python3 tools/construct/qa_outline.py`):
+  - Quét đoạn ngắn, gai, gãy, điểm trùng, điểm thẳng hàng, vòng li ti.
+  - Bỏ qua lỗi kế thừa nguyên vẹn từ bản vẽ designer.
+  - Kết quả: trước khi dọn có **239** lỗi trên 101 glyph dựng theo luật. Sau khi dọn còn đúng các chỗ chủ ý: hai đầu nhọn của C trong €, chỗ giao bụng a với thân trong @, mũi loe chân &, chỗ thân ? gặp vòng số 2.
+  - Bản vẽ designer: dọn 12 mẩu thừa dưới 2.5 u (A Bold, K, M, J Bold, 3, 5, 6 Bold, 9 Bold, V Bold) và các gãy G1 ở A Bold, V Bold, J, 8 Bold.
 
 **Chưa làm:**
 - `₫` cần đ thường, chờ luật chữ thường S10.
 
 **Cần designer xem kỹ:**
-- `@` và `?`: là hình dựng theo luật, chưa có bản vẽ.
+- `@`: là hình dựng theo luật, chưa có bản vẽ.
 
 Ảnh:
 - `img/v0.4-chu-hoa-viet.png`

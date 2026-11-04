@@ -11,6 +11,7 @@ khung 2059:2) + guide hình học nhận diện từ chính đường cong:
 import json, math, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import ellfit
+from tidy import tidy
 import pathops
 
 def parse(d):
@@ -33,8 +34,8 @@ def outline(paths):
     return acc
 
 R = lambda p: [round(p[0], 1), round(p[1], 1)]
-def build(paths):
-    o = outline(paths); cmds, guides, ells, circ, lines, hl, cur, start = [], [], [], [], [], set(), None, None
+def build(paths, strong=False):
+    o = tidy(outline(paths), strong); cmds, guides, ells, circ, lines, hl, cur, start = [], [], [], [], [], set(), None, None
     for verb, ps in o.segments:
         if verb == "moveTo": cmds.append(["M", R(ps[0])]); cur = start = ps[0]
         elif verb in ("lineTo", "closePath"):
@@ -75,7 +76,8 @@ if __name__ == "__main__":
     for f in ("designer_A.json", "designer_B.json", "designer_C.json"):
         if os.path.exists(os.path.join(HERE, f)): src.update(json.load(open(os.path.join(HERE, f))))
     Wover = src.pop("_W", {})   # designer_C: chữ có dấu giữ bề ngang của chữ gốc (dấu được phép tràn)
-    out = {k: build(v) for k, v in src.items()}
+    Cset = set(json.load(open(os.path.join(HERE, "designer_C.json")))) if os.path.exists(os.path.join(HERE, "designer_C.json")) else set()
+    out = {k: build(v, k in Cset) for k, v in src.items()}   # QA: dọn nét thừa (mạnh cho glyph dựng theo luật)
     for k, w in Wover.items(): out[k]["W"] = w
     C = json.load(open(os.path.join(HERE, "designer_C.json"))) if os.path.exists(os.path.join(HERE, "designer_C.json")) else {}
     for k in out: out[k]["src"] = "rule" if k in C else "designer"   # nguồn: A/B = bản vẽ designer; C = dựng theo luật (vn_punct.py)

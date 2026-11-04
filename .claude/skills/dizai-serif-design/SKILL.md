@@ -105,6 +105,8 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   - **Sắc và huyền là cặp đối xứng gương** (designer 04/11: "dấu sắc và huyền không đồng bộ"): cùng hình nêm, đầu trên dày 0.80 N, chân 0.36 N; huyền = sắc lật ngang. Dấu là nét bút, không phải tấm thép.
   - **Sừng ơ ư cắt phẳng**, không có giọt tròn (designer 04/11: "dấu ư không nên tròn"). Tâm sừng là một cung Bézier liền ("cho smooth"); Ư và Ơ có đầu sừng ngang nhau, ở Ư sừng thay loe ngoài thân phải ("dấu ư lỗi và không đồng bộ").
   - **Trăng là lưỡi liềm đối xứng**, hai đầu thon đều ("dấu ă cũng hơi lỗi").
+  - **? dựng từ đầu số 2** + thân cong liền ("cho smooth hơn"); **( ) là lưỡi liềm serif** ("glyph phổ biến của dòng serif"); mọi đầu tự do của dấu câu lớn có **loe S5**.
+  - **QA nét thừa**: `tools/construct/ref/tidy.py` (dọn) + `tools/construct/qa_outline.py` (kiểm) chạy sau mọi thay đổi.
   - **& dựng từ số 8** của designer theo dáng & serif cổ điển: chân dày (\\) cắt chéo tay mảnh (/) đi lên phải tới 0.52 cap ("ký tự & cũng lỗi", "không giống glyph phổ biến cùng dòng").
   - Mũ: dựng như đỉnh A thu nhỏ, lòng luôn mở.
   - Trăng: nửa elip trục nghiêng.

@@ -192,6 +192,22 @@ def clean(p, amin=400):
             for v, ps in c: getattr(out, {'moveTo': 'moveTo', 'lineTo': 'lineTo', 'curveTo': 'cubicTo', 'closePath': 'close'}[v])(*[x for pt in ps for x in pt])
     return out
 
+FR, FF = 112, 23      # luật loe S5 / L1 (glyphs.js): compa r 112, chìa 23 u khỏi mép nét, trên đường cắt
+
+def flare(Eg, u, n, cut=None, rad=FR, f=FF):
+    """vùng loe ở một góc đầu nét: Eg = góc (mép nét ∩ đường cắt), u = hướng dọc mép nét đi vào thân nét,
+    n = pháp tuyến ra ngoài. Mũi loe Pt = Eg + n·f trên đường cắt; một cung tròn r tiếp xúc mép nét, qua Pt (lõm)."""
+    cut = cut or n                                   # hướng đường cắt (ra ngoài); mặc định vuông góc mép nét
+    Pt = (Eg[0] + cut[0]*f, Eg[1] + cut[1]*f)
+    w = (Pt[0] - Eg[0], Pt[1] - Eg[1]); uw = u[0]*w[0] + u[1]*w[1]; nw = n[0]*w[0] + n[1]*w[1]; ww = w[0]**2 + w[1]**2
+    s_ = uw + math.sqrt(max(0, uw*uw - ww + 2*rad*nw))
+    T = (Eg[0] + u[0]*s_, Eg[1] + u[1]*s_); C = (T[0] + n[0]*rad, T[1] + n[1]*rad)
+    a0 = math.degrees(math.atan2(Pt[1] - C[1], Pt[0] - C[0])); a1 = math.degrees(math.atan2(T[1] - C[1], T[0] - C[0]))
+    d = (a1 - a0 + 180) % 360 - 180
+    segs = arc(C, rad, rad, a0, a0 + d)
+    back = (Eg[0] - cut[0]*6, Eg[1] - cut[1]*6)                     # trên đúng đường cắt, lấn vào thân: không bậc
+    return P([('M', back), ('L', Pt)] + [('C', c[1], c[2], c[3]) for c in segs] + [('L', (T[0] - n[0]*3, T[1] - n[1]*3)), ('Z',)])
+
 def halfplane(y, above=True, x0=-2000, x1=4000):
     return rect(x0, y, x1, y + 4000) if above else rect(x0, y - 4000, x1, y)
 def flat_top(p, flat):
@@ -352,7 +368,7 @@ def wedge(xc, ytop, ybot, wt, wb, conc=0.18):
     a, b = (xc - wt/2, ytop), (xc - wb/2, ybot); c, d = (xc + wb/2, ybot), (xc + wt/2, ytop)
     k = conc*(wt - wb)/2
     return P([('M', a), ('C', (a[0] + k, a[1] - (a[1]-b[1])*0.35), (b[0], b[1] + (a[1]-b[1])*0.3), b),
-              ('C', (b[0] + wb*0.1, b[1] - wb*0.45), (c[0] - wb*0.1, c[1] - wb*0.45), c),
+              ('C', (b[0], b[1] - wb*0.5), (c[0], c[1] - wb*0.5), c),          # chân tròn tiếp tuyến hai cạnh (G1, không gãy)
               ('C', (c[0], c[1] + (d[1]-c[1])*0.3), (d[0] - k, d[1] - (d[1]-c[1])*0.35), d), ('Z',)])
 
 def punct(S, w):
@@ -364,12 +380,23 @@ def punct(S, w):
     G[':'] = U(dot((r, r - 3), d), dot((r, up + r), d))
     G[';'] = U(comma_shape(t, w), dot((r, up + r), d))
     ex_w = 0.98*V; G['!'] = U(wedge(ex_w/2, 700, 220 + 0.15*d, ex_w, 0.42*V), dot((ex_w/2, r - 3), d))
-    # ?: một nét bút (luật bút chữ): đầu trái có giọt, vòng phải, thân đứng xuống
-    qx = 1.0 if not bold else 1.15
-    q = hermite([((26*qx, 548), (0.15, 1)), ((168*qx, 711 - 0.5*H), (1, 0)), ((312*qx, 548), (0, -1)), ((178*qx, 360), (-0.55, -1)),
-                 ((166*qx, 250 + 0.1*d), (0, -1))])
-    qs = stroke(q, nib, taper=lambda u: 1.0 if u > 0.15 else 1.0 + (0.15 - u)*2.2)
-    qb = bounds(qs); G['?'] = U(qs, dot((166*qx, r - 3), d))
+    # ? (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn"): lấy PHẦN ĐẦU SỐ 2 của designer (vòng móc + đầu nét trái,
+    # đồng bộ với bộ số), cắt ở y_cut nơi sống 2 bắt đầu đi chéo; nối một thân cong liền (một cung Hermite, tiếp tuyến khớp
+    # sống 2) xuống thẳng đứng, thon từ bề dày sống về 0.78 V, cắt ngang; chấm cùng họ dấu chấm đặt dưới thân.
+    two = letter(S, '2', w); y_cut = 400
+    top2 = I(two, rect(-50, y_cut, 1000, 800))
+    def span(y):
+        sp = I(two, rect(-50, y - 0.05, 1000, y + 0.05)); xs = sorted(set(round(p_[0], 1) for _, ps in sp.segments for p_ in ps))
+        return xs[0], xs[-1]
+    a0_, a1_ = span(y_cut); b0_, b1_ = span(y_cut + 40)
+    c0 = ((a0_ + a1_)/2, y_cut); c1 = ((b0_ + b1_)/2, y_cut + 40)
+    tdir = (c0[0] - c1[0], c0[1] - c1[1])                         # hướng sống 2 đi xuống
+    w0 = (a1_ - a0_)*abs(tdir[1])/math.hypot(*tdir)              # bề dày vuông góc của sống tại chỗ cắt
+    sx = c0[0] - (95 if not bold else 100); y_end = 250 + 0.1*d
+    # thân bắt đầu từ trong sống 2 (lùi 1.5 bước 40 u) và rộng hơn sống 2 % để che trọn mặt cắt ngang: mối nối liền
+    stem = hermite([((c0[0] - tdir[0]*1.5, c0[1] - tdir[1]*1.5), tdir), ((sx, y_end), (0, -1))])
+    qs = stroke(stem, (1, 1), wabs=lambda u: 1.02*w0 + (0.78*V - 1.02*w0)*max(0, (u - 0.3)/0.7)**2*(3 - 2*max(0, (u - 0.3)/0.7)))
+    G['?'] = U(top2, qs, dot((sx, r - 3), d))
     # nháy thẳng ' "
     qt = lambda xc: wedge(xc, 711, 455, 0.86*V, 0.34*V, 0.25)
     G["'"] = qt(0.43*V); G['"'] = U(qt(0.43*V), qt(0.43*V + 0.86*V + 0.75*V))
@@ -384,9 +411,16 @@ def punct(S, w):
     G['-'] = rect(0, yc - hy/2, 250 + (20 if bold else 0), yc + hy/2)
     G['–'] = rect(0, yc - hy/2*0.9, 420, yc + hy/2*0.9)
     G['—'] = rect(0, yc - hy/2*0.9, 920, yc + hy/2*0.9)
-    # ngoặc tròn: một nét bút cong, dày ở giữa (đứng) mảnh ở hai đầu
-    pr = hermite([((250, 860), (-0.78, -1)), ((62, 355), (0, -1)), ((250, -150), (0.78, -1))])
-    par = stroke(pr, (t['N']*0.86, t['m']*0.8)); par = move(par, -bounds(par)[0], 0); G['('] = par
+    # ngoặc tròn (designer 04/11: "( ) nên có glyph phổ biến của dòng serif"): lưỡi liềm từ hai elip đồng tâm —
+    # dày nhất ở giữa tm = 0.85 V, thon dần về hai đầu mảnh te ≈ 0.55 H, cắt ngang ở −150 và 860 (tâm 355).
+    tm, te = 0.85*V, 0.55*H; cy_, half = 355, 505
+    Ao, Bo = 230 + (20 if bold else 0), 545          # Bo chỉ hơn nửa chiều cao 8 %: hai đầu cong vào rõ như ngoặc serif
+    ko = Ao*math.sqrt(1 - (half/Bo)**2); ki = ko - te                      # bề lệch ngang của mép ngoài / trong ở hai đầu
+    Ai = Ao - tm; Bi = half/math.sqrt(1 - (ki/Ai)**2)
+    Co = Ao
+    cres = D(ellipse((Co, cy_), Ao, Bo), ellipse((Co, cy_), Ai, Bi))
+    par = I(cres, rect(-10, cy_ - half, Co, cy_ + half))
+    par = move(par, -bounds(par)[0], 0); G['('] = par
     pb = bounds(par); G[')'] = xform(par, lambda x, y: (pb[2] - x, y))
     # ngoặc vuông: thân 0.86 V, tay H×1.15 dài 0.5 cap/ 2.3
     bv, bh, bl = 0.86*V, 1.15*H, 150 + (10 if bold else 0)
@@ -441,7 +475,8 @@ def punct(S, w):
     tg = (mid[0] - lc[0], mid[1] - lc[1]); tg = (-tg[1], tg[0])
     tt = t['t']; tip = (eb[2] + (115 if not bold else 135), 0.52*CAP)
     # tay đi trùng nét bụng từ góc −62° tới góc cắt −40° (che mặt cắt, mối nối liền), rồi thon dần về t
-    arm_c = hermite([(m0, tg0), (mid, tg), (tip, (1, 1.15))])
+    va = (1/math.hypot(1, 1.15), 1.15/math.hypot(1, 1.15)); pre = (tip[0] - 90*va[0], tip[1] - 90*va[1])
+    arm_c = hermite([(m0, tg0), (mid, tg), (pre, va)]) + [line(pre, tip)]   # 90 u cuối thẳng: loe đầu tay bám mép thẳng
     arm = stroke(arm_c, (1, 1), wabs=lambda u: t0*(0.8 + 0.2*u/0.5) if u < 0.5 else tt + (t0 - tt)*max(0, 1 - (u - 0.5)/0.3)**2)   # gốc hẹp hơn nét bụng: nắp đầu nằm trọn trong bụng
     amp = U(amp, arm)
     Dd = 100 if not bold else 146
@@ -469,7 +504,18 @@ def punct(S, w):
         elif v == 'closePath': cur.close(); cs.append(cur)
     upc = max(cs[1:], key=lambda c: bounds(c)[1])
     leg = D(leg, pathops.op(upc, upc, pathops.PathOp.UNION))     # chân không lấn vào lòng trên
-    G['&'] = U(amp, leg)
+    # loe (luật S5, như chân K/X và đầu chéo của chữ; designer 04/11: "& thiếu module loe như glyph chữ"):
+    #   chân: hai góc ở baseline; đầu tay: hai góc trên mặt cắt vuông góc
+    ud = ((top[0] - foot[0])/L, (top[1] - foot[1])/L)
+    xl = min(foot[0] - nx*Dd/2 - ud[0]/ud[1]*(foot[1] - ny*Dd/2), foot[0] + nx*Dd/2 - ud[0]/ud[1]*(foot[1] + ny*Dd/2))
+    xr = max(foot[0] - nx*Dd/2 - ud[0]/ud[1]*(foot[1] - ny*Dd/2), foot[0] + nx*Dd/2 - ud[0]/ud[1]*(foot[1] + ny*Dd/2))
+    nl = (-ud[1], ud[0]) if -ud[1] < 0 else (ud[1], -ud[0])          # pháp tuyến mép trái, hướng ra ngoài (sang trái)
+    fl = [flare((xl, 0), ud, nl, (-1, 0)), flare((xr, 0), ud, (-nl[0], -nl[1]), (1, 0))]
+    ve = arm_c[-1]; dv = dbez(ve, 1); Lv = math.hypot(*dv); v = (dv[0]/Lv, dv[1]/Lv); pv = (-v[1], v[0])
+    for sg in (1, -1):
+        Eg = (tip[0] + pv[0]*sg*tt/2, tip[1] + pv[1]*sg*tt/2)
+        fl.append(flare(Eg, (-v[0], -v[1]), (pv[0]*sg, pv[1]*sg)))
+    G['&'] = U(amp, leg, *fl)
     # @: vòng ngoài là nét bút gần trọn vòng; bên trong là "a" một tầng (lòng elip + thân)
     R0, cy = 335, 300; cx0 = R0 + 50
     # thân "a" đi xuống, vòng chữ U (bán kính ≈ 118) sang phải, nhập vào vòng ngoài ở góc 0° rồi chạy ngược chiều kim đồng hồ tới 300°
