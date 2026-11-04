@@ -442,7 +442,7 @@ def punct(S, w):
     tt = t['t']; tip = (eb[2] + (115 if not bold else 135), 0.52*CAP)
     # tay đi trùng nét bụng từ góc −62° tới góc cắt −40° (che mặt cắt, mối nối liền), rồi thon dần về t
     arm_c = hermite([(m0, tg0), (mid, tg), (tip, (1, 1.15))])
-    arm = stroke(arm_c, (1, 1), wabs=lambda u: t0 if u < 0.5 else tt + (t0 - tt)*max(0, 1 - (u - 0.5)/0.3)**2)
+    arm = stroke(arm_c, (1, 1), wabs=lambda u: t0*(0.8 + 0.2*u/0.5) if u < 0.5 else tt + (t0 - tt)*max(0, 1 - (u - 0.5)/0.3)**2)   # gốc hẹp hơn nét bụng: nắp đầu nằm trọn trong bụng
     amp = U(amp, arm)
     Dd = 100 if not bold else 146
     top, foot = ((lc[0] + 55, waist), (eb[2] + 70, 0)) if not bold else ((lc[0] + 60, waist), (eb[2] + 85, 0))
