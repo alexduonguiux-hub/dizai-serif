@@ -20,13 +20,14 @@ import math
 import vn_punct as V
 
 XH, OV_T, OV_B = 495.0, 503.4, -11.3          # guide chữ thường (khung 2107:5 / 2112:126)
-# Bold — rút từ MẪU a Bold của designer (2115:384), so với a Regular (đo bằng SVD elip lòng):
-B_STEM = 28.0                  # thân 102 → 130 (46 px): dày RA PHÍA NGOÀI; mép trong giữ khoảng chồng với vòng
-B_WIDE = 20.0                  # vòng (mép ngoài) giãn ngang +20 quanh tâm (bụng a 141 → 148 px)
-B_MAJ, B_MIN = 14.3, 17.6      # lòng elip co: bán trục dài −14.3, bán trục ngắn −17.6 (a: 144.5/96.4 → 130.2/78.8)
-B_SHIFT = 33.0                 # lòng dời về phía thân 33 (vách đối diện thân — nét dày theo bút — dày thêm ~47)
-B_BAR = 16.0                   # nét ngang mảnh (thanh e) +16, nở đều hai phía (nét mảnh của mẫu tăng 6–18)
-B_THIN = 8.0                   # nét nối / tai g: nở đều mỗi phía 8
+# Bold — rút từ MẪU a Bold của designer (2115:551), so với a Regular (2115:440):
+B_STEM = 22.6                  # thân 102 → 124.5 (36 → 44 px): dày RA PHÍA NGOÀI; mép trong giữ khoảng chồng với vòng
+B_WIDE = 11.3                  # vòng (mép ngoài) giãn ngang +11.3 quanh tâm (bụng a 130 → 134 px)
+B_MAJ, B_MIN = 12.7, 12.7      # (tham chiếu) a: lòng 39 × 47 → 34.5 × 42.5 px = −12.7 u mỗi bán trục
+B_K = 0.105                    # lòng co THEO TỈ LỆ bán trục −10.5 % (trung bình a: 11.5 % / 9.6 %): lòng lớn co nhiều hơn
+B_SHIFT = 9.9                  # lòng dời về phía thân 9.9 (a: lệch tâm 10 → 13.5 px)
+B_BAR = 12.7                   # nét ngang mảnh (thanh e) dày thêm bằng phần lòng co
+B_THIN = 6.4                   # nét nối / tai g: nở đều mỗi phía (= nửa phần trên)
 TOK = r'[MLCZ]|-?[\d.]+(?:e-?\d+)?'
 
 # ---------- khối (px cục bộ) ----------
@@ -87,7 +88,7 @@ def _ell_from_pts(pts):
     return ctr, V_ @ np.diag(1/np.sqrt(w))
 def _ell_path(ctr, M, dmaj=0.0, dmin=0.0, shift=(0.0, 0.0)):
     U, Sg, _ = np.linalg.svd(M); rot = math.degrees(math.atan2(U[1, 0], U[0, 0]))
-    return V.ellipse((ctr[0] + shift[0], ctr[1] + shift[1]), Sg[0] - dmaj, Sg[1] - dmin, rot)
+    return V.ellipse((ctr[0] + shift[0], ctr[1] + shift[1]), Sg[0]*(1 - B_K), Sg[1]*(1 - B_K), rot)
 def _samples(p, n=12):
     pts = []; cur = None
     for v, ps in p.segments:
