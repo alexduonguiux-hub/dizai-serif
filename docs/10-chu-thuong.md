@@ -52,6 +52,45 @@ a Bold dùng đúng bản vẽ. Luật Bold của các chữ khác rút từ m�
 
 Chữ thường Bold nhẹ hơn chữ hoa Bold (B/R của chữ hoa 1.26–1.43). Đây là theo mẫu a của designer.
 
+## Chữ suy ra từ module (TẠM, chờ designer duyệt hoặc vẽ lại)
+
+Gồm 17 chữ c f h i j k l m n o r s t u v w x y z, Regular và Bold.
+- Code: `tools/construct/lower/derive.py`, xuất ra `lower/lower_derived.json`.
+- Trong `ref_glyphs.json` các chữ này mang `src: "rule"`. Bold suy ra của d b q p e g cũng vậy; riêng a Bold là bản vẽ.
+
+| Module | Nguồn (designer) | Dùng cho |
+|---|---|---|
+| Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°), r và f (vai lật ngang, đầu cắt bên phải), t (vai xoay 180°: móc chân sang phải), j (vai lật dọc: móc sang trái) |
+| Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
+| Vòng | khối bụng d | o: lòng elip đứng đặt giữa, vách 34 px hai bên |
+| Bụng e | bụng có đầu cắt đứng | c: bụng e cộng bản lật dọc của nó |
+| S hoa | S của designer | s: thu ngang 0.80, dọc về x-height, bù nét 10 (Bold 8) bằng nét viền góc vuông |
+
+Nét chéo (luật S3):
+
+| Nét | Regular | Bold |
+|---|---|---|
+| \ dày D | 100 | 122 |
+| / mảnh t | 44 | 56.7 |
+
+- Đỉnh dưới của v, w cắt phẳng 20.
+- w là hai chữ v chồng lên nhau, đỉnh giữa không có loe.
+- y: nét mảnh kéo xuống descender, có loe; nét dày dừng khi lọt hẳn vào nét mảnh.
+- k: tay mảnh mọc từ thân lên x-height; chân dày mọc từ tay, không thò lên trên mép tay.
+- z: hai thanh mảnh H và một nét chéo dày. Chưa có mỏ như Z hoa.
+- Chấm i, j: đường kính 118 (Bold 146), cách x-height 70.
+- t: đỉnh 640, có loe hai bên. Thanh ngang của f và t: dày H, mép trên ở x-height.
+
+QA (`qa_outline.py`): còn các mũi nhọn chủ ý.
+- Mũi loe ở phía góc nhọn của nét chéo (x, k).
+- Đầu cắt kế thừa từ vai a (r, f, t, j).
+- Góc đầu cắt ở c, e Bold.
+
+**Chưa làm:**
+- Spacing và kerning chữ thường (trang duyệt đang dùng bề ngang mực + 80).
+- Dấu chữ thường (á, ơ, ư, đ…).
+- Mỏ cho z.
+
 ## Lịch sử e
 
 - **Bản 1**: lòng đứng, có nét chéo.

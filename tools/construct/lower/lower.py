@@ -183,7 +183,7 @@ def _extreme(path, top):
             c = (cur, *ps)
             for k in range(41):
                 q = V.bez(c, k/40); dq = V.dbez(c, k/40)
-                if not (-30 < q[1] < XH + 30): continue
+                if not ((XH - 30 < q[1] < XH + 30) if top else (-30 < q[1] < 30)): continue   # chỉ cực trị sát đường vượt
                 if abs(dq[1]) > 0.15*math.hypot(*dq): continue        # chỉ điểm tiếp tuyến ngang (đỉnh/đáy vòng thật)
                 if best is None or (q[1] > best[1] if top else q[1] < best[1]): best = q
             cur = ps[2]
@@ -209,7 +209,7 @@ def clean(p):
     from tidy import tidy
     def ok(p):
         t, b = _extreme(p, True), _extreme(p, False)
-        return abs(t[1] - OV_T) < 0.05 and (b is None or b[1] > -2 or abs(b[1] - OV_B) < 0.05)
+        return (t is None or abs(t[1] - OV_T) < 0.05) and (b is None or b[1] > -2 or abs(b[1] - OV_B) < 0.05)
     for _ in range(12):
         p = snap(p)
         if ok(p): break

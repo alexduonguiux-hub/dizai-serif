@@ -1,0 +1,230 @@
+#!/usr/bin/env python3
+"""Chữ thường SUY RA từ module của designer (chưa có bản vẽ) — Regular + Bold. Nhãn TẠM, chờ designer duyệt / vẽ lại.
+    python3 tools/construct/lower/derive.py   → lower/lower_derived.json (make_ref.py gộp vào ref_glyphs.json)
+
+Module (đều là hình của designer, Figma 2115:421):
+  VAI   = khối vai + thân + loe chân của a (Regular 2115:441; Bold = mẫu a Bold 2115:552) → n h m u r f t j
+  LOE   = loe thân d (dài 69.6, chìa 22.6 u: cong từ mép nét, ngắt thẳng tới mũi trên mặt cắt) → mọi đầu thân / đầu chéo tự do
+  VÒNG  = khối bụng d (o: lòng elip đứng đặt giữa) ; bụng e (c: hai nửa bụng e đối xứng)
+  S     = S chữ hoa của designer thu về x-height, bù nét (s)
+Nét (u):          Regular   Bold (theo mẫu a Bold)
+  thân V          101.8     124.5
+  chéo dày D      100       122      (= D chữ hoa × V thường Bold / V Regular)
+  chéo mảnh t     44        56.7     (+12.7 như nét mảnh vòng Bold)
+  ngang mảnh H    39.6      52.3     (thanh e)
+"""
+import sys, os, json, math
+HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
+import pathops
+import lower as L
+import vn_punct as V
+from src_lower import SHAPES, S
+
+XH, ASC, DESC = 495.0, 698.6, -200.8
+W = {'Regular': dict(V=36*S, D=100.0, t=44.0, H=39.6, dot=118.0, wide=0.0),
+     'Bold':    dict(V=44*S, D=122.0, t=56.7, H=52.3, dot=146.0, wide=22.0)}
+# loe (px của thân d → u): tham số (v ra ngoài, u dọc mép về phía đầu nét)
+FL = [(0, 0), (0, 6.961*S), (1.817*S, 13.802*S), (5.271*S, 19.846*S)]; FL_TIP = (8*S, 24.623*S)
+
+def P(cmds): return V.P(cmds)
+def N(p): return pathops.op(p, p, pathops.PathOp.UNION)      # chuẩn hoá chiều đường viền sau phép lật
+
+# ---------- nét thẳng có loe ----------
+def stroke(bc, tc, w, fl=''):
+    """nét từ tâm đáy bc tới tâm đỉnh tc (đáy, đỉnh là mặt cắt NGANG), dày w đo vuông góc; fl ⊂ {tl,tr,bl,br}: góc có loe"""
+    dx, dy = tc[0] - bc[0], tc[1] - bc[1]; Ln = math.hypot(dx, dy); d = (dx/Ln, dy/Ln)
+    hw = w/2/abs(d[1])                                         # nửa bề ngang mặt cắt
+    BL, BR, TL, TR = (bc[0] - hw, bc[1]), (bc[0] + hw, bc[1]), (tc[0] - hw, tc[1]), (tc[0] + hw, tc[1])
+    def flare(corner, along, out, ycut):
+        """đường loe đi TỚI góc: along = hướng dọc mép về phía đầu nét, out = hướng ra ngoài (vuông góc mép)"""
+        lu = FL_TIP[1]; E0 = (corner[0] - along[0]*lu, corner[1] - along[1]*lu)
+        pt = lambda v, u: (E0[0] + along[0]*u + out[0]*v, E0[1] + along[1]*u + out[1]*v)
+        c1, c2, p3 = pt(*FL[1]), pt(*FL[2]), pt(*FL[3]); q = pt(*FL_TIP)
+        k = (ycut - p3[1])/(q[1] - p3[1]) if abs(q[1] - p3[1]) > 1e-9 else 1     # mũi loe nằm đúng trên mặt cắt
+        tip = (p3[0] + (q[0] - p3[0])*k, ycut)
+        return E0, [('C', c1, c2, p3), ('L', tip)]
+    nl = (-d[1], d[0])                                         # pháp tuyến bên trái (khi đi lên)
+    up, dn = d, (-d[0], -d[1])
+    cmds = []
+    # đi: BL → (mép trái lên) → TL → TR → (mép phải xuống) → BR → BL
+    if 'bl' in fl:
+        E0, seg = flare(BL, dn, nl, bc[1]); tip = seg[-1][1]; c = seg[0]
+        cmds += [('M', tip), ('L', c[3]), ('C', c[2], c[1], E0)]                 # đảo chiều đường loe
+    else: cmds += [('M', BL)]
+    if 'tl' in fl:
+        E0, seg = flare(TL, up, nl, tc[1]); cmds += [('L', E0)] + seg
+    else: cmds += [('L', TL)]
+    if 'tr' in fl:
+        E0, seg = flare(TR, up, (-nl[0], -nl[1]), tc[1]); tip = seg[-1][1]; c = seg[0]
+        cmds += [('L', tip), ('L', c[3]), ('C', c[2], c[1], E0)]
+    else: cmds += [('L', TR)]
+    if 'br' in fl:
+        E0, seg = flare(BR, dn, (-nl[0], -nl[1]), bc[1]); cmds += [('L', E0)] + seg
+    else: cmds += [('L', BR)]
+    cmds += [('Z',)]
+    p = P(cmds); return pathops.op(p, p, pathops.PathOp.UNION)
+
+def vstem(x0, x1, y0, y1, fl=''):
+    # thu 0.001 u mỗi bên: mép trùng khít với thân của khối vai làm pathops gộp hỏng (mất cả thân)
+    c = (x0 + x1)/2; return stroke((c, y0), (c, y1), x1 - x0 - 0.002, fl)
+def side(p0, p1, left=True, big=4000):
+    """nửa mặt phẳng bên trái (left) / phải của đường p0→p1"""
+    dx, dy = p1[0] - p0[0], p1[1] - p0[1]; Ln = math.hypot(dx, dy); d = (dx/Ln, dy/Ln); n = (-d[1], d[0]) if left else (d[1], -d[0])
+    a = (p0[0] - d[0]*big, p0[1] - d[1]*big); b = (p0[0] + d[0]*big, p0[1] + d[1]*big)
+    return V.poly([a, b, (b[0] + n[0]*big, b[1] + n[1]*big), (a[0] + n[0]*big, a[1] + n[1]*big)])
+def dot(cx, w):
+    r = W[w]['dot']/2; return V.ellipse((cx, XH + 70 + r), r, r)
+
+# ---------- vai (khối a) ----------
+def arch(w):
+    """vai + thân + loe chân của a, đầu cắt trái ở x 0, chân ở y 0 (đỉnh vai 505.6 trước khi chốt vượt)"""
+    k = 'a_stem' if w == 'Regular' else 'a_stem_B'; return L._path(SHAPES[k], (1, 0, 0, 0, 1, 188.25048828125))
+def arch_stem(w):
+    return (93*S, 129*S) if w == 'Regular' else (99*S, 143*S)
+
+def n_like(w, asc=False, arches=1):
+    v = W[w]['V']; s0, s1 = arch_stem(w); A = arch(w)
+    parts = [vstem(0, v, 0, ASC if asc else XH, 'tlblbr' + ('tr' if asc else ''))]
+    for i in range(arches):
+        dx = i*s0
+        parts += [V.move(A, dx, 0), vstem(dx + s0, dx + s1, 0, 300, 'bl')]
+    return V.U(*parts)
+
+def ear(w, dy=0.0):
+    """vai a lật ngang: thân trùng thân chữ (x 0..v), vai đi sang phải, đầu cắt bên phải; chỉ phần trên (từ 300)"""
+    s0, s1 = arch_stem(w); A = N(V.xform(arch(w), lambda x, y: (s1 - x, y)))
+    return V.move(V.I(A, V.halfplane(300)), 0, dy)
+
+def hook(w, right=True, ybot=-11.3):
+    """vai a xoay 180° (right: đầu cắt bên phải, thân bên trái — t) hoặc lật dọc (đầu cắt trái, thân phải — j); phần dưới 300"""
+    s0, s1 = arch_stem(w); top = 505.6
+    if right: f = lambda x, y: (s1 - x, top + ybot - y)
+    else: f = lambda x, y: (x - s0, top + ybot - y)
+    return V.I(N(V.xform(arch(w), f)), V.halfplane(ybot + 300, above=False))
+
+# ---------- chéo ----------
+def vee(w, Wd, f=20.0, desc=False, fl_l='tltr', fl_r='tltr'):
+    """v (desc: y): nét trái dày \\, nét phải mảnh /, đỉnh dưới cắt phẳng f; Wd = khoảng hai mép ngoài ở x-height"""
+    D, t = W[w]['D'], W[w]['t']; cx = Wd/2
+    Lo0, Lo1 = (cx - f/2, 0), (0, XH); Ro0, Ro1 = (cx + f/2, 0), (Wd, XH)
+    def centre(o0, o1, wid, sgn):
+        dx, dy = o1[0] - o0[0], o1[1] - o0[1]; Ln = math.hypot(dx, dy); hw = wid/2/(dy/Ln)
+        return (o0[0] + sgn*hw, o0[1]), (o1[0] + sgn*hw, o1[1])
+    lb, lt = centre(Lo0, Lo1, D, +1); rb, rt = centre(Ro0, Ro1, t, -1)
+    if desc:                                                  # nét phải kéo tiếp xuống descender
+        k = (DESC - rb[1])/(rt[1] - rb[1]); rb = (rb[0] + (rt[0] - rb[0])*k, DESC)
+        Ro0 = (Ro0[0] + (Ro1[0] - Ro0[0])*k, DESC)
+    Ls = stroke(lb, lt, D, fl_l); Rs = stroke(rb, rt, t, fl_r + ('blbr' if desc else ''))
+    Ls = V.I(Ls, side(Ro0, Ro1, left=True))
+    if desc:                                                  # nét dày dừng khi lọt hẳn vào nét mảnh
+        # nét dày dừng ở cao độ mép ngoài của nó gặp mép trong nét mảnh (dưới đó nét dày lọt hẳn vào nét mảnh)
+        sn = (Ro1[1] - Ro0[1])/math.hypot(Ro1[0] - Ro0[0], Ro1[1] - Ro0[1]); off = t/sn
+        xl = lambda y: Lo0[0] + (Lo1[0] - Lo0[0])*(y - Lo0[1])/(Lo1[1] - Lo0[1])
+        xr = lambda y: Ro0[0] - off + (Ro1[0] - Ro0[0])*(y - Ro0[1])/(Ro1[1] - Ro0[1])
+        lo, hi = DESC, XH
+        for _ in range(60):
+            mid = (lo + hi)/2
+            if xl(mid) > xr(mid): lo = mid
+            else: hi = mid
+        Ls = V.I(Ls, V.halfplane(hi))
+    else:
+        Rs = V.I(Rs, side(Lo0, Lo1, left=False))
+    o = V.U(Ls, Rs)
+    return V.I(o, V.halfplane(DESC if desc else 0))
+
+def glyph(ch, w):
+    v = W[w]['V']; D, t, H = W[w]['D'], W[w]['t'], W[w]['H']; wide = W[w]['wide']
+    if ch == 'n': return n_like(w)
+    if ch == 'h': return n_like(w, asc=True)
+    if ch == 'm': return n_like(w, arches=2)
+    if ch == 'u':
+        n = n_like(w); return N(V.xform(n, lambda x, y: (-x, XH - y)))
+    if ch == 'r': return V.U(vstem(0, v, 0, XH, 'tlblbr'), ear(w))
+    if ch == 'f':
+        dy = ASC + 8.4 - 505.6
+        bar = V.rect(-95, XH - H, v + 165, XH)
+        return V.U(vstem(0, v, 0, 300 + dy + 40, 'blbr'), ear(w, dy), bar)
+    if ch == 't':
+        top = 640.0; s0, s1 = arch_stem(w); bar = V.rect(-110, XH - H, v + 150, XH)
+        return V.U(vstem(0, v, 200, top, 'tltr'), hook(w, right=True), bar)
+    if ch == 'j':
+        s0, s1 = arch_stem(w); hk = hook(w, right=False, ybot=DESC - 8.4)
+        st = V.move(vstem(0, v, DESC + 200, XH, 'tltr'), (hk.bounds[2] - v), 0)
+        sx = hk.bounds[2] - v/2
+        return V.U(hk, st, dot(sx, w))
+    if ch == 'i': return V.U(vstem(0, v, 0, XH, 'tltrblbr'), dot(v/2, w))
+    if ch == 'l': return vstem(0, v, 0, ASC, 'tltrblbr')
+    if ch == 'v': return vee(w, 455 + wide)
+    if ch == 'y': return vee(w, 455 + wide, desc=True)
+    if ch == 'w':
+        Ww = 690 + 2*wide; a = 0.5*Ww
+        v1 = vee(w, a + 30, fl_r=''); v2 = V.move(vee(w, Ww - a + 30, fl_l=''), a - 30, 0)
+        return V.U(v1, v2)
+    if ch == 'x':
+        Wx = 440 + wide; hD = D/2/(XH/math.hypot(Wx, XH)); ht = t/2/(XH/math.hypot(Wx, XH))
+        a = stroke((Wx - hD, 0), (hD, XH), D, 'tltrblbr'); b = stroke((ht, 0), (Wx - ht, XH), t, 'tltrblbr')
+        return V.U(a, b)
+    if ch == 'k':
+        st = vstem(0, v, 0, ASC, 'tltrblbr'); ax = v + 265 + wide; lx = v + 300 + wide
+        ab, at = (v - 15, 130), (ax - t/2, XH)
+        arm = V.I(stroke(ab, at, t, 'tltr'), V.halfplane(0))
+        j = (ab[0] + (at[0] - ab[0])*0.42, ab[1] + (at[1] - ab[1])*0.42)
+        leg = stroke((lx - D/2, 0), j, D, 'blbr')
+        dx, dy = at[0] - ab[0], at[1] - ab[1]; Ln = math.hypot(dx, dy); nrm = (-dy/Ln, dx/Ln)
+        up0 = (ab[0] + nrm[0]*t/2, ab[1] + nrm[1]*t/2); up1 = (at[0] + nrm[0]*t/2, at[1] + nrm[1]*t/2)
+        leg = V.I(leg, side(up0, up1, left=False))            # chân không thò lên trên mép tay
+        return V.U(st, arm, leg)
+    if ch == 'z':
+        Wz = 400 + wide; hD = D/2/((XH - 2*H)/math.hypot(Wz, XH - 2*H))
+        top = V.rect(0, XH - H, Wz, XH); bot = V.rect(0, 0, Wz, H)
+        dg = V.poly([(0, H), (2*hD, H), (Wz, XH - H), (Wz - 2*hD, XH - H)])
+        return V.U(top, bot, dg)
+    if ch in 'oc': return L._q2c(oc(ch, w))
+    if ch == 's': return s_from_S(w)
+    raise KeyError(ch)
+
+# ---------- o c (khối vòng) ----------
+def oc(ch, w):
+    if ch == 'o':
+        m = (1, 0, 0, 0, 1, 189)
+        outer = L._path(L._first_contour(SHAPES['bowl']), m); x0, y0, x1, y1 = outer.bounds
+        cx, cy = (x0 + x1)/2, (y0 + y1)/2; rx, ry = 48*S, 74.5*S                 # lòng giữa: vách 34 px hai bên như d
+        if w == 'Bold':
+            c, k, st = L._stretch(outer.bounds); outer = V.xform(outer, st); rx, ry = rx*k*(1 - L.B_K), ry*(1 - L.B_K)
+        return V.D(outer, V.ellipse((cx, cy), rx, ry))
+    # c: bụng e (có đầu cắt) + bản lật dọc của nó làm nửa trên
+    m = (1, 0, 0, 0, -1, 369)
+    if w == 'Regular':
+        bowl = L._path(SHAPES['e_bowl'], m)
+    else:
+        bo = L._path("M88.5 0 C114.943 0 138.677 11.6383 154.894 30.0879 L154.894 91 L0 91 L0 88.8076 C0 39.7607 39.6228 0 88.5 0 Z", m)
+        c, k, st = L._stretch(bo.bounds)
+        e2 = L._ell_from_pts([st(*q) for q in L._inner_pts(SHAPES['e_bowl'], m, lambda p: 32 < p[0] < 155 and 15 < p[1] < 91.5)])
+        bowl = V.D(V.xform(bo, st), L._ell_path(*e2))
+    seam = bowl.bounds[3]; ytop = 503.4; yb = bowl.bounds[1]
+    top = V.xform(bowl, lambda x, y: (x, seam + (seam - y) - (2*seam - yb - ytop)))
+    return V.U(bowl, top)
+
+# ---------- s (từ S chữ hoa) ----------
+def s_from_S(w):
+    from make_ref import outline
+    src = {}
+    for f in ('designer_A.json', 'designer_B.json'): src.update(json.load(open(os.path.join(HERE, '..', 'ref', f))))
+    Sp = outline(src[f'S-{w}'])
+    x0, y0, x1, y1 = Sp.bounds; d = 10.0 if w == 'Regular' else 8.0
+    sy = (503.4 + 11.3 - 2*d)/(y1 - y0); sx = 0.80
+    p = V.xform(Sp, lambda x, y: ((x - x0)*sx, (y - y0)*sy - 11.3 + d))
+    stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 3)
+    stp.convertConicsToQuads()
+    return L._q2c(V.U(p, L._q2c(stp)))
+
+CHARS = 'cfhijklmnorstuvwxyz'
+if __name__ == '__main__':
+    out = {}
+    for c in CHARS:
+        for w in ('Regular', 'Bold'):
+            o = L._q2c(glyph(c, w)); o = V.move(o, -o.bounds[0], 0)
+            out[f'{c}-{w}'] = [V.to_d(L.clean(o))]
+    json.dump(out, open(os.path.join(HERE, 'lower_derived.json'), 'w'))
+    from make_ref import outline
+    for k, v in out.items(): print(k, [round(x, 1) for x in outline(v).bounds])
