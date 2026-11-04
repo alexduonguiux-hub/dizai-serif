@@ -1,0 +1,336 @@
+<title>Duyệt glyph Đìzai Serif</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: bàn duyệt chữ — thanh lọc dính trên cùng, ngăn xem lớn hai weight có guide dựng, lưới ô đều nhau, rồi chữ mẫu và ghi chú duyệt. */
+:root {
+  --bg: #f2f2ef; --panel: #ffffff; --ink: #161616; --muted: #66645f; --line: #d9d8d2;
+  --accent: #2b4fd8; --accent-soft: #e2e7fb; --rule: #c4422b; --guide: #b9b7af;
+  --compass: #e0841c; --construct: #2b4fd8; --ok: #1f7a3a; --fix: #b4530a;
+  --ui: "Be Vietnam Pro", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #121212; --panel: #1b1b1a; --ink: #ecebe6; --muted: #a3a19a; --line: #2f2e2b;
+  --accent: #7d97ff; --accent-soft: #1f2747; --rule: #ff7d62; --guide: #47463f;
+  --compass: #f2a54a; --construct: #7d97ff; --ok: #5fd07f; --fix: #f0a050; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #121212; --panel: #1b1b1a; --ink: #ecebe6; --muted: #a3a19a; --line: #2f2e2b;
+  --accent: #7d97ff; --accent-soft: #1f2747; --rule: #ff7d62; --guide: #47463f;
+  --compass: #f2a54a; --construct: #7d97ff; --ok: #5fd07f; --fix: #f0a050; color-scheme: dark }
+body { background: var(--bg); color: var(--ink); font: 15px/1.5 var(--ui); }
+.wrap { max-width: 1280px; margin: 0 auto; padding-block: 28px 64px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+  display: grid; gap: 28px; }
+header { display: grid; gap: 8px; }
+.mast { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 6px 22px; }
+.mast svg { height: clamp(46px, 8vw, 72px); width: auto; max-width: 100%; }
+.ver { font: 500 13px var(--mono); color: var(--muted); }
+.lede { color: var(--muted); max-width: 70ch; margin: 0; }
+h2 { font: 600 13px/1.2 var(--ui); text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin: 0 0 12px; }
+.summary { display: flex; flex-wrap: wrap; gap: 8px 22px; font-size: 14px; color: var(--muted); }
+.summary b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; padding-block: 10px; }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+.seg { display: inline-flex; flex-wrap: wrap; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+.seg button { font: 500 13px var(--ui); color: var(--ink); background: var(--panel); border: 0; padding: 7px 12px; cursor: pointer; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button[aria-pressed="true"] { background: var(--accent); color: var(--panel); }
+label.chk { display: inline-flex; gap: 6px; align-items: center; font-size: 13px; cursor: pointer; }
+input[type="search"] { font: 13px var(--ui); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; min-width: 0; width: 180px; }
+button:focus-visible, input:focus-visible, textarea:focus-visible, .cell:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); align-items: center; margin-bottom: 10px; }
+.sw { display: inline-block; width: 18px; height: 10px; border-radius: 2px; vertical-align: -1px; margin-right: 5px; }
+.dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--rule); margin-right: 5px; vertical-align: 1px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); }
+.cell { background: var(--panel); display: grid; padding: 6px 6px 5px; cursor: pointer; position: relative; min-width: 0; }
+.cell svg { width: 100%; height: auto; aspect-ratio: 1 / 1.05; display: block; }
+.cell .nm { font: 11px/1.3 var(--mono); color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cell.rule::after { content: ""; position: absolute; top: 6px; right: 6px; width: 7px; height: 7px; border-radius: 50%; background: var(--rule); }
+.cell.flag-ok { box-shadow: inset 0 -3px 0 var(--ok); }
+.cell.flag-fix { box-shadow: inset 0 -3px 0 var(--fix); }
+.cell[aria-selected="true"] { outline: 2px solid var(--accent); outline-offset: -2px; }
+.ink { fill: var(--ink); }
+.gx { fill: none; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.g-metric { stroke: var(--guide); }
+.g-mark { stroke: var(--guide); stroke-dasharray: 6 4; }
+.g-adv { stroke: var(--guide); stroke-dasharray: 3 5; }
+.g-compass { stroke: var(--compass); }
+.g-construct { stroke: var(--construct); opacity: .75; }
+.g-hline { stroke: var(--compass); opacity: .7; }
+.glabel { fill: var(--muted); font: 22px var(--mono); }
+.ghost { fill: var(--ink); opacity: .14; }
+.drawer { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 18px; display: grid; gap: 14px; }
+.drawer .head { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: baseline; }
+.drawer .head .big { font: 500 22px var(--mono); }
+.meta { font: 13px var(--mono); color: var(--muted); }
+.duo { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 640px) { .duo { grid-template-columns: 1fr; } }
+.duo figure { margin: 0; display: grid; gap: 4px; min-width: 0; }
+.duo figcaption { font: 12px var(--mono); color: var(--muted); }
+.duo svg { width: 100%; height: auto; max-height: 520px; background: var(--bg); border-radius: 6px; }
+.review { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.review button { font: 500 13px var(--ui); border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 8px; padding: 6px 12px; cursor: pointer; }
+.review button.on-ok { border-color: var(--ok); color: var(--ok); }
+.review button.on-fix { border-color: var(--fix); color: var(--fix); }
+.review input { flex: 1 1 220px; min-width: 0; font: 13px var(--ui); color: var(--ink); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; }
+.samples { display: grid; gap: 10px; }
+.ctrl { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; }
+textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color: var(--ink); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; resize: vertical; }
+.line { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; min-width: 0; }
+.line .w { font: 11px var(--mono); color: var(--muted); }
+.set { display: flex; flex-wrap: wrap; align-items: flex-end; row-gap: 0; }
+.set svg { display: block; flex: none; max-width: 100%; height: auto; }
+.miss { fill: none; stroke: var(--rule); stroke-dasharray: 10 8; stroke-width: 1; vector-effect: non-scaling-stroke; }
+.flags { display: grid; gap: 8px; }
+.flags pre { margin: 0; font: 12px/1.5 var(--mono); background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.tag { font: 500 12px var(--ui); border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
+.note { font-size: 12px; color: var(--muted); }
+@media (prefers-reduced-motion: no-preference) { .cell { transition: background-color .12s; } .cell:hover { background: var(--accent-soft); } }
+</style>
+
+<div class="wrap">
+  <header>
+    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.4 · Regular, Bold</span></div>
+    <p class="lede">Toàn bộ glyph hiện có của hai weight để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật (chưa có bản vẽ tay); còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả hai weight, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
+  </header>
+  <div class="summary" id="summary"></div>
+
+  <div class="bar" role="toolbar" aria-label="Bộ lọc glyph">
+    <div class="seg" id="wsel" role="group" aria-label="Weight"></div>
+    <div class="seg" id="gsel" role="group" aria-label="Nhóm">
+      <button data-g="all" aria-pressed="true">Tất cả</button><button data-g="caps" aria-pressed="false">Chữ hoa</button><button data-g="fig" aria-pressed="false">Số</button><button data-g="vn" aria-pressed="false">Chữ Việt</button><button data-g="punct" aria-pressed="false">Dấu câu</button>
+    </div>
+    <div class="seg" id="ssel" role="group" aria-label="Nguồn">
+      <button data-s="all" aria-pressed="true">Mọi nguồn</button><button data-s="designer" aria-pressed="false">Bản vẽ</button><button data-s="rule" aria-pressed="false">Dựng theo luật</button><button data-s="flag" aria-pressed="false">Đã đánh dấu</button>
+    </div>
+    <label class="chk"><input type="checkbox" id="gdgrid"> Guide trong lưới</label>
+    <input type="search" id="q" placeholder="Tìm: Ữ, ?, U+1EEE…" aria-label="Tìm glyph">
+  </div>
+
+  <section class="drawer" id="drawer" aria-live="polite"></section>
+
+  <section aria-labelledby="h-grid">
+    <h2 id="h-grid">Glyph</h2>
+    <div class="legend"><span><span class="sw" style="background:var(--ink)"></span>outline</span><span><span class="dot"></span>dựng theo luật</span><span><span class="sw" style="background:none;border:2px solid var(--compass)"></span>compa / thanh</span><span><span class="sw" style="background:none;border:2px solid var(--construct)"></span>elip, đường dựng</span><span><span class="sw" style="background:var(--ok)"></span>Đạt</span><span><span class="sw" style="background:var(--fix)"></span>Cần sửa</span><span id="count"></span></div>
+    <div class="grid" id="grid" role="listbox" aria-label="Danh sách glyph"></div>
+  </section>
+
+  <section class="samples" aria-labelledby="h-text">
+    <h2 id="h-text">Chữ mẫu</h2>
+    <textarea id="txt" rows="3" aria-label="Chữ mẫu">ĐẤT NƯỚC TÔI ĐẸP LẮM! “TIẾNG VIỆT” — SỬA ĐỔI: 25% (Ừ, ỔN)? HỒ GƯƠM LÚC BÌNH MINH, THĂM LÀNG GỐM BÁT TRÀNG; ỨNG XỬ & LỄ PHÉP – [2026] 3×4=12 € $ # @ / ẰNG ẪN ỢT ỮA</textarea>
+    <div class="ctrl"><label class="chk"><input type="range" id="tsize" min="18" max="120" value="44" aria-label="Cỡ chữ"> <span id="tsizev">44 px</span></label>
+      <span class="note">Chưa có chữ thường: chữ mẫu được đổi sang chữ hoa. Ký tự chưa có glyph hiện thành ô gạch đỏ.</span></div>
+    <div id="lines" class="samples"></div>
+  </section>
+
+  <section class="flags" aria-labelledby="h-flags">
+    <h2 id="h-flags">Ghi chú duyệt</h2>
+    <p class="note" id="syncnote">Đang kết nối nơi lưu chung…</p>
+    <div class="row"><button class="tag" id="copy">Sao chép danh sách</button><span class="note" id="copied"></span></div>
+    <pre id="flaglist">Chưa có glyph nào được đánh dấu.</pre>
+  </section>
+</div>
+
+<script id="data" type="application/json">/*DATA*/{}</script>
+<script>
+(function () {
+  const D = JSON.parse(document.getElementById('data').textContent);
+  const W = ['Regular', 'Bold'];
+  const G = { CAP: 700, OV: 11.3, MARK: 750, DOT: -47.3, TOP: 1110, BOT: -260 };
+  const SB = 40, SPACE = 230;
+  const GRP = { caps: 'Chữ hoa', fig: 'Số', vn: 'Chữ Việt', punct: 'Dấu câu' };
+  let weight = 'Regular', grp = 'all', srcSel = 'all', query = '', sel = null, gridGuides = false;
+  const byC = {}; for (const w of W) { byC[w] = {}; for (const g of D.weights[w]) byC[w][g.c] = g; }
+  const hex = u => 'U+' + u.toString(16).toUpperCase().padStart(4, '0');
+  const docId = (w, c) => w + '-' + hex(c.codePointAt(0)).slice(2);
+  const esc = s => s.replace(/[&<>"]/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[m]));
+  let mem = {};
+  const store = { get() { try { return JSON.parse(localStorage.getItem('dizai-review') || '{}'); } catch (e) { return mem; } },
+                  set(v) { mem = v; try { localStorage.setItem('dizai-review', JSON.stringify(v)); } catch (e) {} } };
+  let flags = store.get() || {};
+  const key = (w, c) => w + ':' + c;
+
+  // guide dựng hình (toạ độ font, y lên); vẽ trong nhóm đã lật trục y
+  function guideSVG(g) {
+    return g.gd.map(q => {
+      if (q.type === 'circle') return `<circle class="gx g-compass" cx="${q.c[0]}" cy="${q.c[1]}" r="${q.r}"/>`;
+      if (q.type === 'ellipse') {
+        const deg = q.rot * 180 / Math.PI;
+        let s = `<ellipse class="gx g-construct" cx="${q.c[0]}" cy="${q.c[1]}" rx="${q.rx}" ry="${q.ry}" transform="rotate(${deg} ${q.c[0]} ${q.c[1]})"/>`;
+        if (q.axes) for (const a of [q.rot, q.rot + Math.PI / 2]) { const L = 520, dx = Math.cos(a) * L, dy = Math.sin(a) * L; s += `<line class="gx g-construct" x1="${q.c[0] - dx}" y1="${q.c[1] - dy}" x2="${q.c[0] + dx}" y2="${q.c[1] + dy}"/>`; }
+        return s;
+      }
+      if (q.type === 'line') { const L = 1400, p = q.p, d = q.d; return `<line class="gx g-construct" x1="${p[0] - d[0] * L}" y1="${p[1] - d[1] * L}" x2="${p[0] + d[0] * L}" y2="${p[1] + d[1] * L}"/>`; }
+      if (q.type === 'hline') return `<line class="gx g-hline" x1="-200" x2="${g.W + 200}" y1="${q.y}" y2="${q.y}"/>`;
+      return '';
+    }).join('');
+  }
+
+  function cellSVG(g) {
+    const span = 1300, x0 = g.a / 2 - span / 2;
+    return `<svg viewBox="${x0} ${-G.TOP} ${span} ${G.TOP - G.BOT}" aria-hidden="true"><g transform="scale(1,-1) translate(${SB} 0)">${gridGuides ? guideSVG(g) : ''}<path class="ink" d="${g.p}"/></g></svg>`;
+  }
+
+  function bigSVG(g, w) {
+    if (!g) return '<p class="note">Không có trong weight này.</p>';
+    const pad = 160, x0 = -pad, wd = g.a + 2 * pad + 160;
+    const rows = [['cap', G.CAP, 'g-metric'], ['overshoot', G.CAP + G.OV, 'g-mark'], ['baseline', 0, 'g-metric'], ['−overshoot', -G.OV, 'g-mark']];
+    if (g.g === 'vn' || g.g === 'punct') rows.push(['đáy dấu', G.MARK, 'g-mark'], ['dấu nặng', Math.round(G.DOT), 'g-mark']);
+    const lines = rows.map(([n, y, c]) => `<line class="gx ${c}" x1="${x0}" x2="${x0 + wd}" y1="${-y}" y2="${-y}"/><text class="glabel" x="${x0 + wd - 6}" y="${-y - 6}" text-anchor="end">${n} ${y}</text>`).join('');
+    const adv = `<line class="gx g-adv" x1="0" x2="0" y1="${-G.TOP}" y2="${-G.BOT}"/><line class="gx g-adv" x1="${g.a}" x2="${g.a}" y1="${-G.TOP}" y2="${-G.BOT}"/>`;
+    return `<svg viewBox="${x0} ${-G.TOP} ${wd} ${G.TOP - G.BOT}" role="img" aria-label="${esc(g.c)} ${w}">${lines}${adv}<g transform="scale(1,-1) translate(${SB} 0)"><path class="ghost" d="${g.p}"/>${guideSVG(g)}<path class="ink" d="${g.p}" fill-opacity="${showInk ? 1 : 0}"/></g></svg>`;
+  }
+  let showInk = true;
+
+  function visible() {
+    const q = query.trim(), ql = q.toLowerCase();
+    return D.weights[weight].filter(g => {
+      if (grp !== 'all' && g.g !== grp) return false;
+      if (srcSel === 'flag') { if (!flags[key(weight, g.c)]) return false; }
+      else if (srcSel !== 'all' && g.s !== srcSel) return false;
+      if (!q) return true;
+      if (g.c === q || g.c.normalize('NFD')[0] === q.toUpperCase()) return true;
+      return hex(g.u).toLowerCase().includes(ql.replace(/^u\+?/, 'u+'));
+    });
+  }
+
+  function renderGrid() {
+    const gl = visible();
+    document.getElementById('count').textContent = `${gl.length} glyph hiển thị`;
+    document.getElementById('grid').innerHTML = gl.map(g => {
+      const f = flags[key(weight, g.c)];
+      return `<div class="cell${g.s === 'rule' ? ' rule' : ''}${f ? ' flag-' + f.s : ''}" role="option" tabindex="0" data-c="${esc(g.c)}" aria-selected="${sel === g.c}" title="${esc(g.c)} ${hex(g.u)} · ${GRP[g.g]} · ${g.s === 'rule' ? 'dựng theo luật' : 'bản vẽ designer'}">${cellSVG(g)}<div class="nm">${esc(g.c)} ${hex(g.u).slice(2)}</div></div>`;
+    }).join('');
+  }
+
+  function renderSummary() {
+    document.getElementById('summary').innerHTML = W.map(w => {
+      const gs = D.weights[w], r = gs.filter(g => g.s === 'rule').length;
+      return `<span>${w}: <b>${gs.length}</b> glyph · <b>${gs.length - r}</b> bản vẽ · <b>${r}</b> dựng theo luật</span>`;
+    }).join('') + `<span>Chữ hoa <b>26</b> · số <b>10</b> · chữ Việt <b>67</b> · dấu câu <b>29</b></span>`;
+  }
+
+  function renderDrawer() {
+    const el = document.getElementById('drawer');
+    if (!sel) { el.innerHTML = '<p class="note">Bấm một glyph để xem lớn ở cả hai weight.</p>'; return; }
+    const g = byC[weight][sel], f = flags[key(weight, sel)] || {};
+    const advs = W.map(w => { const x = byC[w][sel]; return x ? `${w[0]} mực ${x.W} · adv ${x.a}` : ''; }).join(' · ');
+    const srcs = W.map(w => { const x = byC[w][sel]; return x ? `${w}: ${x.s === 'rule' ? 'dựng theo luật (TẠM)' : 'bản vẽ designer'}` : ''; }).join(' · ');
+    el.innerHTML = `<div class="head"><span class="big">${esc(g.c)}</span><span class="meta">${hex(g.u)} · ${GRP[g.g]} · ${advs}</span></div>
+      <div class="meta">${srcs}</div>
+      <div class="row"><label class="chk"><input type="checkbox" id="inkchk" ${showInk ? 'checked' : ''}> Tô mực (bỏ để xem guide trên nền mờ)</label></div>
+      <div class="duo">${W.map(w => `<figure>${bigSVG(byC[w][sel], w)}<figcaption>${w} · cam: compa loe, thanh · xanh: elip dựng, đường chéo kéo dài</figcaption></figure>`).join('')}</div>
+      <div class="review"><span class="note">${weight}:</span>
+        <button id="b-ok" class="${f.s === 'ok' ? 'on-ok' : ''}">Đạt</button><button id="b-fix" class="${f.s === 'fix' ? 'on-fix' : ''}">Cần sửa</button><button id="b-clear">Bỏ đánh dấu</button>
+        <input id="b-note" placeholder="Ghi chú cho ${esc(sel)} (${weight})" value="${esc(f.note || '')}" aria-label="Ghi chú"></div>`;
+    document.getElementById('inkchk').onchange = e => { showInk = e.target.checked; renderDrawer(); };
+    document.getElementById('b-ok').onclick = () => setFlag('ok');
+    document.getElementById('b-fix').onclick = () => setFlag('fix');
+    document.getElementById('b-clear').onclick = () => setFlag(null);
+    document.getElementById('b-note').oninput = e => { const k = key(weight, sel); const cur = flags[k] || { s: 'fix' }; cur.note = e.target.value; flags[k] = cur; store.set(flags); push(k); renderFlagList(); renderGrid(); };
+  }
+
+  // nơi lưu chung (db): mỗi đánh dấu là một doc flags/<Weight>-<mã>, Claude đọc trực tiếp
+  let col = null; const timers = {};
+  function push(k) {
+    if (!col) return;
+    clearTimeout(timers[k]);
+    timers[k] = setTimeout(() => {
+      const v = flags[k], i = k.indexOf(':'), w = k.slice(0, i), c = k.slice(i + 1), ref = col.doc(docId(w, c));
+      (v ? ref.set({ w, c, u: hex(c.codePointAt(0)), s: v.s, note: v.note || '', at: new Date().toISOString() }) : ref.delete())
+        .catch(e => syncMsg('Không lưu được lên nơi lưu chung (' + (e && e.code || 'lỗi') + '); đánh dấu vẫn còn trong trình duyệt này.'));
+    }, 400);
+  }
+  function syncMsg(m) { document.getElementById('syncnote').textContent = m; }
+  const LOCAL = 'Không kết nối được nơi lưu chung: đánh dấu chỉ lưu trong trình duyệt này. Bấm “Sao chép danh sách” rồi dán vào chat.';
+  (async () => {
+    const t0 = setTimeout(() => syncMsg(LOCAL), 10000);
+    let db = null;
+    try { db = window.claude && window.claude.use ? await window.claude.use('db') : null; } catch (e) { db = null; }
+    if (!db) { clearTimeout(t0); syncMsg(LOCAL); return; }
+    const c = db.collection('flags'); let first = true;
+    c.onSnapshot(snap => {
+      clearTimeout(t0);
+      const remote = {};
+      for (const d of snap.docs) { const v = d.data(); if (v && v.w && v.c) remote[key(v.w, v.c)] = { s: v.s, note: v.note || '' }; }
+      col = c;
+      if (first) { first = false; for (const k of Object.keys(flags)) if (!remote[k]) { remote[k] = flags[k]; push(k); } }
+      flags = remote; store.set(flags); renderGrid(); renderFlagList();
+      if (sel && !(document.activeElement && document.activeElement.id === 'b-note')) renderDrawer();
+      syncMsg('Đánh dấu và ghi chú được lưu chung: Claude đọc được trực tiếp, không cần sao chép.');
+    }, e => { clearTimeout(t0); syncMsg('Mất kết nối nơi lưu chung (' + (e && e.code || 'lỗi') + '): đánh dấu chỉ lưu trong trình duyệt này.'); });
+  })();
+
+  function setFlag(s) {
+    const k = key(weight, sel);
+    if (!s) delete flags[k]; else flags[k] = { ...(flags[k] || {}), s };
+    store.set(flags); push(k); renderDrawer(); renderGrid(); renderFlagList();
+  }
+
+  function renderFlagList() {
+    const rows = Object.entries(flags).sort().map(([k, v]) => {
+      const i = k.indexOf(':'), w = k.slice(0, i), c = k.slice(i + 1);
+      return `${v.s === 'ok' ? 'ĐẠT     ' : 'CẦN SỬA '} ${w.padEnd(7)} ${c} (${hex(c.codePointAt(0))})${v.note ? ' — ' + v.note : ''}`;
+    });
+    document.getElementById('flaglist').textContent = rows.length ? rows.join('\n') : 'Chưa có glyph nào được đánh dấu.';
+  }
+
+  // chữ mẫu xếp bằng chính outline: mỗi từ là một SVG, dòng tự xuống theo khung
+  function wordSVG(word, w, px) {
+    let x = 0; const parts = [];
+    for (const ch of word) {
+      const g = byC[w][ch];
+      if (g) { parts.push(`<path class="ink" transform="translate(${x + SB} 0)" d="${g.p}"/>`); x += g.a; }
+      else { parts.push(`<rect class="miss" x="${x + 30}" y="0" width="420" height="700"/>`); x += 480; }
+    }
+    const top = 1080, bot = -240, k = px / 1000;
+    return `<svg width="${(x * k).toFixed(1)}" height="${((top - bot) * k).toFixed(1)}" viewBox="0 ${-top} ${x} ${top - bot}" aria-hidden="true"><g transform="scale(1,-1)">${parts.join('')}</g></svg>`;
+  }
+  function renderLines() {
+    const t = document.getElementById('txt').value.normalize('NFC').toLocaleUpperCase('vi'), sz = +document.getElementById('tsize').value;
+    document.getElementById('tsizev').textContent = sz + ' px';
+    const words = t.split(/(\s+)/);
+    document.getElementById('lines').innerHTML = W.map(w => {
+      const html = words.map(s => /^\s+$/.test(s) ? (s.includes('\n') ? '<span style="flex-basis:100%;height:0"></span>' : `<span style="width:${(SPACE * sz / 1000).toFixed(1)}px"></span>`) : (s ? wordSVG(s, w, sz) : '')).join('');
+      return `<div class="line"><div class="w">${w} · ${sz} px</div><div class="set" aria-label="${esc(t)}">${html}</div></div>`;
+    }).join('');
+  }
+
+  function seg(id, fn) {
+    const el = document.getElementById(id);
+    el.querySelectorAll('button').forEach(b => b.addEventListener('click', () => {
+      el.querySelectorAll('button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); fn(b);
+    }));
+  }
+  document.getElementById('wsel').innerHTML = W.map(w => `<button aria-pressed="${w === weight}" data-w="${w}">${w}</button>`).join('');
+  seg('wsel', b => { weight = b.dataset.w; renderGrid(); renderDrawer(); });
+  seg('gsel', b => { grp = b.dataset.g; renderGrid(); });
+  seg('ssel', b => { srcSel = b.dataset.s; renderGrid(); });
+  document.getElementById('gdgrid').addEventListener('change', e => { gridGuides = e.target.checked; renderGrid(); });
+  document.getElementById('q').addEventListener('input', e => { query = e.target.value; renderGrid(); });
+  const pick = el => { if (!el) return; sel = el.dataset.c; renderGrid(); renderDrawer(); document.getElementById('drawer').scrollIntoView({ block: 'nearest' }); };
+  document.getElementById('grid').addEventListener('click', e => pick(e.target.closest('.cell')));
+  document.getElementById('grid').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pick(e.target.closest('.cell')); } });
+  document.getElementById('txt').addEventListener('input', renderLines);
+  document.getElementById('tsize').addEventListener('input', renderLines);
+  document.getElementById('copy').addEventListener('click', () => {
+    const t = document.getElementById('flaglist').textContent, out = document.getElementById('copied');
+    const fallback = () => { const r = document.createRange(); r.selectNodeContents(document.getElementById('flaglist')); const s = getSelection(); s.removeAllRanges(); s.addRange(r); out.textContent = 'Không sao chép được: đã chọn sẵn đoạn văn bản, bấm Ctrl/Cmd+C.'; };
+    try { navigator.clipboard.writeText(t).then(() => { out.textContent = 'Đã sao chép.'; }, fallback); } catch (e) { fallback(); }
+  });
+
+  // tên bộ chữ trên đầu trang, xếp bằng chính glyph Bold
+  (function () {
+    const m = document.getElementById('mast'); let x = 0; const ps = [];
+    for (const ch of 'ĐÌZAI SERIF') { if (ch === ' ') { x += SPACE; continue; } const g = byC.Bold[ch]; if (!g) continue; ps.push(`<path class="ink" transform="translate(${x + SB} 0)" d="${g.p}"/>`); x += g.a; }
+    m.setAttribute('viewBox', `0 -1080 ${x} 1120`); m.innerHTML = `<g transform="scale(1,-1)">${ps.join('')}</g>`;
+  })();
+
+  sel = 'Ữ';
+  renderSummary(); renderGrid(); renderDrawer(); renderLines(); renderFlagList();
+})();
+</script>
