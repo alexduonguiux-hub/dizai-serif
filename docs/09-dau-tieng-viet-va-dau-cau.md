@@ -57,7 +57,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | Ký tự | Dựng |
 |---|---|
 | `.` | chấm tròn, Ø 120 (1.18 V); Bold Ø 164 |
-| `,` | chấm tròn và đuôi thon cong xuống-trái tới −1.25 Ø; **đuôi rời chấm tiếp tuyến** ở điểm phải nhất của chấm (mép phải đuôi trùng mép chấm, không còn mép thẳng thò ra — designer 04/11: "vẫn lỗi nét thừa ở các glyph"); dùng chung cho `; ’ ‘ ” “`. **Đuôi không vuốt nhọn**: kéo quá rồi cắt ngang ở −1.0 Ø, mặt cắt 32 u / 43 u (designer 04/11: "đuôi nhọn … nên cắt ngang phần nhọn 1 tí", "cắt thêm xíu nữa cho đỡ nhọn") |
+| `,` | chấm tròn và đuôi **đều nét** 0.36 Ø (43 u / 59 u) cong xuống-trái, **cắt ngang** ở −1.0 Ø (designer 04/11: "thay vì làm nhỏ dần nét thì làm nó đều đi"; trước đó đuôi thon và đã được cắt bớt mũi nhọn). Đuôi rời chấm tiếp tuyến ở điểm phải nhất của chấm, không có mép thẳng thò ra. Dùng chung cho `; ’ ‘ ” “` |
 | `: ;` | chấm trên có đỉnh ở 480 (x-height tạm, chờ luật S10) |
 | `!` | nét thon, đỉnh cắt ngang rộng 0.98 V, chân rộng 0.42 V, hai cạnh lõm nhẹ như loe |
 | `?` | **lấy phần đầu số 2 của designer** (vòng móc + đầu nét trái), cắt ở y 400; thân là một cung Hermite liền tiếp tuyến với sống 2, thon về 0.78 V, cắt ngang; chấm cùng họ dấu chấm (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn") |

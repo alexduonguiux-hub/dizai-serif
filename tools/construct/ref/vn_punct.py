@@ -362,11 +362,12 @@ def comma_shape(t, w):
     d = t['dot']; r = d/2; c = (r, r - 3)
     # đuôi rời chấm TIẾP TUYẾN ở điểm phải nhất của chấm: mép phải đuôi trùng mép chấm, không có mép thẳng thò ra
     # (designer 04/11: "vẫn lỗi nét thừa"); đuôi thon dần, cong xuống-trái.
-    w0 = 0.62*d; x_s = c[0] + r - (w0 + 0.07*d)/2                # mép phải đuôi (bề dày đầu = w0 + 0.07 Ø) chạm đúng mép chấm
+    # đuôi ĐỀU NÉT (designer 04/11: "thay vì làm nhỏ dần nét thì làm nó đều đi"): một độ dày wt = 0.36 Ø từ chấm tới mặt cắt
+    wt = 0.36*d; x_s = c[0] + r - wt/2                               # mép phải đuôi chạm đúng mép chấm
     # đuôi không vuốt nhọn (designer 04/11: "phần đuôi nhọn của các dấu , \" … nên cắt ngang phần nhọn 1 tí"): đuôi kéo quá
     # rồi CẮT NGANG ở −1.2 Ø, mặt cắt rộng ≈ 0.2 Ø.
-    tail = hermite([((x_s, c[1]), (0, -1)), ((c[0] + 0.10*d, -0.62*d), (-0.55, -1)), ((c[0] - 0.50*d, -1.32*d), (-1, -0.75))])
-    tl = stroke(tail, (1, 1), wabs=lambda u: w0*(1 - u)**1.15 + 0.07*d)
+    tail = hermite([((x_s, c[1]), (0, -1)), ((c[0] + 0.18*d, -0.55*d), (-0.45, -1)), ((c[0] - 0.40*d, -1.30*d), (-1, -0.9))])
+    tl = stroke(tail, (1, 1), wabs=lambda u: wt)
     tl = I(tl, halfplane(-1.0*d))                                     # cắt thêm (designer 04/11: "cắt thêm xíu nữa cho đỡ nhọn")
     return U(dot(c, d), tl)
 def wedge(xc, ytop, ybot, wt, wb, conc=0.18):
