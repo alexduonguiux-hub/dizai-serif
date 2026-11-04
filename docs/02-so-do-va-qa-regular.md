@@ -1,5 +1,9 @@
 # Dizai Serif — Số đo và QA bản Regular từ ảnh (v0.1, 04/11/2026)
 
+> **Đã bị ghi đè một phần bởi `03-dac-ta-can-bang-visual-weight.md`.** Nét chéo và
+> nét tròn ở đây đo theo đường cắt ngang nên bị phóng to. Q1 (mảnh chéo X Y) là sai;
+> đo vuông góc thì nét mảnh đã đều 41–47.
+
 Đo bằng `tools/measure_sheet.py` trên `reference/regular/*`. Số đo đã quy về
 cap = 700 u. Sai số ±3 u (1 px ảnh). Các số này chỉ để **chẩn đoán**. Số chính thức
 phải đo lại trên outline khi có file nguồn (.glyphs, .ufo hoặc Figma vector).

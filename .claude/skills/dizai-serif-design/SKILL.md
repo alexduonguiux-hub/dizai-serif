@@ -29,7 +29,7 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
 |---|---|
 | R5h không thu nét / monoline | **Không áp dụng.** Độ dày theo hướng bút dẹt (S3). Nét chỉ mảnh dần khi hướng nét đổi so với bút; không bao giờ mảnh tuỳ tiện |
 | R4b loe F 7/8/9 trên L 120 | Loe lõm F ≈ 0.21 V mỗi bên, trên L ≈ 0.6 V (S5) |
-| Chéo 0.87–0.92 thân | Chéo DÀY 1.06–1.10 thân, chéo MẢNH ≈ 0.45 thân (S2) |
+| Chéo 0.87–0.92 thân | Chéo DÀY ≈ 0.97 thân (đo vuông góc), chéo MẢNH ≈ 0.44 thân (S2) |
 | Vòng trục đứng, oval theo hộp | Vòng trục nghiêng (S4) |
 | Bề ngang đều | Tỉ lệ La Mã: rộng (O Q C G D M W A V X Y), vừa (H N U K T Z R B P), hẹp (E F L S J I) |
 | Tương phản 0.83 | Tương phản 0.39 |
@@ -44,10 +44,15 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   | Ký hiệu | Phần | Giá trị |
   |---|---|---|
   | V | thân đứng dày | 101 |
-  | D | chéo dày (nét \ theo bút) | 108 (1.07 V) |
-  | t | nét mảnh: chéo /, thân mảnh của M N | 46 (0.45 V) |
-  | H | ngang mảnh: thanh, tay, đỉnh/đáy bụng | 39 (0.39 V) |
-  | Vf | nét số | 0.95 × nét hoa (đang chờ duyệt) |
+  | Vr | chỗ dày nhất của vòng | 106 (1.05 V) |
+  | D | chéo dày (nét \ theo bút) | 98 (0.97 V); X 95 là ngoại lệ |
+  | t | nét mảnh: chéo /, thân mảnh của M N | 44 (0.44 V) |
+  | H | ngang mảnh: thanh, tay, đỉnh/đáy bụng | 42 (0.42 V) |
+  | Sp | sống S | 104 (1.03 V) |
+  | Vf / Hf | thân, vòng / ngang của số | 0.95 × chữ (chờ duyệt) |
+
+  Mọi số trong bảng ĐO VUÔNG GÓC NÉT (`tools/perp_thickness.py`). Đặc tả chi tiết:
+  `docs/03-dac-ta-can-bang-visual-weight.md`.
 
   Mọi số khác suy ra từ bảng này. Khớp được mỏng hơn nét (~0.8). Không cố định số của
   Bold. Mỗi weight có một bảng riêng.
