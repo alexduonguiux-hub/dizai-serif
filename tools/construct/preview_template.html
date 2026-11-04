@@ -281,14 +281,16 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   // chữ mẫu xếp bằng chính outline: mỗi từ là một SVG, dòng tự xuống theo khung
   function wordSVG(word, w, px) {
-    let x = 0; const parts = [];
+    // khung SVG mở theo mực thật: sừng Ư/Ơ và dấu được phép tràn ra ngoài bề ngang chữ, không bị cắt ở mép từ
+    let x = 0, lo = 0, hi = 0; const parts = [];
     for (const ch of word) {
       const g = byC[w][ch];
-      if (g) { parts.push(`<path class="ink" transform="translate(${x + SB} 0)" d="${g.p}"/>`); x += g.a; }
+      if (g) { parts.push(`<path class="ink" transform="translate(${x + SB} 0)" d="${g.p}"/>`); lo = Math.min(lo, x + SB + g.bx[0]); hi = Math.max(hi, x + SB + g.bx[1]); x += g.a; }
       else { parts.push(`<rect class="miss" x="${x + 30}" y="0" width="420" height="700"/>`); x += 480; }
     }
-    const top = 1080, bot = -240, k = px / 1000;
-    return `<svg width="${(x * k).toFixed(1)}" height="${((top - bot) * k).toFixed(1)}" viewBox="0 ${-top} ${x} ${top - bot}" aria-hidden="true"><g transform="scale(1,-1)">${parts.join('')}</g></svg>`;
+    const top = 1080, bot = -240, k = px / 1000, x0 = Math.min(0, lo - 10), x1 = Math.max(x, hi + 10);
+    const ml = (x0 * k).toFixed(1), mr = ((x - x1) * k).toFixed(1);
+    return `<svg style="margin-left:${ml}px;margin-right:${mr}px" width="${((x1 - x0) * k).toFixed(1)}" height="${((top - bot) * k).toFixed(1)}" viewBox="${x0} ${-top} ${x1 - x0} ${top - bot}" aria-hidden="true"><g transform="scale(1,-1)">${parts.join('')}</g></svg>`;
   }
   function renderLines() {
     const t = document.getElementById('txt').value.normalize('NFC').toLocaleUpperCase('vi'), sz = +document.getElementById('tsize').value;

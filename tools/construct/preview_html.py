@@ -30,7 +30,9 @@ def rg(g):
 def entry(ch, w, grp):
     k = f"{ch}-{w}"; r = ref.get(k, {})
     rule = r.get("src") == "rule" or k in RULE_EXTRA
+    xs = [float(v) for v in re.findall(r"-?\d+\.?\d*", outl[k])[0::2]]       # toạ độ x (cặp x y xen kẽ)
     return {"c": ch, "u": ord(ch), "g": grp, "a": r.get("W", 0) + 80, "W": r.get("W", 0), "p": short(outl[k]),
+            "bx": [round(min(xs)), round(max(xs))] if xs else [0, 0],
             "s": "rule" if rule else "designer", "gd": [rg(x) for x in r.get("guides", []) if x["type"] != "handles"]}
 
 data = {"weights": {}}
