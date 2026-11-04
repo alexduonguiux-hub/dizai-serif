@@ -362,7 +362,7 @@ def comma_shape(t, w):
     d = t['dot']; r = d/2; c = (r, r - 3)
     # đuôi rời chấm TIẾP TUYẾN ở điểm phải nhất của chấm: mép phải đuôi trùng mép chấm, không có mép thẳng thò ra
     # (designer 04/11: "vẫn lỗi nét thừa"); đuôi thon dần, cong xuống-trái.
-    w0 = 0.62*d; x_s = c[0] + r - w0/2
+    w0 = 0.62*d; x_s = c[0] + r - (w0 + 0.07*d)/2                # mép phải đuôi (bề dày đầu = w0 + 0.07 Ø) chạm đúng mép chấm
     tail = hermite([((x_s, c[1]), (0, -1)), ((c[0] + 0.10*d, -0.62*d), (-0.55, -1)), ((c[0] - 0.42*d, -1.25*d), (-1, -0.75))])
     tl = stroke(tail, (1, 1), wabs=lambda u: w0*(1 - u)**1.15 + 0.07*d)
     return U(dot(c, d), tl)
