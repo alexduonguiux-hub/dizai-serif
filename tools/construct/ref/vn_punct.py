@@ -438,9 +438,12 @@ def punct(S, w):
     mv, mh, ms = 0.62*V, 0.55*V, 500
     G['+'] = U(rect(ms/2 - mv/2, yc - ms/2 + 10, ms/2 + mv/2, yc + ms/2 - 10), rect(0, yc - mh/2, ms, yc + mh/2))
     G['='] = U(rect(0, yc + 95 - mh/2, ms, yc + 95 + mh/2), rect(0, yc - 95 - mh/2, ms, yc - 95 + mh/2))
-    xb = I(U(stroke([line((0, yc - 200), (400, yc + 200))], (1, 1), wabs=lambda u: 0.6*V),
-             stroke([line((0, yc + 200), (400, yc - 200))], (1, 1), wabs=lambda u: 0.6*V)), rect(0, -1000, 400, 2000))
-    G['×'] = I(xb, rect(-10, yc - 200, 410, yc + 200))
+    # ×: hai thanh 0.6 V xoay ±45° quanh tâm (200, 330), dài 430; đầu thanh cắt VUÔNG GÓC với nét
+    # (designer 04/11: "glyph này các góc cắt hơi kỳ" — bản cũ bị cắt bởi khung vuông nên đầu nét lệch góc).
+    def bar(a_deg, L=430, wb=0.6*V, c_=(200, yc)):
+        a_ = math.radians(a_deg); ux, uy = math.cos(a_)*L/2, math.sin(a_)*L/2; px_, py_ = -math.sin(a_)*wb/2, math.cos(a_)*wb/2
+        return poly([(c_[0] - ux - px_, c_[1] - uy - py_), (c_[0] + ux - px_, c_[1] + uy - py_), (c_[0] + ux + px_, c_[1] + uy + py_), (c_[0] - ux + px_, c_[1] - uy + py_)])
+    G['×'] = U(bar(45), bar(-45))
     # #: hai nét đứng nghiêng 10°, 0.66 V; hai ngang 0.5 V
     hw, gv, gh = 560, 0.66*V, 0.5*V; sl = math.tan(math.radians(10))
     def slant(xc): return poly([(xc - gv/2 - 350*sl, 0), (xc + gv/2 - 350*sl, 0), (xc + gv/2 + 350*sl, 700), (xc - gv/2 + 350*sl, 700)])

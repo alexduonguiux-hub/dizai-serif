@@ -67,7 +67,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | `( )` | **lưỡi liềm serif**: hai elip đồng tâm, dày nhất ở giữa 0.85 V, thon về hai đầu ≈ 0.55 H, hai đầu cong vào (ry ngoài chỉ hơn nửa chiều cao 8 %), cắt ngang ở −150 và 860 (designer 04/11: "( ) nên có glyph phổ biến của dòng serif") |
 | `[ ]` | thân 0.86 V, tay 1.15 H dài 150 |
 | `/` | dày 0.58 V, từ −130 tới 830 |
-| `+ = ×` | nét đứng 0.62 V, nét ngang 0.55 V (ngang dày như bộ số, Hf); `×` dày 0.6 V; tâm ở 330 |
+| `+ = ×` | nét đứng 0.62 V, nét ngang 0.55 V (ngang dày như bộ số, Hf); `×` dày 0.6 V; tâm ở 330. `×` là hai thanh xoay ±45°, dài 430, **đầu cắt vuông góc với nét** (designer 04/11: "các góc cắt hơi kỳ") |
 | `#` | hai nét đứng nghiêng 10°, dày 0.66 V; hai nét ngang 0.5 V |
 | `%` | hai vòng kiểu O (lòng xoay 30°) và nét chéo 0.6 V |
 | `$` | S của designer và nét đứng dày 1.1 H, vươn từ −100 tới 800 |
