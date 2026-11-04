@@ -10,15 +10,22 @@ import vn_punct as V
 # (mật độ mực a 0.445, e 0.411 so với H 0.387, D 0.365). Chỉnh trên chính khối dựng của designer (đơn vị px Figma):
 STEM_IN = 102*0.1/S            # thân 102 → 92: mép trong dịch vào 10 u (mép ngoài giữ nguyên, như luật Bold đảo chiều)
 COUNTER = 1.0                  # hệ số nở lòng (đặt bên dưới theo từng khối)
-GROW = {'a_bowl': 1.12, 'e_low': 1.12}   # lòng nở 12 %: thân 102 → 92 (S10), vòng 96 → 80–86, mật độ a 0.403, e 0.370
-# Nét chéo nối bụng–thân của e phải dày bằng của a (designer 04/11: "đuôi nối bụng chữ e mỏng hơn so với chữ a … lẽ ra phải
-# bằng nhau"). Bản vẽ gốc đã mỏng hơn ~13 u. Nâng mép dưới lòng mắt e lên E_LIFT (u), giảm tuyến tính về 0 ở đỉnh lòng,
-# nên nét trên của e không đổi.
-E_LIFT = 14.0
+GROW = {'a_bowl': 1.12}   # lòng nở 12 %: thân 102 → 92 (S10), vòng 96 → 80–86
+# e (vẽ lại 04/11): hai vách trái/phải 36 px = 102 u → 0.9 V; nét mảnh đỉnh vòm 48.5 u, đáy bụng 49.6 u → 40 u (như vai a).
+# Chỉnh mép trong (lòng) của vòm và bụng; mép ngoài, thanh ngang và đầu cắt của designer giữ nguyên.
+E_WALL = 102*0.9/S; E_THIN = 40/S
+def _e_inner(key, x, y):
+    if key == 'e_arch' and 35.9 <= x <= 136.1 and y >= 17:          # lòng vòm: tâm x 86, chân ở y 89
+        kx = (50 + 36 - E_WALL)/50; ky = (89 - E_THIN)/(89 - 17.1562)
+        return 86 + (x - 86)*kx, 89 - (89 - y)*ky
+    if key == 'e_bowl' and 35.9 <= x <= 140 and y >= 17.5:          # lòng bụng: neo ở đầu cắt x 154.894, chân ở y 91
+        kx = (154.894 - E_WALL)/(154.894 - 36); ky = (91 - E_THIN)/(91 - 17.542)
+        return 154.894 - (154.894 - x)*kx, 91 - (91 - y)*ky
+    return x, y
 
 def _adjust(key, dstr):
     toks = re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', dstr)
-    if key in ('a_stem', 'e_top'):
+    if key == 'a_stem':
         # điểm thuộc mép trong của thân (x ≤ 93 trong khối gốc, kể cả loe chân trái và tay nắm đầu vòng vai) dịch +STEM_IN
         out = []; i = 0; xs = True
         while i < len(toks):
@@ -27,6 +34,12 @@ def _adjust(key, dstr):
             x, y = float(toks[i]), float(toks[i + 1])
             if 84.9 <= x <= 93.01 and (y > 50 or y < -20 or abs(x - 93) < 0.01): x += STEM_IN
             out += [repr(x), repr(y)]; i += 2
+        return ' '.join(out)
+    if key in ('e_arch', 'e_bowl'):
+        toks = re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', dstr); out = []; i = 0
+        while i < len(toks):
+            if toks[i] in 'MLCZ': out.append(toks[i]); i += 1; continue
+            x, y = _e_inner(key, float(toks[i]), float(toks[i + 1])); out += [repr(x), repr(y)]; i += 2
         return ' '.join(out)
     if key in GROW and GROW[key] != 1.0:
         # nở lòng (contour thứ hai) quanh tâm hộp của nó
@@ -40,9 +53,6 @@ def _adjust(key, dstr):
         while q < len(tk):
             if tk[q] in 'MLCZ': out.append(tk[q]); q += 1; continue
             x, y = float(tk[q]), float(tk[q + 1]); x, y = cx + (x - cx)*k, cy + (y - cy)*k
-            if key == 'e_low':                    # toạ độ cục bộ: y tăng = đi lên trong font; đỉnh lòng ở y lớn nhất
-                y0, y1 = cy - (cy - min(ys))*k, cy + (max(ys) - cy)*k
-                y += E_LIFT/S*(y1 - y)/(y1 - y0)
             out += [repr(x), repr(y)]; q += 2
         return outer + ' ' + ' '.join(out)
     return dstr
