@@ -72,7 +72,13 @@ def build(paths):
 
 if __name__ == "__main__":
     src = {}
-    for f in ("designer_A.json", "designer_B.json"): src.update(json.load(open(os.path.join(HERE, f))))
+    for f in ("designer_A.json", "designer_B.json", "designer_C.json"):
+        if os.path.exists(os.path.join(HERE, f)): src.update(json.load(open(os.path.join(HERE, f))))
+    Wover = src.pop("_W", {})   # designer_C: chữ có dấu giữ bề ngang của chữ gốc (dấu được phép tràn)
     out = {k: build(v) for k, v in src.items()}
+    for k, w in Wover.items(): out[k]["W"] = w
+    C = json.load(open(os.path.join(HERE, "designer_C.json"))) if os.path.exists(os.path.join(HERE, "designer_C.json")) else {}
+    for k in out: out[k]["src"] = "rule" if k in C else "designer"   # nguồn: A/B = bản vẽ designer; C = dựng theo luật (vn_punct.py)
+
     json.dump(out, open(os.path.join(HERE, "..", "ref_glyphs.json"), "w"), separators=(",", ":"))
     print("ok", len(out), {k: (v["W"], sum(g["type"] == "ellipse" for g in v["guides"]), sum(g["type"] == "circle" for g in v["guides"])) for k, v in list(out.items())[:8]})

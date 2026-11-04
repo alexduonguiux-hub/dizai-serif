@@ -61,7 +61,7 @@ function makeGlyph(ch, W8) {
   // Hình gốc của designer là chuẩn: nếu có bản vẽ thì glyph = bản vẽ, guide = hình học nhận diện từ chính đường cong.
   // Chỉ những glyph chưa có bản vẽ (Bold U–Z, số Bold) mới dựng tạm theo luật bên dưới.
   const ref = REF[`${ch}-${W8}`];
-  if (ref && !NO_REF) return { ch, W: ref.W, src: 'designer', parts: [{ name: 'Hình gốc (bản vẽ designer)', cmds: ref.cmds }], guides: ref.guides.map(g => Object.assign({}, g)) };
+  if (ref && !NO_REF) return { ch, W: ref.W, src: ref.src || 'designer', parts: [{ name: ref.src === 'rule' ? 'Hình dựng theo luật (vn_punct.py)' : 'Hình gốc (bản vẽ designer)', cmds: ref.cmds }], guides: ref.guides.map(g => Object.assign({}, g)) };
   const r = RULES[W8], W = WIDTH[W8][ch], parts = [], guides = [];
   const P = s => (parts.push(s), s);
   const G = (o) => guides.push(o);
@@ -329,5 +329,7 @@ function makeGlyph(ch, W8) {
   return { ch, W, parts, guides, src: 'rule' };
 }
 function makeGlyphRaw(ch, W8, Wover) { const save = WIDTH[W8][ch]; WIDTH[W8][ch] = Wover; const g = makeGlyph(ch, W8); WIDTH[W8][ch] = save; return g; }
-const ALL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
-if (typeof module !== 'undefined') module.exports = { makeGlyph, ALL, RULES, WIDTH, CAP, OVS, arcCmds };
+const VN = 'ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬĐÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ';
+const PUNCT = '.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@';
+const ALL = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', ...VN, ...PUNCT];
+if (typeof module !== 'undefined') module.exports = { makeGlyph, ALL, VN, PUNCT, RULES, WIDTH, CAP, OVS, arcCmds };
