@@ -363,8 +363,11 @@ def comma_shape(t, w):
     # đuôi rời chấm TIẾP TUYẾN ở điểm phải nhất của chấm: mép phải đuôi trùng mép chấm, không có mép thẳng thò ra
     # (designer 04/11: "vẫn lỗi nét thừa"); đuôi thon dần, cong xuống-trái.
     w0 = 0.62*d; x_s = c[0] + r - (w0 + 0.07*d)/2                # mép phải đuôi (bề dày đầu = w0 + 0.07 Ø) chạm đúng mép chấm
-    tail = hermite([((x_s, c[1]), (0, -1)), ((c[0] + 0.10*d, -0.62*d), (-0.55, -1)), ((c[0] - 0.42*d, -1.25*d), (-1, -0.75))])
+    # đuôi không vuốt nhọn (designer 04/11: "phần đuôi nhọn của các dấu , \" … nên cắt ngang phần nhọn 1 tí"): đuôi kéo quá
+    # rồi CẮT NGANG ở −1.2 Ø, mặt cắt rộng ≈ 0.2 Ø.
+    tail = hermite([((x_s, c[1]), (0, -1)), ((c[0] + 0.10*d, -0.62*d), (-0.55, -1)), ((c[0] - 0.50*d, -1.32*d), (-1, -0.75))])
     tl = stroke(tail, (1, 1), wabs=lambda u: w0*(1 - u)**1.15 + 0.07*d)
+    tl = I(tl, halfplane(-1.12*d))
     return U(dot(c, d), tl)
 def wedge(xc, ytop, ybot, wt, wb, conc=0.18):
     """nét thon (chấm than, nháy): đỉnh cắt ngang rộng wt, chân rộng wb, hai cạnh lõm nhẹ như loe"""
