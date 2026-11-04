@@ -95,12 +95,11 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   bụng B trên nhỏ hơn bụng dưới.
 - **S9 Đuôi bút** (Q R K J). Đuôi là một đường cong đều (G2 ở chỗ rời bụng hoặc thân).
   Độ dày theo bút (S3). Tầm vươn của Regular là mức sàn cho mọi weight.
-- **S10 Chữ thường** (chưa có, viết luật TRƯỚC khi vẽ):
-  - x/cap khoảng 0.66–0.70 (glyphic);
-  - v ≈ 0.9 V, h ≈ 0.9 H;
-  - loe giống S5 nhưng tỉ lệ theo v;
-  - a và g chọn theo concept (đề xuất: a hai tầng, g hai tầng kiểu La Mã, kiểm
-    lòng ở Bold).
+- **S10 Chữ thường** (v0.5, `docs/10-chu-thuong.md`, nguồn Figma 2112:126):
+  - x-height 495 (vượt 503.4 / −11.3); ascender d b = 698.6 ≈ cap; descender q p = −200.8.
+  - **Thân chữ thường = V chữ hoa** (102 / Bold 139). Designer 04/11: "đồng bộ độ dày của các chữ thường với chữ hoa". Bỏ luật cũ 0.9 V.
+  - Vòng trục nghiêng như O (lòng elip xoay). d b q p chung một khối bụng và một khối thân (lật/xoay).
+  - Bold theo docs/08: mép ngoài giữ, thân và vòng +37 vào lòng, nét ngang mảnh +28.
 - **S11 Dấu tiếng Việt.** Dấu cùng hệ nét với chữ và có tương phản theo bút:
   - **Sắc và huyền là cặp đối xứng gương** (designer 04/11: "dấu sắc và huyền không đồng bộ"): cùng hình nêm, đầu trên dày 0.80 N, chân 0.36 N; huyền = sắc lật ngang. Dấu là nét bút, không phải tấm thép.
   - **Sừng ơ ư cắt phẳng**, không có giọt tròn (designer 04/11: "dấu ư không nên tròn"). Tâm sừng là một cung Bézier liền ("cho smooth"); Ư và Ơ có đầu sừng ngang nhau, ở Ư sừng thay loe ngoài thân phải ("dấu ư lỗi và không đồng bộ").

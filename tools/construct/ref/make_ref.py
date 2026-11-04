@@ -73,7 +73,7 @@ def build(paths, strong=False):
 
 if __name__ == "__main__":
     src = {}
-    for f in ("designer_A.json", "designer_B.json", "designer_C.json", "../lower/lower_ae.json"):
+    for f in ("designer_A.json", "designer_B.json", "designer_C.json", "../lower/lower.json"):
         if os.path.exists(os.path.join(HERE, f)): src.update(json.load(open(os.path.join(HERE, f))))
     Wover = src.pop("_W", {})   # designer_C: chữ có dấu giữ bề ngang của chữ gốc (dấu được phép tràn)
     Cset = set(json.load(open(os.path.join(HERE, "designer_C.json")))) if os.path.exists(os.path.join(HERE, "designer_C.json")) else set()
