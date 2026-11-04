@@ -13,6 +13,7 @@ VN = re.search(r"const VN = '([^']*)'", src).group(1)
 PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@')
 FIG = list("0123456789")
 CAPS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+LOWER = list(re.search(r"const LOWER = '([^']*)'", src).group(1))
 # glyph dựng theo luật nhưng không nằm trong designer_C: Bold U–Z (docs/08)
 RULE_EXTRA = {f"{c}-Bold" for c in "UVWXYZ"}
 
@@ -38,8 +39,8 @@ def entry(ch, w, grp):
 data = {"weights": {}}
 for w in ("Regular", "Bold"):
     L = []
-    for grp, chars in (("caps", CAPS), ("fig", FIG), ("vn", list(VN)), ("punct", PUNCT)):
-        L += [entry(c, w, grp) for c in chars]
+    for grp, chars in (("caps", CAPS), ("lower", LOWER), ("fig", FIG), ("vn", list(VN)), ("punct", PUNCT)):
+        L += [entry(c, w, grp) for c in chars if f"{c}-{w}" in outl]
     data["weights"][w] = L
 js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 

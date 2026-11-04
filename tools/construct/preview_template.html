@@ -102,7 +102,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   <div class="bar" role="toolbar" aria-label="Bộ lọc glyph">
     <div class="seg" id="wsel" role="group" aria-label="Weight"></div>
     <div class="seg" id="gsel" role="group" aria-label="Nhóm">
-      <button data-g="all" aria-pressed="true">Tất cả</button><button data-g="caps" aria-pressed="false">Chữ hoa</button><button data-g="fig" aria-pressed="false">Số</button><button data-g="vn" aria-pressed="false">Chữ Việt</button><button data-g="punct" aria-pressed="false">Dấu câu</button>
+      <button data-g="all" aria-pressed="true">Tất cả</button><button data-g="caps" aria-pressed="false">Chữ hoa</button><button data-g="lower" aria-pressed="false">Chữ thường</button><button data-g="fig" aria-pressed="false">Số</button><button data-g="vn" aria-pressed="false">Chữ Việt</button><button data-g="punct" aria-pressed="false">Dấu câu</button>
     </div>
     <div class="seg" id="ssel" role="group" aria-label="Nguồn">
       <button data-s="all" aria-pressed="true">Mọi nguồn</button><button data-s="designer" aria-pressed="false">Bản vẽ</button><button data-s="rule" aria-pressed="false">Dựng theo luật</button><button data-s="flag" aria-pressed="false">Đã đánh dấu</button>
@@ -121,9 +121,10 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   <section class="samples" aria-labelledby="h-text">
     <h2 id="h-text">Chữ mẫu</h2>
-    <textarea id="txt" rows="3" aria-label="Chữ mẫu">ĐẤT NƯỚC TÔI ĐẸP LẮM! “TIẾNG VIỆT” — SỬA ĐỔI: 25% (Ừ, ỔN)? HỒ GƯƠM LÚC BÌNH MINH, THĂM LÀNG GỐM BÁT TRÀNG; ỨNG XỬ & LỄ PHÉP – [2026] 3×4=12 € $ # @ / ẰNG ẪN ỢT ỮA</textarea>
+    <textarea id="txt" rows="3" aria-label="Chữ mẫu">ae ea aeae · Hae Eae Dae
+ĐẤT NƯỚC TÔI ĐẸP LẮM! “TIẾNG VIỆT” — SỬA ĐỔI: 25% (Ừ, ỔN)? HỒ GƯƠM LÚC BÌNH MINH, THĂM LÀNG GỐM BÁT TRÀNG; ỨNG XỬ & LỄ PHÉP – [2026] 3×4=12 € $ # @ / ẰNG ẪN ỢT ỮA</textarea>
     <div class="ctrl"><label class="chk"><input type="range" id="tsize" min="18" max="120" value="44" aria-label="Cỡ chữ"> <span id="tsizev">44 px</span></label>
-      <span class="note">Chưa có chữ thường: chữ mẫu được đổi sang chữ hoa. Ký tự chưa có glyph hiện thành ô gạch đỏ.</span></div>
+      <span class="note">Chữ thường mới có a, e (Regular); chữ thường chưa vẽ tạm hiện bằng chữ hoa. Ký tự chưa có glyph hiện thành ô gạch đỏ.</span></div>
     <div id="lines" class="samples"></div>
   </section>
 
@@ -142,7 +143,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   const W = ['Regular', 'Bold'];
   const G = { CAP: 700, OV: 11.3, MARK: 750, DOT: -47.3, TOP: 1110, BOT: -260 };
   const SB = 40, SPACE = 230;
-  const GRP = { caps: 'Chữ hoa', fig: 'Số', vn: 'Chữ Việt', punct: 'Dấu câu' };
+  const GRP = { caps: 'Chữ hoa', lower: 'Chữ thường', fig: 'Số', vn: 'Chữ Việt', punct: 'Dấu câu' };
   let weight = 'Regular', grp = 'all', srcSel = 'all', query = '', sel = null, gridGuides = false;
   const byC = {}; for (const w of W) { byC[w] = {}; for (const g of D.weights[w]) byC[w][g.c] = g; }
   const hex = u => 'U+' + u.toString(16).toUpperCase().padStart(4, '0');
@@ -211,7 +212,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     document.getElementById('summary').innerHTML = W.map(w => {
       const gs = D.weights[w], r = gs.filter(g => g.s === 'rule').length;
       return `<span>${w}: <b>${gs.length}</b> glyph · <b>${gs.length - r}</b> bản vẽ · <b>${r}</b> dựng theo luật</span>`;
-    }).join('') + `<span>Chữ hoa <b>26</b> · số <b>10</b> · chữ Việt <b>67</b> · dấu câu <b>29</b></span>`;
+    }).join('') + `<span>${Object.keys(GRP).map(k => `${GRP[k]} <b>${D.weights.Regular.filter(g => g.g === k).length}</b>`).join(' · ')}</span>`;
   }
 
   function renderDrawer() {
@@ -284,7 +285,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     // khung SVG mở theo mực thật: sừng Ư/Ơ và dấu được phép tràn ra ngoài bề ngang chữ, không bị cắt ở mép từ
     let x = 0, lo = 0, hi = 0; const parts = [];
     for (const ch of word) {
-      const g = byC[w][ch];
+      const g = byC[w][ch] || byC[w][ch.toLocaleUpperCase('vi')];   // chữ thường chưa vẽ: tạm hiện chữ hoa
       if (g) { parts.push(`<path class="ink" transform="translate(${x + SB} 0)" d="${g.p}"/>`); lo = Math.min(lo, x + SB + g.bx[0]); hi = Math.max(hi, x + SB + g.bx[1]); x += g.a; }
       else { parts.push(`<rect class="miss" x="${x + 30}" y="0" width="420" height="700"/>`); x += 480; }
     }
@@ -293,7 +294,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     return `<svg style="margin-left:${ml}px;margin-right:${mr}px" width="${((x1 - x0) * k).toFixed(1)}" height="${((top - bot) * k).toFixed(1)}" viewBox="${x0} ${-top} ${x1 - x0} ${top - bot}" aria-hidden="true"><g transform="scale(1,-1)">${parts.join('')}</g></svg>`;
   }
   function renderLines() {
-    const t = document.getElementById('txt').value.normalize('NFC').toLocaleUpperCase('vi'), sz = +document.getElementById('tsize').value;
+    const t = document.getElementById('txt').value.normalize('NFC'), sz = +document.getElementById('tsize').value;
     document.getElementById('tsizev').textContent = sz + ' px';
     const words = t.split(/(\s+)/);
     document.getElementById('lines').innerHTML = W.map(w => {
