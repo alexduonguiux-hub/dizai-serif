@@ -4,8 +4,10 @@ const COL = { metric: [0.70, 0.68, 0.64], sb: [0.80, 0.78, 0.75], glyph: [0.90, 
 const rgb = a => ({ r: a[0], g: a[1], b: a[2] });
 async function buildCell(grid, W8, ch) {
   const g = makeGlyph(ch, W8);
-  const w = (g.W + 80 + 2 * PAD_) * S_, h = (CAP + TOP_ + BOT_) * S_;
-  const fx = x => (x + 40 + PAD_) * S_, fy = y => (TOP_ + CAP - y) * S_;
+  const ext = VN.includes(ch) || PUNCT.includes(ch); // chữ có dấu, dấu câu: ô cao hơn cho dấu (tới 1060) và phần dưới baseline (−200)
+  const PADc = ext ? 120 : PAD_, TOPc = ext ? 400 : TOP_, BOTc = ext ? 260 : BOT_;
+  const w = (g.W + 80 + 2 * PADc) * S_, h = (CAP + TOPc + BOTc) * S_;
+  const fx = x => (x + 40 + PADc) * S_, fy = y => (TOPc + CAP - y) * S_;
   const D = cmds => cmds.map(c => c[0] === 'Z' ? 'Z' : c[0] + ' ' + c.slice(1).map(p => fx(p[0]).toFixed(2) + ' ' + fy(p[1]).toFixed(2)).join(' ')).join(' ');
   const cell = figma.createFrame(); cell.name = `${ch} ${W8}`; cell.resize(w, h); cell.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }]; cell.clipsContent = true; grid.appendChild(cell);
   function vec(name, d, stroke, sw, fill, dash) {
@@ -16,7 +18,7 @@ async function buildCell(grid, W8, ch) {
     v.fills = fill ? [{ type: 'SOLID', color: rgb(fill) }] : []; v.strokes = stroke ? [{ type: 'SOLID', color: rgb(stroke) }] : []; v.strokeWeight = sw || 0.75; if (dash) v.dashPattern = dash; return v;
   }
   const line = (x1, y1, x2, y2, c, sw, dash) => vec('guide', `M ${x1.toFixed(2)} ${y1.toFixed(2)} L ${x2.toFixed(2)} ${y2.toFixed(2)}`, c, sw, null, dash);
-  for (const [y, dash] of [[CAP, null], [0, null], [CAP + OVS, [2, 3]], [-OVS, [2, 3]]]) line(0, fy(y), w, fy(y), COL.metric, dash ? 0.5 : 0.75, dash);
+  for (const [y, dash] of [[CAP, null], [0, null], [CAP + OVS, [2, 3]], [-OVS, [2, 3]], ...(ext ? [[750, [6, 3]], [-47.3, [6, 3]]] : [])]) line(0, fy(y), w, fy(y), COL.metric, dash ? 0.5 : 0.75, dash);
   for (const x of [-40, g.W + 40]) line(fx(x), fy(CAP + 70), fx(x), fy(-160), COL.sb, 0.75, [1, 3]);
   const BLK = [0, 0, 0];
   function partNode(s) {
@@ -59,7 +61,7 @@ async function buildCell(grid, W8, ch) {
   const lab = (s, size, style, col, x, y) => { const t = figma.createText(); t.fontName = { family: 'Inter', style }; t.fontSize = size; t.characters = s; t.fills = [{ type: 'SOLID', color: rgb(col) }]; cell.appendChild(t); t.x = x; t.y = y; return t; };
   lab(ch, 20, 'Semi Bold', COL.ink, 14, 10);
   const u = lab('U+' + ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0'), 11, 'Regular', COL.mute, 0, 16); u.x = w - 14 - u.width;
-  lab(`mực ${g.W} u · adv ${g.W + 80} u` + (g.src === 'rule' ? ' · TẠM (chưa có bản vẽ)' : ''), 11, 'Regular', g.src === 'rule' ? COL.red : COL.mute, 14, h - 24);
+  lab(`mực ${g.W} u · adv ${g.W + 80} u` + (g.src === 'rule' ? (ext ? ' · TẠM (dựng theo luật S11/S15, chờ duyệt)' : ' · TẠM (chưa có bản vẽ)') : ''), 11, 'Regular', g.src === 'rule' ? COL.red : COL.mute, 14, h - 24);
   return cell;
 }
 for (const st of ['Regular', 'Semi Bold']) await figma.loadFontAsync({ family: 'Inter', style: st });

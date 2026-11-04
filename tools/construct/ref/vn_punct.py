@@ -121,18 +121,23 @@ def stroke(segs, nib, taper=None, wabs=None):
     K = 40; tab = []; acc = 0; prev = None
     for i in range(n):
         for k in range(K + (1 if i == n - 1 else 0)):
-            t = k/K; q = bez(segs[i], t); acc += math.dist(prev, q) if prev else 0; prev = q; tab.append((acc, raw(i, t)))
-    sig = 14.0; sm = []
-    for s0, _ in tab:
-        ws = [(math.exp(-((s1 - s0)/sig)**2/2), w) for s1, w in tab if abs(s1 - s0) < 3*sig]
-        sm.append(sum(a*w for a, w in ws)/sum(a for a, _ in ws))
-    def width(i, t):
-        x = (i*K + t*K); j = min(int(x), len(sm) - 2); f = x - j
-        return sm[j]*(1 - f) + sm[j + 1]*f
+            t = k/K; q = bez(segs[i], t); acc += math.dist(prev, q) if prev else 0; prev = q
+            d = dbez(segs[i], t); dd = ddbez(segs[i], t); Ld = math.hypot(*d) or 1
+            tab.append((acc, raw(i, t), (d[0]*dd[1] - d[1]*dd[0]) / Ld**3))
+    sig = 22.0; sm = []; skap = []   # độ cong cũng làm mượt: mối nối Hermite có độ cong nhảy bậc
+    for s0, _, _ in tab:
+        ws = [(math.exp(-((s1 - s0)/sig)**2/2), w, kk) for s1, w, kk in tab if abs(s1 - s0) < 3*sig]
+        sw = sum(a for a, _, _ in ws); sm.append(sum(a*w for a, w, _ in ws)/sw)
+        wk = [(math.exp(-((s1 - s0)/8)**2/2), kk) for s1, _, kk in tab if abs(s1 - s0) < 24]   # độ cong: σ 8 (giữ đỉnh)
+        skap.append(sum(a*kk for a, kk in wk)/sum(a for a, _ in wk))
+    def interp(arr, i, t):
+        x = min(max(i*K + t*K, 0), len(arr) - 1); j = min(int(x), len(arr) - 2); f = x - j
+        return arr[j]*(1 - f) + arr[j + 1]*f
+    def width(i, t): return interp(sm, i, t)
     def off(i, t, side):
         c = bez(segs[i], t); d = dbez(segs[i], t); L = math.hypot(*d) or 1; nv = (-d[1]/L*side, d[0]/L*side); w = width(i, t)/2
-        dd = ddbez(segs[i], t); k = (d[0]*dd[1] - d[1]*dd[0]) / L**3          # độ cong; phía lòng không lùi quá 0.8 bán kính
-        if side*k > 1e-9: Rm = 0.8/(side*k); w = (w**-4 + Rm**-4)**-0.25          # min mềm: không gờ khi chạm ngưỡng
+        k = interp(skap, i, t)          # độ cong (đã làm mượt); phía lòng không lùi quá 0.72 bán kính
+        # không kẹp: chỗ mép trong gập (đuôi én) do pathops gộp lại thành góc trong, lỗ li ti bị clean() bỏ
         return (c[0] + nv[0]*w, c[1] + nv[1]*w)
     def side_curves(i, t0, t1, side, depth=0):
         K = 16; ts = [t0 + (t1 - t0)*k/K for k in range(K + 1)]; Q = [off(i, t, side) for t in ts]
@@ -147,12 +152,30 @@ def stroke(segs, nib, taper=None, wabs=None):
         if err > 0.6 and depth < 4:
             tm = (t0 + t1)/2; return side_curves(i, t0, tm, side, depth + 1) + side_curves(i, tm, t1, side, depth + 1)
         return [c]
-    pieces = []
-    for i in range(n):
-        L = side_curves(i, 0, 1, 1); R = side_curves(i, 0, 1, -1)
-        cmds = [('M', L[0][0])] + [('C', c[1], c[2], c[3]) for c in L] + [('L', R[-1][3])]
-        cmds += [('C', c[2], c[1], c[0]) for c in reversed(R)] + [('Z',)]
-        pieces.append(P(cmds))
+    # viền liền một mạch: lấy mẫu dày cả hai mép trên toàn nét, khớp chuỗi Bézier (chia đôi khi sai số > 0.6 u),
+    # khép bằng hai nắp. Không ghép mảnh nên không có gờ ở mối nối; chỗ nét tự cắt (&) do pathops gộp (winding khác 0).
+    KS = 48; prm = [(i, k/KS) for i in range(n) for k in range(KS)] + [(n - 1, 1.0)]
+    def chain(side):
+        Q = [off(i, t, side) for i, t in prm]
+        Q2 = [Q[0]]
+        for q in Q[1:]:
+            if math.dist(q, Q2[-1]) > 0.05: Q2.append(q)
+        Q = Q2
+        def tanq(j):
+            a, b = Q[max(0, j - 1)], Q[min(len(Q) - 1, j + 1)]; L = math.dist(a, b) or 1; return ((b[0]-a[0])/L, (b[1]-a[1])/L)
+        def fit(j0, j1, depth=0):
+            pts = Q[j0:j1 + 1]; dl = [0]
+            for a_, b_ in zip(pts, pts[1:]): dl.append(dl[-1] + math.dist(a_, b_))
+            us = [x/dl[-1] for x in dl]
+            c, err = _fit(pts, us, pts[0], pts[-1], tanq(j0), tanq(j1))
+            if err > 0.6 and j1 - j0 > 3 and depth < 8:
+                jm = (j0 + j1)//2; return fit(j0, jm, depth + 1) + fit(jm, j1, depth + 1)
+            return [c]
+        return fit(0, len(Q) - 1)
+    L = chain(1); R = chain(-1)
+    cmds = [('M', L[0][0])] + [('C', c[1], c[2], c[3]) for c in L] + [('L', R[-1][3])]
+    cmds += [('C', c[2], c[1], c[0]) for c in reversed(R)] + [('Z',)]
+    pieces = [pathops.simplify(P(cmds))]
     return clean(U(*pieces))
 
 def clean(p, amin=400):
@@ -235,7 +258,7 @@ def marks(w):
     M['tilde'] = norm(stroke(tl, nib, taper=lambda u: 0.8 + 0.2*math.sin(math.pi*u)))
     # hỏi: móc ? thu nhỏ, chân đứng ngắn; bút 0.85 bút dấu (nét cong nhỏ)
     # vòng móc là cung tròn r 52 (độ cong đều: không nút thắt ở phía lòng), rồi đuôi cong về giữa
-    hc, hr = (4*sx, 100), 52*sx; a_end = math.radians(-40)
+    hc, hr = (4*sx, 100), (52 if sx == 1 else 60); a_end = math.radians(-40)
     e = (hc[0] + hr*math.cos(a_end), hc[1] + hr*math.sin(a_end)); te = (math.sin(a_end), -math.cos(a_end))
     hk = arc(hc, hr, hr, 168, -40) + hermite([(e, te), (S(2, 4), (-0.1, -1))])
     M['hook'] = norm(stroke(hk, (nib[0]*0.8, nib[1]), taper=lambda u: 1.1 - 0.25*u))
@@ -331,7 +354,7 @@ def punct(S, w):
     G[';'] = U(comma_shape(t, w), dot((r, up + r), d))
     ex_w = 0.98*V; G['!'] = U(wedge(ex_w/2, 700, 220 + 0.15*d, ex_w, 0.42*V), dot((ex_w/2, r - 3), d))
     # ?: một nét bút (luật bút chữ): đầu trái có giọt, vòng phải, thân đứng xuống
-    qx = 1.0 if not bold else 1.08
+    qx = 1.0 if not bold else 1.15
     q = hermite([((26*qx, 548), (0.15, 1)), ((168*qx, 711 - 0.5*H), (1, 0)), ((312*qx, 548), (0, -1)), ((178*qx, 360), (-0.55, -1)),
                  ((166*qx, 250 + 0.1*d), (0, -1))])
     qs = stroke(q, nib, taper=lambda u: 1.0 if u > 0.15 else 1.0 + (0.15 - u)*2.2)
@@ -385,7 +408,7 @@ def punct(S, w):
     e = U(c, rect(-0.12*ew, 300 - eh/2, 0.6*ew, 300 + eh/2), rect(-0.12*ew, 430 - eh/2, 0.66*ew, 430 + eh/2))
     G['€'] = e
     # &: một nét bút liền (luật bút chữ) — chân phải đi lên-trái (dày), vòng trên, bụng dưới, tay phải vút lên
-    k = 1.0 if not bold else 1.12; Hh = 0.5*H
+    k = 1.0 if not bold else 1.18; Hh = 0.5*H
     # vòng trên là oval đứng (phải 350, trái 160), nét trong vòng nhẹ hơn 0.78 (lòng mở như lòng B trên)
     amp = hermite([((585*k, 8), (-0.72, 1)), ((330*k, 380), (-0.3, 1)), ((352*k, 572), (0, 1)), ((256*k, 711 - Hh - 6), (-1, 0)),
                    ((160*k, 592), (0, -1)), ((206*k, 470), (0.12, -1)), ((120*k, 300), (-0.62, -1)), ((62*k, 170), (0, -1)),

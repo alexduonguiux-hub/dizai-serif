@@ -10,9 +10,10 @@ Phạm vi: 67 chữ hoa tiếng Việt và 29 dấu câu, ký hiệu, cho cả R
 Mọi nét cong hoặc xiên của dấu là **một nét bút dẹt** (luật S3).
 - Bút nghiêng φ = 20°.
 - Độ dày đo vuông góc với nét: `w(θ) = √((N·sin(θ − φ))² + m²)`, với θ là hướng nét.
-- Hai mép nét là hai đường song song biến thiên. Code khớp lại bằng Bézier (least-squares) và chia đôi đoạn cho tới khi sai số dưới 0.6 u.
-- Độ dày được làm mượt theo chiều dài nét (Gauss, σ = 14 u). Nhờ vậy mối nối giữa các đoạn cong không tạo gờ.
-- Ở phía lòng của chỗ cong gắt, mép nét không lùi quá 0.8 lần bán kính cong. Code dùng min mềm nên không sinh nút thắt.
+- Hai mép nét lấy mẫu dày trên **toàn nét liền một mạch**, không ghép mảnh, nên mối nối không có gờ. Code khớp lại bằng chuỗi Bézier (least-squares) và chia đôi cho tới khi sai số dưới 0.6 u. Hai đầu nét khép bằng hai nắp.
+- Độ dày được làm mượt theo chiều dài nét (Gauss, σ = 22 u). Lý do: các mối nối Hermite có độ cong nhảy bậc.
+- Phía lòng không kẹp. Chỗ mép trong gập lại (đuôi én), pathops gộp thành góc trong như vết bút thật; lỗ dưới 400 u² bị bỏ.
+- Ở Bold, các khung cong gắt được nới ra để góc trong không thành khấc: `?` × 1.15, `&` × 1.18, vòng dấu hỏi r 60.
 
 | | N | m | Nét đứng | Nét ngang |
 |---|---|---|---|---|
@@ -32,7 +33,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | mũ | dựng như đỉnh A: hai cạnh ngoài, hai cạnh trong song song; chân trái mảnh, chân phải dày (× 0.85 để lòng mở ở Bold); chân cắt ngang; đỉnh cắt phẳng 0.2 N | rộng 300, cao 142 |
 | trăng | nửa elip ngoài trừ lòng elip xoay 12° (trục nghiêng như lòng O): đáy dày 0.72 N, hai đầu ≈ 0.4 N, cắt ngang | rx 118, ry 96 |
 | ngã | tâm nét là một chu kỳ sin: biên độ 32, bước sóng 260; đoạn đi lên mảnh, đoạn đi xuống dày. Bold: biên độ 28, giãn ngang 1.14 (bán kính đỉnh lớn hơn nửa nét) | rộng 260 |
-| hỏi | ? thu nhỏ: vòng là cung tròn r 52 (168° → −40°), đuôi về giữa; bút 0.8 bút dấu | cao 170 |
+| hỏi | ? thu nhỏ: vòng là cung tròn r 52 (Bold 60), quét 168° → −40°, đuôi về giữa; bút 0.8 bút dấu | cao 170 |
 | nặng | chấm tròn, cùng họ với dấu chấm | Ø 100 / Bold 138 |
 | sừng ơ ư | **một tấm chung**: nét ra phải rồi vút lên; dày 0.34 V → 0.62 V; kết bằng giọt Ø 0.62 V | bám Ư ở mép ngoài thân phải, cao 0.9 cap; bám Ơ ở vai vòng O, góc 38° |
 
@@ -48,7 +49,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 
 **QA (máy đo, 120 chữ × 2 weight):**
 - Không có vi phạm.
-- Khe dấu–chữ nhỏ nhất là 39 (luật ≥ 36). Khe dấu–dấu nhỏ nhất là 32 (luật ≥ 30).
+- Khe dấu–chữ nhỏ nhất là 39 (luật ≥ 36). Khe dấu–dấu nhỏ nhất là 32.1 (luật ≥ 30). Khe dấu nặng–chữ nhỏ nhất là 38.
 - Chữ cao nhất là Ằ Bold, đỉnh ở 1054.
 
 ## Dấu câu và ký hiệu
