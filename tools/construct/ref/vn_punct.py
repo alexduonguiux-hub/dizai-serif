@@ -360,8 +360,11 @@ def dstroke(S, w):
 def dot(c, d): return ellipse(c, d/2, d/2)
 def comma_shape(t, w):
     d = t['dot']; r = d/2; c = (r, r - 3)
-    tail = hermite([((c[0] + 0.22*d, c[1] + 0.05*d), (0.15, -1)), ((c[0] + 0.12*d, -0.62*d), (-0.6, -1)), ((c[0] - 0.42*d, -1.25*d), (-1, -0.75))])
-    tl = stroke(tail, (1, 1), wabs=lambda u: d*(0.62*(1 - u)**1.1 + 0.07))
+    # đuôi rời chấm TIẾP TUYẾN ở điểm phải nhất của chấm: mép phải đuôi trùng mép chấm, không có mép thẳng thò ra
+    # (designer 04/11: "vẫn lỗi nét thừa"); đuôi thon dần, cong xuống-trái.
+    w0 = 0.62*d; x_s = c[0] + r - w0/2
+    tail = hermite([((x_s, c[1]), (0, -1)), ((c[0] + 0.10*d, -0.62*d), (-0.55, -1)), ((c[0] - 0.42*d, -1.25*d), (-1, -0.75))])
+    tl = stroke(tail, (1, 1), wabs=lambda u: w0*(1 - u)**1.15 + 0.07*d)
     return U(dot(c, d), tl)
 def wedge(xc, ytop, ybot, wt, wb, conc=0.18):
     """nét thon (chấm than, nháy): đỉnh cắt ngang rộng wt, chân rộng wb, hai cạnh lõm nhẹ như loe"""
@@ -476,8 +479,10 @@ def punct(S, w):
     tt = t['t']; tip = (eb[2] + (115 if not bold else 135), 0.52*CAP)
     # tay đi trùng nét bụng từ góc −62° tới góc cắt −40° (che mặt cắt, mối nối liền), rồi thon dần về t
     va = (1/math.hypot(1, 1.15), 1.15/math.hypot(1, 1.15)); pre = (tip[0] - 90*va[0], tip[1] - 90*va[1])
-    arm_c = hermite([(m0, tg0), (mid, tg), (pre, va)]) + [line(pre, tip)]   # 90 u cuối thẳng: loe đầu tay bám mép thẳng
+    over = (tip[0] + 80*va[0], tip[1] + 80*va[1])
+    arm_c = hermite([(m0, tg0), (mid, tg), (pre, va)]) + [line(pre, over)]  # đoạn cuối thẳng, vượt quá đỉnh rồi cắt ngang
     arm = stroke(arm_c, (1, 1), wabs=lambda u: t0*(0.8 + 0.2*u/0.5) if u < 0.5 else tt + (t0 - tt)*max(0, 1 - (u - 0.5)/0.3)**2)   # gốc hẹp hơn nét bụng: nắp đầu nằm trọn trong bụng
+    arm = I(arm, rect(-100, -300, 3000, tip[1]))                     # đầu tay cắt NGANG ở 0.52 cap, như đầu tay K ở cap
     amp = U(amp, arm)
     Dd = 100 if not bold else 146
     top, foot = ((lc[0] + 55, waist), (eb[2] + 70, 0)) if not bold else ((lc[0] + 60, waist), (eb[2] + 85, 0))
@@ -511,10 +516,11 @@ def punct(S, w):
     xr = max(foot[0] - nx*Dd/2 - ud[0]/ud[1]*(foot[1] - ny*Dd/2), foot[0] + nx*Dd/2 - ud[0]/ud[1]*(foot[1] + ny*Dd/2))
     nl = (-ud[1], ud[0]) if -ud[1] < 0 else (ud[1], -ud[0])          # pháp tuyến mép trái, hướng ra ngoài (sang trái)
     fl = [flare((xl, 0), ud, nl, (-1, 0)), flare((xr, 0), ud, (-nl[0], -nl[1]), (1, 0))]
-    ve = arm_c[-1]; dv = dbez(ve, 1); Lv = math.hypot(*dv); v = (dv[0]/Lv, dv[1]/Lv); pv = (-v[1], v[0])
-    for sg in (1, -1):
-        Eg = (tip[0] + pv[0]*sg*tt/2, tip[1] + pv[1]*sg*tt/2)
-        fl.append(flare(Eg, (-v[0], -v[1]), (pv[0]*sg, pv[1]*sg)))
+    v = va; pv = (-v[1], v[0])
+    for sg in (1, -1):                                               # góc mép tay ∩ đường cắt ngang; loe chìa theo phương ngang
+        e0 = (tip[0] + pv[0]*sg*tt/2, tip[1] + pv[1]*sg*tt/2); k_ = (tip[1] - e0[1])/v[1]
+        Eg = (e0[0] + v[0]*k_, tip[1]); nout = (pv[0]*sg, pv[1]*sg)
+        fl.append(flare(Eg, (-v[0], -v[1]), nout, (1 if nout[0] > 0 else -1, 0)))
     G['&'] = U(amp, leg, *fl)
     # @: vòng ngoài là nét bút gần trọn vòng; bên trong là "a" một tầng (lòng elip + thân)
     R0, cy = 335, 300; cx0 = R0 + 50

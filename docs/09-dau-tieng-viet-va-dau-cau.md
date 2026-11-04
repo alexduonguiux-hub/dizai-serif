@@ -57,7 +57,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | Ký tự | Dựng |
 |---|---|
 | `.` | chấm tròn, Ø 120 (1.18 V); Bold Ø 164 |
-| `,` | chấm và đuôi thon cong xuống-trái tới −1.25 Ø |
+| `,` | chấm tròn và đuôi thon cong xuống-trái tới −1.25 Ø; **đuôi rời chấm tiếp tuyến** ở điểm phải nhất của chấm (mép phải đuôi trùng mép chấm, không còn mép thẳng thò ra — designer 04/11: "vẫn lỗi nét thừa ở các glyph"); dùng chung cho `; ’ ‘ ” “` |
 | `: ;` | chấm trên có đỉnh ở 480 (x-height tạm, chờ luật S10) |
 | `!` | nét thon, đỉnh cắt ngang rộng 0.98 V, chân rộng 0.42 V, hai cạnh lõm nhẹ như loe |
 | `?` | **lấy phần đầu số 2 của designer** (vòng móc + đầu nét trái), cắt ở y 400; thân là một cung Hermite liền tiếp tuyến với sống 2, thon về 0.78 V, cắt ngang; chấm cùng họ dấu chấm (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn") |
@@ -72,7 +72,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | `%` | hai vòng kiểu O (lòng xoay 30°) và nét chéo 0.6 V |
 | `$` | S của designer và nét đứng dày 1.1 H, vươn từ −100 tới 800 |
 | `€` | C của designer và hai thanh dày 1.05 H, ở 300 và 430 |
-| `&` | **dựng từ số 8 của designer, theo dáng & serif cổ điển** (designer 04/11: "ký tự & cũng lỗi", "không giống glyph phổ biến cùng dòng"): vòng trên chảy thành **chân dày (\\)** D 100 / 146 xuống chân phải; bụng dưới cắt ở góc −40° rồi đi tiếp thành **tay mảnh (/)** t 44 / 74 lên tới 0.52 cap bên phải, cắt chéo qua chân thành chữ X (đúng logic bút: / mảnh, \\ dày). Tay đi trùng nét bụng từ −62° tới −40° nên mối nối liền. **Loe S5** ở hai góc chân và hai góc đầu tay (compa r 112, chìa 23 u), như chân K, X (designer 04/11: "& thiếu module loe như glyph chữ") |
+| `&` | **dựng từ số 8 của designer, theo dáng & serif cổ điển** (designer 04/11: "ký tự & cũng lỗi", "không giống glyph phổ biến cùng dòng"): vòng trên chảy thành **chân dày (\\)** D 100 / 146 xuống chân phải; bụng dưới cắt ở góc −40° rồi đi tiếp thành **tay mảnh (/)** t 44 / 74 lên tới 0.52 cap bên phải, cắt chéo qua chân thành chữ X (đúng logic bút: / mảnh, \\ dày). Tay đi trùng nét bụng từ −62° tới −40° nên mối nối liền. **Loe S5** ở hai góc chân và hai góc đầu tay (compa r 112, chìa 23 u), như chân K, X (designer 04/11: "& thiếu module loe như glyph chữ"). Đầu tay **cắt ngang ở 0.52 cap** và loe theo phương ngang, như đầu tay K ở cap |
 | `@` | vòng ngoài là nét bút từ 0° tới 300°; bên trong là a một tầng, thân a cong chữ U nhập vào vòng ngoài |
 
 ## QA nét thừa và lỗi (designer 04/11: "QA/QC lại hết các nét thừa và lỗi")
