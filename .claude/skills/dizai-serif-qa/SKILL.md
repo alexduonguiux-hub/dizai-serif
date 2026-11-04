@@ -70,6 +70,16 @@ Số hiệu luật (S1…) lấy từ `dizai-serif-design`.
 - Cap 700 cho mọi chữ thẳng (v0.1: L M đo được 707 → kiểm nguồn).
 - Vertical metrics bao chồng dấu cao nhất (Ẳ Bold) và thấp nhất (ỵ).
 
+### 1.8 Sửa path có sẵn (bài học 04/11, số 2: "Không bo tròn")
+- **Không dời tay nắm của điểm góc.** Một góc nhọn chỉ giữ nhọn khi hai tay nắm ở hai phía
+  góc giữ nguyên hướng. Muốn đổi độ dày gần góc thì dựng lại đoạn đó.
+- Sau khi dời điểm trên đường cong, kiểm tra độ cong: không có chỗ uốn ngược hay gãy. Render
+  ×4 vùng đã sửa cạnh bản gốc và tự nhìn.
+- Đo lại sau khi sửa. Nếu số đo không đổi đáng kể thì huỷ thay đổi; không giữ một chỉnh sửa
+  làm xấu hình mà không đem lại gì.
+- Khi Figma tự chuẩn hoá gốc toạ độ path sau mỗi lần ghi, so điểm bằng toạ độ tuyệt đối
+  (absoluteTransform), không so bằng toạ độ cục bộ.
+
 ## 2. Check giữ nguyên từ `type-qa-qc`
 - **Tiến triển weight:** chồng outline R/M/B. Đường cong song song, nhát cắt cùng chỗ,
   góc đầu nét lệch ≤ ±3°. Đuôi không ngắn đi.
