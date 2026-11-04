@@ -34,3 +34,23 @@
 - **Trục nét tròn:** O, Q, 0, 6, 8, 9 có trục nghiêng (lòng xoay 15–30°), còn C, G có trục đứng (lòng không xoay).
   - Vì vậy C trông nhẹ hơn O một chút: p90 Regular 34.7 so với 36.7, Bold 47.5 so với 50.5.
   - Luật S4 nói mọi chữ tròn dùng một trục. Cần designer chọn: xoay lòng C, G theo trục O, hay ghi C, G là ngoại lệ.
+
+## Trục C, G → 15° (04/11, designer: "lấy 15° c3, chỉnh G Regular rồi áp")
+
+Bảng xem trước trên trang v0.2:
+- "Xoay lòng C G theo trục O (Claude)": mọi phương án và các hàng tinh chỉnh.
+- "Trước / sau — C G trục 15° (Claude)": bảng so sánh trước và sau khi áp.
+
+| | Lòng | Dày nhất (p97) | Đỉnh mảnh nhất | Mật độ mực |
+|---|---|---|---|---|
+| O Regular (tham chiếu) | 30° | 37.5 | 13 | 0.263 |
+| C Regular trước → sau | 0° → 15°, cao −8, tâm (−2, +8) | 36.5 → 36.8 | 13 → 14 | 0.232 → 0.250 |
+| G Regular trước → sau | 0° → 15°, cao −8, rộng +2, tâm (−2, +8) | 37.4 → 37.6 | 13 → 14 | 0.306 → 0.321 |
+| C Bold → sau | 15°, cao −8, rộng +3 | 50.0 → 49.2 | 24 → 29 | 0.330 → 0.343 |
+| G Bold → sau | 15°, cao −8, rộng +3 | 50.0 → 50.0 | 25 → 29 | 0.395 → 0.411 |
+
+Ghi chú:
+- 30° (phương án a, b) bị loại: dày 45–51 px, nét đỉnh 6–7 px, C Regular còn nhạt hơn (0.210–0.219).
+- G Regular với tâm giữ nguyên có nét đỉnh 6 px và đáy dày 43.9 px. Dời tâm (−2, +8) và nới rộng +2 đưa về 14 px và 37.6 px.
+- Đã kiểm C chính so với bản thử ở tỉ lệ 1:1: trùng (diện tích mực lệch 0.1 %).
+- **Còn mở:** O, Q dùng 30°, còn C, G, 0, 6, 9 dùng 15°. Có thống nhất O, Q về 15° không? Cần designer quyết.

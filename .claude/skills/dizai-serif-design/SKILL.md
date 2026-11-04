@@ -73,9 +73,13 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   - Z: chéo dày (truyền thống La Mã).
   - U: hai thân dày (chờ duyệt).
   - 2 và 7: chéo dày.
-- **S4 Vòng.** O và Q chung một vòng (rộng 726). Trục dày nghiêng: dày ở dưới-trái và
-  trên-phải. Mọi chữ tròn (C G D Q 0 6 9 8 3 5) dùng cùng một góc trục. Lòng là elip
-  thật, không có đoạn phẳng. 0 là oval hẹp (578), phân biệt với O.
+- **S4 Vòng (cập nhật 04/11, designer: "lấy 15° c3").** Trục dày nghiêng: dày ở dưới-trái và trên-phải.
+  - O, Q: lòng xoay 30° (O và Q dùng chung một vòng).
+  - C, G và các số 0, 6, 9: lòng xoay **15°**.
+  - C, G không dùng được 30°: chữ hở bên phải nên mất vùng dày trên-phải. Khi đó chỉ còn một lưỡi liềm dày 45–51 px ở dưới-trái, nét đỉnh còn 6–7 px (dưới H), và C còn nhạt hơn.
+  - Dựng lòng C, G từ lòng đứng cũ: xoay 15° quanh tâm, cao −8 px. Regular dời tâm (−2, +8), nới rộng C ±0, G +2. Bold không dời tâm, nới rộng +3.
+  - Ràng buộc: nét đỉnh/đáy ≥ H (Regular 14, Bold ≈ 24–29); chỗ dày nhất ≈ Vr (37.5 / 51.5).
+  - Lòng là elip thật, không có đoạn phẳng. 0 là oval hẹp (578 u), phân biệt với O.
 - **S5 Loe.** Mọi đầu thân và đầu chéo tự do loe lõm từ V lên V + 2F, F = 21 mỗi bên,
   trên L = 60 tính từ mép. Góc cuối bo r ≈ 5. Đỉnh nhọn và vertex (A, M, N, V, W) không
   loe. Không loe vào khấc, không loe vượt đường kẻ. Chéo loe vuông góc với chéo, cùng F
