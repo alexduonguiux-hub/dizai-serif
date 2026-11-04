@@ -73,12 +73,11 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   - Z: chéo dày (truyền thống La Mã).
   - U: hai thân dày (chờ duyệt).
   - 2 và 7: chéo dày.
-- **S4 Vòng (cập nhật 04/11, designer: "lấy 15° c3").** Trục dày nghiêng: dày ở dưới-trái và trên-phải.
-  - O, Q: lòng xoay 30° (O và Q dùng chung một vòng).
-  - C, G và các số 0, 6, 9: lòng xoay **15°**.
-  - C, G không dùng được 30°: chữ hở bên phải nên mất vùng dày trên-phải. Khi đó chỉ còn một lưỡi liềm dày 45–51 px ở dưới-trái, nét đỉnh còn 6–7 px (dưới H), và C còn nhạt hơn.
-  - Dựng lòng C, G từ lòng đứng cũ: xoay 15° quanh tâm, cao −8 px. Regular dời tâm (−2, +8), nới rộng C ±0, G +2. Bold không dời tâm, nới rộng +3.
-  - Ràng buộc: nét đỉnh/đáy ≥ H (Regular 14, Bold ≈ 24–29); chỗ dày nhất ≈ Vr (37.5 / 51.5).
+- **S4 Vòng (chốt 04/11, designer: "nên đưa C G về như cũ").** Trục dày nghiêng: dày ở dưới-trái và trên-phải.
+  - O, Q: lòng xoay 30°. Số 0, 6, 9: lòng xoay 15°.
+  - **Ngoại lệ chủ ý: C, G giữ lòng đứng (0°).** Chữ hở bên phải mất vùng dày trên-phải, nên lòng nghiêng sinh ra lưỡi liềm dày ở dưới-trái và nét đỉnh rất mảnh.
+  - Đã thử 30° và 15° (bảng "Xoay lòng C G theo trục O" và "Trước / sau — C G trục 15°" trên trang v0.2). Designer chọn giữ trục đứng. Đừng "sửa" C, G về trục nghiêng.
+  - Thông số C, G v0.2: thành trái = Vr (Regular 37.5, Bold 51.5); đỉnh/đáy 14 / 24.
   - Lòng là elip thật, không có đoạn phẳng. 0 là oval hẹp (578 u), phân biệt với O.
 - **S5 Loe.** Mọi đầu thân và đầu chéo tự do loe lõm từ V lên V + 2F, F = 21 mỗi bên,
   trên L = 60 tính từ mép. Góc cuối bo r ≈ 5. Đỉnh nhọn và vertex (A, M, N, V, W) không

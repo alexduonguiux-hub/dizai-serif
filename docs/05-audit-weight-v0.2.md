@@ -35,7 +35,9 @@
   - Vì vậy C trông nhẹ hơn O một chút: p90 Regular 34.7 so với 36.7, Bold 47.5 so với 50.5.
   - Luật S4 nói mọi chữ tròn dùng một trục. Cần designer chọn: xoay lòng C, G theo trục O, hay ghi C, G là ngoại lệ.
 
-## Trục C, G → 15° (04/11, designer: "lấy 15° c3, chỉnh G Regular rồi áp")
+## Trục C, G → 15° (04/11, designer: "lấy 15° c3, chỉnh G Regular rồi áp") — ĐÃ HUỶ
+
+> **Cập nhật 04/11:** designer quyết "nên đưa C G về như cũ". C, G chính đã trả về lòng đứng của v0.2: so pixel 1:1 với bản "trước" khớp hoàn toàn. Luật S4 ghi C, G trục đứng là ngoại lệ chủ ý. Bảng dưới chỉ để tham khảo.
 
 Bảng xem trước trên trang v0.2:
 - "Xoay lòng C G theo trục O (Claude)": mọi phương án và các hàng tinh chỉnh.
