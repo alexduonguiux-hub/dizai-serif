@@ -210,7 +210,9 @@ Nguồn: Figma `2062:452` (1 3 2 5 6 9 7 Bold do designer vẽ) → `tools/const
   - Giữ nguyên các cạnh nằm trên đường kẻ (0, 700, ±11.3, 711.3, 702.8, 708.5) và các mặt cắt ở mép ô chữ.
   - Sau đó giãn về đúng khung, nắn liền tiếp tuyến ở nút trơn, nắn cạnh gần đứng/ngang cho thẳng.
   - Lượng dời: 2 −6.3u · 3 −1.4 · 5 −2.4 · 6 +2.2 · 7 +1.6 · 9 +2.2 · 1 giữ nguyên (lệch 2 %).
-- **0 và 8** (không có trong bản vẽ): giữ vòng ngoài của Regular; lòng là elip 4 điểm của Regular co lại như O Bold, tới đúng mật độ mục tiêu.
+- **0** (designer vẽ thêm, Figma `2062:453`): vòng ngoài giữ nguyên; lòng elip phóng ×1.043 quanh tâm tới đúng mật độ mục tiêu (giữ elip chính xác, không offset).
+- **2**: theo bản designer chỉnh lại (vai trên, đầu chéo); luật giữ mặt cắt ở mép ô chỉ áp cho cạnh thẳng, không áp cho tay nắm đường cong (trước đó làm dẹt vai phải của 2).
+- **8** (không có trong bản vẽ): giữ vòng ngoài của Regular; lòng là elip 4 điểm của Regular co lại như O Bold, tới đúng mật độ mục tiêu.
 - **4** (không có trong bản vẽ): bản suy ra từ Regular (thân +37 sang trái, chéo dày vào lòng, thanh +28 xuống).
 - **Kiểm tra:** không còn gãy tiếp tuyến ngoài các góc cố ý của bản vẽ (chân thân 5, góc trên-phải 7). Đáy/đỉnh đúng đường kẻ.
 - **Ảnh:** `docs/img/v0.3.3-so-Regular-Bold.png`, `docs/img/v0.3.3-so-Bold-guide.png`.

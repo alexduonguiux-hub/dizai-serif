@@ -9,7 +9,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys
 import pathops
 from make_ref import outline
 import diff
-YMIN = {'1': 0, '3': -11.3, '2': 0, '5': -11.3, '6': -11.3, '9': -11.3, '7': 0}
+YMIN = {'0': -11.3, '1': 0, '3': -11.3, '2': 0, '5': -11.3, '6': -11.3, '9': -11.3, '7': 0}
 
 def segs_of(p):
     """pathops → list contour; mỗi contour = list đoạn ('L', P0, P1) / ('C', P0, P1, P2, P3)"""
@@ -43,10 +43,10 @@ def legs(s):
     return out
 
 FIX = {'xs': (), 'ys': (0, 700, -11.3, 711.3, 702.8, 708.5)}
-def off_line(a, b, d):
-    # cạnh nằm trên đường kẻ (baseline, cap, overshoot) hoặc mặt cắt ở mép trái/phải ô chữ: giữ nguyên
+def off_line(a, b, d, fixed=True):
+    # cạnh nằm trên đường kẻ (baseline, cap, overshoot): giữ nguyên; mặt cắt ở mép trái/phải ô chữ: chỉ khi là cạnh THẲNG (fixed)
     if abs(a[1] - b[1]) < 2 and any(abs(a[1] - m) < 2 and abs(b[1] - m) < 2 for m in FIX['ys']): d = 0
-    if abs(a[0] - b[0]) < 0.6 and any(abs(a[0] - m) < 0.6 for m in FIX['xs']): d = 0
+    if fixed and abs(a[0] - b[0]) < 0.6 and any(abs(a[0] - m) < 0.6 for m in FIX['xs']): d = 0
     L = math.dist(a, b); n = ((b[1] - a[1]) / L, -(b[0] - a[0]) / L)   # bên phải hướng đi = phía ngoài mực (contour ngoài ngược chiều kim đồng hồ)
     return (a[0] + n[0] * d, a[1] + n[1] * d), (b[0] + n[0] * d, b[1] + n[1] * d)
 
@@ -63,12 +63,12 @@ def offset_contour(c, d):
     for i, s in enumerate(c):
         L = legs(s)
         if not L: new.append(s); continue
-        OL = [off_line(a, b, d) for a, b in L]
-        prevL = legs(c[i - 1]); pl = off_line(*prevL[-1], d) if prevL else OL[0]
+        OL = [off_line(a, b, d, s[0] == 'L') for a, b in L]
+        prevL = legs(c[i - 1]); pl = off_line(*prevL[-1], d, c[i - 1][0] == 'L') if prevL else OL[0]
         p0 = inter(pl, OL[0]) or OL[0][0]
         if math.dist(p0, s[1]) > 4 * abs(d) + 1: p0 = OL[0][0]   # góc rất nhọn: giữ điểm dời thẳng
         if s[0] == 'L':
-            nxt = legs(c[(i + 1) % n]); nl = off_line(*nxt[0], d) if nxt else OL[0]
+            nxt = legs(c[(i + 1) % n]); nl = off_line(*nxt[0], d, c[(i + 1) % n][0] == 'L') if nxt else OL[0]
             p1 = inter(OL[0], nl) or OL[0][1]
             if math.dist(p1, s[2]) > 4 * abs(d) + 1: p1 = OL[0][1]
             new.append(['L', p0, p1])
@@ -78,13 +78,13 @@ def offset_contour(c, d):
             k = 0
             for j in (1, 2):
                 a, b = P[j - 1], P[j]
-                if math.dist(a, b) > 2.0: la = off_line(a, b, d)
-                else: la = off_line(P[j], P[j + 1], d) if math.dist(P[j], P[j + 1]) > 2.0 else off_line(P[0], P[3], d)
+                if math.dist(a, b) > 2.0: la = off_line(a, b, d, False)
+                else: la = off_line(P[j], P[j + 1], d, False) if math.dist(P[j], P[j + 1]) > 2.0 else off_line(P[0], P[3], d, False)
                 ix = None
                 nb = P[j + 1]
-                if math.dist(P[j], nb) > 2.0 and math.dist(a, b) > 2.0: ix = inter(la, off_line(P[j], nb, d))
+                if math.dist(P[j], nb) > 2.0 and math.dist(a, b) > 2.0: ix = inter(la, off_line(P[j], nb, d, False))
                 Q.append(ix if ix and math.dist(ix, P[j]) < 6 * abs(d) + 2 else (P[j][0] + (la[0][0] - a[0]), P[j][1] + (la[0][1] - a[1])))
-            nxt = legs(c[(i + 1) % n]); nl = off_line(*nxt[0], d) if nxt else OL[-1]
+            nxt = legs(c[(i + 1) % n]); nl = off_line(*nxt[0], d, c[(i + 1) % n][0] == 'L') if nxt else OL[-1]
             p3 = inter(OL[-1], nl) or OL[-1][1]
             if math.dist(p3, s[4]) > 4 * abs(d) + 1: p3 = OL[-1][1]
             Q.append(p3); new.append(['C'] + Q)
@@ -202,9 +202,21 @@ if __name__ == '__main__':
         print(ch, 'lòng co hệ số %.2f, %d lòng, mật độ %.3f (mục tiêu %.3f)' % (f, len(cnt), dens(to_path(cs2)), target))
         return cs2
     for ch in '0123456789':
-        if ch in '08':
+        if ch in '08' and ch not in raw:   # chỉ khi chưa có bản vẽ
             cur = round_bold(ch); x0 = bbox(cur)[0]; cur = [[[s_[0]] + [(p[0] - x0, p[1]) for p in s_[1:]] for s_ in c] for c in cur]
             B[f'{ch}-Bold'] = [d_of(cur)]; continue
+        if ch == '0' and ch in raw:   # 0 của designer: vòng ngoài giữ nguyên, lòng (elip) phóng/co quanh tâm tới mật độ mục tiêu
+            cs = segs_of(pathops.simplify(shift(outline(raw[ch]), YMIN[ch]), fix_winding=True))
+            big = max(cs, key=lambda c: (bbox([c])[2] - bbox([c])[0]))
+            inner = [c for c in cs if c is not big][0]; ib = bbox([inner]); cx, cy = (ib[0] + ib[2]) / 2, (ib[1] + ib[3]) / 2
+            target = dens(L('0-Regular')) * ratio; lo, hi = 0.9, 1.2
+            for it in range(18):
+                f = (lo + hi) / 2
+                cur = [big, [[s_[0]] + [(cx + (p[0] - cx) * f, cy + (p[1] - cy) * f) for p in s_[1:]] for s_ in inner]]
+                if dens(to_path(cur)) > target: lo = f
+                else: hi = f
+            x0 = bbox(cur)[0]; cur = [[[s_[0]] + [(p[0] - x0, p[1]) for p in s_[1:]] for s_ in c] for c in cur]
+            B['0-Bold'] = [d_of(cur)]; print('0 lòng × %.3f, mật độ %.3f (mục tiêu %.3f)' % (f, dens(to_path(cur)), target)); continue
         if ch == '1':
             cs = segs_of(pathops.simplify(shift(outline(raw[ch]), YMIN[ch]), fix_winding=True)); B['1-Bold'] = [d_of([tidy(g1(c)) for c in cs])]; continue
         src = shift(outline(raw[ch]), YMIN[ch]) if ch in raw else L(f'{ch}-Bold')

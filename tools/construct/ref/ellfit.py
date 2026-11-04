@@ -30,7 +30,7 @@ def ellipse_of(p):
     return {"c": [float(C[0]), float(C[1])], "rl": float(ax[i]), "rs": float(ax[1 - i]), "ang": ang,
             "M": [float(a), float(b), float(c)]}
 
-def same(e, f, tol=2.0):
+def same(e, f, tol=8.0):
     if math.dist(e["c"], f["c"]) > tol or abs(e["rl"] - f["rl"]) > tol or abs(e["rs"] - f["rs"]) > tol: return False
     if abs(e["rl"] - e["rs"]) < 2: return True               # gần tròn: góc không quan trọng
     da = abs(e["ang"] - f["ang"]) % 180; return min(da, 180 - da) < 3
