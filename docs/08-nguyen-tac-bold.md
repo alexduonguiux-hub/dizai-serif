@@ -23,7 +23,7 @@ Nguồn đo: Bold A–T và số 0–9 do designer vẽ, so với Regular.
    - Thân phải: dịch ra ngoài, nên chữ rộng thêm. H: thân phải 374–476 → 380–519; lòng chỉ hẹp đi ~31.
 2. **Thanh giữa nở đều hai phía** (E, H: 351–391 → 337–405).
    - Tay trên dày xuống (660 → 632); tay dưới dày lên (40 → 68).
-   - Ngoại lệ có chủ ý: tay dưới của L giữ 40.
+   - L Bold cũng theo luật này: tay dưới 40 → 68, mỏ trượt lên 28.3 u (`ref/fix_L_bold.py`). Bản vẽ gốc giữ 40; trước đây ghi là ngoại lệ, designer 04/11 xác định là lỗi: "glyph của chữ L hoa hình như lỗi độ dày".
 3. **Vòng:** mép ngoài giữ nguyên (O, Q vẫn rộng 723). Lòng co đều ~38 mỗi phía, kể cả chỗ mảnh. Trục nghiêng của lòng giữ nguyên.
 4. **Nét chéo (A):**
    - Chân ngoài cố định trên baseline; nửa phải dịch theo phần tăng bề rộng (A +23).
