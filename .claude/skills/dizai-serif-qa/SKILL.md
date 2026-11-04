@@ -1,0 +1,93 @@
+---
+name: dizai-serif-qa
+description: Checklist QA/QC của Dizai Serif (chữ glyphic loe nét, tương phản theo bút dẹt). Chạy sau mọi thay đổi glyph, luật, dấu, spacing, kerning hoặc build, trước khi gửi cho designer. Dùng kèm dizai-serif-design.
+---
+
+# Dizai Serif — QA/QC
+
+Skill này lấy từ `type-qa-qc` của DINHTUONG60s. Phần chung (đo chứ không nhìn, chạy ở
+mọi weight và trên mọi glyph cùng luật, báo cáo theo thứ tự đạt → nằm sát giới hạn →
+đã đổi) giữ nguyên. Các check riêng cho chữ tương phản được thêm vào hoặc thay thế.
+Số hiệu luật (S1…) lấy từ `dizai-serif-design`.
+
+## 0. Cách chạy
+- Một chỗ sửa là một luật. Gọi tên luật bị vi phạm → sửa trong code dựng → build lại
+  mọi weight → chạy lại toàn bộ checklist.
+- Chưa có file nguồn: đo trên ảnh bằng `tools/measure_sheet.py` (±3 u). Ghi rõ "đo từ
+  ảnh". Không kết luận chắc chắn về nét chéo hay nét tròn từ số đo cắt ngang.
+- Việc dài (kerning, QA toàn cặp, build) chạy nền.
+- Mỗi glyph đã đổi: render to cạnh glyph tham chiếu (H|N, O|Q, A|V, R|K, 0|O, B|P),
+  kèm overlay outline R / M / B. Tự nhìn trước khi gửi.
+
+## 1. Check riêng cho chữ tương phản
+
+### 1.1 Bảng nét (S2, S3)
+- Đo mọi thân với V, chéo dày với D, nét mảnh (chéo / và thân M N) với t, nét ngang với
+  H, ở từng glyph, từng weight. Đo vuông góc nét, không đo cắt ngang.
+- **Một giá trị cho mỗi loại** (±4 u Regular). v0.1 trượt ở hai chỗ:
+  - mảnh chéo: X Y 4 = 60–62, các chữ khác 43–50;
+  - ngang mảnh: 33 / 36 / 39 / 42 / 46.
+- Kiểm logic bút: nét \ dày, nét / mảnh. Liệt kê ngoại lệ chủ ý (Z, U, 2, 7) để không
+  bị "sửa" nhầm.
+- Tương phản theo weight: in t/V và H/V cho R, M, B. Mọi glyph phải theo cùng một bảng.
+
+### 1.2 Loe (S5)
+- Liệt kê mọi đầu nét tự do (thân, chéo, tay) ở mọi glyph và mọi weight. Đo F (vuông
+  góc nét) và L. Regular: F 21 ± 3, L 60 ± 6. Đường loe lõm, góc cuối bo đều.
+- Không loe ở đỉnh nhọn hay vertex, không loe vào khấc, không loe vượt cap line hoặc
+  baseline.
+- Render A V W M N H E T cạnh nhau ở cỡ lớn. Loe phải đọc thành một đặc điểm duy nhất.
+
+### 1.3 Vòng và trục (S4)
+- Đo góc trục dày (đường nối hai điểm mỏng nhất) của O Q C G D 0 6 9 8: một góc, ±3°.
+- Overshoot của mọi chữ tròn bằng nhau. v0.1: O Q +16 / −7, C G +9 / −12 → lỗi.
+- Lòng là elip thật, không có đoạn phẳng. Bề ngang C và G so với O theo luật đã duyệt.
+
+### 1.4 Khớp, đỉnh, lòng nhỏ (S7, S8, S13)
+- Khớp mỏng hơn nét, góc trong sắc, không bo.
+- Lòng nhỏ đo theo đơn vị Regular ở mọi weight: lòng A trên thanh, lòng B trên và dưới,
+  lòng P R, lòng 4, 6, 8, 9. Lòng ở Bold không được nhỏ quá mức hệ số K cho phép
+  (v0.1 Bold: lòng A gần bít, theo quan sát bằng mắt).
+- Nét ngang bụng B D P R dày bằng H suốt nét, chỉ mỏng ở chỗ khớp.
+- Một chữ có hai lòng (B, 8, 3): lòng trên nhỏ hơn, cân thị giác.
+
+### 1.5 Đuôi bút (S9)
+- Q R K J (và đuôi chữ thường sau này): độ cong ở chỗ đuôi rời bụng hoặc thân liên tục
+  G2 (tỉ số độ cong 1.0–1.3).
+- Tầm vươn của Regular là sàn cho mọi weight: in tầm vươn R ≤ M ≤ B.
+- Đầu đuôi không thành mũi kim: góc mép trong gặp nhát cắt ≥ 25°.
+- Đuôi được mảnh dần **chỉ** theo hướng bút. Đo độ dày dọc đuôi: phải đơn điệu, không
+  có chỗ eo hay phình.
+
+### 1.6 Số (S12)
+- Nét số = 0.95 nét hoa (khi đã duyệt).
+- 3 và 5 chung bụng dưới, 6 và 9 chung bụng: so object outline.
+- 1 có cờ cùng góc và cùng tầm vươn ở mọi weight.
+- Khoảng trắng mỗi bên của số bằng của 0 (±3). Không cặp số nào chạm nhau. v0.1: 7 và 8
+  chạm nhau, 0 và 1 cách 11 u → lỗi.
+
+### 1.7 Metrics (S1)
+- Cap 700 cho mọi chữ thẳng (v0.1: L M đo được 707 → kiểm nguồn).
+- Vertical metrics bao chồng dấu cao nhất (Ẳ Bold) và thấp nhất (ỵ).
+
+## 2. Check giữ nguyên từ `type-qa-qc`
+- **Tiến triển weight:** chồng outline R/M/B. Đường cong song song, nhát cắt cùng chỗ,
+  góc đầu nét lệch ≤ ±3°. Đuôi không ngắn đi.
+- **Bề ngang (R2c):** chiều cao giữ nguyên. Bề ngang mực và advance tăng đơn điệu.
+  Lòng mất đi tính theo bội Δ: thẳng ≈ 1.0Δ, tròn ≈ 1.3Δ.
+- **Outline:** không có mực nhọn < 25°, không có đoạn < 6 u. Không có bậc chỗ hai phép
+  dựng chồng nhau. Phép hợp chồng nhau 3–6 u. Closing r 18 không đổi topology.
+- **Retired glyph:** sau mọi lần đổi thiết kế, kiểm mọi ký hiệu, chữ ghép và ordinal.
+- **Dấu tiếng Việt:** overlay dấu hoa và dấu thường cùng hệ. Sắc một độ dài. Trên ă mọi
+  dấu thanh nằm trên trăng. Khe ≥ 30 / ≥ 36. Phủ đủ 134 chữ. NFD = NFC.
+- **Spacing / kerning:** kiểm khoảng trắng trước rồi mới kern. Khe ≥ 26. Cặp có dấu giữ
+  khoảng của cặp gốc ±12. Kiểm âm tiết Việt ở ba kiểu viết hoa. Cặp La Mã kinh điển:
+  AV AT LT LY TA VA WA AW PA FA RV KO.
+- **Phát hành:** OTF và TTF khớp nhau, cmap đủ, version tăng.
+
+## 3. Mẫu báo cáo
+1. Đạt (kèm số).
+2. Nằm đúng giới hạn (và vì sao không dời được).
+3. Đã đổi (luật, số cũ → số mới).
+4. Còn mở (chờ designer).
+Ghi vào `docs/` kèm version và ngày.
