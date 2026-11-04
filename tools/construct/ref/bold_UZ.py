@@ -93,13 +93,16 @@ def make_Z():
     # thanh 68 (trên dày xuống, dưới dày lên), mỏ trượt theo thanh (như E: x theo bề rộng +48, y ±28);
     # chéo dày 146 đi qua góc trên-phải (W, 683) và dưới-trái (0, 17) như Regular
     W = 464.8 + 48; dw = 48
-    top = poly([(11.3, 632), (W, 632), (W, 700), (11.3, 700)]); bot = poly([(0, 0), (W - 11.3, 0), (W - 11.3, 68), (0, 68)])
+    top = poly([(11.3, 632), (W, 632), (W, 700), (11.3, 700)]); bot = poly([(0, 0), (453.4 + dw, 0), (453.4 + dw, 68), (0, 68)])
     bk1 = pathops.Path(); bk1.moveTo(104.9, 632); bk1.cubicTo(75.6, 632, 47.4, 620.7, 26.4, 600.8); bk1.cubicTo(19.8, 594.5, 15.1, 586.5, 11.3, 578.2); bk1.lineTo(11.3, 634); bk1.lineTo(106, 634); bk1.close()
     bk2 = pathops.Path(); bk2.moveTo(359.9 + dw, 68); bk2.cubicTo(389.2 + dw, 68, 417.4 + dw, 79.3, 438.4 + dw, 99.2); bk2.cubicTo(445 + dw, 105.5, 449.7 + dw, 113.5, 453.4 + dw, 121.8); bk2.lineTo(453.4 + dw, 66); bk2.lineTo(358 + dw, 66); bk2.close()
     A1, B1 = (W, 683), (0, 17); d = band2(A1, B1, ZD, 1)
     if d[1] > 0: d = band2(A1, B1, ZD, -1)
     q1 = (A1[0] + d[0] * 1000, A1[1] + d[1] * 1000); q2 = (B1[0] - d[0] * 1000, B1[1] - d[1] * 1000)
     diag = I(poly([(xat(A1, q1, 760), 760), (xat(A1, q1, -60), -60), (xat(B1, q2, -60), -60), (xat(B1, q2, 760), 760)]), poly([(0, 0), (W, 0), (W, 700), (0, 700)]))
+    # như Regular: mép ngoài nét chéo cắt vát đầu thanh (trên-phải còn mặt cắt đứng 683–700, dưới-trái 0–17)
+    top = I(top, poly([(-100, 800), (xat(A1, q1, 800), 800), (xat(A1, q1, 500), 500), (-100, 500)]))
+    bot = I(bot, poly([(xat(B1, q2, -100), -100), (W + 100, -100), (W + 100, 200), (xat(B1, q2, 200), 200)]))
     return U(top, bot, bk1, bk2, diag)
 
 def make_X():

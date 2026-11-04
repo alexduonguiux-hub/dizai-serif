@@ -64,6 +64,6 @@ Dựng bằng `tools/construct/ref/bold_UZ.py`.
 | W | 4 nét (hai V lồng nhau). Mép ngoài từng nét giữ, giãn theo bề rộng +25; đáy nhọn phẳng 20; dày 146 / mảnh 74 vào trong; đỉnh giữa cắt phẳng; loe ngoài của designer trượt theo mép | 801 | 1.30 |
 | X | Góc ngoài giữ (phải +23). Dày 132, mảnh 72, chỉnh cho mật độ ≈ nhóm chữ chéo. Loe trong của designer trượt theo mép | 665 | 1.33 |
 | Y | Rộng +23, tâm thân dịch +11.5 (như T); thân 139. Mép ngoài hai tay giữ độ dốc; tay trái dày 146, tay phải mảnh 77; loe trong và loe chân thân trượt theo mép | 655 | 1.35 |
-| Z | Rộng +48 (như E). Thanh 68; mỏ trượt theo thanh. Chéo 134 qua góc (W, 683) và (0, 17) như Regular | 513 | 1.32 |
+| Z | Rộng +48 (như E). Thanh 68; mỏ trượt theo thanh. Chéo 134 qua góc (W, 683) và (0, 17) như Regular; mép ngoài chéo cắt vát đầu thanh (mặt cắt đứng 683–700 ở góc trên-phải, 0–17 ở góc dưới-trái) | 513 | 1.32 |
 
 Đây là bản dựng theo nguyên tắc, chưa phải bản vẽ tay. Cần designer duyệt, đặc biệt W và X.
