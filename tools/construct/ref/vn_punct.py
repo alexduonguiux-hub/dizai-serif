@@ -424,7 +424,26 @@ def punct(S, w):
     e8 = letter(S, '8', w); eb = bounds(e8)
     lc = (261, 210) if not bold else (275, 210)                 # tâm lòng dưới (đo từ bản vẽ 8)
     waist = 413 if not bold else 405
-    amp = D(e8, poly([(lc[0], lc[1] + 5), (eb[2] + 50, lc[1] - 25), (eb[2] + 50, waist - 8), (lc[0] + 40, waist - 8)]))
+    # & serif cổ điển: chân dày (\\) cắt chéo qua TAY mảnh (/) — bụng dưới bị cắt ở góc −40° (dưới-phải), từ đó một nét
+    # mảnh t đi lên-phải (đúng logic bút: nét / mảnh, nét \\ dày) tới đầu tay ở 0.52 cap bên phải; phần trên-phải còn lại
+    # của bụng dưới cắt bỏ để vòng trên chảy thành chân.
+    ang = math.radians(-40); far = 600
+    cut = poly([(lc[0], lc[1]), (lc[0] + far*math.cos(ang), lc[1] + far*math.sin(ang)), (eb[2] + 300, -100), (eb[2] + 300, waist - 8), (lc[0] + 40, waist - 8)])
+    amp = D(e8, cut)
+    # điểm giữa nét bụng ở một góc: trung điểm hai giao điểm của tia với mép trong / mép ngoài
+    def mid_at(a_):
+        ray = poly([(lc[0], lc[1] - 0.5), (lc[0] + far*math.cos(a_), lc[1] + far*math.sin(a_) - 0.5), (lc[0] + far*math.cos(a_), lc[1] + far*math.sin(a_) + 0.5), (lc[0], lc[1] + 0.5)])
+        hb = bounds(I(e8, ray)); pa = (hb[0], hb[3]) if math.sin(a_) < 0 else (hb[0], hb[1]); pb = (hb[2], hb[1]) if math.sin(a_) < 0 else (hb[2], hb[3])
+        return ((pa[0] + pb[0])/2, (pa[1] + pb[1])/2), math.dist(pa, pb)
+    a0 = ang - math.radians(22)
+    m0, _ = mid_at(a0); mid, t0 = mid_at(ang)
+    tg0 = (m0[0] - lc[0], m0[1] - lc[1]); tg0 = (-tg0[1], tg0[0])        # tiếp tuyến bụng (ngược chiều kim đồng hồ)
+    tg = (mid[0] - lc[0], mid[1] - lc[1]); tg = (-tg[1], tg[0])
+    tt = t['t']; tip = (eb[2] + (115 if not bold else 135), 0.52*CAP)
+    # tay đi trùng nét bụng từ góc −62° tới góc cắt −40° (che mặt cắt, mối nối liền), rồi thon dần về t
+    arm_c = hermite([(m0, tg0), (mid, tg), (tip, (1, 1.15))])
+    arm = stroke(arm_c, (1, 1), wabs=lambda u: t0 if u < 0.5 else tt + (t0 - tt)*max(0, 1 - (u - 0.5)/0.3)**2)
+    amp = U(amp, arm)
     Dd = 100 if not bold else 146
     top, foot = ((lc[0] + 55, waist), (eb[2] + 70, 0)) if not bold else ((lc[0] + 60, waist), (eb[2] + 85, 0))
     L = math.dist(top, foot); nx, ny = (foot[1] - top[1])/L, -(foot[0] - top[0])/L

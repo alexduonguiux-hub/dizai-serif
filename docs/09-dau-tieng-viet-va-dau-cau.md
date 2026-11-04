@@ -72,7 +72,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | `%` | hai vòng kiểu O (lòng xoay 30°) và nét chéo 0.6 V |
 | `$` | S của designer và nét đứng dày 1.1 H, vươn từ −100 tới 800 |
 | `€` | C của designer và hai thanh dày 1.05 H, ở 300 và 430 |
-| `&` | **dựng từ số 8 của designer** (designer 04/11: "ký tự & cũng lỗi"): cắt góc trên-phải của bụng dưới từ tâm lòng dưới lên tới eo, để vòng trên chảy thành chân; chân là nét chéo dày D (100 / 146) như chân K, X, cắt ngang ở baseline, cắt theo mép ngoài số 8 và không lấn vào lòng trên |
+| `&` | **dựng từ số 8 của designer, theo dáng & serif cổ điển** (designer 04/11: "ký tự & cũng lỗi", "không giống glyph phổ biến cùng dòng"): vòng trên chảy thành **chân dày (\\)** D 100 / 146 xuống chân phải; bụng dưới cắt ở góc −40° rồi đi tiếp thành **tay mảnh (/)** t 44 / 74 lên tới 0.52 cap bên phải, cắt chéo qua chân thành chữ X (đúng logic bút: / mảnh, \\ dày). Tay đi trùng nét bụng từ −62° tới −40° nên mối nối liền |
 | `@` | vòng ngoài là nét bút từ 0° tới 300°; bên trong là a một tầng, thân a cong chữ U nhập vào vòng ngoài |
 
 **Chưa làm:**
