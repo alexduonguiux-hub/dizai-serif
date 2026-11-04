@@ -8,7 +8,8 @@ chữ hoa"); chỉ chốt cực trị tròn vào đường vượt (x-height 495
 Bold = luật Bold của chữ hoa (docs/08), cùng số với chữ hoa:
   - mép ngoài giữ nguyên, mực nở vào phía lòng;
   - thân 102 → 139 (+37): mép phía lòng dời vào 37 u, loe phía lòng trượt theo (giữ hình);
-  - vòng / bụng: lòng co đều 37 u mọi phía, kể cả chỗ mảnh (như O: "lòng co đều ~38 mỗi phía");
+  - vòng / bụng giãn ngang 40 u (e 36, như C G) như chữ hoa Bold rộng ra; thân trượt theo mép vòng, giữ hình;
+  - lòng co đều 35 u mọi phía (cộng phần giãn: vách ~ +40, như O D Bold);
   - nét ngang mảnh (thanh e, vai a): +28 (40 → 68, như thanh / tay E H L).
 """
 import sys, re, os, json
@@ -18,7 +19,10 @@ from src_lower import SHAPES, GLYPH, S, BASE
 import vn_punct as V
 
 XH, OV_T, OV_B = 495.0, 503.4, -11.3          # guide chữ thường (khung 2107:5 / 2112:126)
-B_IN = 37.0                                    # Bold: thân và vòng dày thêm vào phía lòng (139 − 102)
+B_IN = 37.0                                    # Bold: thân dày thêm vào phía lòng (139 − 102)
+B_RING = 35.0                                  # Bold: lòng vòng co đều (vòng đã giãn ngang nên vách dày thêm ~ +40, như O D)
+B_WIDE = {'e': 36.0}                           # Bold: vòng giãn ngang (u) như chữ hoa (C G +36, B +31, D +51); mặc định 40
+B_WIDE_DEFAULT = 40.0
 B_H = 28.0                                     # Bold: nét ngang mảnh dày thêm (68 − 40)
 TOK = r'[MLCZ]|-?[\d.]+(?:e-?\d+)?'
 
@@ -80,7 +84,7 @@ def _dil(p, d):
     st.convertConicsToQuads(); return V.U(p, st)
 def ring_bold(p, mask=None):
     """vòng / bụng: mực nở đều B_IN vào lòng; mép ngoài (hình bao) giữ nguyên"""
-    return V.I(_dil(p, B_IN), mask if mask is not None else _outer(p))
+    return V.I(_dil(p, B_RING), mask if mask is not None else _outer(p))
 
 def e_bold(pcs):
     """e: vòm + bụng nở vào lòng B_IN (chỉ tới mép dưới thanh Bold, mép ngoài và mặt đầu cắt giữ); thanh nở đều hai phía +B_H"""
@@ -90,14 +94,24 @@ def e_bold(pcs):
     cy = (by0 + by1)/2; hb = (by1 - by0) + B_H; yb = cy - hb/2                             # mép dưới thanh Bold
     x_in = bw.bounds[0] + 60
     mask = _outer(V.U(ink, bar, V.rect(x_in, y_tt, x_cut, yb)))
-    grown = V.U(V.I(_dil(pcs['e_arch'], B_IN), V.I(mask, V.halfplane(yb))), V.I(_dil(pcs['e_bowl'], B_IN), mask))
+    grown = V.U(V.I(_dil(pcs['e_arch'], B_RING), V.I(mask, V.halfplane(yb))), V.I(_dil(pcs['e_bowl'], B_RING), mask))
     barB = V.xform(bar, lambda x, y: (x, cy + (y - cy)*hb/(by1 - by0)))
     fill = V.rect(bx1 - 40, yb, bx1, by0)       # đầu phải thanh (vát) lấp thẳng đứng tới mép ngoài phần thò dưới mặt nối
     return V.U(grown, barB, fill)
 
+RINGS = {'a': ['a_bowl'], 'e': ['e_arch', 'e_bowl', 'e_bar']}
 def raw(ch, weight):
     pcs = {k: piece(k, m, weight) for k, m in GLYPH[ch]}
     if weight == 'Bold':
+        # 1. vòng giãn ngang B_WIDE quanh tâm của nó (như chữ hoa Bold: chữ rộng ra, lòng không bị bóp)
+        rk = RINGS.get(ch, ['bowl']); ring = V.U(*[pcs[k] for k in rk]); x0, _, x1, _ = ring.bounds; c = (x0 + x1)/2
+        k = (x1 - x0 + B_WIDE.get(ch, B_WIDE_DEFAULT))/(x1 - x0)
+        for kk in rk: pcs[kk] = V.xform(pcs[kk], lambda x, y: (c + (x - c)*k, y))
+        # 2. thân (và vai a) giữ hình, trượt theo mép vòng phía nó
+        for kk in [q for q in pcs if q not in rk]:
+            sx0, _, sx1, _ = pcs[kk].bounds; edge = x1 if (sx0 + sx1)/2 > c else x0
+            pcs[kk] = V.move(pcs[kk], (k - 1)*(edge - c), 0)
+        # 3. lòng co đều B_RING (mép ngoài giữ); thân đã dày vào lòng B_IN ở bước khối (_bold_px)
         if ch == 'e': o = e_bold(pcs)
         elif ch == 'a': o = V.U(pcs['a_stem'], ring_bold(pcs['a_bowl']))
         else: o = V.U(pcs['stem'], ring_bold(pcs['bowl']))

@@ -25,25 +25,30 @@ Nguồn: bản vẽ designer, Figma frame `2112:126` (cập nhật 04/11): a, e,
 
 ## Bold — cùng luật với chữ hoa (docs/08)
 
-- Mép ngoài giữ nguyên, mực nở vào phía lòng.
-- **Thân** 102 → 139 (+37): mép phía lòng dời vào 37. Loe phía lòng trượt theo, giữ nguyên hình.
-- **Vòng, bụng**: lòng co đều 37 mọi phía, kể cả chỗ mảnh, như O ("lòng co đều ~38 mỗi phía").
-- **Nét ngang mảnh** +28 (40 → 68, như thanh và tay E, H, L):
-  - thanh e nở đều hai phía;
-  - vai a dày xuống;
-  - đầu cắt e dày lên.
+Designer 04/11: "Bold hơi sai và không đồng bộ về glyph". Bản đầu giữ nguyên bề ngang, chỉ cho lòng co đều 37. Kết quả là lòng a, e bị bóp, chữ đen và chật hơn chữ hoa Bold (chữ hoa Bold rộng ra). Bản hiện tại:
 
-Mật độ mực (mực ÷ ((rộng + 80) × 700)):
+1. **Vòng giãn ngang** quanh tâm của nó, như chữ hoa Bold rộng ra:
+   - a, d, b, q, p: +40;
+   - e: +36, như C và G.
+2. **Thân và vai a giữ nguyên hình**, chỉ trượt theo mép vòng phía nó. Thân dày vào phía lòng: 102 → 139 (+37). Loe phía ngoài giữ nguyên.
+3. **Lòng co đều 35 mọi phía**, mép ngoài giữ nguyên. Cộng thêm phần giãn, vách dày thêm khoảng 40, như O và D Bold.
+4. **Nét ngang mảnh** +28 (40 → 68):
+   - thanh e nở đều hai phía;
+   - vai a dày xuống;
+   - đầu cắt e dày lên.
+5. **Đầu thân nối bụng không có loe phía lòng**, như thân D, B, P chữ hoa. Áp ở cả hai weight, tại các chỗ:
+   - chân d, b, a;
+   - đỉnh q, p.
 
-| Chữ | Regular | Bold | Bold / Regular |
-|---|---|---|---|
-| a | 0.318 | 0.408 | 1.28 |
-| e | 0.263 | 0.363 | 1.38 |
-| d b q p | 0.360 | 0.473 | 1.31 |
-| H (hoa) | 0.387 | 0.491 | 1.27 |
-| O (hoa) | 0.263 | 0.377 | 1.43 |
+   Lý do: loe ở đó thò thành mẩu nhọn cạnh bụng.
 
-Tỉ lệ của chữ thường nằm trong khoảng của chữ hoa (1.26–1.43).
+| Chữ | Rộng R → B | Mật độ R | Mật độ B | B / R |
+|---|---|---|---|---|
+| a | 434 → 474 | 0.317 | 0.396 | 1.25 |
+| e | 486 → 522 | 0.263 | 0.361 | 1.37 |
+| d b q p | 509 → 549 | 0.359 | 0.461 | 1.28 |
+| H (hoa) | | 0.387 | 0.491 | 1.27 |
+| O (hoa) | | 0.263 | 0.377 | 1.43 |
 
 ## Lịch sử e
 
