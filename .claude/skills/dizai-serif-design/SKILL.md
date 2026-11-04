@@ -61,6 +61,12 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
 
   Mọi số khác suy ra từ bảng này. Khớp được mỏng hơn nét (~0.8). Không cố định số của
   Bold. Mỗi weight có một bảng riêng.
+- **S2b Bề ngang nhóm chéo** (duyệt 04/11, "áp bản 0.96 / 0.94 cho X Y"). Mực của A = V = 237 px (667 u) làm chuẩn.
+  - X = 0.96 A: 226.6 px (≈ 642 u).
+  - Y = 0.94 A: 222.9 px (≈ 632 u).
+  - Lý do: X và Y hở trắng ở cả hai bên đỉnh nên trông rộng hơn A, V khi cùng bề ngang.
+  - Thu hẹp không làm đổi độ dày nét vuông góc. Thân Y và chỗ giao giữ nguyên. Đầu loe bám theo mép nét mới.
+  - Bold dùng cùng tỉ lệ khi vẽ X, Y.
 - **S3 Logic bút dẹt.** Bút nghiêng ~30°. Nét đi từ trên-trái xuống dưới-phải dùng D.
   Nét đi từ dưới-trái lên trên-phải dùng t. Thân đứng dùng V. Nét ngang dùng H.
   Ngoại lệ chủ ý (ghi tên):
