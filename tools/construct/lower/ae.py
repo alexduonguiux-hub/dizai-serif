@@ -13,8 +13,16 @@ COUNTER = 1.0                  # hệ số nở lòng (đặt bên dưới theo 
 GROW = {'a_bowl': 1.12}   # lòng nở 12 %: thân 102 → 92 (S10), vòng 96 → 80–86
 # e (vẽ lại 04/11): hai vách trái/phải 36 px = 102 u → 0.9 V; nét mảnh đỉnh vòm 48.5 u, đáy bụng 49.6 u → 40 u (như vai a).
 # Chỉnh mép trong (lòng) của vòm và bụng; mép ngoài, thanh ngang và đầu cắt của designer giữ nguyên.
-E_WALL = 102*0.9/S; E_THIN = 40/S
+# Bold (docs/08): mép ngoài giữ nguyên, nét dày vào lòng; chữ thường giữ cùng tỉ lệ với chữ hoa như ở Regular:
+# vách 0.9 V (Bold 0.9 × 139 = 125), nét mảnh = H (Bold 68), thanh ngang = H nở đều hai phía (39.6 → 68),
+# đầu cắt dày vào lòng +28 (như tay dưới E/L Bold 40 → 68). Đơn vị px Figma.
+EW = {'Regular': dict(wall=102*0.9/S, thin=40/S, bar=14.0, term=0.0),
+      'Bold':    dict(wall=139*0.9/S, thin=68/S, bar=68/S, term=28/S)}
+WEIGHT = 'Regular'
 def _e_inner(key, x, y):
+    E_WALL, E_THIN = EW[WEIGHT]['wall'], EW[WEIGHT]['thin']
+    if key == 'e_bowl' and (x, y) in ((154.894, 50.4912), (143.437, 30.6786)):   # đầu cắt: mép trên dày lên
+        return x, y + EW[WEIGHT]['term']
     if key == 'e_arch' and 35.9 <= x <= 136.1 and y >= 17:          # lòng vòm: tâm x 86, chân ở y 89
         kx = (50 + 36 - E_WALL)/50; ky = (89 - E_THIN)/(89 - 17.1562)
         return 86 + (x - 86)*kx, 89 - (89 - y)*ky
@@ -35,6 +43,12 @@ def _adjust(key, dstr):
             if 84.9 <= x <= 93.01 and (y > 50 or y < -20 or abs(x - 93) < 0.01): x += STEM_IN
             out += [repr(x), repr(y)]; i += 2
         return ' '.join(out)
+    if key == 'e_bar':                                   # thanh ngang nở đều hai phía quanh tâm y 7
+        k = EW[WEIGHT]['bar']/14
+        return re.sub(r'(-?[\d.]+) (-?[\d.]+)', lambda m: f"{m.group(1)} {7 + (float(m.group(2)) - 7)*k!r}", dstr)
+    if key == 'e_arch':                                  # chân vòm phải kéo xuống theo mép dưới thanh (thanh nở quá y 89)
+        dd = (EW[WEIGHT]['bar'] - 14)/2
+        dstr = dstr.replace('L172 89 L136 89', f'L172 {89 + dd!r} L136 {89 + dd!r}')
     if key in ('e_arch', 'e_bowl'):
         toks = re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', dstr); out = []; i = 0
         while i < len(toks):
@@ -120,9 +134,12 @@ def clean(ch):
         if abs(_extreme(p, False)[1] - OV_B) < 0.05 or _extreme(p, False)[1] > -2: break
     return p
 
+BUILD = [('a', 'Regular'), ('e', 'Regular'), ('e', 'Bold')]
 if __name__ == '__main__':
-    raw_ = {f'{c}-Regular': [V.to_d(raw(c))] for c in 'ae'}
+    raw_, out = {}, {}
+    for c, w in BUILD:
+        WEIGHT = w; raw_[f'{c}-{w}'] = [V.to_d(raw(c))]; out[f'{c}-{w}'] = [V.to_d(clean(c))]
     json.dump(raw_, open(os.path.join(HERE, 'raw_ae.json'), 'w'))
-    out = {f'{c}-Regular': [V.to_d(clean(c))] for c in 'ae'}
     json.dump(out, open(os.path.join(HERE, 'lower_ae.json'), 'w'))
-    print({k: [round(x, 1) for x in V.bounds(clean(k[0]))] for k in out})
+    from make_ref import outline
+    print({k: [round(x, 1) for x in outline(v).bounds] for k, v in out.items()})
