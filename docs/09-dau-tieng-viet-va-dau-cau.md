@@ -33,7 +33,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | mũ | dựng như đỉnh A: hai cạnh ngoài, hai cạnh trong song song; chân trái mảnh, chân phải dày (× 0.85 để lòng mở ở Bold); chân cắt ngang; đỉnh cắt phẳng 0.2 N | rộng 300, cao 142 |
 | trăng | **lưỡi liềm đối xứng** (designer 04/11: "dấu ă cũng hơi lỗi"): nửa elip ngoài trừ lòng elip có tâm nâng 0.5 rv; đáy dày 0.66 N, hai đầu thon 0.42 N, cắt ngang | rx 112, ry 90 (Bold 100) |
 | ngã | tâm nét là một chu kỳ sin: biên độ 32, bước sóng 260; đoạn đi lên mảnh, đoạn đi xuống dày. Bold: biên độ 28, giãn ngang 1.14 (bán kính đỉnh lớn hơn nửa nét) | rộng 260 |
-| hỏi | ? thu nhỏ: vòng là cung tròn r 52 (Bold 60), quét 168° → −40°, đuôi về giữa; bút 0.8 bút dấu | cao 170 |
+| hỏi | ? thu nhỏ: vòng là cung tròn r 58, quét 168° → −20°, đuôi dài cong về giữa; bút 0.8 bút dấu. Designer 04/11: "sửa lại bụng của dấu hỏi regular lẫn bold" → bỏ chỗ lòng thắt nhọn rồi phình ở góc dưới-phải; mép lòng chảy liền xuống cổ như dấu ?. Bold ("dấu hỏi của bold lỗi"): tâm nét Regular phóng đều × 1.2, bút 0.70 bút dấu Bold, lòng không còn bị bít | cao 182 / Bold 223 |
 | nặng | chấm tròn, cùng họ với dấu chấm | Ø 100 / Bold 138 |
 | sừng ơ ư | **một tấm chung**, tâm nét là **một cung Bézier liền** (designer 04/11: "điều chỉnh nét cong của dấu ư lại cho smooth"); dày 0.34 V → 0.64 V theo smoothstep; đầu cắt phẳng ngang (bỏ giọt tròn) | Ơ bám vai vòng O ở góc 38°; **Ư bám mép ngoài thân phải ở cùng cao độ** nên đầu sừng hai chữ ngang nhau, và ở Ư sừng thay cho loe ngoài của thân phải (designer 04/11: "dấu ư lỗi và không đồng bộ") |
 
@@ -50,7 +50,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 **QA (máy đo, 120 chữ × 2 weight):**
 - Không có vi phạm.
 - Khe dấu–chữ nhỏ nhất là 39 (luật ≥ 36). Khe dấu–dấu nhỏ nhất là 32.1 (luật ≥ 30). Khe dấu nặng–chữ nhỏ nhất là 38.
-- Chữ cao nhất là Ằ Bold, đỉnh ở 1054.
+- Chữ cao nhất là Ẳ Bold, đỉnh ở 1086.
 
 ## Dấu câu và ký hiệu
 

@@ -240,6 +240,11 @@ def norm(p, cx=None):
     x0, y0, x1, y1 = bounds(p); cx = (x0 + x1)/2 if cx is None else cx
     return move(p, -cx, -y0)
 
+# hỏi (designer 04/11: "dấu hỏi của bold lỗi", "sửa lại bụng của dấu hỏi regular lẫn bold"): vòng r 52 kết thúc ở −40° làm
+# lòng thắt nhọn ở góc dưới-phải rồi phình (bụng gợn) khi chuyển sang đuôi; Bold r 60 với bút 0.8 bít lòng, đuôi gập mẩu mảnh.
+# Nay: vòng r 58 (tâm y 106) dừng sớm ở −20°, đuôi dài hơn về (0, 4) → mép lòng chảy liền xuống cổ như dấu ?.
+# Bold = tâm nét Regular phóng đều 1.2 (giữ tỉ lệ vòng/đuôi), bút 0.70 × bút dấu Bold.
+HOOK_B = (1.2, 0.70); HOOK_END = -20; HOOK_TAIL = (0, 4); HOOK_R = 58; HOOK_C = 106
 def marks(w):
     t = T[w]; nib = (t['Nm'], t['mm']); sx = t['sx']; S = lambda x, y: (x*sx, y)
     M = {}
@@ -276,12 +281,14 @@ def marks(w):
     f = lambda x: (x*kx, A_*math.sin(2*math.pi*(x + 130)/260)); df = lambda x: (kx, A_*2*math.pi/260*math.cos(2*math.pi*(x + 130)/260))
     tl = hermite([(f(x), df(x)) for x in (-130, -65, 0, 65, 130)])
     M['tilde'] = norm(stroke(tl, nib, taper=lambda u: 0.8 + 0.2*math.sin(math.pi*u)))
-    # hỏi: móc ? thu nhỏ, chân đứng ngắn; bút 0.85 bút dấu (nét cong nhỏ)
-    # vòng móc là cung tròn r 52 (độ cong đều: không nút thắt ở phía lòng), rồi đuôi cong về giữa
-    hc, hr = (4*sx, 100), (52 if sx == 1 else 60); a_end = math.radians(-40)
+    # hỏi: móc ? thu nhỏ; vòng là cung tròn HOOK_R (độ cong đều), rồi đuôi cong về giữa; bút 0.8 bút dấu (xem HOOK_*)
+    hc, hr = (4, HOOK_C), HOOK_R; a_end = math.radians(HOOK_END)
     e = (hc[0] + hr*math.cos(a_end), hc[1] + hr*math.sin(a_end)); te = (math.sin(a_end), -math.cos(a_end))
-    hk = arc(hc, hr, hr, 168, -40) + hermite([(e, te), (S(2, 4), (-0.1, -1))])
-    M['hook'] = norm(stroke(hk, (nib[0]*0.8, nib[1]), taper=lambda u: 1.1 - 0.25*u))
+    k = 1.0 if sx == 1 else HOOK_B[0]
+    hk = arc(hc, hr, hr, 168, HOOK_END) + hermite([(e, te), (HOOK_TAIL, (-0.1, -1))])
+    hk = [tuple((q[0]*k, q[1]*k) for q in sg) for sg in hk]
+    M['hook'] = norm(xform(stroke(hk, (nib[0]*(0.8 if sx == 1 else HOOK_B[1]), nib[1]), taper=lambda u: 1.1 - 0.25*u),
+                           lambda x, y: (x*sx, y)))
     # nặng: cùng họ chấm với dấu chấm (tròn), nhỏ hơn
     M['dotbelow'] = norm(ellipse((0, 0), t['mdot']/2, t['mdot']/2))
     # sừng ơ ư (một tấm chung): gốc (0,0) bám vào mép phải chữ; nét đi ra phải rồi vút lên, dày dần.
