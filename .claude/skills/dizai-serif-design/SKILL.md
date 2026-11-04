@@ -102,9 +102,8 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   - a và g chọn theo concept (đề xuất: a hai tầng, g hai tầng kiểu La Mã, kiểm
     lòng ở Bold).
 - **S11 Dấu tiếng Việt.** Dấu cùng hệ nét với chữ và có tương phản theo bút:
-  - sắc đi từ dưới-trái lên trên-phải nên là nét mảnh (t, đầu trên có thể đậm hơn
-    theo vết bút); huyền đi xuống-phải nên là nét dày (D thu nhỏ). Dấu là nét bút,
-    không phải tấm thép.
+  - **Sắc và huyền là cặp đối xứng gương** (designer 04/11: "dấu sắc và huyền không đồng bộ"): cùng hình nêm, đầu trên dày 0.80 N, chân 0.36 N; huyền = sắc lật ngang. Dấu là nét bút, không phải tấm thép.
+  - **Sừng ơ ư cắt phẳng**, không có giọt tròn (designer 04/11: "dấu ư không nên tròn").
   - Mũ: dựng như đỉnh A thu nhỏ, lòng luôn mở.
   - Trăng: nửa elip trục nghiêng.
   - Ngã: sóng có tương phản theo bút.

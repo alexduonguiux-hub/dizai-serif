@@ -228,9 +228,11 @@ def marks(w):
     t = T[w]; nib = (t['Nm'], t['mm']); sx = t['sx']; S = lambda x, y: (x*sx, y)
     M = {}
     # sắc: đi lên-phải → nét mảnh; đầu trên đậm hơn theo vết bút
-    a = line(S(-48, 0), S(48, 122)); M['acute'] = norm(stroke([a], nib, taper=lambda u: 0.72 + 0.55*u))
-    # huyền: đi xuống-phải → nét dày (D thu nhỏ), mảnh dần về chân
-    g = line(S(-48, 122), S(48, 0)); M['grave'] = norm(stroke([g], nib, taper=lambda u: 1.08 - 0.42*u))
+    # sắc / huyền (designer 04/11: "dấu sắc và huyền không đồng bộ"): một cặp đối xứng gương — cùng dài, cùng góc,
+    # cùng hình nêm: đầu trên dày 0.80 N, chân 0.36 N; huyền = sắc lật ngang (không còn chênh mảnh/dày theo bút)
+    a = line(S(-48, 0), S(48, 122)); wt, wb = 0.80*nib[0], 0.36*nib[0]
+    M['acute'] = norm(stroke([a], nib, wabs=lambda u: wb + (wt - wb)*u))
+    M['grave'] = norm(xform(M['acute'], lambda x, y: (-x, y)))
     # mũ: đỉnh A thu nhỏ — chân trái mảnh (/), chân phải dày (\), chân cắt ngang, đỉnh cắt phẳng 0.2 × nét dày; lòng mở.
     # Dựng như A: hai cạnh ngoài, hai cạnh trong (song song, cách đúng độ dày bút), giao nhau ở đỉnh trong.
     hw, hh = 150*sx, 150; ang = math.atan2(hh, hw)
@@ -264,10 +266,10 @@ def marks(w):
     M['hook'] = norm(stroke(hk, (nib[0]*0.8, nib[1]), taper=lambda u: 1.1 - 0.25*u))
     # nặng: cùng họ chấm với dấu chấm (tròn), nhỏ hơn
     M['dotbelow'] = norm(ellipse((0, 0), t['mdot']/2, t['mdot']/2))
-    # sừng ơ ư (một tấm chung): gốc (0,0) bám vào mép phải chữ; nét đi ra phải rồi vút lên, dày dần, kết bằng giọt (họ chấm)
-    V = t['V']; hn = hermite([(S(-50, -4), (1, 0.06)), (S(58, 40), (0.5, 1)), (S(78, 118), (0, 1))])
-    hs = stroke(hn, (1, 1), wabs=lambda u: V*(0.34 + 0.28*u))
-    M['horn'] = U(hs, ellipse(S(78, 118), 0.31*V, 0.31*V))
+    # sừng ơ ư (một tấm chung): gốc (0,0) bám vào mép phải chữ; nét đi ra phải rồi vút lên, dày dần.
+    # Đầu sừng cắt phẳng ngang như đầu thân (designer 04/11: "dấu ư không nên tròn" — bỏ giọt tròn)
+    V = t['V']; hn = hermite([(S(-50, -4), (1, 0.06)), (S(58, 40), (0.5, 1)), (S(80, 132), (0, 1))])
+    M['horn'] = stroke(hn, (1, 1), wabs=lambda u: V*(0.34 + 0.30*u))
     return M
 
 # ---------- chữ gốc ----------
