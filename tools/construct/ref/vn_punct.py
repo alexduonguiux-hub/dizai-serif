@@ -245,6 +245,7 @@ def norm(p, cx=None):
 # Nay: vòng r 58 (tâm y 106) dừng sớm ở −20°, đuôi dài hơn về (0, 4) → mép lòng chảy liền xuống cổ như dấu ?.
 # Bold = tâm nét Regular phóng đều 1.2 (giữ tỉ lệ vòng/đuôi), bút 0.70 × bút dấu Bold.
 HOOK_B = (1.2, 0.70); HOOK_END = -20; HOOK_TAIL = (0, 4); HOOK_R = 58; HOOK_C = 106
+Q_NARROW = (20, 200, 45)   # ? hẹp ngang 45 u: Regular 420 → 375, Bold 436 → 391
 def marks(w):
     t = T[w]; nib = (t['Nm'], t['mm']); sx = t['sx']; S = lambda x, y: (x*sx, y)
     M = {}
@@ -395,22 +396,29 @@ def punct(S, w):
     G[';'] = U(comma_shape(t, w), dot((r, up + r), d))
     ex_w = 0.98*V; G['!'] = U(wedge(ex_w/2, 700, 220 + 0.15*d, ex_w, 0.42*V), dot((ex_w/2, r - 3), d))
     # ? (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn"): lấy PHẦN ĐẦU SỐ 2 của designer (vòng móc + đầu nét trái,
-    # đồng bộ với bộ số), cắt ở y_cut nơi sống 2 bắt đầu đi chéo; nối một thân cong liền (một cung Hermite, tiếp tuyến khớp
-    # sống 2) xuống thẳng đứng, thon từ bề dày sống về 0.78 V, cắt ngang; chấm cùng họ dấu chấm đặt dưới thân.
+    # đồng bộ với bộ số), cắt ở y_cut nơi sống 2 bắt đầu đi chéo; nối thân cong liền xuống thẳng đứng; chấm cùng họ dấu chấm.
     two = letter(S, '2', w); y_cut = 400
-    top2 = I(two, rect(-50, y_cut, 1000, 800))
     def span(y):
         sp = I(two, rect(-50, y - 0.05, 1000, y + 0.05)); xs = sorted(set(round(p_[0], 1) for _, ps in sp.segments for p_ in ps))
         return xs[0], xs[-1]
-    a0_, a1_ = span(y_cut); b0_, b1_ = span(y_cut + 40)
-    c0 = ((a0_ + a1_)/2, y_cut); c1 = ((b0_ + b1_)/2, y_cut + 40)
-    tdir = (c0[0] - c1[0], c0[1] - c1[1])                         # hướng sống 2 đi xuống
-    w0 = (a1_ - a0_)*abs(tdir[1])/math.hypot(*tdir)              # bề dày vuông góc của sống tại chỗ cắt
-    sx = c0[0] - (95 if not bold else 100); y_end = 250 + 0.1*d
-    # thân bắt đầu từ trong sống 2 (lùi 1.5 bước 40 u) và rộng hơn sống 2 % để che trọn mặt cắt ngang: mối nối liền
-    stem = hermite([((c0[0] - tdir[0]*1.5, c0[1] - tdir[1]*1.5), tdir), ((sx, y_end), (0, -1))])
-    qs = stroke(stem, (1, 1), wabs=lambda u: 1.02*w0 + (0.78*V - 1.02*w0)*max(0, (u - 0.3)/0.7)**2*(3 - 2*max(0, (u - 0.3)/0.7)))
-    G['?'] = U(top2, qs, dot((sx, r - 3), d))
+    a0_, a1_ = span(y_cut)
+    c0 = ((a0_ + a1_)/2, y_cut)
+    sx = c0[0] - (95 if not bold else 100); y_end = 250 + 0.1*d; we = 0.78*V
+    # thân: hai mép là hai cung Hermite đi tiếp từ đúng hai mép sống 2 tại chỗ cắt (cùng điểm, cùng tiếp tuyến) xuống thẳng
+    # đứng, rộng 0.78 V, cắt ngang. Mép nối G1 với sống 2 nên không còn bậc ở mép phải (bản trước lệch 4 u).
+    e0, e1 = span(y_cut + 3); top2 = I(two, rect(-50, y_cut - 0.5, 1000, 800))
+    lt, rt = (a0_ - e0, -3), (a1_ - e1, -3)
+    Le = hermite([((a0_, y_cut), lt), ((sx - we/2, y_end), (0, -1))])[0]
+    Re = hermite([((a1_, y_cut), rt), ((sx + we/2, y_end), (0, -1))])[0]
+    qs = pathops.Path(); qs.moveTo(*Le[0]); qs.cubicTo(*Le[1], *Le[2], *Le[3]); qs.lineTo(*Re[3])
+    qs.cubicTo(*Re[2], *Re[1], *Re[0]); qs.close()
+    # hẹp ngang (designer 04/11: "dấu ? nên làm hẹp ngang lại bớt"): uốn mềm theo x trong dải tay trái Q_NARROW = (x0, x1, Δ):
+    # x' = x + Δ·smoothstep((x1 − x)/(x1 − x0)) — đầu nét trái dời sang phải Δ, vòng phải, thân, chấm giữ nguyên.
+    # Dải nằm ở tay trái đi lên (nét gần ngang, độ dày đo dọc) nên nét không mỏng đi.
+    qx0, qx1, qd = Q_NARROW
+    def qw(x, y):
+        u = min(1, max(0, (qx1 - x)/(qx1 - qx0))); return (x + qd*u*u*(3 - 2*u), y)
+    G['?'] = U(xform(U(top2, qs), qw), dot((sx, r - 3), d))
     # nháy thẳng ' "
     qt = lambda xc: wedge(xc, 711, 455, 0.86*V, 0.34*V, 0.25)
     G["'"] = qt(0.43*V); G['"'] = U(qt(0.43*V), qt(0.43*V + 0.86*V + 0.75*V))

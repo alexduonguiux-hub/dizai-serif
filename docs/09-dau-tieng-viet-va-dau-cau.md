@@ -60,7 +60,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | `,` | chấm tròn và đuôi **đều nét** 0.36 Ø (43 u / 59 u) cong xuống-trái, **cắt ngang** ở −1.0 Ø (designer 04/11: "thay vì làm nhỏ dần nét thì làm nó đều đi"; trước đó đuôi thon và đã được cắt bớt mũi nhọn). Đuôi rời chấm tiếp tuyến ở điểm phải nhất của chấm, không có mép thẳng thò ra. Dùng chung cho `; ’ ‘ ” “` |
 | `: ;` | chấm trên có đỉnh ở 480 (x-height tạm, chờ luật S10) |
 | `!` | nét thon, đỉnh cắt ngang rộng 0.98 V, chân rộng 0.42 V, hai cạnh lõm nhẹ như loe |
-| `?` | **lấy phần đầu số 2 của designer** (vòng móc + đầu nét trái), cắt ở y 400; thân là một cung Hermite liền tiếp tuyến với sống 2, thon về 0.78 V, cắt ngang; chấm cùng họ dấu chấm (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn") |
+| `?` | **lấy phần đầu số 2 của designer** (vòng móc + đầu nét trái), cắt ở y 400; thân có hai mép là hai cung Hermite đi tiếp đúng điểm và tiếp tuyến hai mép sống 2 (nối G1, không bậc) xuống thẳng đứng rộng 0.78 V, cắt ngang; chấm cùng họ dấu chấm (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn"). **Hẹp ngang** (designer 04/11: "dấu ? nên làm hẹp ngang lại bớt"): uốn mềm dải tay trái x 20–200, đầu nét trái dời vào 45 u; vòng phải, thân, chấm giữ nguyên. Rộng 375 / Bold 391 (trước 420 / 436) |
 | `' "` | nét thon từ 711 xuống 455, rộng 0.86 V → 0.34 V |
 | `’ ‘ ” “` | dấu phẩy nâng lên (‘ là ’ xoay 180°) |
 | `- – —` | dày 0.58 V (giữa H và V), tâm ở 330; `-` dài 250, `–` dài 420, `—` dài 920 |
@@ -87,7 +87,7 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 - **Kiểm tra** (`python3 tools/construct/qa_outline.py`):
   - Quét đoạn ngắn, gai, gãy, điểm trùng, điểm thẳng hàng, vòng li ti.
   - Bỏ qua lỗi kế thừa nguyên vẹn từ bản vẽ designer.
-  - Kết quả: trước khi dọn có **239** lỗi trên 101 glyph dựng theo luật. Sau khi dọn còn đúng các chỗ chủ ý: hai đầu nhọn của C trong €, chỗ giao bụng a với thân trong @, mũi loe chân &, chỗ thân ? gặp vòng số 2.
+  - Kết quả: trước khi dọn có **239** lỗi trên 101 glyph dựng theo luật. Sau khi dọn còn đúng các chỗ chủ ý: hai đầu nhọn của C trong €, chỗ giao bụng a với thân trong @, mũi loe chân &.
   - Bản vẽ designer: dọn 12 mẩu thừa dưới 2.5 u (A Bold, K, M, J Bold, 3, 5, 6 Bold, 9 Bold, V Bold) và các gãy G1 ở A Bold, V Bold, J, 8 Bold.
 
 **Chưa làm:**
