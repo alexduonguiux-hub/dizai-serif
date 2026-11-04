@@ -107,3 +107,74 @@ Designer duyệt control set: "duyệt, dựng tiếp toàn bộ chữ và số"
 - **S:** đã liền và đúng luật, nhưng dáng còn "cuộn" (bụng trên nhỏ, sống ngắn). Có thể chỉnh góc nối tâm (−68°) hoặc tỉ lệ hai vòng (46/54).
 - **Q:** độ dài và độ cong của đuôi.
 - **Spacing / kerning:** chưa làm. Preview đang dùng 40 u mỗi bên.
+
+
+## v0.3.1 (04/11) — sửa lỗi và dựng lại theo concept của designer
+
+Designer phản hồi: "nhiều số và chữ không giống concept", "lệch mà còn lỗi nữa", rồi gửi demo guide vẽ tay (6 7 8 9: elip trọn vòng + trục chéo).
+
+**Nguyên nhân.** v0.3 áp luật chung trước rồi mới dựng, nên những hình đặc trưng của bản vẽ (J, K, Q, S, W, số 1 2 3 5 6 7 9…) bị thay bằng hình "suy ra từ luật". Một số phép cắt còn sinh lỗi hình học.
+
+**Cách sửa.** Số đo lấy ngược từ chính đường cong v0.2 của designer (`tools/construct/ref/`):
+- `v02_paths.json`: vector gốc lấy từ Figma.
+- `ellfit.py`: nhận diện cung elip trong mỗi cubic (cubic có hai tay nắm cùng tỉ lệ ρ ⇒ cung conic, w = ρ / (4/3 − ρ)) → tâm, trục, góc của elip designer đã dùng.
+- `diff.py`: % diện tích lệch so với v0.2. `scan.py`: so từng đường quét ngang.
+
+Sau đó dựng lại từ các elip, đường thẳng và vòng compa đó (`glyphs.js`). Guide vẽ theo kiểu demo của designer: elip trọn vòng, hai trục, mép chéo kéo dài, mốc ngang cam (`guides.py`; trong Figma là các lớp "elip dựng" / "guide").
+
+### Lỗi đã sửa
+- Loe ở nét chéo (A V W X Y K R 7): phần chồng 3u đi theo pháp tuyến nên thò xuống dưới baseline thành gờ. Nay phần chồng đi dọc đường mũi.
+- A: hai đầu thanh lộ bậc nhỏ ở mép trong chân. Nay thanh chạy tới đường giữa của chân.
+- Z: hai mẩu thò ở đầu thanh. Nay mép chéo đi qua (W, cap − 17) và (0, 17), như v0.2.
+- 4: nét chéo chỉ còn một cái nêm rời khỏi thanh. 7: mảnh vụn ở chân (còn sót khối dựng cũ). 5, 6, 9: khấc ở thành trái. 3, 5 Bold: lòng kín, sai đầu hở.
+
+### Luật đo từ v0.2 (Regular, đơn vị font)
+- **J:** thân V xuống tận baseline. Góc ngoài cung r 170, góc trong cung r 85. Đuôi là thanh Hb chạy tới x = 0, đầu có mỏ L2.
+- **K:**
+  - tay mảnh t: mép trên chạm thân ở 0.54 cap; mép dưới tới cap tại W − FF − 52;
+  - chân dày D: mép trên mọc từ mép dưới của tay ở 0.58 cap, xuống baseline tại W − FF.
+- **W:** V1 rộng 0.70 W, V2 bắt đầu ở 0.268 W. Hai đầu giữa ở đỉnh cắt phẳng, không loe. Hai nét giữa cắt nhau.
+- **Y:**
+  - thân lệch phải (tâm 0.509 W);
+  - tay trái dày D chạm mép trái thân ở 0.464 cap; tay phải mảnh t chạm mép phải ở 0.53 cap;
+  - mép ngoài hai tay chạy thẳng tới góc, không loe; chỉ loe phía trong, mũi cách mép 2·FF.
+- **B, P, R:**
+  - bụng có đoạn thẳng 49 %, ngoài κ (0.55, 0.70), lòng κ (0.55, 0.84);
+  - P, R: bụng xuống tới 0.486 cap; R dùng đúng bụng của P; chân R nghiêng 27° so với phương đứng, mép phải ở W − 40, dày D;
+  - B: thanh giữa 0.567 cap; mép ngoài hai bụng gặp nhau tại một điểm (có khấc); bụng trên rộng 0.78.
+- **0:** vòng ngoài 289 × 361; lòng 187 × 322, nghiêng 15°.
+- **6:**
+  - bụng là vòng r 246, lòng 145 × 205, trục −60°;
+  - nét lên là một phần vòng lớn 289 × 367 (≈ vòng số 0), lòng 186 × 329, nghiêng 15°;
+  - đầu nét cắt theo đường qua (409, 527) và (452, 643).
+- **9:** là 6 xoay 180°.
+- **8:**
+  - vòng dưới 261 × 221, lòng 159 × 181, trục −60°;
+  - vòng trên 204 × 159, lòng 116 × 122, trục −60°.
+- **3, 5:**
+  - bụng là elip 258 × 244 tâm (190, 235); lòng 157 × 220, nghiêng 40°;
+  - mở ở trái, cắt dọc x = 0 tới cao 241;
+  - 3: chéo mảnh t, mép trái qua (145, 475);
+  - 5: thân mảnh t nghiêng 9°, chân thân cắt ngang ở 397.
+- **4:**
+  - thân ở 0.62 W, đỉnh vượt cap 9;
+  - thanh 0.24–0.33 cap, mỏ hướng lên;
+  - chéo mảnh t, mép ngoài từ (0, 0.316 cap) tới đỉnh thân.
+- **7:** thanh Hb, mỏ trái. Chéo dày D, mép phải qua (W, cap − 15) và (0.433 W, 0). Chân chỉ loe phía phải.
+- **1:** đỉnh thân vượt cap 11. Mép trên cờ là đường thẳng từ đỉnh thân tới mũi (0, cap − 100); mép dưới là cung L1.
+- **S, Q, 2** (đường cong tự do): giữ nguyên đường cong của designer (`ref_glyphs.json`). Guide gồm elip nhận diện được và tay nắm Bézier.
+- **Bold:**
+  - cùng các luật trên; lòng co lại 0.7 × (V_Bold − V_Regular);
+  - 3, 5: lòng co về phía dưới-phải, giữ mép trên-trái để đầu hở vẫn mở.
+
+### Độ lệch so với v0.2 (`docs/img/v0.3.1-lech-so-voi-v0.2.txt`)
+- Các glyph đã dựng lại lệch 0–6 % diện tích.
+- W lệch 8 %: đỉnh dưới V2 lệch 12u.
+- 7 lệch 11 %: thanh theo bảng nét Hb 40 (bản vẽ 34) và mỏ L2 sâu 54 (bản vẽ 28).
+
+### Còn mở
+- **2 Bold:** chưa có bản Bold v0.2. Bản tạm suy ra từ 2 Regular (tổng Minkowski với chữ nhật 37 × 30 rồi nén về cap). Dáng đúng nhưng có bậc nhỏ ở ba mũi nhọn và quá nhiều điểm. Cần designer vẽ.
+- Bold U V W X Y Z và các số Bold khác cũng chưa có bản v0.2 để đối chiếu; đang dựng theo luật đo từ Regular.
+- Mỏ L2 (54) sâu hơn mỏ trên 3, 5, 7 trong bản vẽ (28): cần designer chọn một giá trị chung.
+
+Ảnh: `docs/img/v0.3.1-Regular.png`, `v0.3.1-Bold.png`, `v0.3.1-dung-elip-Regular.png` (xanh đứt = v0.2), `v0.3.1-dung-elip-Bold.png`.

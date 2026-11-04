@@ -47,6 +47,13 @@ async function buildCell(grid, W8, ch) {
     else if (q.type === 'apex') { for (const d of [q.d1, q.d2]) line(fx(q.p[0]), fy(q.p[1]), fx(q.p[0] + d[0] * 110), fy(q.p[1] + d[1] * 110), COL.blue, 0.6, [4, 3]);
       const dt = figma.createEllipse(); cell.appendChild(dt); dt.resize(3.2, 3.2); dt.x = fx(q.p[0]) - 1.6; dt.y = fy(q.p[1]) - 1.6; dt.fills = [{ type: 'SOLID', color: rgb(COL.blue) }]; dt.name = 'điểm dựng'; }
     else if (q.type === 'cut') line(fx(q.x), fy(CAP + 50), fx(q.x), fy(-50), COL.blue, 0.6, [1, 2]);
+    else if (q.type === 'ellipse') { const ca = Math.cos(q.rot), sa = Math.sin(q.rot), pts = [];
+      for (let i = 0; i <= 72; i++) { const t = 2 * Math.PI * i / 72, x = q.rx * Math.cos(t), y = q.ry * Math.sin(t); pts.push([q.c[0] + x * ca - y * sa, q.c[1] + x * sa + y * ca]); }
+      vec('elip dựng', 'M ' + pts.map(p => fx(p[0]).toFixed(2) + ' ' + fy(p[1]).toFixed(2)).join(' L ') + ' Z', COL.ink, 0.5);
+      if (q.axes) for (const a of [q.rot, q.rot + Math.PI / 2]) { const L = 520, dx = Math.cos(a) * L, dy = Math.sin(a) * L; line(fx(q.c[0] - dx), fy(q.c[1] - dy), fx(q.c[0] + dx), fy(q.c[1] + dy), COL.ink, 0.4); } }
+    else if (q.type === 'line') { const L = 900, p = q.p, d = q.d; line(fx(p[0] - d[0] * L), fy(p[1] - d[1] * L), fx(p[0] + d[0] * L), fy(p[1] + d[1] * L), COL.ink, 0.4); }
+    else if (q.type === 'hline') line(0, fy(q.y), w, fy(q.y), COL.orange, 0.6);
+    else if (q.type === 'handles') { const p = q.p; line(fx(p[0][0]), fy(p[0][1]), fx(p[1][0]), fy(p[1][1]), COL.mute, 0.5); line(fx(p[3][0]), fy(p[3][1]), fx(p[2][0]), fy(p[2][1]), COL.mute, 0.5); }
   }
   const lab = (s, size, style, col, x, y) => { const t = figma.createText(); t.fontName = { family: 'Inter', style }; t.fontSize = size; t.characters = s; t.fills = [{ type: 'SOLID', color: rgb(col) }]; cell.appendChild(t); t.x = x; t.y = y; return t; };
   lab(ch, 20, 'Semi Bold', COL.ink, 14, 10);
