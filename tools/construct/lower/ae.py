@@ -43,13 +43,13 @@ def _adjust(key, dstr):
             if 84.9 <= x <= 93.01 and (y > 50 or y < -20 or abs(x - 93) < 0.01): x += STEM_IN
             out += [repr(x), repr(y)]; i += 2
         return ' '.join(out)
-    if key == 'e_bar':                                   # thanh ngang nở đều hai phía quanh tâm y 7
+    if key == 'e_bar' and False:
         k = EW[WEIGHT]['bar']/14
         return re.sub(r'(-?[\d.]+) (-?[\d.]+)', lambda m: f"{m.group(1)} {7 + (float(m.group(2)) - 7)*k!r}", dstr)
-    if key == 'e_arch':                                  # chân vòm phải kéo xuống theo mép dưới thanh (thanh nở quá y 89)
+    if key == 'e_arch' and False:                        # chân vòm phải kéo xuống theo mép dưới thanh (thanh nở quá y 89)
         dd = (EW[WEIGHT]['bar'] - 14)/2
         dstr = dstr.replace('L172 89 L136 89', f'L172 {89 + dd!r} L136 {89 + dd!r}')
-    if key in ('e_arch', 'e_bowl'):
+    if key in ('e_arch', 'e_bowl') and False:
         toks = re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', dstr); out = []; i = 0
         while i < len(toks):
             if toks[i] in 'MLCZ': out.append(toks[i]); i += 1; continue
@@ -134,11 +134,69 @@ def clean(ch):
         if abs(_extreme(p, False)[1] - OV_B) < 0.05 or _extreme(p, False)[1] > -2: break
     return p
 
+# e Bold (bản vẽ lại lần 2, lòng elip xoay): luật Bold docs/08 — mép ngoài giữ nguyên, mực nở vào lòng. Vòm + bụng nở đều
+# E_BOLD_IN = 0.9 × (O Bold − O Regular mỗi phía ≈ 37) ≈ 33 u về phía lòng (giãn mực bằng nét tròn rồi cắt theo hình bao ngoài
+# Regular, nên mép ngoài và mặt đầu cắt không đổi); thanh ngang nở đều hai phía 39.6 → 67.6 (+28 như thanh E/H Bold).
+E_BOLD_IN, E_BAR_B = 33.0, 67.6
+def _outer(p):
+    cs = list(p.contours); best = max(cs, key=lambda c: abs(c.area)); out = pathops.Path(); out.addPath(best)
+    return pathops.op(out, out, pathops.PathOp.UNION)
+def _q2c(p):
+    out = pathops.Path(); cur = None
+    for v, ps in p.segments:
+        if v == 'moveTo': out.moveTo(*ps[0]); cur = ps[0]
+        elif v == 'lineTo': out.lineTo(*ps[0]); cur = ps[0]
+        elif v == 'curveTo': out.cubicTo(*ps[0], *ps[1], *ps[2]); cur = ps[2]
+        elif v == 'qCurveTo':
+            pts = list(ps)
+            ons = []                                      # TrueType: các điểm off liên tiếp có điểm on ẩn ở giữa
+            for i in range(len(pts) - 1):
+                a = pts[i]; b = pts[i + 1] if i + 1 < len(pts) - 1 else None
+                end = ((a[0] + b[0])/2, (a[1] + b[1])/2) if b else pts[-1]
+                c1 = (cur[0] + 2/3*(a[0] - cur[0]), cur[1] + 2/3*(a[1] - cur[1])); c2 = (end[0] + 2/3*(a[0] - end[0]), end[1] + 2/3*(a[1] - end[1]))
+                out.cubicTo(*c1, *c2, *end); cur = end
+        elif v == 'closePath': out.close()
+    return out
+def e_bold():
+    pcs = {k: piece(k) for k in ('e_arch', 'e_bowl', 'e_bar')}
+    allp = V.U(*pcs.values()); dx = -allp.bounds[0]; pcs = {k: V.move(v, dx, 0) for k, v in pcs.items()}
+    ink = V.U(pcs['e_arch'], pcs['e_bowl']); bar = pcs['e_bar']; bx0, by0, bx1, by1 = bar.bounds
+    bw = pcs['e_bowl']; x_cut = bw.bounds[2]
+    y_tt = max(q[1] for _, ps in bw.segments for q in ps if abs(q[0] - x_cut) < 0.5)      # mặt trên đầu cắt
+    d = E_BOLD_IN; cy = (by0 + by1)/2; yb = cy - E_BAR_B/2                                    # mép dưới thanh Bold
+    # hình bao = mực + thanh + vùng mở giữa đầu cắt và thanh (chỉ phía trong, x từ 60, tới mép dưới thanh Bold): lòng được nở,
+    # mép ngoài và mặt đầu cắt không; thanh Bold thêm vào sau nên không bị cắt
+    mask = _outer(V.U(ink, bar, V.rect(60, y_tt, x_cut, yb)))
+    def dil(p):
+        st = pathops.Path(); st.addPath(p); st.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.ROUND_JOIN, 4)
+        st.convertConicsToQuads(); return V.U(p, st)
+    # vòm nở riêng và chỉ tới mép dưới thanh Bold: chân vách phải của vòm không thò xuống khoảng mở
+    grown = V.U(V.I(dil(pcs['e_arch']), V.I(mask, V.halfplane(yb))), V.I(dil(pcs['e_bowl']), mask))
+    barB = V.xform(bar, lambda x, y: (x, cy + (y - cy)*E_BAR_B/(by1 - by0)))
+    # thanh Bold thò dưới mặt nối 251.7: đầu phải (vát 10 px) lấp thẳng đứng tới mép ngoài, không khấc ở góc phải
+    fill = V.rect(bx1 - 40, yb, bx1, by0)
+    return _q2c(V.U(grown, barB, fill))
+
+def clean_path(p):
+    from tidy import tidy
+    for _ in range(12):
+        p = snap(p); t = _extreme(p, True)[1]; b = _extreme(p, False)[1]
+        if abs(t - OV_T) < 0.05 and (b > -2 or abs(b - OV_B) < 0.05): break
+    p = tidy(p, True)
+    for _ in range(6):
+        p = snap(p)
+        if abs(_extreme(p, False)[1] - OV_B) < 0.05 or _extreme(p, False)[1] > -2: break
+    return p
+
 BUILD = [('a', 'Regular'), ('e', 'Regular'), ('e', 'Bold')]
 if __name__ == '__main__':
     raw_, out = {}, {}
     for c, w in BUILD:
-        WEIGHT = w; raw_[f'{c}-{w}'] = [V.to_d(raw(c))]; out[f'{c}-{w}'] = [V.to_d(clean(c))]
+        WEIGHT = w
+        if (c, w) == ('e', 'Bold'):
+            r = e_bold(); raw_[f'{c}-{w}'] = [V.to_d(r)]; out[f'{c}-{w}'] = [V.to_d(clean_path(r))]
+        else:
+            raw_[f'{c}-{w}'] = [V.to_d(raw(c))]; out[f'{c}-{w}'] = [V.to_d(clean(c))]
     json.dump(raw_, open(os.path.join(HERE, 'raw_ae.json'), 'w'))
     json.dump(out, open(os.path.join(HERE, 'lower_ae.json'), 'w'))
     from make_ref import outline
