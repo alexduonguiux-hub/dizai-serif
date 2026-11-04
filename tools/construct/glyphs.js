@@ -8,6 +8,7 @@ const CAP = 700, OVS = 12;
 // Đường viền giữ từ bản vẽ v0.2 cho các glyph có đường cong tự do (S, Q, 2, 3, 5, 6, 9): ref_glyphs.json (ref/make_ref.py)
 const REF = typeof REF_DATA !== 'undefined' ? REF_DATA : (typeof require !== 'undefined' ? require('./ref_glyphs.json') : {});
 let VOPT = null; // tuỳ chọn cho V con trong W
+let NO_REF = false; // true: bỏ qua bản vẽ, dựng hoàn toàn theo luật (để so sánh)
 const RULES = { Regular: { V: 102, Vr: 106, D: 100, t: 44, Hb: 40, Hf: 90 }, Bold: { V: 139, Vr: 146, D: 146, t: 74, Hb: 68, Hf: 120 } };
 const WIDTH = {
   Regular: { A: 672, B: 473, C: 537, D: 558, E: 374, F: 374, G: 537, H: 499, I: 148, J: 303, K: 503, L: 408, M: 643, N: 499, O: 723, P: 473, Q: 757, R: 527, S: 394, T: 397, U: 499, V: 672, W: 780, X: 642, Y: 632, Z: 465,
@@ -57,6 +58,10 @@ const flipY = cmds => cmds.map(c => [c[0], ...c.slice(1).map(p => [p[0], CAP - p
 const rot180 = (cmds, W) => cmds.map(c => [c[0], ...c.slice(1).map(p => [W - p[0], CAP - p[1]])]);
 
 function makeGlyph(ch, W8) {
+  // Hình gốc của designer là chuẩn: nếu có bản vẽ thì glyph = bản vẽ, guide = hình học nhận diện từ chính đường cong.
+  // Chỉ những glyph chưa có bản vẽ (Bold U–Z, số Bold) mới dựng tạm theo luật bên dưới.
+  const ref = REF[`${ch}-${W8}`];
+  if (ref && !NO_REF) return { ch, W: ref.W, src: 'designer', parts: [{ name: 'Hình gốc (bản vẽ designer)', cmds: ref.cmds }], guides: ref.guides.map(g => Object.assign({}, g)) };
   const r = RULES[W8], W = WIDTH[W8][ch], parts = [], guides = [];
   const P = s => (parts.push(s), s);
   const G = (o) => guides.push(o);
@@ -321,7 +326,7 @@ function makeGlyph(ch, W8) {
     const sub = makeGlyphRaw('V', W8, Wv); for (const s of sub.parts) for (const k of ['cmds', 'minus', 'clip']) if (s[k]) s[k] = s[k].map(c => [c[0], ...c.slice(1).map(p => [p[0] + ox, p[1]])]);
     for (const g of sub.guides) for (const k of ['c', 'T', 'tip', 'p']) if (g[k]) g[k] = [g[k][0] + ox, g[k][1]]; return sub; }
   B[ch]();
-  return { ch, W, parts, guides };
+  return { ch, W, parts, guides, src: 'rule' };
 }
 function makeGlyphRaw(ch, W8, Wover) { const save = WIDTH[W8][ch]; WIDTH[W8][ch] = Wover; const g = makeGlyph(ch, W8); WIDTH[W8][ch] = save; return g; }
 const ALL = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');

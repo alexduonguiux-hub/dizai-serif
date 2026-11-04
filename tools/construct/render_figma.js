@@ -53,12 +53,13 @@ async function buildCell(grid, W8, ch) {
       if (q.axes) for (const a of [q.rot, q.rot + Math.PI / 2]) { const L = 520, dx = Math.cos(a) * L, dy = Math.sin(a) * L; line(fx(q.c[0] - dx), fy(q.c[1] - dy), fx(q.c[0] + dx), fy(q.c[1] + dy), COL.ink, 0.4); } }
     else if (q.type === 'line') { const L = 900, p = q.p, d = q.d; line(fx(p[0] - d[0] * L), fy(p[1] - d[1] * L), fx(p[0] + d[0] * L), fy(p[1] + d[1] * L), COL.ink, 0.4); }
     else if (q.type === 'hline') line(0, fy(q.y), w, fy(q.y), COL.orange, 0.6);
+    else if (q.type === 'circle') { const cm = [['M', [q.c[0] + q.r, q.c[1]]], ...arcCmds(q.c, q.r, 0, 2 * Math.PI)]; vec('vòng compa r ' + Math.round(q.r), D(cm), COL.orange, 0.5); }
     else if (q.type === 'handles') { const p = q.p; line(fx(p[0][0]), fy(p[0][1]), fx(p[1][0]), fy(p[1][1]), COL.mute, 0.5); line(fx(p[3][0]), fy(p[3][1]), fx(p[2][0]), fy(p[2][1]), COL.mute, 0.5); }
   }
   const lab = (s, size, style, col, x, y) => { const t = figma.createText(); t.fontName = { family: 'Inter', style }; t.fontSize = size; t.characters = s; t.fills = [{ type: 'SOLID', color: rgb(col) }]; cell.appendChild(t); t.x = x; t.y = y; return t; };
   lab(ch, 20, 'Semi Bold', COL.ink, 14, 10);
   const u = lab('U+' + ch.charCodeAt(0).toString(16).toUpperCase().padStart(4, '0'), 11, 'Regular', COL.mute, 0, 16); u.x = w - 14 - u.width;
-  lab(`mực ${g.W} u · adv ${g.W + 80} u`, 11, 'Regular', COL.mute, 14, h - 24);
+  lab(`mực ${g.W} u · adv ${g.W + 80} u` + (g.src === 'rule' ? ' · TẠM (chưa có bản vẽ)' : ''), 11, 'Regular', g.src === 'rule' ? COL.red : COL.mute, 14, h - 24);
   return cell;
 }
 for (const st of ['Regular', 'Semi Bold']) await figma.loadFontAsync({ family: 'Inter', style: st });

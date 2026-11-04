@@ -38,6 +38,8 @@ def cell(g, o, sc, ox, ref=None):
             out.append(f'<line x1="{fx(-60):.1f}" x2="{fx(W + 60):.1f}" y1="{fy(q["y"]):.1f}" y2="{fy(q["y"]):.1f}" stroke="#ef7b50" stroke-width="0.7"/>')
         elif t == "compass":
             out.append(f'<circle cx="{fx(q["c"][0]):.1f}" cy="{fy(q["c"][1]):.1f}" r="{q["r"] * sc:.1f}" fill="none" stroke="#e8a33a" stroke-width="0.6"/>')
+        elif t == "circle":
+            out.append(f'<circle cx="{fx(q["c"][0]):.1f}" cy="{fy(q["c"][1]):.1f}" r="{q["r"] * sc:.1f}" fill="none" stroke="#e8a33a" stroke-width="0.6"/>')
         elif t == "handles":
             p = q["p"]
             for a, b in ((p[0], p[1]), (p[3], p[2])):

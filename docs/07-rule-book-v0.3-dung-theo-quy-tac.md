@@ -178,3 +178,23 @@ Sau đó dựng lại từ các elip, đường thẳng và vòng compa đó (`g
 - Mỏ L2 (54) sâu hơn mỏ trên 3, 5, 7 trong bản vẽ (28): cần designer chọn một giá trị chung.
 
 Ảnh: `docs/img/v0.3.1-Regular.png`, `v0.3.1-Bold.png`, `v0.3.1-dung-elip-Regular.png` (xanh đứt = v0.2), `v0.3.1-dung-elip-Bold.png`.
+
+
+## v0.3.2 (04/11) — hình gốc của designer là chuẩn
+
+Designer phản hồi: "số 1, 2, 3 lỗi không giống tôi vẽ. Bản bold bị làm sai glyph ban đầu."
+
+**Quyết định.** Không dựng lại hình bằng luật nữa. Glyph = đúng bản vẽ của designer. Guide = hình học nhận diện từ chính đường cong đó, vẽ đè lên như demo của designer (6 7 8 9).
+- **Nguồn** (`tools/construct/ref/`):
+  - `designer_A.json`: Regular A–Z, trang "Design v0.2 — cân bằng".
+  - `designer_B.json`: Bold A–T và bộ số mới nhất (khung `2059:2`, có 6 và 9 vẽ lại, 2 chỉnh).
+- **Guide tự nhận diện** (`make_ref.py`):
+  - elip (vẽ trọn vòng + 2 trục);
+  - vòng compa của loe, mỏ, móc;
+  - mép chéo kéo dài;
+  - mốc ngang của thanh và tay;
+  - tay nắm Bézier cho đường cong tự do dài.
+- `glyphs.js` dùng bản vẽ khi có. Phần dựng theo luật chỉ còn cho các glyph **chưa có bản vẽ**: Bold U V W X Y Z và số Bold. Các ô này ghi nhãn đỏ "TẠM (chưa có bản vẽ)". `NO_REF = true` để xem lại bản dựng theo luật nếu cần so sánh.
+- Các mục "Luật đo từ v0.2" ở v0.3.1 chỉ còn là số đo tham khảo, không dùng để thay hình.
+
+**Cần designer:** bản vẽ Bold U–Z và bộ số Bold.
