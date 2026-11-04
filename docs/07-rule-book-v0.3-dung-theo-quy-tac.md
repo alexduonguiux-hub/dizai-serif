@@ -198,3 +198,21 @@ Designer phản hồi: "số 1, 2, 3 lỗi không giống tôi vẽ. Bản bold 
 - Các mục "Luật đo từ v0.2" ở v0.3.1 chỉ còn là số đo tham khảo, không dùng để thay hình.
 
 **Cần designer:** bản vẽ Bold U–Z và bộ số Bold.
+
+
+## v0.3.3 (04/11) — số Bold theo bản vẽ của designer, cân weight
+
+Nguồn: Figma `2062:452` (1 3 2 5 6 9 7 Bold do designer vẽ) → `tools/construct/ref/designer_boldfig_raw.json`. Yêu cầu: "vẽ lại cho smooth và đồng bộ về weight".
+
+- **Thước weight:** mật độ mực = mực ÷ ((rộng + 80) × 700).
+  - Mục tiêu mỗi số = mật độ số Regular × 1.294 (tỉ lệ Bold/Regular trung bình của chữ A–T designer).
+- **Cân bằng** (`ref/adjust_bold_fig.py`): dời đều đường viền theo pháp tuyến bằng offset Tiller–Hanson trên đa giác điều khiển, không dùng boolean.
+  - Giữ nguyên các cạnh nằm trên đường kẻ (0, 700, ±11.3, 711.3, 702.8, 708.5) và các mặt cắt ở mép ô chữ.
+  - Sau đó giãn về đúng khung, nắn liền tiếp tuyến ở nút trơn, nắn cạnh gần đứng/ngang cho thẳng.
+  - Lượng dời: 2 −6.3u · 3 −1.4 · 5 −2.4 · 6 +2.2 · 7 +1.6 · 9 +2.2 · 1 giữ nguyên (lệch 2 %).
+- **0 và 8** (không có trong bản vẽ): giữ vòng ngoài của Regular; lòng là elip 4 điểm của Regular co lại như O Bold, tới đúng mật độ mục tiêu.
+- **4** (không có trong bản vẽ): bản suy ra từ Regular (thân +37 sang trái, chéo dày vào lòng, thanh +28 xuống).
+- **Kiểm tra:** không còn gãy tiếp tuyến ngoài các góc cố ý của bản vẽ (chân thân 5, góc trên-phải 7). Đáy/đỉnh đúng đường kẻ.
+- **Ảnh:** `docs/img/v0.3.3-so-Regular-Bold.png`, `docs/img/v0.3.3-so-Bold-guide.png`.
+
+Còn thiếu bản vẽ: Bold U–Z (đang là bản dựng tạm theo luật).
