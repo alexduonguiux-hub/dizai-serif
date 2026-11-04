@@ -248,9 +248,11 @@ def marks(w):
     flat = 0.2*nib[0]; ytop = hh*(1 - flat/(2*hw))
     M['circumflex'] = norm(poly([Lo0, (xi(Lo0, Lo1, ytop), ytop), (xi(Ro0, Ro1, ytop), ytop), Ro0, Ri0, inn, Li0]))
     # trăng: nửa elip trục nghiêng (như lòng O): ngoài là nửa elip, lòng là elip xoay 18° → dày dưới-trái, mảnh dưới-phải; đầu mảnh
-    ro, rv = 118*sx, 96
-    ri, ci = ro - 0.33*nib[0], 22; rvi = ci + rv - 0.72*nib[0]        # đáy dày 0.72 N, hai đầu ≈ 0.4 N
-    br = D(ellipse((0, 0), ro, rv), ellipse((0, ci), ri, rvi, 12))
+    # trăng (designer 04/11: "dấu ă cũng hơi lỗi"): lưỡi liềm ĐỐI XỨNG — nửa elip ngoài (ro, rv) trừ lòng elip có tâm nâng
+    # lên 0.5 rv: đáy dày tb = 0.66 N, hai đầu thon te = 0.42 N, cắt ngang; lòng sâu nên không bẹt ở Bold.
+    ro, rv = 112*sx, (90 if sx == 1 else 100); tb, te = 0.66*nib[0], 0.42*nib[0]
+    ci = 0.5*rv; ryi = ci + rv - tb; rxi = (ro - te)/math.sqrt(1 - (ci/ryi)**2)
+    br = D(ellipse((0, 0), ro, rv), ellipse((0, ci), rxi, ryi))
     M['breve'] = norm(I(br, halfplane(0, above=False)))
     # ngã: sóng; đoạn đi lên mảnh, đoạn đi xuống dày; hai đầu thon
     # tâm nét là một chu kỳ sin: y = 32 sin(2π(x+130)/260), đỉnh ở −65, đáy ở +65 (độ cong đỉnh R ≈ 53 > nửa nét)
@@ -268,8 +270,10 @@ def marks(w):
     M['dotbelow'] = norm(ellipse((0, 0), t['mdot']/2, t['mdot']/2))
     # sừng ơ ư (một tấm chung): gốc (0,0) bám vào mép phải chữ; nét đi ra phải rồi vút lên, dày dần.
     # Đầu sừng cắt phẳng ngang như đầu thân (designer 04/11: "dấu ư không nên tròn" — bỏ giọt tròn)
-    V = t['V']; hn = hermite([(S(-50, -4), (1, 0.06)), (S(58, 40), (0.5, 1)), (S(80, 132), (0, 1))])
-    M['horn'] = stroke(hn, (1, 1), wabs=lambda u: V*(0.34 + 0.30*u))
+    # Tâm nét là MỘT cung Bézier (không nối đoạn) để đường cong liền mượt (designer 04/11: "điều chỉnh nét cong của dấu ư
+    # lại cho smooth"); độ dày tăng theo smoothstep 0.34 V → 0.64 V.
+    V = t['V']; hn = [(S(-50, -2), S(30, -2), S(82, 40), S(84, 132))]
+    M['horn'] = stroke(hn, (1, 1), wabs=lambda u: V*(0.34 + 0.30*(u*u*(3 - 2*u))))
     return M
 
 # ---------- chữ gốc ----------
@@ -285,10 +289,13 @@ def anchor_x(ch, p):
     return (x0 + x1)/2
 
 def horn_anchor(ch, p, w):
-    """điểm bám của sừng: Ư — mép ngoài thân phải ở 0.91 cap; Ơ — vai phải của vòng O (góc 38°)"""
+    """điểm bám của sừng (designer 04/11: "dấu ư lỗi và không đồng bộ"):
+    Ơ — vai phải của vòng O (góc 38°); Ư — mép ngoài thân phải ở CÙNG cao độ với Ơ, nên đầu sừng hai chữ ngang nhau.
+    Ở Ư sừng thay cho loe ngoài của thân phải (loe bị cắt trong compose), không còn khe giữa loe và sừng."""
     x0, y0, x1, y1 = bounds(p)
     if ch == 'U':
-        y = 0.9*CAP; s = I(p, rect(x0, y - 0.05, x1, y + 0.05)); return (bounds(s)[2], y)
+        y = CAP/2 + (CAP + 2*OV)/2*math.sin(math.radians(38))
+        s = I(p, rect(x0, y - 0.05, x1, y + 0.05)); return (bounds(s)[2], y)
     a = math.radians(38); cx, cy = (x0 + x1)/2, (y0 + y1)/2; rx, ry = (x1 - x0)/2, (y1 - y0)/2
     return (cx + rx*math.cos(a), cy + ry*math.sin(a))
 
@@ -311,7 +318,9 @@ def place_right(circ, m, w):
 def compose(S, M, ch_base, mod, tone, w):
     base = letter(S, ch_base, w); cx = anchor_x(ch_base, base); parts = [base]; above = []
     if mod == 'horn':
-        ax, ay = horn_anchor(ch_base, base, w); parts.append(move(M['horn'], ax, ay))
+        ax, ay = horn_anchor(ch_base, base, w)
+        if ch_base == 'U': parts[0] = D(base, rect(ax, ay, ax + 300, CAP + 50))   # bỏ loe ngoài thân phải: sừng thay chỗ loe
+        parts.append(move(M['horn'], ax, ay))
     elif mod:
         m0 = move(M[mod], cx, MARK_Y); above.append(m0)
     if tone and tone != 'dotbelow':
@@ -409,14 +418,39 @@ def punct(S, w):
     c = letter(S, 'C', w); cb = bounds(c); ew = cb[2] - cb[0]; eh = H*1.05
     e = U(c, rect(-0.12*ew, 300 - eh/2, 0.6*ew, 300 + eh/2), rect(-0.12*ew, 430 - eh/2, 0.66*ew, 430 + eh/2))
     G['€'] = e
-    # &: một nét bút liền (luật bút chữ) — chân phải đi lên-trái (dày), vòng trên, bụng dưới, tay phải vút lên
-    k = 1.0 if not bold else 1.18; Hh = 0.5*H
-    # vòng trên là oval đứng (phải 350, trái 160), nét trong vòng nhẹ hơn 0.78 (lòng mở như lòng B trên)
-    amp = hermite([((585*k, 8), (-0.72, 1)), ((330*k, 380), (-0.3, 1)), ((352*k, 572), (0, 1)), ((256*k, 711 - Hh - 6), (-1, 0)),
-                   ((160*k, 592), (0, -1)), ((206*k, 470), (0.12, -1)), ((120*k, 300), (-0.62, -1)), ((62*k, 170), (0, -1)),
-                   ((225*k, -11 + Hh + 4), (1, 0)), ((432*k, 118), (0.9, 1)), ((540*k, 318), (0.35, 1))])
-    lt = lambda u: 1 - (0.22 if not bold else 0.3)*max(0, 1 - abs(u - 0.32)/0.2)
-    G['&'] = stroke(amp, (t['N']*0.9, t['m']), taper=lt)
+    # & (designer 04/11: "ký tự & cũng lỗi"): dựng từ SỐ 8 của designer để đồng bộ nét và vòng:
+    #   cắt bỏ góc trên-phải của bụng dưới (từ tâm bụng dưới lên tới eo) → vòng trên mở ở chân phải và chảy thành chân;
+    #   chân là nét chéo dày D (như chân K, X), từ eo xuống chân phải, cắt ngang ở baseline, cắt trên ở eo.
+    e8 = letter(S, '8', w); eb = bounds(e8)
+    lc = (261, 210) if not bold else (275, 210)                 # tâm lòng dưới (đo từ bản vẽ 8)
+    waist = 413 if not bold else 405
+    amp = D(e8, poly([(lc[0], lc[1] + 5), (eb[2] + 50, lc[1] - 25), (eb[2] + 50, waist - 8), (lc[0] + 40, waist - 8)]))
+    Dd = 100 if not bold else 146
+    top, foot = ((lc[0] + 55, waist), (eb[2] + 70, 0)) if not bold else ((lc[0] + 60, waist), (eb[2] + 85, 0))
+    L = math.dist(top, foot); nx, ny = (foot[1] - top[1])/L, -(foot[0] - top[0])/L
+    ext = lambda p, k: (p[0] + (foot[0] - top[0])/L*k, p[1] + (foot[1] - top[1])/L*k)
+    a, b = ext(top, -120), ext(foot, 160)
+    leg = poly([(a[0] - nx*Dd/2, a[1] - ny*Dd/2), (b[0] - nx*Dd/2, b[1] - ny*Dd/2), (b[0] + nx*Dd/2, b[1] + ny*Dd/2), (a[0] + nx*Dd/2, a[1] + ny*Dd/2)])
+    # đỉnh chân: kéo lên quá eo rồi cắt theo mép ngoài số 8 (không để góc chân thò ra ngoài vòng)
+    filled = pathops.Path(); first = True
+    for v, ps in e8.segments:
+        if v == 'moveTo' and not first: break
+        first = False
+        if v == 'moveTo': filled.moveTo(*ps[0])
+        elif v == 'lineTo': filled.lineTo(*ps[0])
+        elif v == 'curveTo': filled.cubicTo(*ps[0], *ps[1], *ps[2])
+        elif v == 'closePath': filled.close()
+    leg = I(leg, U(filled, rect(-100, 0, 3000, waist - 90)))
+    leg = I(leg, rect(-100, 0, 3000, waist + 40))
+    cs = []; cur = None                                           # lòng trên của số 8 (contour có tâm cao nhất)
+    for v, ps in e8.segments:
+        if v == 'moveTo': cur = pathops.Path(); cur.moveTo(*ps[0])
+        elif v == 'lineTo': cur.lineTo(*ps[0])
+        elif v == 'curveTo': cur.cubicTo(*ps[0], *ps[1], *ps[2])
+        elif v == 'closePath': cur.close(); cs.append(cur)
+    upc = max(cs[1:], key=lambda c: bounds(c)[1])
+    leg = D(leg, pathops.op(upc, upc, pathops.PathOp.UNION))     # chân không lấn vào lòng trên
+    G['&'] = U(amp, leg)
     # @: vòng ngoài là nét bút gần trọn vòng; bên trong là "a" một tầng (lòng elip + thân)
     R0, cy = 335, 300; cx0 = R0 + 50
     # thân "a" đi xuống, vòng chữ U (bán kính ≈ 118) sang phải, nhập vào vòng ngoài ở góc 0° rồi chạy ngược chiều kim đồng hồ tới 300°

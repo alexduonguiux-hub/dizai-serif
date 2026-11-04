@@ -31,11 +31,11 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | sắc | nét thẳng đi lên-phải, hình nêm: đầu trên dày 0.80 N, chân 0.36 N | rộng 96, cao 122 |
 | huyền | **sắc lật ngang** (đối xứng gương: cùng dài, cùng góc, cùng hình nêm). Designer 04/11: "dấu sắc và huyền không đồng bộ" → bỏ chênh mảnh/dày theo bút giữa hai dấu | như sắc |
 | mũ | dựng như đỉnh A: hai cạnh ngoài, hai cạnh trong song song; chân trái mảnh, chân phải dày (× 0.85 để lòng mở ở Bold); chân cắt ngang; đỉnh cắt phẳng 0.2 N | rộng 300, cao 142 |
-| trăng | nửa elip ngoài trừ lòng elip xoay 12° (trục nghiêng như lòng O): đáy dày 0.72 N, hai đầu ≈ 0.4 N, cắt ngang | rx 118, ry 96 |
+| trăng | **lưỡi liềm đối xứng** (designer 04/11: "dấu ă cũng hơi lỗi"): nửa elip ngoài trừ lòng elip có tâm nâng 0.5 rv; đáy dày 0.66 N, hai đầu thon 0.42 N, cắt ngang | rx 112, ry 90 (Bold 100) |
 | ngã | tâm nét là một chu kỳ sin: biên độ 32, bước sóng 260; đoạn đi lên mảnh, đoạn đi xuống dày. Bold: biên độ 28, giãn ngang 1.14 (bán kính đỉnh lớn hơn nửa nét) | rộng 260 |
 | hỏi | ? thu nhỏ: vòng là cung tròn r 52 (Bold 60), quét 168° → −40°, đuôi về giữa; bút 0.8 bút dấu | cao 170 |
 | nặng | chấm tròn, cùng họ với dấu chấm | Ø 100 / Bold 138 |
-| sừng ơ ư | **một tấm chung**: nét ra phải rồi vút lên; dày 0.34 V → 0.64 V; **đầu cắt phẳng ngang** như đầu thân (designer 04/11: "dấu ư không nên tròn" → bỏ giọt tròn) | bám Ư ở mép ngoài thân phải, cao 0.9 cap; bám Ơ ở vai vòng O, góc 38° |
+| sừng ơ ư | **một tấm chung**, tâm nét là **một cung Bézier liền** (designer 04/11: "điều chỉnh nét cong của dấu ư lại cho smooth"); dày 0.34 V → 0.64 V theo smoothstep; đầu cắt phẳng ngang (bỏ giọt tròn) | Ơ bám vai vòng O ở góc 38°; **Ư bám mép ngoài thân phải ở cùng cao độ** nên đầu sừng hai chữ ngang nhau, và ở Ư sừng thay cho loe ngoài của thân phải (designer 04/11: "dấu ư lỗi và không đồng bộ") |
 
 **Vị trí dấu:**
 - Đáy dấu thấp nhất ở y = 750, tức cap + overshoot 11.3 + khe 36.
@@ -72,14 +72,13 @@ Bold giãn ngang × 1.08. Mọi số ở dưới tính theo đơn vị u.
 | `%` | hai vòng kiểu O (lòng xoay 30°) và nét chéo 0.6 V |
 | `$` | S của designer và nét đứng dày 1.1 H, vươn từ −100 tới 800 |
 | `€` | C của designer và hai thanh dày 1.05 H, ở 300 và 430 |
-| `&` | một nét bút liền: chân phải đi lên-trái (dày), vòng trên là oval đứng với nét nhẹ 0.78, bụng dưới, tay phải vút lên |
+| `&` | **dựng từ số 8 của designer** (designer 04/11: "ký tự & cũng lỗi"): cắt góc trên-phải của bụng dưới từ tâm lòng dưới lên tới eo, để vòng trên chảy thành chân; chân là nét chéo dày D (100 / 146) như chân K, X, cắt ngang ở baseline, cắt theo mép ngoài số 8 và không lấn vào lòng trên |
 | `@` | vòng ngoài là nét bút từ 0° tới 300°; bên trong là a một tầng, thân a cong chữ U nhập vào vòng ngoài |
 
 **Chưa làm:**
 - `₫` cần đ thường, chờ luật chữ thường S10.
 
 **Cần designer xem kỹ:**
-- `&` Bold: lòng vòng trên nhỏ.
 - `@` và `?`: là hình dựng theo luật, chưa có bản vẽ.
 
 Ảnh:
