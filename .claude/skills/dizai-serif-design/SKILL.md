@@ -49,9 +49,11 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   | t | nét mảnh: chéo /, thân mảnh của M N | 44 (15.5) | 74 (26) |
   | H | ngang mảnh: thanh, tay, đỉnh/đáy bụng | 40 (14) | 68 (24) |
   | Sp | sống S / thành bụng S | 104 (36.7) / 96 (34) | 143 (50.3) / 130 (46) |
-  | Vf | thân số | 96 (34) = 0.95 V | — |
-  | Hf | ngang số (2 3 4 5 7) = H | 40 (14) — duyệt 04/11 ("ngang số để 40") | — |
-  | Loe đầu thanh | một hình duy nhất (chân L): nhô 19 px trên đoạn 14 px | | |
+  | Vf | thân số | 102 (36) = V, giữ như bản vẽ gốc | — |
+  | Hf | ngang số (2 3 4 5 nóc, 4 thanh) | 90 (32): **nét ngang dày là bản sắc của bộ số** (designer 04/11: "nét số cũ đang đẹp và đồng bộ style hơn"); 7 nóc 34 (12) | — |
+
+  Cân bằng số ↔ chữ đo bằng MẬT ĐỘ MỰC (diện tích mực ÷ (bề ngang mực + 2 × 40 u) ÷ cap),
+  không đo bằng độ dày từng nét: v0.2 số 0.344, chữ hoa 0.335 (+2.7 %, trong ngưỡng ±5 %).
 
   Cap = 247 px trong Figma = 700 u (1 px = 2.834 u). Số chính thức đo trên vector Figma,
   không đo trên ảnh: răng cưa của ảnh từng làm nét 14 px đọc thành 33 u.
@@ -102,7 +104,7 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   - Dấu hoa dùng bộ `.case`. Khe dấu–dấu ≥ 30, dấu–chữ ≥ 36.
   - Sừng ơ ư dùng chung một tấm.
   - Phủ đủ 134 chữ Việt và dấu tổ hợp.
-- **S12 Số.** Ngang số Hf = 40, cùng màu với chữ. Lining cao bằng cap. 1 có cờ, cùng góc ở mọi weight. 3 và 5 chung bụng
+- **S12 Số.** Giữ nét ngang dày (Hf 32 px) như bản vẽ gốc. Màu chữ cân bằng theo mật độ mực trung bình, không ép từng nét bằng chữ. Lining cao bằng cap. 1 có cờ, cùng góc ở mọi weight. 3 và 5 chung bụng
   dưới. 6 và 9 chung bụng (xoay 180°). 8 có vòng trên nhỏ hơn. 4 có thanh ~0.25 cap.
   Có tnum.
 - **S13 Tiến triển weight.** Một khung xương; mỗi weight khác nhau ở bảng nét. Dùng

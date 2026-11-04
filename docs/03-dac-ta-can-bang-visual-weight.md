@@ -1,5 +1,7 @@
 # Dizai Serif — Đặc tả cân bằng visual weight (v0.2, 04/11/2026)
 
+> **Ghi đè:** phần về số (Hf 40, Vf 96, "số đậm hơn 15–20 %") đã bị huỷ. Xem đầu `04-v0.2-thay-doi-trong-figma.md`.
+
 > **Đã duyệt 04/11/2026** (lời designer: "ngang số để 40, vòng tăng lên 106"):
 > Hf = 40 cho 2 3 4 5 7; Vr = 106 cho O Q C G D. Các luật S2-Vr và S2-Hf đã chốt.
 
