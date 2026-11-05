@@ -197,6 +197,21 @@ def build_w(S, L, w):
     S0 = q2c(D(S0, rect(-100, -100, b[0] + 0.46*(b[2] - b[0]), b[1] + 0.43*hs)))
     rot = xform(S0, lambda x, y: (b[2] - x, b[3] - y)); ov = 0.47*hs
     sec = q2c(U(move(S0, 0, hs - ov), rot)); bb = bounds(sec)
+    # lòng vòng giữa = MỘT ELIP nội tiếp hộp của lòng (designer 05/11: "lỗi vòng khuyết trong" — góc nhát cắt ló vào lòng):
+    # lấp kín lòng rồi khoét lại bằng elip
+    cs = []; cur = None
+    for v, ps in sec.segments:
+        if v == 'moveTo': cur = pathops.Path(); cur.moveTo(*ps[0])
+        elif v == 'lineTo': cur.lineTo(*ps[0])
+        elif v == 'curveTo': cur.cubicTo(*ps[0], *ps[1], *ps[2])
+        elif v == 'closePath': cur.close(); cs.append(cur)
+    mid = (bb[1] + bb[3])/2
+    holes = [c for c in cs if bounds(c)[1] < mid < bounds(c)[3] and (bounds(c)[2] - bounds(c)[0]) < 0.8*(bb[2] - bb[0])]
+    if holes:
+        hb = bounds(min(holes, key=lambda c: (bounds(c)[2] - bounds(c)[0])*(bounds(c)[3] - bounds(c)[1])))
+        fill = pathops.Path(); fill.addPath(min(holes, key=lambda c: (bounds(c)[2] - bounds(c)[0])*(bounds(c)[3] - bounds(c)[1])))
+        fill = pathops.op(fill, fill, pathops.PathOp.UNION)
+        sec = q2c(D(U(sec, fill), ellipse(((hb[0] + hb[2])/2, (hb[1] + hb[3])/2), (hb[2] - hb[0])/2, (hb[3] - hb[1])/2)))
     G['§'] = move(sec, 0, 330 - (bb[1] + bb[3])/2)
     # ¶ : bụng đặc (nửa elip trái) + hai thân 0.5 V, −150 … 700
     st = 0.5*Vv; bx = 300
