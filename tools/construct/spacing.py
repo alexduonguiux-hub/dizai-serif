@@ -64,7 +64,8 @@ SPACE = lerp_w({'Regular': 230, 'Bold': 245})                                   
 NOKERN = set('*<>\\^_`|~•·©®™°±÷−‰§¶†‡£¥¢µ') | set(MATH)
 CAPS = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'); LOWER = list('abcdefghijklmnopqrstuvwxyz'); FIG = list('0123456789')
 
-ROUND_R, ROUND_L, ROUND_A = 'DO', 'OCGQ', 1.0      # cặp tròn × A: khe mực nhỏ nhất ≤ 1.0 × khe HH
+ROUND_R, ROUND_L, ROUND_A = 'DO', 'OCGQ', 1.0      # cặp tròn × chéo: khe mực nhỏ nhất ≤ 1.0 × khe HH
+WEDGE_X = 'AVWYT'                                  # chữ chéo / tay vươn tạo nêm trắng
 
 def kind(ch):
     if ch in COMB: return 'mark'
@@ -248,7 +249,7 @@ def main():
                         lim = 0.4*min(sp[ra_][1], sp[rb_][1]); k = max(-lim, min(lim, k)); k = math.ceil(k/5)*5
                 # TRÒN × A (designer 05/11: "ĐÂ, ĐĂ và ĐA kerning vẫn hơi xa"): tham chiếu để khe mực nhỏ nhất DA / OA / AO ≈ 1.5 ×
                 # khe HH (128 / 86 u) — nêm trắng của A cộng bụng tròn thành lỗ. Luật: khe nhỏ nhất ≤ ROUND_A × khe HH
-                if (ra_ in ROUND_R and rb_ == 'A') or (ra_ == 'A' and rb_ in ROUND_L):
+                if (ra_ in ROUND_R and rb_ in WEDGE_X) or (ra_ in WEDGE_X and rb_ in ROUND_L):   # 05/11: mở rộng OV DY… (V W Y T)
                     g = pair_gap(a, b_, k); gm = float(np.nanmin(g)); gh = float(np.nanmin(pair_gap('H', 'H', 0.0)))
                     if gm > ROUND_A*gh: k -= math.floor((gm - ROUND_A*gh)/5)*5
                 if k <= -10 or k >= 5: KC[f'{rc}|{lc}'] = k
