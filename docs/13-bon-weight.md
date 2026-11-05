@@ -237,3 +237,36 @@ Loe, nhát cắt ngang, độ dày nét giữ nguyên. Bề ngang: V 672→618 /
 
 Designer: "ĐÂ, ĐĂ và ĐA kerning vẫn hơi xa". Trắng cặp theo tham chiếu cho DA / OA / AO khe mực nhỏ nhất 128–136 u ≈ 1.5 × khe HH (86): nêm trắng của A cộng bụng tròn thành lỗ. Luật mới (`spacing.py`, ROUND_A = 1.0): cặp D O (Đ Ð Ơ… theo chữ gốc) + A và A + O C G Q kéo vào tới khi khe mực nhỏ nhất ≤ khe HH. Kết quả DA −55 → −95 (Bold −100), OA −105, AO AC AG AQ −95 (Bold −100); áp cho mọi biến thể dấu (ĐÂ ĐĂ ĐẠ ĐÀ ĐOÀN…). Va chạm 0, âm tiết Việt không đổi, 4 weight nhất quán.
 Mở rộng (designer: "siết luôn các cặp OV DY theo luật đó"): luật áp cho mọi chữ chéo / tay vươn WEDGE_X = A V W Y T, hai phía. Regular / Bold: OV −90/−100 · DV −85/−95 · OW −85/−90 · DY −110/−115 · OY −125/−120 · OT −80/−50 · VO −95/−80 · WO −90/−95 · YO −130 · TO −80/−55 (Bold T đã sát do tay T dày). Va chạm 0, âm tiết Việt không đổi.
+
+## Bản variable + Italic (05/11)
+
+Designer: "làm bản variable luôn nhé, thêm cả Italic". `tools/construct/export_font.py` (sau `spacing.py`) → `fonts/`:
+
+| Thư mục | Nội dung |
+|---|---|
+| `fonts/variable/` | `DizaiSerif[wght].ttf`, `DizaiSerif-Italic[wght].ttf` — trục wght 400–700, instance Regular 400 · Medium 500 · SemiBold 600 · Bold 700; STAT có trục `ital` (Roman ↔ Italic liên kết) |
+| `fonts/otf/`, `fonts/ttf/` | 8 bản tĩnh `DizaiSerif-{Regular, Medium, SemiBold, Bold}[Italic]` |
+
+- **Master**: Regular + Bold (outlines.json sau `compat_masters.py`, cùng cấu trúc ở cả 324 glyph). Medium / SemiBold không là master: outline, dịch outline, advance và kerning của chúng = ĐÚNG nội suy hai master (spacing.py) → bản tĩnh trùng khít bản variable.
+- **Chiều contour** chuẩn PostScript theo độ lồng (58 contour ở 44 glyph do designer vẽ chiều kim đồng hồ được đảo cùng chỉ số ở hai master).
+- **Kerning**: class → groups `public.kern1/2`; 5 287 ngoại lệ chống va ghi tường minh ở cả hai master. Ngoại lệ tương thích variable: cặp nào nội suy ở M / SB chặt hơn mức chống va thật thì nới cả R / B (59 cặp, theo đơn vị 1 u). Hệ quả nhỏ: Tĩ / Vĩ Regular, ư + i m n SemiBold thưa hơn cặp gốc 17–33 u.
+- **ccmp**: chuỗi NFD (gốc + dấu tổ hợp, kể cả hai dấu như ấ = a + ̂ + ́, ợ = o + ̛ + ̣) → chữ dựng sẵn.
+- **Vertical metrics** một bộ: typo = hhea 960 / −240 (dòng 1.2 em, USE_TYPO_METRICS), usWin 1070 / 246 bao chồng dấu cao nhất (1060) và đuôi thấp nhất (−236).
+
+### Italic I1 — roman nghiêng có hệ thống
+
+Chữ glyphic loe nét có tiền lệ italic là **roman nghiêng** (Optima Italic, Palatino Sans Italic), không phải chữ viết tay. I1: mọi glyph nghiêng 10° quanh đường y = ½ x-height (247.5). Vì mọi glyph nghiêng như nhau quanh cùng một đường, khe giữa hai chữ ở mọi cao độ giữ nguyên → spacing / kerning / chống va của Roman đúng tuyệt đối cho Italic. post.italicAngle −10, caret slope 1000 / 176.
+
+Cần designer duyệt cho I2 (italic thật): a một tầng, e / c thu hẹp, f có đuôi xuống, nét nối ra ở chân n m h u, góc nghiêng 10° hay 12°.
+
+### QA trên chính file font (`qa_font.py`, HarfBuzz)
+
+Variable ở wght 400 / 500 / 600 / 700 và 16 bản tĩnh: advance khớp spacing.json, kerning mọi cặp khớp kerning.json (lệch ≤ 1 u), NFD = NFC, hộp bao glyph của instance = outlines.json (≤ 1.6 u, Italic so với Roman nghiêng 10°).
+
+## ™ dựng lại (05/11)
+
+Designer: "kiểm tra lỗi của glyph này" (™). Lỗi: T M thu 0.42 rồi làm đậm ĐỀU mọi phía 0.09 V → nét mảnh dày gấp đôi, chéo mảnh của M nặng gần bằng thân, mép chéo hết song song. Dựng lại: T M của master **Bold** thu 0.42 (thân 0.42 × V_B ≈ 0.57 V Regular, giữ tương phản bút dẹt); weight đậm hơn chỉ làm dày **theo phương ngang** (cộng Minkowski với đoạn ngang, `xdilate`), thân tăng theo V_w / V_R; đáy nhọn của M bị cộng thành đoạn phẳng thì kéo dài hai mép chéo tới giao điểm (`sharpen`). Nét ngang, loe và mép chéo song song giữ nguyên.
+
+Designer: "Module T trong cụm TM vẫn lỗi mà". Lỗi thứ hai nằm ở bước dọn outline `ref/tidy.py` (glyph dựng theo luật): luật "gai = mẩu < 12 u quay ngược > 150°" xoá mất chóp mỏ tay phải của T trong ™ Regular (đoạn cong 11.5 u gãy gắt vào mép đứng) → tay phải T vát xiên. Sửa luật: chỉ xoá khi phần bỏ đi gần như không có diện tích (tam giác < 30 u², sợi thật); mũi nhọn có diện tích giữ nguyên. Build lại: chỉ ™ đổi (so outlines.json trước / sau), không glyph nào khác bị ảnh hưởng.
+
+Trang preview có thêm mục **Font variable** (hai file woff2 nhúng trong trang): thanh trượt wght 400–700, Roman / Italic, ô chữ sửa được, bảng 8 kiểu.

@@ -124,7 +124,7 @@ def white(prof, side, b):
 
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
-    spacing, kerning = {}, {}
+    spacing, kerning = {}, {}; NEED = {}
     # thứ tự: Regular, Bold trước; Medium / SemiBold lấy kern CLASS nội suy từ hai master (như variable font — QA kerning
     # 05/11: kern đo riêng từng weight nhảy bậc ở ngưỡng hình học, vd. c- −60 / −60 / −60 / 0, L» −115 / −115 / 0 / 0),
     # rồi chặn va chạm riêng theo outline của chính weight đó
@@ -172,6 +172,12 @@ def main():
             sp[ch] = (-n_rsb, 0) if ch == '\u031b' else (-round(n_adv/2), 0)
         spacing[w] = {ch: {'dx': v[0], 'adv': v[1]} for ch, v in sp.items()}
         for ch in (' ', '\u00a0'): spacing[w][ch] = {'dx': 0, 'adv': round(SPACE[w])}       # space, nbsp
+        if w not in ('Regular', 'Bold'):
+            # font variable chỉ có master Regular / Bold → dịch outline + advance của Medium / SemiBold = ĐÚNG nội suy hai master
+            # (outline đã là nội suy — compat_masters.py) → bản tĩnh trùng khít bản variable
+            SR, SB_ = spacing['Regular'], spacing['Bold']; t_ = TW[w]
+            spacing[w] = {ch: {k_: round(SR[ch][k_] + (SB_[ch][k_] - SR[ch][k_])*t_, 2) for k_ in ('dx', 'adv')} for ch in spacing[w]}
+            sp = {ch: (v['dx'], v['adv']) for ch, v in spacing[w].items()}
         chars = [c for c in chars if kind(c) != 'mark']                    # kerning: không kern dấu tổ hợp
 
         # ---- kerning theo class ----
@@ -256,8 +262,8 @@ def main():
         if w not in ('Regular', 'Bold'):
             KR, KB = kerning['Regular']['class'], kerning['Bold']['class']; t_ = TW[w]; KC = {}
             for key in set(KR) | set(KB):
-                v = KR.get(key, 0.0) + (KB.get(key, 0.0) - KR.get(key, 0.0))*t_; v = math.ceil(v/5)*5
-                if v <= -10 or v >= 5: KC[key] = v
+                v = KR.get(key, 0.0) + (KB.get(key, 0.0) - KR.get(key, 0.0))*t_   # nội suy ĐÚNG như font variable (không làm tròn)
+                if v: KC[key] = round(v, 2)
         # ---- chặn va chạm: mọi cặp ký tự chữ / số / dấu câu ----
         # sàn khe theo cao độ: vùng SỪNG (ơ ư Ơ Ư và chữ có dấu của chúng — chỗ viền phải khác chữ gốc) chỉ cần MIN_GAP_HORN:
         # sừng là chi tiết nhỏ ở cao, sàn 26 đẩy mọi cặp ư ơ + chữ sau ra ≈ +30 (ưu, ươ, ƯỜ thưa hẳn — QA kerning 05/11;
@@ -268,6 +274,7 @@ def main():
             b0 = base(c); Rc = placed(c)[1]; Rb = placed(b0)[1]
             horn = ~np.isnan(Rc) & (np.isnan(Rb) | (Rc > Rb + 3))
             FLOOR[c] = np.where(horn, MIN_GAP_HORN, MIN_GAP)
+        NEED.setdefault(w, {})
         EXC = {}; worst = []
         for a in chars:
             Ra = placed(a)[1]
@@ -278,6 +285,7 @@ def main():
                 if not np.any(~np.isnan(g)): continue
                 short = np.nanmax(FLOOR.get(a, MIN_GAP) - g)                  # thiếu bao nhiêu so với sàn (theo cao độ)
                 gm = np.nanmin(g)
+                if short > -40: NEED[w][f'{a}|{b_}'] = k + short             # mức kern chặt nhất còn đủ sàn (cho bước variable)
                 if short > 0:
                     need = math.ceil(short/5)*5; k2 = k + need
                     EXC[f'{a}|{b_}'] = k2; worst.append((round(gm, 1), a + b_, k, k2))
@@ -285,6 +293,25 @@ def main():
         nexc = len(EXC); top = sorted(KC.items(), key=lambda kv: kv[1])[:12]
         print(w, 'spacing', len(sp), '· class kern', len(KC), '· ngoại lệ chống va', nexc)
         print('   mạnh nhất:', ' '.join(f'{k.replace("|", "")}{v:.0f}' for k, v in top))
+    # ---- ngoại lệ tương thích variable: font variable chỉ có master Regular / Bold → giá trị ở Medium / SemiBold là nội suy.
+    # Cặp nào nội suy chặt hơn mức chống va riêng của M / SB thì nới CẢ HAI master (bội 5), rồi M / SB = đúng giá trị nội suy
+    # → bản tĩnh trùng bản variable và không cặp nào dưới sàn
+    def kv(w, key):
+        v = kerning[w]['exc'].get(key)
+        if v is None:
+            a, b = key[0], key[2:]; v = kerning[w]['class'].get(f'{rclass(a)}|{lclass(b)}', 0.0)
+        return v
+    keys = set().union(*(kerning[x]['exc'] for x in WEIGHTS)); nb = 0
+    for key in keys:
+        r, b = kv('Regular', key), kv('Bold', key)
+        def need(x):                                                   # mức tối thiểu thật (chưa làm tròn) ở weight x
+            return NEED[x].get(key, -1e9)
+        d = max(0.0, *(need(x) - (r + (b - r)*TW[x]) for x in WEIGHTS if x not in ('Regular', 'Bold')))
+        if d > 1e-6: d = math.ceil(d); r += d; b += d; nb += 1
+        kerning['Regular']['exc'][key] = r; kerning['Bold']['exc'][key] = b
+        for x in WEIGHTS:
+            if x not in ('Regular', 'Bold'): kerning[x]['exc'][key] = round(r + (b - r)*TW[x], 2)
+    print('ngoại lệ tương thích variable:', len(keys), 'cặp · nới ở R / B:', nb)
     spacing = {x: spacing[x] for x in WEIGHTS}; kerning = {x: kerning[x] for x in WEIGHTS}
     json.dump(spacing, open(os.path.join(OUT, 'spacing.json'), 'w'), ensure_ascii=False)
     json.dump(kerning, open(os.path.join(OUT, 'kerning.json'), 'w'), ensure_ascii=False)

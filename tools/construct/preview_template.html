@@ -89,12 +89,20 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
 .tag { font: 500 12px var(--ui); border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 3px 10px; cursor: pointer; }
 .note { font-size: 12px; color: var(--muted); }
+/*FONTS*/
+.vf .ctrl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin: 8px 0 12px; }
+.vf .ctrl input[type="range"] { width: 220px; max-width: 100%; }
+.vf .out { font-family: "Dizai Serif VF", serif; font-size: 48px; line-height: 1.2; outline: none; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 12px 14px; overflow-wrap: anywhere; }
+.vf .out.it { font-family: "Dizai Serif VF Italic", serif; }
+.vf .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 12px; }
+.vf .steps div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 30px; line-height: 1.25; overflow-wrap: anywhere; }
+.vf .steps small { display: block; font: 12px var(--ui); color: var(--muted); margin-bottom: 2px; }
 @media (prefers-reduced-motion: no-preference) { .cell { transition: background-color .12s; } .cell:hover { background: var(--accent-soft); } }
 </style>
 
 <div class="wrap">
   <header>
-    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.5 · Regular, Medium, SemiBold, Bold</span></div>
+    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.6 · variable wght 400–700 · Roman + Italic</span></div>
     <p class="lede">Toàn bộ glyph hiện có của hai weight để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật (chưa có bản vẽ tay); còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả hai weight, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
   </header>
   <div class="summary" id="summary"></div>
@@ -117,6 +125,18 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     <h2 id="h-grid">Glyph</h2>
     <div class="legend"><span><span class="sw" style="background:var(--ink)"></span>outline</span><span><span class="dot"></span>dựng theo luật</span><span><span class="sw" style="background:none;border:2px solid var(--compass)"></span>compa / thanh</span><span><span class="sw" style="background:none;border:2px solid var(--construct)"></span>elip, đường dựng</span><span><span class="sw" style="background:var(--ok)"></span>Đạt</span><span><span class="sw" style="background:var(--fix)"></span>Cần sửa</span><span id="count"></span></div>
     <div class="grid" id="grid" role="listbox" aria-label="Danh sách glyph"></div>
+  </section>
+
+  <section class="vf" aria-labelledby="h-vf" id="vf" hidden>
+    <h2 id="h-vf">Font variable</h2>
+    <p class="note">Hai file font thật (<code>fonts/variable/DizaiSerif[wght].ttf</code>, <code>DizaiSerif-Italic[wght].ttf</code>), trục wght 400–700, có kerning và ghép dấu NFD. Italic hiện là I1: roman nghiêng 10° — bản italic dựng lại chữ thường chờ duyệt.</p>
+    <div class="ctrl">
+      <label class="chk">wght <input type="range" id="vfw" min="400" max="700" step="1" value="400" aria-label="Độ đậm"> <span id="vfwv">400</span></label>
+      <div class="seg" role="group" aria-label="Kiểu"><button id="vfr" aria-pressed="true">Roman</button><button id="vfi" aria-pressed="false">Italic</button></div>
+      <label class="chk">cỡ <input type="range" id="vfs" min="16" max="120" value="48" aria-label="Cỡ chữ"> <span id="vfsv">48 px</span></label>
+    </div>
+    <div class="out" id="vfout" contenteditable="true" spellcheck="false">Hồ Gươm lúc bình minh — ĐẤT NƯỚC TÔI ĐẸP LẮM! Thăm làng gốm Bát Tràng, ứng xử &amp; lễ phép (2026).</div>
+    <div class="steps" id="vfsteps"></div>
   </section>
 
   <section class="samples" aria-labelledby="h-text">
@@ -344,5 +364,25 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   sel = 'Ữ';
   renderSummary(); renderGrid(); renderDrawer(); renderLines(); renderFlagList();
+})();
+</script>
+<script>
+(function () {
+  const sec = document.getElementById("vf"); if (!sec || !document.querySelector("style").textContent.includes("Dizai Serif VF")) return;
+  sec.hidden = false;
+  const $ = (id) => document.getElementById(id);
+  const out = $("vfout"), w = $("vfw"), wv = $("vfwv"), sz = $("vfs"), szv = $("vfsv"), br = $("vfr"), bi = $("vfi"), steps = $("vfsteps");
+  const apply = () => { out.style.fontVariationSettings = `"wght" ${w.value}`; wv.textContent = w.value; out.style.fontSize = sz.value + "px"; szv.textContent = sz.value + " px"; };
+  w.addEventListener("input", apply); sz.addEventListener("input", apply);
+  const it = (on) => { out.classList.toggle("it", on); br.setAttribute("aria-pressed", String(!on)); bi.setAttribute("aria-pressed", String(on)); };
+  br.addEventListener("click", () => it(false)); bi.addEventListener("click", () => it(true));
+  const S = [["Regular", 400], ["Medium", 500], ["SemiBold", 600], ["Bold", 700]];
+  for (const ital of [false, true]) for (const [n, v] of S) {
+    const d = document.createElement("div"), sm = document.createElement("small"), t = document.createElement("span");
+    sm.textContent = (ital ? (n === "Regular" ? "Italic" : n + " Italic") : n) + " · " + v;
+    t.textContent = "Ánh Đèn Phố Hội — quả ổi"; t.style.fontFamily = ital ? '"Dizai Serif VF Italic", serif' : '"Dizai Serif VF", serif';
+    t.style.fontVariationSettings = `"wght" ${v}`; d.append(sm, t); steps.append(d);
+  }
+  apply();
 })();
 </script>

@@ -70,6 +70,10 @@ def _pass(c, strong):
             s = c[j]; m = s[1] if j == i else s[-1]
             # bỏ mẩu ngắn hơn, nối hai bên
             prv, nxt = c[j - 1], c[(j + 1) % len(c)]
+            # chỉ là gai khi phần bỏ đi gần như không có diện tích (sợi); mũi nhọn thật (chóp mỏ T trong ™: đoạn cong 11.5 u gãy
+            # 150°+ vào mép đứng, tam giác bỏ đi ≈ 160 u²) thì giữ — designer 05/11 "Module T trong cụm TM vẫn lỗi"
+            A_, B_, C_ = s[1], s[-1], nxt[-1]
+            if abs((B_[0] - A_[0])*(C_[1] - A_[1]) - (B_[1] - A_[1])*(C_[0] - A_[0]))/2 > 30: continue
             _set_end(prv, s[1]); _set_start(nxt, s[1]); del c[j]; return True
     return _g1(c, 20)
 

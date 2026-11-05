@@ -32,6 +32,49 @@ def embolden(p, d):
     s = pathops.Path(); s.addPath(p); s.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
     s.convertConicsToQuads(); return q2c(U(p, q2c(s)))
 
+def xdilate(p, d):
+    """cộng Minkowski với đoạn ngang [−d, d]: hợp hai bản dời ±d và dải quét của từng đoạn (giữ đường cong)"""
+    parts = [move(p, -d, 0), move(p, d, 0)]
+    for v, ps in p.segments:
+        if v == 'moveTo': cur = ps[0]; start = cur
+        elif v in ('lineTo', 'curveTo', 'closePath'):
+            end = start if v == 'closePath' else ps[-1]
+            q = pathops.Path(); q.moveTo(cur[0] - d, cur[1])
+            if v == 'curveTo':
+                a, b = ps[0], ps[1]
+                q.cubicTo(a[0] - d, a[1], b[0] - d, b[1], end[0] - d, end[1]); q.lineTo(end[0] + d, end[1])
+                q.cubicTo(b[0] + d, b[1], a[0] + d, a[1], cur[0] + d, cur[1])
+            else:
+                q.lineTo(end[0] - d, end[1]); q.lineTo(end[0] + d, end[1]); q.lineTo(cur[0] + d, cur[1])
+            q.close(); q2 = pathops.Path(); q2.addPath(q)
+            q2 = pathops.op(q, q, pathops.PathOp.UNION, fix_winding=True) if True else q
+            parts.append(q2); cur = end
+    return q2c(U(*parts))
+
+def sharpen(p, w):
+    """đỉnh nhọn (đáy chữ V trong M) bị cộng Minkowski ngang thành đoạn phẳng dài w → kéo dài hai mép kề tới giao điểm"""
+    y0, y1 = bounds(p)[1], bounds(p)[3]; segs = []; tris = []
+    for v, ps in p.segments:
+        if v == 'moveTo': cur = ps[0]; start = cur; segs.append([])
+        elif v in ('lineTo', 'curveTo'): segs[-1].append((v, cur, ps)); cur = ps[-1]
+        elif v == 'closePath':
+            if cur != start: segs[-1].append(('lineTo', cur, (start,)))
+    for S_ in segs:
+        n = len(S_)
+        for i, (v, a, ps) in enumerate(S_):
+            b = ps[-1]
+            if v != 'lineTo' or abs(a[1] - b[1]) > 0.01 or abs(abs(b[0] - a[0]) - w) > 0.5 or min(a[1] - y0, y1 - a[1]) < 5: continue
+            pv, pa, pps = S_[i - 1]; nv, na, nps = S_[(i + 1) % n]
+            p_in = pps[-2] if pv == 'curveTo' else pa                  # hướng tới a
+            p_out = nps[0] if nv == 'curveTo' else nps[-1]              # hướng rời b
+            d1 = (a[0] - p_in[0], a[1] - p_in[1]); d2 = (p_out[0] - b[0], p_out[1] - b[1])
+            den = d1[0]*d2[1] - d1[1]*d2[0]
+            if abs(den) < 1e-9: continue
+            t_ = ((b[0] - a[0])*d2[1] - (b[1] - a[1])*d2[0])/den
+            if t_ <= 0 or t_ > 5*w: continue
+            X = (a[0] + t_*d1[0], a[1] + t_*d1[1]); tris.append(poly([a, X, b]))
+    return q2c(U(p, *tris)) if tris else p
+
 def q2c(p):
     out = pathops.Path(); cur = None
     for v, ps in p.segments:
@@ -205,9 +248,15 @@ def build_w(S, L, w):
         g = V.letter(S, ch, w); g = scale(g, 0.44); g = embolden(g, 0.10*Vv); b = bounds(g)
         return move(g, Rr - (b[0] + b[2])/2, 350 - (b[1] + b[3])/2)
     G['©'] = U(ring, inner('C')); G['®'] = U(ring, inner('R'))
-    # ™: T M hoa thu 0.42, đỉnh ở cap, bù nét để thân ≈ 0.6 V
+    # ™ (designer 05/11 "kiểm tra lỗi của glyph này"): làm đậm ĐỀU mọi phía (0.09 V) làm nét mảnh dày gấp đôi → chéo mảnh của M
+    # nặng gần bằng thân, mép chéo hết song song. Dựng lại: T M của master BOLD thu 0.42 (thân 0.42 × V_B ≈ 0.57 V Regular, giữ
+    # nguyên tương phản bút dẹt của Bold), weight đậm hơn thì chỉ làm dày THEO PHƯƠNG NGANG (cộng Minkowski với đoạn ngang):
+    # thân dày theo tỉ lệ V_w / V_R, nét ngang giữ nguyên, mép chéo song song, loe giữ đầu nhọn trên đường cap / chân
     def sup(ch, s=0.42):
-        g = embolden(scale(V.letter(S, ch, w), s), 0.09*Vv); b = bounds(g); return move(g, -b[0], 700 - b[3])
+        g = scale(V.letter(S, ch, 'Bold'), s)
+        dx = 0.5*s*T['Bold']['V']*(Vv/T['Regular']['V'] - 1)
+        if dx > 0.05: g = sharpen(xdilate(g, dx), 2*dx)
+        b = bounds(g); return move(g, -b[0], 700 - b[3])
     tT = sup('T'); tM = sup('M'); G['™'] = U(tT, move(tM, bounds(tT)[2] + 0.35*Vv, 0))
     # °: vòng nhỏ đỉnh ở cap
     ro = 105; G['°'] = D(ellipse((ro, 700 - ro), ro, ro), ellipse((ro, 700 - ro), ro - 0.42*Vv, ro - 0.42*Vv))

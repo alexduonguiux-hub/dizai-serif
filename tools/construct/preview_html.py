@@ -62,6 +62,17 @@ for w in ("Regular", "Medium", "SemiBold", "Bold"):
 js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 html = open(os.path.join(HERE, "preview_template.html")).read().replace("/*DATA*/{}", js)
+# font variable thật (export_font.py) nhúng woff2 base64 → mục "Font variable" của trang
+import base64, io
+FF = []
+for fam, fn in (("Dizai Serif VF", "DizaiSerif[wght].ttf"), ("Dizai Serif VF Italic", "DizaiSerif-Italic[wght].ttf")):
+    fp = os.path.join(ROOT, "fonts", "variable", fn)
+    if not os.path.exists(fp): continue
+    from fontTools.ttLib import TTFont
+    f = TTFont(fp); f.flavor = "woff2"; b = io.BytesIO(); f.save(b)
+    FF.append('@font-face { font-family: "%s"; src: url(data:font/woff2;base64,%s) format("woff2"); font-weight: 400 700; font-display: block; }'
+              % (fam, base64.b64encode(b.getvalue()).decode()))
+html = html.replace("/*FONTS*/", "\n".join(FF))
 os.makedirs(os.path.join(ROOT, "docs", "preview"), exist_ok=True)
 out = os.path.join(ROOT, "docs", "preview", "dizai-serif.html")
 open(out, "w").write(html)
