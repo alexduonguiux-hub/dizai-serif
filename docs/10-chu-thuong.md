@@ -9,8 +9,9 @@ Cập nhật 05/11 — **r, t có bản vẽ** (designer: "update chữ t và r"
 - **t**: thân 36 px, đỉnh 631 có loe hai bên; thanh 14 px (−24 / +36 px quanh thân); móc chân ngắn có mặt cắt đứng (69 px).
 - Bold theo luật mẫu a: thân +8 px (22.6 u) ra phía ngoài, tức bên trái, loe trái trượt theo; tai r, móc t và thanh dày vào trong +4.5 px (12.7 u), đầu cắt dày theo.
 
-**f, j dựng từ khối r, t** (designer 05/11: "đồng bộ móc f và j theo r, t"):
-- **f** = khối r (thân, loe trên trái, tai) nâng lên ascender, đỉnh thân 698.6, đỉnh tai 707. Loe chân hai bên như r. Thanh ngang là thanh t, đặt cùng vị trí so với thân.
+**f, j dựng từ khối t** (designer 05/11: "đồng bộ móc f và j theo r, t"):
+- **f** = móc chân t **lật dọc** đặt ở đỉnh: thân cong liền sang phải, đỉnh 707, mặt cắt đứng. Cộng thân, thanh t (cùng vị trí so với thân) và loe chân hai bên như r.
+  - Designer 05/11: "chữ f đang lỗi". Bản trước ghép tai r lên một thân có đỉnh phẳng, tạo khấc ở chỗ tai mọc ra.
 - **j** = móc chân t lật ngang (đầu cắt sang trái), đáy ở −209. Đỉnh thân ở x-height, loe hai bên như đỉnh t. Có chấm.
 - Bold dùng cùng luật với r, t. Thân dày ra phía ngoài: f sang trái, j sang phải.
 
