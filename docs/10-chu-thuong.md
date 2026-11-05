@@ -104,6 +104,7 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
   - Loe và vát ở đầu mép tịnh tiến theo mép, nên cung module loe giữ nguyên bán kính như chữ hoa. Đỉnh nối mép với nét / tính lại bằng giao điểm.
   - Bản ngòi dẹt trước đó (cộng Minkowski với một đoạn thẳng) quét cả phần loe, làm cung module vỡ thành nhiều mảnh và méo đầu nét. Đã bỏ.
   - Kết quả: v y rộng 411 (Bold 422), x 423 (Bold 434). Nét / Regular ≈ 37–42, Bold ≈ 48–52.
+  - **k và z** (designer 05/11: "kiểm tra lại module chữ k và z"): chân k (nét \\) và chéo z (nét /) cũng chỉ ≈ 0.89 thân (Regular 90.6 / 89.7, Bold 116 / 106). Nay dùng cùng cách dời song song hai mép: chân k và chéo z = 101.8 / Bold 124.4. Tay k (45 / 55) và thanh z (39 / 54) là nét mảnh, giữ nguyên. Mỏ, loe tịnh tiến theo mép, giữ cung chữ hoa. Thu ngang chỉnh để giữ bề rộng: k 0.785 (rộng 452 / Bold 472), z 0.772 (387 / 398).
   - w giữ như cũ (thu 0.80, không làm dày; rộng 654 / Bold 656) (designer 05/11: "giữ bề rộng chữ w như cũ"; "chữ w bold hơi dính").
 
 **Bề ngang Bold** (designer 05/11: "các chữ bold thường tăng độ rộng hơn nhiều so với regular"; luật tiến triển weight: bề rộng tăng ½ phần nét tăng):

@@ -310,13 +310,13 @@ def s_from_S(w):
 # v w x y k z: CHỮ HOA của designer thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module",
 # "đồng bộ v w x y k theo chữ hoa") — giữ loe S5, đỉnh, mỏ của chữ hoa; thu ngang CAP_SX, dọc về x-height, bù nét
 # CAP_D mỗi phía (nét viền góc vuông, góc giữ sắc) để nét mảnh ≈ 44 / chéo dày ≈ 100 (Bold theo mẫu a Bold).
-CAP_SX = {'v': 0.55, 'w': 0.80, 'x': 0.565, 'z': 0.80, 'k': 0.85}
+CAP_SX = {'v': 0.55, 'w': 0.80, 'x': 0.565, 'z': 0.772, 'k': 0.785}
 # Làm dày nét \ (luật S10 — đồng bộ độ dày): V X hoa thu nhỏ chỉ còn nét \ ≈ 0.88 thân chữ thường → hai mép nét \ dời song
 # song ra ngoài (mỗi bên ½ Δ, đo ngang), Δ giải để nét \ = thân (101.8 / Bold 124.5). Loe / vát ở đầu mép tịnh tiến theo mép
 # nên cung module loe giữ nguyên bán kính như chữ hoa (designer 05/11: "chữ y, x, v lỗi module" — bản ngòi dẹt cộng Minkowski
 # trước đó quét cả phần loe, cung module vỡ thành nhiều mảnh). Đỉnh nối mép với nét / tính lại bằng giao điểm. y dựng từ v.
 # w giữ như cũ (designer 05/11: "giữ bề rộng chữ w như cũ").
-THICK = ('v', 'x')
+THICK = ('v', 'x', 'z')                                      # z: chéo / (designer 05/11: "kiểm tra lại module chữ k và z")
 CAP_D = {'Regular': 6.0, 'Bold': 3.0}
 def runs_at(p, y):
     """các đoạn mực (x0, x1) trên đường ngang y: mỗi mảnh giao với dải 0.1 u là một đoạn"""
@@ -339,7 +339,7 @@ def _contours(p):
         else: cur['segs'].append(('L' if v == 'lineTo' else 'C', [tuple(q) for q in ps]))
     return out
 
-def thicken(p, delta, ylo=90.0, yhi=400.0):
+def thicken(p, delta, ylo=90.0, yhi=400.0, fs=False):
     """nét \\ dày thêm delta (đo ngang): hai mép dời song song ra ngoài mỗi bên delta/2; điểm loe / vát ở đầu mép (y < ylo hoặc
     > yhi, gần mép hơn mọi nét khác) tịnh tiến theo mép; đỉnh nối mép với nét khác = giao điểm mép mới với nét đó"""
     CS = _contours(p); lines = []
@@ -347,7 +347,7 @@ def thicken(p, delta, ylo=90.0, yhi=400.0):
         a = c['start']
         for t, ps in c['segs']:
             b = ps[-1]
-            if t == 'L' and math.hypot(b[0] - a[0], b[1] - a[1]) > 60: lines.append((a, b, (b[0] - a[0])*(b[1] - a[1]) < 0))
+            if t == 'L' and math.hypot(b[0] - a[0], b[1] - a[1]) > 60: lines.append((a, b, ((b[0] - a[0])*(b[1] - a[1]) > 0) if fs else ((b[0] - a[0])*(b[1] - a[1]) < 0)))
             a = b
     xat = lambda l, y: l[0][0] + (y - l[0][1])*(l[1][0] - l[0][0])/(l[1][1] - l[0][1])
     oth = [l for l in lines if not l[2] and abs(l[1][1] - l[0][1]) > 1]; E = []
@@ -389,9 +389,9 @@ def thicken(p, delta, ylo=90.0, yhi=400.0):
         out.append(V.P(cmds + [('Z',)]))
     return V.U(*out)
 
-def _thick_of(p):
-    """độ dày nét \\ (vuông góc) đo ở 0.78 / 0.70 x-height (trên chỗ hai nét x giao)"""
-    y1, y2 = XH*0.78, XH*0.70; (a1, b1), (a2, b2) = runs_at(p, y1)[0], runs_at(p, y2)[0]
+def _thick_of(p, y1=XH*0.78, y2=XH*0.70, i=0):
+    """độ dày nét chéo đậm (vuông góc), run thứ i ở hai cao độ (mặc định 0.78 / 0.70 x-height: trên chỗ hai nét x giao)"""
+    (a1, b1), (a2, b2) = runs_at(p, y1)[i], runs_at(p, y2)[i]
     th = math.atan2(y1 - y2, ((a1 + b1) - (a2 + b2))/2); return (b1 - a1)*abs(math.sin(th))
 
 def shrink_caps(ch, w, top=XH, sx=None, delta=None):
@@ -406,22 +406,18 @@ def shrink_caps(ch, w, top=XH, sx=None, delta=None):
     p = V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d))
     if ch in THICK:
         if delta is None:                                    # nét \\ tăng tuyến tính theo Δ → hai lần đo
-            t0 = _thick_of(_embolden(p, d)); t1 = _thick_of(_embolden(thicken(p, 40.0), d))
+            fs = ch == 'z'; m = (lambda q: _thick_of(q, XH*0.6, XH*0.4)) if fs else _thick_of
+            t0 = m(_embolden(p, d)); t1 = m(_embolden(thicken(p, 40.0, fs=fs), d))
             delta = 40.0*(W[w]['V'] - t0)/(t1 - t0)
-        p = thicken(p, delta)
+        p = thicken(p, delta, fs=(ch == 'z'))
     p = _embolden(p, d)
     return V.move(p, -p.bounds[0], 0)
 
 def z_from_Z(w):
-    if w == 'Bold':                                          # z Bold chỉ rộng hơn z Regular ½ B_STEM (Z Bold rộng hơn Z Regular 48)
-        zr = _caps('z', 'Regular').bounds; zb = _caps('z', 'Bold').bounds
-        wr = (zr[2] - zr[0])*CAP_SX['z'] + 2*CAP_D['Regular']
-        old = CAP_SX['z']; CAP_SX['z'] = (wr + L.B_STEM/2 - 2*CAP_D['Bold'])/(zb[2] - zb[0])
-        try: return shrink_caps('z', w)
-        finally: CAP_SX['z'] = old
+    """z: Z hoa thu nhỏ; chéo / dày bằng thân (thicken); Bold rộng hơn Regular ½ B_STEM (shrink_caps tự giải)"""
     return shrink_caps('z', w)
 
-def k_from_K(w, sxk=None):
+def k_from_K(w, sxk=None, kd=None):
     """k: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap), tay + chân thu về x-height; Bold: thân về 124.5 (thân Bold thường),
     dày ra đều hai phía (mép trái lùi ½ B_STEM), phần chéo giữ đúng vươn ngang của Regular tính từ mép phải thân → k Bold rộng
     hơn Regular đúng B_STEM (như n)"""
@@ -443,7 +439,11 @@ def k_from_K(w, sxk=None):
     stem = V.xform(stem, lambda x, y: (s0 - h + (x - s0)*kx, y*ASC/700))
     d = CAP_D[w]; sx = sxk; sy = (XH - 2*d)/(y1 - y0)
     diag = V.D(V.I(P_, V.rect(s1 + 0.5, -50, x1 + 50, 800)), V.U(V.rect(s1 - 1, 700 - FLR, s1 + 40, 800), V.rect(s1 - 1, -50, s1 + 40, FLR)))
-    diag = _embolden(V.xform(diag, lambda x, y: (s0 - h + v - 0.5 + (x - s1)*sx, y*sy + d)), d)
+    diag = V.xform(diag, lambda x, y: (s0 - h + v - 0.5 + (x - s1)*sx, y*sy + d))
+    if kd is None:                                           # chân k (nét \\) dày bằng thân: dời song song hai mép (như v x)
+        leg = lambda q: _thick_of(_embolden(q, d), 140, 100, -1)
+        t0, t1 = leg(diag), leg(thicken(diag, 40.0)); kd = 40.0*(v - t0)/(t1 - t0)
+    diag = _embolden(thicken(diag, kd), d)
     xr = s0 - h + v - 0.5                                    # tay / chân sau khi bù nét không lấn qua mép phải thân (bậc 6 u)
     return V.U(stem, V.I(V.I(diag, V.halfplane(0)), V.rect(xr, -100, 2000, 2000)))
 
