@@ -6,6 +6,8 @@ Thang: cap 247.5 px = 700 u; baseline Y 367.
 
 Cấu tạo (designer):
   a  = thân a (vai + thân + loe chân) + bụng elip (lòng elip đứng lệch về thân)
+  r  = thân + loe trên trái + loe chân + tai cắt đứng (2127:982)
+  t  = thân (đỉnh 631) + loe trên + thanh 14 px + móc chân cắt đứng (2127:1008)
   c  = mép ngoài elip, lòng elip đứng, hai đầu cắt đứng (2123:922)
   o  = vòng 172 × 181, lòng elip xoay (2123:788)
   e  = vòm (2112:154) + bụng có đầu cắt đứng (2112:159) + thanh ngang 14 px (2112:164); lòng là elip xoay
@@ -63,13 +65,28 @@ D_C = ("M95 0 C114.181 0 133.371 3.60945 150 11.291 L150 46.502 C136.293 28.0081
 D_C_OUTER = ("M95 0 C114.181 0 133.371 3.60945 150 11.291 L150 169.708 C133.371 177.39 114.181 181 95 181 "
              "C42.5329 181 0 140.482 0 90.5 C0 40.5182 42.5329 0 95 0 Z")
 C_CTR, C_R, C_CUT, C_TT = (95.5, 90.5), (59.5, 74.5), 150.0, 46.502     # lòng, mặt cắt, mép trong đầu cắt trên (px)
+# r, t (designer 05/11, 2127:982 / 2127:1008): thân hình chữ nhật 36 px + khối loe + tai / móc có mặt cắt đứng + thanh
+D_RECT36 = lambda h: f"M0 0 L36 0 L36 {h} L0 {h} L0 0 Z"
+D_R_EAR = ("M70.4834 0 C76.1511 0 81.6725 0.749774 86.9834 2.16895 L86.9834 34.5068 C70.6928 20.6864 52.007 16.6259 37.7812 25.9814 "
+           "C28.0556 32.3776 22.0545 43.9654 19.9863 58 L0 58 C10.8942 24.0745 38.3425 0 70.4834 0 Z")
+D_FL1 = "M0 0 L44 0 L41.2703 4.77702 C37.8166 10.8209 36 17.6615 36 24.6226 L36 29 L0 29 L0 14 L0 0 Z"           # loe một bên
+D_FL2 = ("M0 0 L52 0 L49.2703 4.77702 C45.8166 10.8209 44 17.6615 44 24.6226 L44 29 L8 29 L8 24.6226 "
+         "C8 17.6615 6.18339 10.8209 2.72972 4.77702 L0 0 Z")                                                   # loe hai bên
+D_T_HOOK = ("M56.1016 0 C60.5321 6.53154e-05 64.8483 0.749824 69 2.16895 L69 34.5107 C56.2644 20.6885 49.2621 16.5 41.5 20.9814 "
+            "C33.8969 27.3775 36 43.5 36 58 L0 58 C0 5 30.9751 6.68636e-05 56.1016 0 Z")
 SHAPES = {'a_stem': D_A_STEM, 'a_bowl': D_A_BOWL, 'a_stem_B': D_A_STEM_B, 'a_bowl_B': D_A_BOWL_B,
           'g_bowl': D_G_BOWL, 'g_loop': D_G_LOOP, 'g_link': D_G_LINK, 'g_ear': D_G_EAR, 'e_arch': D_E_ARCH, 'e_bowl': D_E_BOWL, 'e_bar': D_E_BAR,
-          'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O, 'c_shape': D_C}
+          'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O, 'c_shape': D_C,
+          'r_stem': D_RECT36(176), 'r_ear': D_R_EAR, 'fl1': D_FL1, 'fl2': D_FL2, 't_stem': D_RECT36(169), 't_hook': D_T_HOOK,
+          't_bar': 'M0 0 L96 0 L96 14 L0 14 L0 0 Z'}
 GLYPH_BOLD = {   # bản vẽ Bold của designer (dùng thẳng, không suy)
     'a': [('a_stem_B', (1, 0, 1910, 0, 1, 188.2505)), ('a_bowl_B', (1, 0, 1895, 0, 1, 245))],
 }
 GLYPH = {
+    'r': [('r_stem', (1, 0, 1954, 0, 1, 191)), ('r_ear', (1, 0, 1966.0166, 0, 1, 188)), ('fl1', (-1, 0, 1990, 0, 1, 191)),
+          ('fl2', (1, 0, 1946, 0, -1, 367))],
+    't': [('t_stem', (1, 0, 2253, 0, 1, 144)), ('t_hook', (1, 0, 2253, 0, -1, 371)), ('fl2', (-1, 0, 2297, 0, 1, 144)),
+          ('t_bar', (1, 0, 2229, 0, 1, 192))],
     'c': [('c_shape', (1, 0, 1688, 0, 1, 188))],
     'o': [('o_ring', (-1, 0, 1668, 0, 1, 188))],
     'g': [('g_bowl', (-1, 0, 1338, 0, -1, 323)), ('g_loop', (-1, 0, 1338, 0, -1, 437)), ('g_link', (1, 0, 1220, 0, 1, 316)),

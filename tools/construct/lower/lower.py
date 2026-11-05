@@ -144,6 +144,31 @@ def bold(ch):
         x0, _, x1, _ = outer.bounds; edge = x1 if side > 0 else x0
         bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN, (side*B_SHIFT, 0)))
         return V.U(bowl, V.move(stem, (k - 1)*(edge - c), 0))
+    if ch in 'rt':
+        # r, t (bản vẽ 05/11): thân + 8 px (B_STEM) RA PHÍA NGOÀI = bên trái (loe trái trượt theo); tai r / móc t / thanh dày
+        # vào trong + 4.5 px (B_BAR): mép dưới tai r hạ xuống, mép trên móc t nâng lên (đầu cắt dày theo), thanh dày xuống.
+        dS, dH = B_STEM/S, B_BAR/S; out = []
+        for key, m in GLYPH[ch]:
+            d = SHAPES[key]
+            if key in ('r_stem', 't_stem'): d = _map_pts(d, lambda x, y: (x - dS if x < 0.01 else x, y))
+            elif key == 'fl1': d = _map_pts(d, lambda x, y: (x + dS if x > 35.9 else x, y))              # lật ngang: x lớn = trái
+            elif key == 'fl2':
+                if m[0] < 0: d = _map_pts(d, lambda x, y: (x + dS if x > 43.9 else x, y))               # lật ngang
+                else: d = _map_pts(d, lambda x, y: (x - dS if x < 8.01 else x, y))
+            elif key == 'r_ear':
+                inner = {(86.9834, 34.5068), (70.6928, 20.6864), (52.007, 16.6259), (37.7812, 25.9814), (28.0556, 32.3776),
+                         (22.0545, 43.9654)}
+                d = _map_pts(d, lambda x, y: (x, y + dH) if (x, y) in inner else (x, y))
+            elif key == 't_hook':
+                inner = {(69.0, 34.5107), (56.2644, 20.6885), (49.2621, 16.5), (41.5, 20.9814), (33.8969, 27.3775), (36.0, 43.5)}
+                def f(x, y):
+                    if (x, y) in inner: return x, y + dH
+                    if x < 0.01: return x - dS, y                                                       # mép ngoài móc theo thân
+                    return x, y
+                d = _map_pts(d, f)
+            elif key == 't_bar': d = _map_pts(d, lambda x, y: (x - dS if x < 0.01 else x, y + dH if y > 13.9 else y))
+            out.append(_path(d, m))
+        return V.U(*out)
     if ch == 'c':
         # c: vách trái = thân Bold (36 → 36 + B_STEM); đỉnh/đáy và đầu cắt + B_BAR (nét mảnh); lòng vẫn cắt qua mặt cắt
         # (miệng c mở). Lòng Bold là elip đứng: mép trái ở x = 36 + B_STEM, cắt mặt cắt ở mép trong đầu cắt Bold.
@@ -233,7 +258,7 @@ def clean(p):
         p = snap(p)
     return p
 
-CHARS = 'aedbqpgoc'
+CHARS = 'aedbqpgocrt'
 if __name__ == '__main__':
     out = {}
     for c in CHARS:

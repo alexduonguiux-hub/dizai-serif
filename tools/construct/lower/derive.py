@@ -256,7 +256,7 @@ def s_from_S(w):
     stp.convertConicsToQuads()
     return L._q2c(V.U(p, L._q2c(stp)))
 
-CHARS = 'fhijklmnrstuvwxyz'      # o, c: đã có bản vẽ designer (lower.py)
+CHARS = 'fhijklmnsuvwxyz'      # o, c, r, t: đã có bản vẽ designer (lower.py)
 if __name__ == '__main__':
     out = {}
     for c in CHARS:
