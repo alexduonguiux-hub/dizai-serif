@@ -224,3 +224,11 @@ Designer: "hãy dùng skill kerning của Dinh Tuong đã đo sẵn". Thay cho c
   - thân 0.9 V; chân là ¼ vòng elip đồng tâm cong sang trái, liền tiếp tuyến vào đáy;
   - thanh đáy dày bằng nét mảnh; đầu phải đúng hai cubic đầu tay dưới E (Figma 6:924);
   - thanh giữa ở 300, đầu phải cắt xiên như thanh giữa E.
+
+## Thu hẹp X V Y hoa (05/11)
+
+Designer: "giảm bề ngang X, Y, V hoa". Không làm đậm / co cả glyph (làm méo loe). Dùng **nghiêng từng nét** (`ref/narrow_caps.py · shear_narrow`, FRAC 0.08 bề ngang):
+- mỗi nét chéo = dải giữa hai mép thẳng của nó (kéo dài, nới 6 u) + vùng đầu nét (loe) → nghiêng một chiều quanh điểm gốc: V quanh đáy, X quanh tâm giao, Y quanh đỉnh thân (cột thân + chân giữ nguyên);
+- V / Y: dưới nách chia theo đường từ đáy lòng tới điểm gốc; X: chỉ nới dải xa tâm giao (> 120 u) để không khấc;
+- sau phép hợp, bỏ gai mảnh (hai đoạn thẳng gần trùng hướng < 4°) — X Regular từng có gai sợi ở nách phải.
+Loe, nhát cắt ngang, độ dày nét giữ nguyên. Bề ngang: V 672→618 / 683→628 · X 642→591 / 665→612 · Y 632→584 / 655→605 (Regular / Bold); Medium, SemiBold nội suy. v x y w thường không đổi.

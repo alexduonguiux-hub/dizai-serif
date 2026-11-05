@@ -102,23 +102,120 @@ def narrow(ch, d, s):
         out.append({'moveTo': 'M', 'lineTo': 'L', 'curveTo': 'C', 'closePath': 'Z'}[v] + ' '.join('%.1f %.1f' % pt for pt in ps))
     return ''.join(out), q
 
+# THU HẸP BẰNG NGHIÊNG KHỐI (designer 05/11 lần 3: "giảm bề ngang X, Y, V hoa"): mỗi nhánh chéo là một khối, nghiêng (shear ngang)
+# quanh điểm gốc của nó — V: đáy nhọn · X: tâm giao (4 nhánh) · Y: đỉnh thân (thân + chân giữ nguyên). Shear giữ đường cap / chân,
+# giữ HÌNH LOE (chỉ nghiêng 2–4°) và bề dày cắt ngang của nét; chỗ hai nhánh gặp nhau tự hạ xuống. Bề ngang mực −FRAC.
+FRAC = {'V': 0.08, 'X': 0.08, 'Y': 0.08}
+def despike(q, ang=4.0):
+    """bỏ gai mảnh do phép hợp các dải nghiêng: đỉnh B của hai đoạn thẳng A→B→C mà BA, BC gần trùng hướng (< ang°) → bỏ B"""
+    from fontTools.pens.recordingPen import RecordingPen
+    rp = RecordingPen(); q.draw(rp); C = []; cur = None
+    for v, ps in rp.value:
+        if v == 'moveTo': cur = [('M', ps[0])]
+        elif v == 'lineTo': cur.append(('L', ps[0]))
+        elif v == 'curveTo': cur.append(('C', ps))
+        elif v in ('closePath', 'endPath'): C.append(cur); cur = None
+    def pt(e): return e[1] if e[0] != 'C' else e[1][-1]
+    out = pathops.Path(); pen = out.getPen()
+    for c in C:
+        ch_ = True
+        while ch_ and len(c) > 3:
+            ch_ = False
+            n = len(c)
+            for i in range(n):
+                a, b, cc = c[i - 1], c[i], c[(i + 1) % n]
+                if b[0] == 'C' or cc[0] == 'C': continue
+                A, B, Cp = pt(a), pt(b), pt(cc)
+                u = (A[0] - B[0], A[1] - B[1]); w = (Cp[0] - B[0], Cp[1] - B[1])
+                lu, lw = math.hypot(*u), math.hypot(*w)
+                if lu < 1e-6 or lw < 1e-6 or math.degrees(math.acos(max(-1, min(1, (u[0]*w[0] + u[1]*w[1])/(lu*lw))))) < ang:
+                    if b[0] == 'M': c[(i + 1) % n] = ('M', Cp); del c[i]
+                    else: del c[i]
+                    ch_ = True; break
+        k = next(i for i, e in enumerate(c) if e[0] == 'M'); c = c[k:] + c[:k]
+        pen.moveTo(c[0][1])
+        for e in c[1:]:
+            if e[0] == 'L': pen.lineTo(e[1])
+            else: pen.curveTo(*e[1])
+        pen.closePath()
+    return out
+
+def shear_narrow(ch, d, frac):
+    """chia theo TỪNG NÉT: nét \\ và nét / là dải giữa hai mép thẳng của nó (kéo dài) + vùng đầu nét (loe); mỗi dải nghiêng một
+    chiều duy nhất quanh điểm gốc (V: đáy · X: tâm giao · Y: đỉnh thân, thân + chân giữ nguyên) → không cạnh nào bị bẻ;
+    chỗ hai nét chồng nhau gộp lại (khe giữa hai nét tự hạ xuống)"""
+    p = outline([d]); x0, y0, x1, y1 = p.bounds; dw = frac*(x1 - x0)/2; R = V.rect; BIG = 3000
+    segs = [(a, ps[-1]) for t, a, ps in segs_of(p) if t == 'L' and math.dist(a, ps[-1]) > 60 and abs(ps[-1][0] - a[0]) > 5 and abs(ps[-1][1] - a[1]) > 5]
+    xat = lambda l, y: l[0][0] + (y - l[0][1])*(l[1][0] - l[0][0])/(l[1][1] - l[0][1])
+    if ch == 'X': yp = (y0 + y1)/2; s = dw/((y1 - y0)/2)
+    elif ch == 'V': yp = y0; s = dw/(y1 - y0)
+    else:
+        vs = [(a, ps[-1]) for t, a, ps in segs_of(p) if t == 'L' and abs(ps[-1][0] - a[0]) < 0.5 and abs(ps[-1][1] - a[1]) > 100]
+        tops = sorted(max(a[1], b[1]) for a, b in vs); yp = tops[0]; yp2 = tops[-1]; s = dw/(y1 - yp)
+        xc_stem = sum(a[0] for a, b in vs)/len(vs); sxl, sxr = min(a[0] for a, b in vs), max(a[0] for a, b in vs)
+    ym = yp + 0.5*(y1 - yp) if ch != 'X' else yp
+    M = 6.0                                                  # nới dải: mép dưới / trên của bản vẽ không thẳng hàng tuyệt đối
+    def edges(fs):
+        ls = [l for l in segs if ((l[1][0] - l[0][0])*(l[1][1] - l[0][1]) > 0) == fs]
+        G = []
+        for l in sorted(ls, key=lambda l: xat(l, ym)):
+            if G and abs(xat(l, ym) - xat(G[-1], ym)) < 3: continue
+            G.append(l)
+        return G[0], G[-1]
+    def band(a, b):
+        ya, yb = y0 - 60, y1 + 60
+        core = V.poly([(xat(a, ya), ya), (xat(b, ya), ya), (xat(b, yb), yb), (xat(a, yb), yb)])
+        wide = V.poly([(xat(a, ya) - M, ya), (xat(b, ya) + M, ya), (xat(b, yb) + M, yb), (xat(a, yb) - M, yb)])
+        if ch == 'X':                                        # X: chỉ nới xa tâm giao (gần tâm, phần nới cắt vào nét / → khấc)
+            return V.U(core, V.I(wide, V.U(R(-BIG, yp + 120, BIG, BIG), R(-BIG, -BIG, BIG, yp - 120))))
+        return wide
+    xmid = (x0 + x1)/2
+    ba, bb = edges(False); fa, fb = edges(True)
+    bs = band(ba, bb)                                        # nét \\ (V: tay trái · Y: tay trái · X: nét dày)
+    if ch == 'X': ends = V.U(R(-BIG, yp + 200, xmid, BIG), R(xmid, -BIG, BIG, yp - 200))
+    else: ends = R(-BIG, yp + 0.55*(y1 - yp), xmid, BIG)
+    reg_bs = V.U(bs, ends)
+    if ch in 'VY':
+        # dưới chỗ hai tay gặp nhau (đáy lòng C = giao mép trong hai tay), chia theo đường C → điểm gốc: phần bên phải thuộc tay phải
+        def isect(l1, l2):
+            (p1, p2), (p3, p4) = l1, l2
+            d1 = (p2[0] - p1[0], p2[1] - p1[1]); d2 = (p4[0] - p3[0], p4[1] - p3[1]); den = d1[0]*d2[1] - d1[1]*d2[0]
+            t = ((p3[0] - p1[0])*d2[1] - (p3[1] - p1[1])*d2[0])/den; return (p1[0] + t*d1[0], p1[1] + t*d1[1])
+        C = isect(bb, fa)
+        if ch == 'V':
+            bot = V.I(p, R(-BIG, y0 - 1, BIG, y0 + 3)); P0 = ((bot.bounds[0] + bot.bounds[2])/2, y0 - 60)
+        else: P0 = (xc_stem, yp - 1)
+        dx = (C[0] - P0[0])/max(C[1] - P0[1], 1e-6)
+        left_of = V.poly([(-BIG, -BIG), (P0[0] + dx*(-BIG - P0[1]), -BIG), (C[0], C[1]), (C[0], BIG), (-BIG, BIG)])
+        reg_bs = V.I(reg_bs, left_of)
+    yq = yp
+    if ch == 'Y':                                            # giữ nguyên cả cột thân; tay trái nghiêng quanh đỉnh thân trái (yp),
+        low = V.U(V.I(p, R(-BIG, -BIG, BIG, yp)), V.I(p, R(sxl, -BIG, sxr, yp2)))   # tay phải quanh đỉnh thân phải (yp2)
+        up = V.D(p, low); yq = yp2
+    else: low = None; up = p
+    part_bs = V.I(up, reg_bs); part_fs = V.D(up, reg_bs)
+    q = V.U(V.xform(part_bs, lambda x, y: (x + s*(y - yp), y)), V.xform(part_fs, lambda x, y: (x - s*(y - yq), y)))
+    if low is not None: q = V.U(q, low)
+    q = pathops.op(q, q, pathops.PathOp.UNION); q = V.move(q, -q.bounds[0], 0)
+    q = despike(q)
+    out = []
+    for v, ps in q.segments:
+        out.append({'moveTo': 'M', 'lineTo': 'L', 'curveTo': 'C', 'closePath': 'Z'}[v] + ' '.join('%.1f %.1f' % pt for pt in ps))
+    return ''.join(out), q
+
 def main():
     orig = json.load(open(ORIG)) if os.path.exists(ORIG) else {}
     for f in ('designer_A.json', 'designer_B.json'):
         P = os.path.join(HERE, f); d = json.load(open(P)); W = d.get('_W', {})
         for k in list(d):
             ch = k.split('-')[0]
-            if ch not in NARROW: continue
+            if ch not in FRAC: continue
             if k not in orig: orig[k] = d[k]; orig['_W_' + k] = W.get(k)
-            s, q = narrow(ch, orig[k][0], NARROW[ch])
-            d[k] = [s]
-            if orig.get('_W_' + k) is not None:
-                W[k] = round(orig['_W_' + k]*NARROW[ch]); d['_W'] = W
-            print(k, 'bề ngang', round(outline(orig[k]).bounds[2]), '→', round(q.bounds[2]))
-        # A K (và loe V X Y): GIỮ ĐÚNG BẢN VẼ GỐC (designer 05/11: "hư hết rồi — coi lại bản gốc", Figma 2138:1200 — loe đầu nét
-        # chéo của bản vẽ đã đúng module 2138:1189). Bản dựng lại loe theo module đã bỏ; trả A K về bản gốc nếu từng bị sửa.
-        for k in [k for k in d if k.split('-')[0] in ('A', 'K')]:
-            if k in orig: d[k] = orig[k]
+            s_, q = shear_narrow(ch, orig[k][0], FRAC[ch])
+            d[k] = [s_]
+            ow = outline(orig[k]).bounds[2]
+            if orig.get('_W_' + k) is not None: W[k] = round(orig['_W_' + k] - (ow - q.bounds[2])); d['_W'] = W
+            print(k, 'bề ngang', round(ow), '→', round(q.bounds[2]), '· contour', len(list(q.contours)))
         json.dump(d, open(P, 'w'), separators=(',', ':'))
     json.dump(orig, open(ORIG, 'w'), separators=(',', ':'))
 
