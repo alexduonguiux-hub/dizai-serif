@@ -77,23 +77,9 @@ D_FL2 = ("M0 0 L52 0 L49.2703 4.77702 C45.8166 10.8209 44 17.6615 44 24.6226 L44
          "C8 17.6615 6.18339 10.8209 2.72972 4.77702 L0 0 Z")                                                   # loe hai bên
 D_T_HOOK = ("M56.1016 0 C60.5321 6.53154e-05 64.8483 0.749824 69 2.16895 L69 34.5107 C56.2644 20.6885 49.2621 16.5 41.5 20.9814 "
             "C33.8969 27.3775 36 43.5 36 58 L0 58 C0 5 30.9751 6.68636e-05 56.1016 0 Z")
-# --- đồng bộ theo bụng mới (designer 05/11: "đồng bộ các chữ còn lại theo bụng mới"): bụng d b q p = mép ngoài elip
-# XOAY 15°, lòng elip đứng (trong khung xoay) lệch về phía mở. c dùng đúng khối bụng d; bụng trên g dựng cùng hệ ở cỡ g.
-def _ell_d(cx, cy, rx, ry, k=0.5523, rev=False):
-    if rev:   # ngược chiều (lòng): đi trái trước
-        return (f"M{cx} {cy-ry} C{cx-k*rx} {cy-ry} {cx-rx} {cy-k*ry} {cx-rx} {cy} C{cx-rx} {cy+k*ry} {cx-k*rx} {cy+ry} {cx} {cy+ry} "
-                f"C{cx+k*rx} {cy+ry} {cx+rx} {cy+k*ry} {cx+rx} {cy} C{cx+rx} {cy-k*ry} {cx+k*rx} {cy-ry} {cx} {cy-ry} Z")
-    return (f"M{cx} {cy-ry} C{cx+k*rx} {cy-ry} {cx+rx} {cy-k*ry} {cx+rx} {cy} C{cx+rx} {cy+k*ry} {cx+k*rx} {cy+ry} {cx} {cy+ry} "
-            f"C{cx-k*rx} {cy+ry} {cx-rx} {cy+k*ry} {cx-rx} {cy} C{cx-rx} {cy-k*ry} {cx-k*rx} {cy-ry} {cx} {cy-ry} Z")
-_R15 = (0.9659, -0.2588, 0.2588, 0.9659)
-def _rot_about(lc, fc):
-    """ma trận (a,b,c,d,e,f): xoay 15° như bụng d, đưa tâm cục bộ lc tới tâm Figma fc"""
-    a, b, d, e = _R15; return (a, b, fc[0] - (a*lc[0] + b*lc[1]), d, e, fc[1] - (d*lc[0] + e*lc[1]))
-# bụng trên g: elip 144 × 134 (như bản vẽ), vách 30 px (= 34 × 144/164), đỉnh/đáy 16 px, lòng lệch phải 6 px
-D_G_BOWL2 = _ell_d(72, 67, 72, 67) + " " + _ell_d(78, 67, 42, 51, rev=True)
 SHAPES = {'a_stem': D_A_STEM, 'a_bowl': D_A_BOWL, 'a_stem_B': D_A_STEM_B, 'a_bowl_B': D_A_BOWL_B,
           'g_bowl': D_G_BOWL, 'g_loop': D_G_LOOP, 'g_link': D_G_LINK, 'g_ear': D_G_EAR, 'e_arch': D_E_ARCH, 'e_bowl': D_E_BOWL, 'e_bar': D_E_BAR,
-          'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O, 'g_bowl2': D_G_BOWL2, 'c_shape': D_C,
+          'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O, 'c_shape': D_C,
           'r_stem': D_RECT36(176), 'r_ear': D_R_EAR, 'fl1': D_FL1, 'fl2': D_FL2, 't_stem': D_RECT36(169), 't_hook': D_T_HOOK,
           't_bar': 'M0 0 L96 0 L96 14 L0 14 L0 0 Z',
           'f_stem': D_RECT36(192), 'j_stem': D_RECT36(192)}
@@ -111,9 +97,9 @@ GLYPH = {
           ('fl2', (1, 0, 1946, 0, -1, 367))],
     't': [('t_stem', (1, 0, 2253, 0, 1, 144)), ('t_hook', (1, 0, 2253, 0, -1, 371)), ('fl2', (-1, 0, 2297, 0, 1, 144)),
           ('t_bar', (1, 0, 2229, 0, 1, 192))],
-    'c': [('bowl', (0.9659, -0.2588, 640.4932, 0.2588, 0.9659, 169.8606))],   # c = khối bụng d (cắt đứng bên phải, lower.py)
+    'c': [('c_shape', (1, 0, 1688, 0, 1, 188))],
     'o': [('o_ring', (-1, 0, 1668, 0, 1, 188))],
-    'g': [('g_bowl2', _rot_about((72, 67), (1266, 256))), ('g_loop', (-1, 0, 1338, 0, -1, 437)), ('g_link', (1, 0, 1220, 0, 1, 316)),
+    'g': [('g_bowl', (-1, 0, 1338, 0, -1, 323)), ('g_loop', (-1, 0, 1338, 0, -1, 437)), ('g_link', (1, 0, 1220, 0, 1, 316)),
           ('g_ear', (0.4999999701976776, -0.866025447845459, 1343.1304, -0.866025447845459, -0.4999999701976776, 245.2441))],
     'a': [('a_stem', (1, 0, 285.1609, 0, 1, 188.2505)), ('a_bowl', (0.8786, -0.4775, 311.2118, 0.4775, 0.8786, 218.5154))],
     'e': [('e_arch', (1, 0, 429, 0, 1, 189)), ('e_bowl', (1, 0, 429, 0, -1, 370)), ('e_bar', (1, 0, 445, 0, 1, 265))],
