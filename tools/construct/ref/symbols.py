@@ -272,7 +272,15 @@ def build_w(S, L, w):
                 # dời điểm (không boolean): điểm thân + loe chân (dưới mặt thanh, trong cột thân ± 14 u) sang hai phía ±dx
                 # → cùng cấu trúc điểm ở mọi weight (nội suy Medium / SemiBold đúng), tay + mỏ giữ nguyên
                 cx_ = (sx0 + sx1)/2
-                g = xform(g, lambda x, y: ((x - dx if x < cx_ else x + dx), y) if (y <= yb + 0.01 and sx0 - 14 <= x <= sx1 + 14) else (x, y))
+                # thanh ngang dày theo nét ngang H của weight (designer 05/11 "thanh ngang của chữ T trong TM lúc bold lên sao không
+                # dày lên theo"): mặt dưới thanh + mỏ hạ xuống dy (dời điểm), mặt trên giữ ở cap
+                dy = s*T['Bold']['H']*(T[w]['H']/T['Regular']['H'] - 1)
+                def mv(x, y):
+                    col = sx0 - 14 <= x <= sx1 + 14
+                    if col and y < yb - 0.01: return (x - dx if x < cx_ else x + dx), y           # thân + loe chân
+                    if y >= y1_ - 0.01: return x, y                                              # mặt trên thanh
+                    return ((x - dx if x < cx_ else x + dx) if col else x), y - dy                # mặt dưới thanh, mỏ
+                g = xform(g, mv)
             else:                                            # M: thân + chéo dày theo phương ngang, đáy chữ V kéo nhọn lại
                 g = sharpen(xdilate(g, dx), 2*dx)
         b = bounds(g); return move(g, -b[0], 700 - b[3])

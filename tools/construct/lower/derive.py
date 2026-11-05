@@ -419,8 +419,24 @@ def shrink_caps(ch, w, top=XH, sx=None, delta=None):
             t0 = m(_embolden(p, d)); t1 = m(_embolden(thicken(p, 40.0, fs=fs), d))
             delta = 40.0*(W[w]['V'] - t0)/(t1 - t0)
         p = thicken(p, delta, fs=(ch == 'z'))
+        if ch in ('v', 'x'):                                 # S10b: nét mảnh / theo tỉ lệ mảnh / thân của V hoa
+            mt = lambda q: _thick_of(q, XH*0.80, XH*0.70, -1)
+            u0 = mt(_embolden(p, d)); u1 = mt(_embolden(thicken(p, 30.0, fs=True), d))
+            dl = 30.0*(thin_target(w) - u0)/(u1 - u0) if abs(u1 - u0) > 1e-3 else (thin_target(w) - u0)*1.25
+            if dl > 0.2: p = thicken(p, dl, fs=True)
     p = _embolden(p, d)
     return V.move(p, -p.bounds[0], 0)
+
+_TR = {}
+def thin_target(w):
+    """S10b (designer 05/11 "độ dày các đường xéo x y v w k thường có bị mỏng so với cân bằng chung không"): nét chéo mảnh
+    của chữ thường = thân chữ thường × (nét mảnh / thân) của V hoa cùng weight — V thu nhỏ bằng nén ngang 0.55 làm nét / còn
+    0.35–0.40 thân (V hoa 0.43 Regular, 0.50 Bold); Bold mỏng hơn hệ chung tới 20 %"""
+    if w not in _TR:
+        Vc = _caps('v', w); Hc = _caps('h', w)
+        r = _thick_of(Vc, 700*0.72, 700*0.60, -1)/(lambda a: a[1] - a[0])(runs_at(Hc, 560)[0])   # thân H trên thanh
+        _TR[w] = r*W[w]['V']
+    return _TR[w]
 
 W_SX = 0.47   # v dùng cho w: hẹp hơn v (0.55) → hai chữ v ghép lại rộng ≈ 1.45 v
 def w_from_v(w, sx=None):
@@ -494,7 +510,13 @@ def k_from_K(w, sxk=None, kd=None):
     if kd is None:                                           # chân k (nét \\) dày bằng thân: dời song song hai mép (như v x)
         leg = lambda q: _thick_of(_embolden(q, d), 140, 100, -1)
         t0, t1 = leg(diag), leg(thicken(diag, 40.0)); kd = 40.0*(v - t0)/(t1 - t0)
-    diag = _embolden(thicken(diag, kd), d)
+    diag = thicken(diag, kd)
+    # S10b: tay k (nét /) theo tỉ lệ mảnh / thân của V hoa
+    arm = lambda q: _thick_of(_embolden(q, d), XH*0.86, XH*0.76, -1)
+    u0, u1 = arm(diag), arm(thicken(diag, 30.0, fs=True))
+    dl = 30.0*(thin_target(w) - u0)/(u1 - u0) if abs(u1 - u0) > 1e-3 else (thin_target(w) - u0)*1.25
+    if dl > 0.2: diag = thicken(diag, dl, fs=True)
+    diag = _embolden(diag, d)
     xr = s0 - h + v - 0.5                                    # tay / chân sau khi bù nét không lấn qua mép phải thân (bậc 6 u)
     k = V.U(stem, V.I(V.I(diag, V.halfplane(0)), V.rect(xr, -100, 2000, 2000)))
     # đầu tay k = đầu nét / của v (cùng module loe nét xiên Figma 2138:1189): mũi K gốc rất nhọn (~27°), thu về k thành nêm dài

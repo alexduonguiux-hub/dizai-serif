@@ -272,3 +272,20 @@ Designer: "Module T trong cụm TM vẫn lỗi mà". Lỗi thứ hai nằm ở b
 Trang preview có thêm mục **Font variable** (hai file woff2 nhúng trong trang): thanh trượt wght 400–700, Roman / Italic, ô chữ sửa được, bảng 8 kiểu.
 
 Designer: "Medium vẫn lỗi module T", "Semi bold và bold module T bị kéo dài quá". Lỗi thứ ba: cộng Minkowski ngang biến chóp mỏ T thành đoạn phẳng 2dx, bước `sharpen` (chỉ dành cho đáy chữ V của M) bắt nhầm và kéo mép đứng đầu tay xuống thêm ~50 u ở SemiBold / Bold; Medium là nội suy nên méo theo. Sửa: T không dùng boolean nữa — **dời điểm** thân + loe chân (dưới mặt thanh, trong cột thân ± 14 u) sang hai phía ±dx; tay, mỏ, thanh giữ nguyên module T hoa; cùng cấu trúc điểm ở mọi weight nên Medium / SemiBold nội suy thẳng thân. `sharpen` chỉ áp cho M (Regular M cũng qua cùng phép 0.3 u để hai master cùng cấu trúc).
+
+## Nét chéo mảnh v w x y k + thanh T trong ™ (05/11)
+
+Designer: "thanh ngang của chữ T trong TM lúc bold lên sao không dày lên theo. Sẵn kiểm tra lại độ dày của các đường xéo x, y, v, w, k thường có bị mỏng so với cân bằng chung không".
+
+**Đo (trục giữa, nét chéo):**
+
+| | nét dày / thân | nét mảnh / thân |
+|---|---|---|
+| V W X Y K hoa | 0.94–1.08 | 0.43 Regular · 0.50–0.56 Bold |
+| v w x y k thường (trước) | 0.97–0.99 | 0.35–0.42 Regular · 0.40–0.42 Bold |
+
+Nét dày đã bằng thân (S10). Nét mảnh mỏng: v w x y k là chữ hoa thu ngang 0.55, nét / bị nén theo, bù nét CAP_D chỉ 6 / 3 u.
+
+**S10b**: nét chéo mảnh của chữ thường = thân chữ thường × (nét mảnh / thân) của V hoa cùng weight → 44.5 Regular, 63.6 Bold (`derive.thin_target`). Làm như S10: hai mép nét / dời song song ra ngoài (`thicken(fs=True)`), loe tịnh tiến theo mép, đỉnh tính lại bằng giao điểm; áp cho v x (w, y dựng từ v tự theo) và tay k. Sau: nét mảnh 45 / 51 / 57 / 63 (R / M / SB / B) ở cả năm chữ; bề ngang v x w giữ đích cũ.
+
+**™**: thanh ngang T dày theo nét ngang H của weight (Regular 0.42 × H_B = 28.6 → Bold 48.6): mặt dưới thanh + mỏ hạ xuống bằng dời điểm, mặt trên ở cap.
