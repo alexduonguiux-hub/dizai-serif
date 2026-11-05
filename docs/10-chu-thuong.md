@@ -98,7 +98,7 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 
 **v w x y k z = chữ hoa của designer thu nhỏ** (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module", "đồng bộ v w x y k theo chữ hoa"). Thay bản dựng theo luật nét chéo trước đó.
 - **Cách thu**: giữ loe S5, đỉnh, mỏ của chữ hoa. Thu ngang 0.80, dọc về x-height. Bù nét 6 (Bold 3) mỗi phía bằng nét viền góc vuông, góc giữ sắc. Kết quả nét mảnh ≈ 44, chéo dày ≈ 100, thanh z = 39 (Bold 54).
-- **Ngòi dẹt cho v w x y** (designer 05/11: "đồng bộ lại độ dày các glyph"; "chữ v hơi rộng", "v và y", "x cũng rộng"): thu ngang thôi thì nét \ chỉ còn ≈ 0.88 thân (v, y nhẹ hơn chữ thường trung bình 40 %) mà chữ lại quá rộng (v 568, x 540, n 444). Nay thu hẹp hơn (v y 0.565, x 0.60) rồi cộng Minkowski với một đoạn thẳng (ngòi dẹt) nằm theo hướng nét /. Nét / gần như không dày thêm; nét \ dày thêm theo góc giữa hai nét.
+- **Ngòi dẹt cho v w x y** (designer 05/11: "đồng bộ lại độ dày các glyph"; "chữ v hơi rộng", "v và y", "x cũng rộng"): thu ngang thôi thì nét \ chỉ còn ≈ 0.88 thân (v, y nhẹ hơn chữ thường trung bình 40 %) mà chữ lại quá rộng (v 568, x 540, n 444). Nay thu hẹp hơn (v y 0.55, x 0.60) rồi cộng Minkowski với một đoạn thẳng (ngòi dẹt) nằm theo hướng nét /. Nét / gần như không dày thêm; nét \ dày thêm theo góc giữa hai nét.
   - Ngòi: v y dài 47 ở 68° (Bold 41 ở 62°); x dài 32 ở 55° (Bold 36).
   - w giữ như cũ (thu 0.80, không ngòi; rộng 654 / Bold 656) (designer 05/11: "giữ bề rộng chữ w như cũ"). w là hai chữ V chồng nhau ở giữa: ngòi làm lòng giữa Bold bít ("chữ w bold hơi dính").
   - Kết quả Regular: v y rộng 413, nét \ 100, nét / 39. x rộng 426, nét \ 101, nét / 42. Bold: nét \ ≈ 123, nét / ≈ 54.
@@ -112,10 +112,15 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 - **Vai n m h u dựng bằng hai ellipse** (designer 05/11: "độ cong của các nét này không smooth", "đường cong không tự nhiên", "nên thử áp dụng cách dựng bằng 2 ellipse như các chữ tròn khác"). Mỗi nửa trên là một cung ellipse liền, độ cong biến thiên đều. Thay cho vai a ghép hai đoạn, vốn có độ cong nhảy ở đỉnh và tay nắm suy biến ở chỗ vai chuyển sang thân phải.
   - Hai ellipse cùng tâm cao 340.8 (chỗ thân phải bắt đầu thẳng).
   - Ellipse ngoài: mép phải = mép ngoài thân phải, đỉnh = đường vượt 503.4. Đi qua khuyết trên mép phải thân trái (Regular 448.4, Bold 458.9).
-  - Ellipse trong (lòng): mép phải = mép trong thân phải, đỉnh thấp hơn đường vượt 40.4 (Bold 53.1). Đi qua nách, đặt sao cho chỗ nối vai–thân (đo đứng sát mép thân) dày bằng chỗ nối bụng–thân của b d p q: Regular 67.1, Bold 77.4, nên nách ở 381.3 / 381.5. Trước đó nách 420.8 / 418.2, chỗ nối chỉ 27.5 / 40.6, khoảng 40 % các chữ khác (designer 05/11: "chỗ nối m, n, u có bị bất đồng bộ độ dày với các glyph khác không?").
-  - Tâm lòng lệch trái tâm ngoài, nên trục nhấn tự nghiêng: mảnh ở vai trái, dày dần sang thân phải.
+  - Ellipse trong (lòng): mép phải = mép trong thân phải, đỉnh thấp hơn đường vượt 40.4 (Bold 53.1). Đi qua nách, đặt sao cho chỗ nối vai–thân (đo đứng sát mép thân) dày bằng chỗ nối bụng–thân của b d p q: Regular 67.1, Bold 81.8, nên nách ở 381.3 / 377.1. Trước đó nách 420.8 / 418.2, chỗ nối chỉ 27.5 / 40.6, khoảng 40 % các chữ khác (designer 05/11: "chỗ nối m, n, u có bị bất đồng bộ độ dày với các glyph khác không?").
+  - Ellipse lòng **nghiêng** như bụng d (designer 05/11: "nét nối của u, m, n, h vẫn cảm giác bị mỏng hơn so với các glyph khác"). Trục lớn nghiêng 72.2° (Bold 67.8°). Giải sao cho: đỉnh lòng đúng đỉnh trên, mép phải lòng chạm mép trong thân phải ở cao 340.8, đi qua nách. Lòng trục đứng làm nét vai mỏng nhanh khi rời thân (cách thân 20 u chỉ 45, so với b d p q 55).
+  - Độ dày chỗ nối, đo đứng cách thân 1 / 8 / 20 / 40 u: Regular 66 / 62 / 56 / 49 (b d p q 67 / 62 / 55 / 49). Bold 81.5 / 79 / 74 / 66 (b d p q 82 / 77 / 72 / 68). Nách Bold đặt theo chỗ nối b d p q Bold 81.8.
   - m: ellipse ngoài vai sau kéo sang trái, đè lên vai trước. Hai cung ngoài cắt nhau thành nách nhọn trên thân giữa.
   - Chân thân phải có loe hai bên.
+- **Chỗ nối a, r Bold** (designer 05/11: kiểm độ dày chỗ nối r, a với các chữ khác):
+  - a Bold: lòng bụng không dời về thân nữa. Bụng a nối thân ở đáy, dời 9.9 làm chỗ nối Bold còn 76, mỏng hơn cả Regular (80). Nay 90.5.
+  - r t f j Bold: mép trong tai / móc dày thêm B_BAR + 5 (B_JOIN), cho chỗ nối bằng b d p q Bold. r Bold: 77 → 80.5 (b d p q 82).
+- **Loe đầu nét v x y**: ngòi dẹt kéo đỉnh / đáy ra thêm ½ ngòi · sin góc. Trước đây phần này bị xén ở x-height, làm méo loe đầu nét (designer 05/11: "module 1 số chữ bị lỗi"). Nay dựng thấp hơn đúng phần đó, không xén; v y thu ngang 0.55, rộng 412.
 - **k**: tay, chân cắt ngoài mép thân rồi mới bù nét. Trước đó nhát cắt ăn 0.5 u vào thân K, bù nét làm dải này thành gờ 6 u dọc mép phải thân (designer 05/11: "chữ k bị lỗi nét").
 - **k**: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap). Ở Bold, thân thu về 124.5 (thân Bold chữ thường). Loe phải ở đỉnh và chân đi theo thân. Chỉ tay và chân thu về x-height (ngang 0.85).
 - **y**: lấy v (từ V), kéo nét mảnh xuống descender, có loe chân. Nét dày dừng ở cao độ mép trái của nó gặp mép trái nét mảnh. Chữ hoa Y khác cấu trúc nên không dùng.

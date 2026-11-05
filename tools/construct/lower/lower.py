@@ -28,6 +28,7 @@ B_K = 0.105                    # lòng co THEO TỈ LỆ bán trục −10.5 % (
 B_SHIFT = 9.9                  # lòng dời về phía thân 9.9 (a: lệch tâm 10 → 13.5 px)
 B_BAR = 12.7                   # nét ngang mảnh (thanh e) dày thêm bằng phần lòng co
 B_THIN = 6.4                   # nét nối / tai g: nở đều mỗi phía (= nửa phần trên)
+B_JOIN = 5.0                   # chỗ nối tai / móc–thân (r t f j) Bold dày thêm ngoài B_BAR, cho bằng chỗ nối bụng–thân b d p q
 TOK = r'[MLCZ]|-?[\d.]+(?:e-?\d+)?'
 
 # ---------- khối (px cục bộ) ----------
@@ -148,7 +149,9 @@ def bold(ch):
         stem = _path(_map_pts(SHAPES['a_stem'], fs), G['a_stem'])
         bm = G['a_bowl']; outer = _path(_first_contour(SHAPES['a_bowl']), bm); c, k, st = _stretch(outer.bounds)
         cpts = [st(*q) for q in _samples(_path('M' + SHAPES['a_bowl'].split('M')[2], bm))]; ctr, M = _ell_from_pts(cpts)
-        bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, shift=(B_SHIFT, 0)))
+        # lòng a KHÔNG dời về thân (designer 05/11, kiểm độ dày chỗ nối): bụng a nối thân ở đáy, dời B_SHIFT làm chỗ nối Bold
+        # còn 76 < Regular 80; không dời → 90.6 (đo đứng sát thân), dày theo weight như b d p q
+        bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, shift=(0, 0)))
         return V.U(bowl, V.move(stem, (k - 1)*(outer.bounds[2] - c), 0))
     if ch in 'dbqp':
         bm, sm = G['bowl'], G['stem']
@@ -164,6 +167,9 @@ def bold(ch):
         # trượt theo; tai / móc / thanh dày vào trong + 4.5 px (B_BAR): mép trong tai, móc dời vào, đầu cắt dày theo; thanh dày xuống.
         # thân chia đều hai phía (mỗi mép h = ½ B_STEM, loe theo mép); tai / móc trượt theo mép trong; thanh dài thêm hai đầu
         dS, dH = B_STEM/S, B_BAR/S; h = dS/2; out = []
+        # mép trong tai / móc dày thêm B_BAR + B_JOIN: chỗ nối tai–thân Bold dày như chỗ nối bụng–thân b d p q Bold (+15 so với
+        # Regular; chỉ B_BAR thì r Bold nhẹ hơn 5–8 u — designer 05/11, kiểm độ dày chỗ nối)
+        dJ = (B_BAR + B_JOIN)/S
         for key, m in GLYPH[ch]:
             d = SHAPES[key]
             if key in ('r_stem', 't_stem', 'f_stem', 'j_stem'):
@@ -173,11 +179,11 @@ def bold(ch):
             elif key == 'r_ear':
                 inner = {(86.9834, 34.5068), (70.6928, 20.6864), (52.007, 16.6259), (37.7812, 25.9814), (28.0556, 32.3776),
                          (22.0545, 43.9654)}
-                d = _map_pts(d, lambda x, y: (x + h, y + dH) if (x, y) in inner else (x + h, y))
+                d = _map_pts(d, lambda x, y: (x + h, y + dJ) if (x, y) in inner else (x + h, y))
             elif key == 't_hook':
                 inner = {(69.0, 34.5107), (56.2644, 20.6885), (49.2621, 16.5), (41.5, 20.9814), (33.8969, 27.3775), (36.0, 43.5)}
                 def f(x, y):
-                    if (x, y) in inner: return x + h, y + dH
+                    if (x, y) in inner: return x + h, y + dJ
                     if x < 0.01: return x - h, y                                                        # mép ngoài theo thân
                     return x + h, y
                 d = _map_pts(d, f)

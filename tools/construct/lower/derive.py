@@ -120,7 +120,7 @@ ARCH_NOTCH = {'Regular': 448.4, 'Bold': 458.9}
 # Nách: chỗ nối vai–thân dày bằng chỗ nối bụng–thân của b d p q (đo đứng sát mép thân: Regular 67.1, Bold 77.4).
 # Trước đó (nách 420.8 / 418.2) chỗ nối chỉ 27.5 / 40.6, ≈ 40 % các chữ khác (designer 05/11: "chỗ nối m, n, u có bị bất
 # đồng bộ độ dày với các glyph khác không?").
-ARCH_JOIN = {'Regular': 67.1, 'Bold': 77.4}
+ARCH_JOIN = {'Regular': 67.1, 'Bold': 81.8}
 ARCH_CROTCH = {w: ARCH_NOTCH[w] - ARCH_JOIN[w] for w in ARCH_NOTCH}
 ARCH_TOP = {'Regular': 40.4, 'Bold': 40.4 + 12.7}
 
@@ -128,14 +128,33 @@ def _ell_through(xr, top, cy, px, py):
     """ellipse trục đứng/ngang: mép phải xr, đỉnh top, tâm ở cao độ cy, qua (px, py) bên trái tâm → (cx, rx, ry)"""
     ry = top - cy; r = math.sqrt(1 - ((py - cy)/ry)**2); rx = (xr - px)/(1 + r); return xr - rx, rx, ry
 
+# Lòng vai là ellipse NGHIÊNG (như bụng d nghiêng 15°) — designer 05/11: "nét nối của u, m, n, h vẫn cảm giác bị mỏng hơn
+# so với các glyph khác": lòng trục đứng làm nét vai mỏng nhanh khi rời thân (cách thân 20 u chỉ 45 so với b d p q 55).
+# Trục lớn nghiêng ARCH_TILT so với phương ngang (Regular 72.2°, Bold 67.8°), giải sao cho: đỉnh lòng = đường vượt − ARCH_TOP,
+# mép phải lòng = mép trong thân phải ở đúng cao độ ARCH_CY (lòng gặp thân phải tiếp tuyến), qua nách ARCH_CROTCH.
+# Kết quả (đo đứng cách thân 1 / 8 / 20 / 40 u): Regular 66 / 62 / 56 / 49 (b d p q 67 / 62 / 55 / 49),
+# Bold 81.5 / 79 / 74 / 66 (b d p q 82 / 77 / 72 / 68).
+ARCH_TILT = {'Regular': 72.2, 'Bold': 67.8}
+
+def _tilted_inner(w, xl, xi):
+    from scipy.optimize import least_squares
+    th = math.radians(ARCH_TILT[w]); c, s = math.cos(th), math.sin(th); T = L.OV_T - ARCH_TOP[w]; yc = ARCH_CROTCH[w]
+    def yup(cx, cy, a, b, x):
+        X = x - cx; A = s*s/a/a + c*c/b/b; B = 2*X*c*s*(1/a/a - 1/b/b); C = X*X*(c*c/a/a + s*s/b/b) - 1
+        return cy + (-B + math.sqrt(max(B*B - 4*A*C, 0)))/(2*A)
+    def F(q):
+        cx, cy, a, b = q; rx = math.sqrt(a*a*c*c + b*b*s*s)
+        return [cy + math.sqrt(a*a*s*s + b*b*c*c) - T, cx + rx - xi, yup(cx, cy, a, b, xl) - yc, cy + s*c*(a*a - b*b)/rx - ARCH_CY]
+    cx, cy, a, b = least_squares(F, [xl + 80, 300, 170, 105], bounds=([-200, 0, 30, 30], [600, 460, 500, 500])).x
+    return V.ellipse((cx, cy), a, b, ARCH_TILT[w])
+
 def shoulder(w, xl, xi, xo, ext=0.5):
     """vai giữa thân trái (mép phải xl) và thân phải (xi … xo), từ cao độ ARCH_CY lên đường vượt.
     m vai sau (ext 60): ellipse ngoài kéo sang trái đè lên vai trước → hai cung ngoài cắt nhau thành nách nhọn trên thân giữa"""
-    cy = ARCH_CY; top = L.OV_T if hasattr(L, 'OV_T') else 503.4
+    cy = ARCH_CY; top = L.OV_T
     co, ao, bo = _ell_through(xo, top, cy, xl, ARCH_NOTCH[w])
-    ci, ai, bi = _ell_through(xi, top - ARCH_TOP[w], cy, xl, ARCH_CROTCH[w])
     outer = V.I(V.ellipse((co, cy), ao, bo), V.rect(xl - ext, cy, xo, top + 5))
-    inner = V.I(V.ellipse((ci, cy), ai, bi), V.rect(xl if ext > 1 else xl - 5, cy - 1, xi, top))
+    inner = V.I(_tilted_inner(w, xl, xi), V.rect(xl if ext > 1 else xl - 5, cy - 0.5, xi, top))
     return V.U(V.D(outer, inner), V.rect(xi, 290, xo, cy + 0.5))
 
 def n_like(w, asc=False, arches=1):
@@ -291,7 +310,7 @@ def s_from_S(w):
 # v w x y k z: CHỮ HOA của designer thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module",
 # "đồng bộ v w x y k theo chữ hoa") — giữ loe S5, đỉnh, mỏ của chữ hoa; thu ngang CAP_SX, dọc về x-height, bù nét
 # CAP_D mỗi phía (nét viền góc vuông, góc giữ sắc) để nét mảnh ≈ 44 / chéo dày ≈ 100 (Bold theo mẫu a Bold).
-CAP_SX = {'v': 0.565, 'w': 0.80, 'x': 0.60, 'z': 0.80, 'k': 0.85}
+CAP_SX = {'v': 0.55, 'w': 0.80, 'x': 0.60, 'z': 0.80, 'k': 0.85}
 # Ngòi dẹt (luật S10 — đồng bộ độ dày): V hoa thu nhỏ chỉ còn nét \ ≈ 0.88 thân thường, nét / ≈ 0.45 → cộng Minkowski với một
 # đoạn thẳng dài NIB theo hướng nét / (nét / gần như không dày thêm, nét \ dày thêm ≈ NIB·sin góc giữa hai nét):
 # v x: nét \ = thân (102 / 124.5), nét / ≈ 40–45 / 56; w: hai chữ V chồng ở giữa nên ngòi ngắn (giữ lòng giữa mở).
@@ -324,7 +343,7 @@ def nib(p, Ln, ang):
         if verb == 'lineTo': q.lineTo(cur[0] + vx, cur[1] + vy)
         else: q.cubicTo(pts[1][0] + vx, pts[1][1] + vy, pts[0][0] + vx, pts[0][1] + vy, cur[0] + vx, cur[1] + vy)
         q.close(); q.simplify(fix_winding=True); parts.append(q); cur = end
-    return L._q2c(V.I(L._q2c(V.U(*parts)), V.rect(-100, 0, 2000, XH)))
+    return L._q2c(V.U(*parts))
 
 def shrink_caps(ch, w, top=XH, sx=None):
     """chữ hoa thu về x-height; v w x: + ngòi dẹt; Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
@@ -334,8 +353,11 @@ def shrink_caps(ch, w, top=XH, sx=None):
         a, b = CAP_SX[ch], CAP_SX[ch]*1.05; ea, eb = wd(a), wd(b)
         for _ in range(3): c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, wd(c)
         sx = b
-    P_ = _caps(ch, w); x0, y0, x1, y1 = P_.bounds; d = CAP_D[w]; sy = (top - 2*d)/(y1 - y0); sx = sx or CAP_SX[ch]
-    p = _embolden(V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d)), d)
+    P_ = _caps(ch, w); x0, y0, x1, y1 = P_.bounds; d = CAP_D[w]; sx = sx or CAP_SX[ch]
+    # ngòi dẹt kéo đỉnh / đáy ra thêm ½ ngòi · sin góc → dựng thấp hơn đúng phần đó (không xén: xén làm méo loe đầu nét)
+    e = NIB[ch][w][0]/2*math.sin(math.radians(NIB[ch][w][1])) if ch in NIB else 0.0
+    sy = (top - 2*d - 2*e)/(y1 - y0)
+    p = _embolden(V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d + e)), d)
     if ch in NIB: p = nib(p, *NIB[ch][w]); p = V.move(p, -p.bounds[0], 0)
     return p
 def z_from_Z(w):
