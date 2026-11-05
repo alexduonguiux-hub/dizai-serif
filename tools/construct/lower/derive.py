@@ -106,7 +106,7 @@ def hook(w, right=True, ybot=-11.3):
 # Vách trái c dày đúng bằng thân (36 px; Bold 44 px) nên nửa c ghép khít vào thân. Đầu cắt là đầu cắt c (nét mảnh cong,
 # cắt đứng). Nửa c thu ngang C_KX phần BÊN PHẢI VÁCH (vách = thân giữ nguyên, không bậc ở chỗ thân gặp nửa c).
 C_MID = (503.4 - 11.3)/2                                     # chia đôi c ở tâm lòng
-C_KX = {'r': 0.70, 'f': 0.60, 't': 0.64, 'j': 0.78}   # f, t rút ngắn (designer 05/11: "móc trên chữ f và móc dưới chữ t hơi dài ra")
+C_KX = {'r': 0.60, 'f': 0.60, 't': 0.64, 'j': 0.64}   # móc trên (r f) 0.60, móc dưới (t j) 0.64 — designer 05/11: "móc trên chữ f và móc dưới chữ t hơi dài ra", "đồng bộ móc r và j theo f, t"
 def c_half(w, top, kx):
     c = L.clean(L._q2c(L.raw('c', w)))
     wall = W[w]['V']                                         # vách c = thân: giữ nguyên, chỉ thu phần bên phải vách

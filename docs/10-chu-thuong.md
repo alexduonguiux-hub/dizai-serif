@@ -72,7 +72,7 @@ Gồm 15 chữ f h i j k l m n r s t u v w x y z, Regular và Bold (o, c đã c�
 | Module | Nguồn (designer) | Dùng cho |
 |---|---|---|
 | Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°) |
-| **Nửa c** (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") | c: vách = thân (36 / Bold 44 px), đầu cắt đứng | r (nửa trên, thu 0.70), f (nửa trên nâng lên ascender, 0.60), t (nửa dưới, 0.64), j (nửa dưới lật ngang, 0.78). f và t rút ngắn từ 0.72 / 0.78 (designer 05/11: "móc trên chữ f và móc dưới chữ t hơi dài ra"). Chỉ thu phần bên phải vách, vách giữ nguyên nên không có bậc chỗ thân gặp nửa c |
+| **Nửa c** (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") | c: vách = thân (36 / Bold 44 px), đầu cắt đứng | r (nửa trên, thu 0.60), f (nửa trên nâng lên ascender, 0.60), t (nửa dưới, 0.64), j (nửa dưới lật ngang, 0.64). Móc trên (r, f) cùng 0.60, móc dưới (t, j) cùng 0.64 (designer 05/11: "móc trên chữ f và móc dưới chữ t hơi dài ra", "đồng bộ móc r và j theo f, t"). Chỉ thu phần bên phải vách, vách giữ nguyên nên không có bậc chỗ thân gặp nửa c |
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
 | **S hoa** (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") | S của designer | s: thu ngang 0.85, dọc về x-height, rồi bù nét bằng nét viền góc vuông (Regular 7, Bold 3 mỗi phía). Nét mảnh trên/dưới 40.5 (= H; Bold 55), sống 102 theo phương đứng (Bold 124 = thân Bold chữ thường). Bản dựng từ c (05/11) đã bỏ: s phải cùng dáng S hoa |
 
