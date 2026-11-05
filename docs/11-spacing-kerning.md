@@ -69,3 +69,24 @@ Theo skill `typeface-construction` §15 và luật S14. Designer 05/11: "làm ke
 - tnum cho số.
 - cpsp khi set toàn hoa.
 - Đưa vào file font (GPOS) khi xuất OTF/TTF.
+
+## QA/QC kerning 05/11 (`tools/construct/qa_kern.py`)
+
+Designer 05/11: "QA/QC lại hết các kerning cho đủ. Tôi thấy nhiều chỗ kerning chưa chuẩn".
+
+**Đã sửa (luật trong `spacing.py`):**
+- **Chữ có dấu canh theo phần chữ gốc** (trung vị lệch profile), không theo mép mực. Trước đó Đ bị đặt lệch phải 40.5 u (Bold 63.5), mọi cặp Đ + chữ sau đều sát hoặc chạm (Đ|O… bị đẩy +5 / +20). Đ / đ: lề trái tính lại cho thanh chìa.
+- **Vùng đo kern = phần chồng tầm cao mực hai chữ**, không cắt ở x-height. Trước đó T b, T h, V b, d T, f T bị kéo tới sàn chống va 26 vì thanh T chạm đỉnh b h. Nay T b, T h, d T = 0, khe 60.
+- **Sàn khe ở vùng sừng ơ ư Ơ Ư = 14** (vùng viền phải khác chữ gốc), còn lại 26. Trước đó sàn 26 đẩy mọi cặp ư ơ + chữ sau ra khoảng +30. Nay ươ = uo, ơn = on, ƯỜ = UO (0).
+- **Sàn mềm cho cặp chữ gốc:** khe nhỏ nhất ≥ 0.55 × khe chuẩn (HH 86, nn 70; Bold 93 / 78). ff, ft trước chỉ 32. Nay Regular ff, ft +10; vt, yt, rt, tt, vv +5.
+- Đã thử đo trắng quang học giới hạn độ sâu (cùng thước spacing) để kern, nhưng bỏ: phép đo cộng độc lập hai phía, nên mọi cặp hoa + hoa ra 0 (AV = 0), không thấy được hai chữ ăn khớp vào nhau. Giữ cách đo khe nhỏ nhất.
+
+**Kết quả QA (Regular / Bold):**
+- A. Va chạm (khe < sàn, tính dấu, sừng, ascender, descender): 0 / 0.
+- C. Âm tiết Việt (5663 cặp kề, ba kiểu viết): 5214 cặp có dấu. 5103 / 5097 lệch ≤ 12 so với cặp gốc. 99 / 105 lệch chỉ vì sàn chống va (dấu chạm chữ bên cạnh). 12 / 12 lệch thật: ơt ơy và dạng có dấu (+15 / +25: sừng ơ chạm đỉnh t, đầu y).
+- D. Cặp kinh điển: AV −115, AT −40, LT −40, LY −90, VA −125, WA −105, PA −85, To −50, Yo −100, P. −150, r. −70, "A −100, 11 / 17 = 0.
+- E. Cặp chữ gốc sát (< 0.55 khe chuẩn): 0 / 0.
+- Ngoại lệ chống va: 1176 / 1506, gần hết là cặp có dấu chạm chữ bên cạnh.
+
+**Còn mở (chờ designer):**
+- **Sừng ư chìa 97 u (Bold 115), gấp khoảng 2.7 lần sừng ơ (36 / 52).** Vì vậy ưu, ưn, ưt, ƯT, ƯU vẫn phải đẩy +20…+50 (Bold +30…+60) và đọc thưa. Luật S14 / skill: "sừng ơ / ư một tấm chung, cùng hình, ngắn". Đề xuất: dời chân sừng ư vào trong để sừng chìa ngang sừng ơ.
