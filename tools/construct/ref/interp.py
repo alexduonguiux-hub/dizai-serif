@@ -119,7 +119,13 @@ def tocubic(s):
     if s[0] == 'C': return s
     a, b = s[1], s[2]; return ['C', a, (a[0] + (b[0] - a[0])/3, a[1] + (b[1] - a[1])/3), (a[0] + 2*(b[0] - a[0])/3, a[1] + 2*(b[1] - a[1])/3), b]
 
-def lerp(p, q, t): return (p[0] + (q[0] - p[0])*t, p[1] + (q[1] - p[1])*t)
+def lerp(p, q, t):
+    x, y = p[0] + (q[0] - p[0])*t, p[1] + (q[1] - p[1])*t
+    # điểm nằm TRÊN đường chân / cap ở một master, sát đường đó (< 20) ở master kia (móc loe chân K Regular ↔ chân cắt nhọn K
+    # Bold): nội suy ra một VÁT XIÊN ở Medium / SemiBold (designer 05/11: "lỗi nét chân chữ k") → đặt lên đường đó
+    for yl in (0.0, 700.0):
+        if (abs(p[1] - yl) < 0.6 and abs(q[1] - yl) < 20) or (abs(q[1] - yl) < 0.6 and abs(p[1] - yl) < 20): y = yl
+    return (x, y)
 
 def interp_glyph(pr, pb, t):
     cr, cb = contours(pr), contours(pb)

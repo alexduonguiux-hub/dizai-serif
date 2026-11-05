@@ -111,3 +111,39 @@ Designer: "đuôi móc không giống các font cùng dòng".
   - Hai nét ngoài giữ loe của v. Hai nét trong bỏ loe, kéo thẳng theo mép nét.
   - Đỉnh giữa cắt phẳng ở x-height, rộng đúng bằng đáy nhọn của v.
 - **Bề ngang:** w = 1.45 × v. Medium / SemiBold / Bold rộng hơn Regular đúng phần B_STEM (hai nét dày).
+
+## Module loe đầu nét chéo, X V Y hẹp lại, k (05/11)
+
+### Module loe đầu nét chéo
+Designer: "đỉnh loe không nhọn như các module khác"; tham khảo module ở Figma 2138:1189.
+
+- **Vector của designer** (đơn vị module cao 29, đo theo mép nét kéo dài):
+
+  | Module | Mũi chìa | Điểm điều khiển gần mũi | Điểm điều khiển gần mép |
+  |---|---|---|---|
+  | Thân đứng | 8 | (1.5, t 8) | (0, t 13.5) |
+  | Nét xiên 15°, phía góc tù | 10.2 | (1.45, t 6) | (0, t 13.5) |
+  | Nét xiên 15°, phía góc nhọn | 5.8 | (−2.9, t 8): lấn vào mép, tạo đoạn lồi nhỏ rồi mũi nhọn | (0, t 14) |
+
+- **`derive.flare_ends`:**
+  - Một cubic từ mép tới mũi; nội suy theo độ ngả λ = ngả / 0.268.
+  - Phía tù: mũi 8 + 2.2λ. Phía nhọn: mũi 8 − 2.2λ, điểm điều khiển 1.5 − 4.4λ.
+  - Quy ra font: t × 69.8/29 (bằng chiều cao loe thân H), u × 22.7/8 (bằng độ chìa loe H).
+  - Cắt từ chỗ mép thẳng của bản vẽ dừng, nên không sót bướu của loe cũ.
+- **Áp cho:** đầu trên V Y, đầu trên + chân X, chân A, đầu tay (/) + chân (\) K. Chạy ở cả hai master Regular / Bold (`ref/narrow_caps.py`); Medium / SemiBold nội suy lại.
+  - Trước đây K Regular có móc loe ở chân còn K Bold cắt nhọn, nên Medium / SemiBold nội suy ra vát xiên ("lỗi nét chân chữ k").
+- **Chữ thường v x y w k:** dựng từ chữ hoa nên tự theo module.
+
+### X V Y hoa hẹp lại
+Designer: "giảm bề ngang chữ X hoa 1 chút", "các chữ XVY hoa giảm bề ngang lại".
+
+- Co ngang × 0.92 quanh tâm. Y chỉ co phần tay; góc tay gặp thân là giao của mép tay mới với mép thân đứng.
+- Nét chéo dốc hơn thì mỏng đi, nên dời song song hai mép (`thicken`) để bề dày vuông góc bằng bản gốc.
+- Bề ngang mới: V 672 → 624, X 642 → 597, Y 632 → 586 (Regular).
+- Bản vẽ gốc giữ ở `designer_AB_orig.json`; chạy lại script luôn đi từ bản gốc.
+- v x w thường giữ bề ngang cũ: sx được giải theo bề ngang đích 411 / 423 / 596.
+
+### k
+- **Kerning:** designer thấy "kerning chữ k và i hơi xa".
+  - Lề phải k chỉ còn 14, nhưng giữa đầu tay và chân là khe chữ V sâu (khoảng trắng trung bình của ki là 218, so với ni 116).
+  - Rút lề phải k thêm 12 (`spacing.NOTCH_RS`).

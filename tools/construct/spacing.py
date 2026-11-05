@@ -38,7 +38,10 @@ WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.25, 0.38
 # kéo vào, nhưng phía trên là hai khoảng trắng hình nêm đối nhau, sâu quá DEPTH 40 mà spacing một phía không bù hết.
 # U = trung bình theo cao độ (vùng chung) của phần trắng sâu quá 40 ở CẢ HAI phía (chỉ đếm cao độ cả hai cùng > 40, mỗi phía
 # tối đa 200). U > 110 → kern ≤ −0.25 (U − 110); sàn mềm của cặp nêm hạ xuống 0.38 khe chuẩn (chân gần như chân serif)
-KMIN_DASH = -60.0                    # cặp có gạch / dấu toán: gạch rơi vào miệng C c L… chỉ kéo vào vừa phải
+KMIN_DASH = -60.0
+# lề phải bù KHẤC SÂU (designer 05/11: "kerning chữ k và i hơi xa"): k phải là khe chữ V sâu giữa đầu tay và chân (trắng sâu quá 40
+# trung bình 105, gấp ~5 lần chữ thường khác); đo trắng chặn ở DEPTH 40 nên lề phải 14 vẫn thưa (ki trắng TB 218, ni 116) → rút 12
+NOTCH_RS = {'k': -12.0}                    # cặp có gạch / dấu toán: gạch rơi vào miệng C c L… chỉ kéo vào vừa phải
 CAP, XH = 700.0, 495.0
 
 src = open(os.path.join(HERE, 'glyphs.js')).read()
@@ -134,6 +137,7 @@ def main():
             b = band(ch, PR[ch]); x0, _, x1, _ = P[ch].bounds
             ls, rs = t - white(PR[ch], 'L', b), t - white(PR[ch], 'R', b)
             if k == 'punct': ls, rs = max(ls, 20.0), max(rs, 20.0)
+            rs += NOTCH_RS.get(ch, 0.0)
             sp[ch] = (round(ls - x0), round(x1 - x0 + ls + rs))          # (dịch outline, advance)
         for ch in chars:                                                   # chữ có dấu: theo chữ gốc
             if ch not in sp and kind(ch) != 'mark':

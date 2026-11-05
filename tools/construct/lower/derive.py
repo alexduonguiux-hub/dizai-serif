@@ -303,7 +303,7 @@ def s_from_S(w):
     x0, y0, x1, y1 = Sp.bounds; d = S_D[w]
     sy = (503.4 + 11.3 - 2*d)/(y1 - y0); sx = S_SX[w]
     p = V.xform(Sp, lambda x, y: ((x - x0)*sx, (y - y0)*sy - 11.3 + d))
-    stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
+    stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 8)   # miter 4 vát cụt mũi loe nhọn (designer 05/11: 'đỉnh loe không nhọn'); 40 kéo mũi thành kim
     stp.convertConicsToQuads()
     return L._q2c(V.U(p, L._q2c(stp)))
 
@@ -311,6 +311,8 @@ def s_from_S(w):
 # "đồng bộ v w x y k theo chữ hoa") — giữ loe S5, đỉnh, mỏ của chữ hoa; thu ngang CAP_SX, dọc về x-height, bù nét
 # CAP_D mỗi phía (nét viền góc vuông, góc giữ sắc) để nét mảnh ≈ 44 / chéo dày ≈ 100 (Bold theo mẫu a Bold).
 CAP_SX = {'v': 0.55, 'w': 0.80, 'x': 0.565, 'z': 0.772, 'k': 0.785}
+# V X hoa thu hẹp (ref/narrow_caps.py, designer 05/11): v x w thường GIỮ bề ngang Regular cũ (giải sx theo bề ngang đích)
+W_TGT = {'v': 411.0, 'x': 423.0, 'w': 596.0}
 # Làm dày nét \ (luật S10 — đồng bộ độ dày): V X hoa thu nhỏ chỉ còn nét \ ≈ 0.88 thân chữ thường → hai mép nét \ dời song
 # song ra ngoài (mỗi bên ½ Δ, đo ngang), Δ giải để nét \ = thân (101.8 / Bold 124.5). Loe / vát ở đầu mép tịnh tiến theo mép
 # nên cung module loe giữ nguyên bán kính như chữ hoa (designer 05/11: "chữ y, x, v lỗi module" — bản ngòi dẹt cộng Minkowski
@@ -326,7 +328,7 @@ def _caps(ch, w):
     ref = json.load(open(os.path.join(HERE, '..', 'ref_glyphs.json')))
     return N(V.P([(c[0], *[tuple(p) for p in c[1:]]) if c[0] != 'Z' else ('Z',) for c in ref[f'{ch.upper()}-{w}']['cmds']]))
 def _embolden(p, d):
-    stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
+    stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 8)   # miter 4 vát cụt mũi loe nhọn (designer 05/11: 'đỉnh loe không nhọn'); 40 kéo mũi thành kim
     stp.convertConicsToQuads(); return L._q2c(V.U(p, L._q2c(stp)))
 def _contours(p):
     out = []; cur = None
@@ -396,6 +398,13 @@ def _thick_of(p, y1=XH*0.78, y2=XH*0.70, i=0):
 
 def shrink_caps(ch, w, top=XH, sx=None, delta=None):
     """chữ hoa thu về x-height; v x: nét \\ dày bằng thân (thicken); Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
+    if w == 'Regular' and sx is None and ch in W_TGT and ch != 'w':
+        def wd(k): p = shrink_caps(ch, w, top, k); return p.bounds[2] - p.bounds[0]
+        a, b = CAP_SX[ch], CAP_SX[ch]*1.05; ea, eb = wd(a), wd(b)
+        for _ in range(4):
+            if abs(eb - ea) < 1e-6 or abs(eb - W_TGT[ch]) < 0.05: break
+            c = b + (W_TGT[ch] - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, wd(c)
+        return shrink_caps(ch, w, top, b, delta)
     if w != 'Regular' and sx is None and ch in THICK:
         R = shrink_caps(ch, 'Regular', top); tgt = R.bounds[2] - R.bounds[0] + L.B_STEM/2
         def wd(k): p = shrink_caps(ch, w, top, k); return p.bounds[2] - p.bounds[0]
@@ -413,12 +422,18 @@ def shrink_caps(ch, w, top=XH, sx=None, delta=None):
     p = _embolden(p, d)
     return V.move(p, -p.bounds[0], 0)
 
-W_SX = 0.47          # v dùng cho w: hẹp hơn v (0.55) → hai chữ v ghép lại rộng ≈ 1.45 v
+W_SX = 0.47   # v dùng cho w: hẹp hơn v (0.55) → hai chữ v ghép lại rộng ≈ 1.45 v
 def w_from_v(w, sx=None):
     """w (designer 05/11: "cân nhắc làm lại chữ w thường khác" — bản W hoa thu nhỏ có nét giữa bắt chéo, cụm mực đặc ở giữa):
     hai MODULE v ghép lại. v dựng như v (shrink_caps, nét \\ dày = thân) nhưng hẹp hơn (W_SX). Hai nét ngoài giữ loe của v;
     hai nét trong bỏ loe, kéo thẳng theo mép nét lên quá x-height; đỉnh giữa cắt phẳng ở x-height, rộng đúng đáy nhọn v.
     Bold: sx giải để w Bold rộng hơn Regular ½ B_STEM × 2 (hai nét dày)"""
+    if w == 'Regular' and sx is None:
+        a, b = W_SX, W_SX*1.05; ea, eb = w_from_v(w, a).bounds[2], w_from_v(w, b).bounds[2]
+        for _ in range(4):
+            if abs(eb - ea) < 1e-6 or abs(eb - W_TGT['w']) < 0.05: break
+            c = b + (W_TGT['w'] - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, w_from_v(w, c).bounds[2]
+        sx = b
     if w != 'Regular' and sx is None:
         tgt = w_from_v('Regular').bounds[2] + L.B_STEM
         a, b = W_SX, W_SX*1.05; ea, eb = w_from_v(w, a).bounds[2], w_from_v(w, b).bounds[2]
@@ -481,7 +496,105 @@ def k_from_K(w, sxk=None, kd=None):
         t0, t1 = leg(diag), leg(thicken(diag, 40.0)); kd = 40.0*(v - t0)/(t1 - t0)
     diag = _embolden(thicken(diag, kd), d)
     xr = s0 - h + v - 0.5                                    # tay / chân sau khi bù nét không lấn qua mép phải thân (bậc 6 u)
-    return V.U(stem, V.I(V.I(diag, V.halfplane(0)), V.rect(xr, -100, 2000, 2000)))
+    k = V.U(stem, V.I(V.I(diag, V.halfplane(0)), V.rect(xr, -100, 2000, 2000)))
+    # đầu tay k = đầu nét / của v (cùng module loe nét xiên Figma 2138:1189): mũi K gốc rất nhọn (~27°), thu về k thành nêm dài
+    return graft_top(k, shrink_caps('v', w), XH, xr + 40, xr - 5)
+
+# MODULE LOE ĐẦU NÉT (designer 05/11: "đỉnh loe không nhọn như các module khác", "lỗi" ở đầu nét chéo V v): loe thân H của
+# designer (giống nhau Regular / Bold): (u chìa ngang ra ngoài, t cách đường cap/chân) — cubic (0, 69.8) (0, 50.1) (5.2, 30.7)
+# (15.0, 13.5) rồi thẳng tới mũi (22.7, 0). Đầu nét chéo: HAI bên đều là loe này. Mép nét ngả 29 u trên 70 u cao (hơn độ chìa 22.7)
+# → dời ngang theo mép vẫn ra "mũi tù" phía nét ngả vào (chính là mũi lồi của bản vẽ). Nên đặt theo MŨI: mũi chìa 22.7 ra ngoài
+# điểm ngoài cùng của mép trong vùng loe, đoạn cuối gặp đường cap 60° như thân H, đường cong rời mép tiếp tuyến.
+FLARE_LOG = []
+FLARE = [(0.0, 69.8), (0.0, 50.1), (5.2, 30.7), (15.0, 13.5), (22.7, 0.0)]
+def flare_ends(p, yend, top, xmin=-1e9, xmax=1e9, slope=None):
+    """dựng lại loe hai bên mọi đầu nét chéo chạm đường yend (top: đầu trên; không: chân). slope: chỉ nét '/' (True) / '\\' (False)"""
+    H = FLARE[0][1]; sgn = -1 if top else 1; ycut = yend + sgn*H
+    segs = []
+    for c in _contours(p):
+        a = c['start']
+        for t, ps in c['segs']:
+            b = ps[-1]
+            if t == 'L' and math.hypot(b[0] - a[0], b[1] - a[1]) > 40 and abs(b[0] - a[0]) > 5 and abs(b[1] - a[1]) > 5: segs.append((a, b))
+            a = b
+    xat = lambda l, y: l[0][0] + (y - l[0][1])*(l[1][0] - l[0][0])/(l[1][1] - l[0][1])
+    yr = yend + sgn*110                                           # cao độ đo / ghép cặp mép: dưới vùng loe
+    near = [l for l in segs if min(l[0][1], l[1][1]) - 1 <= yr <= max(l[0][1], l[1][1]) + 1 and xmin <= xat(l, yr) <= xmax]
+    out = p
+    for fs in (True, False):
+        if slope is not None and fs != slope: continue
+        ls = sorted([l for l in near if ((l[1][0] - l[0][0])*(l[1][1] - l[0][1]) > 0) == fs], key=lambda l: xat(l, yr))
+        i = 0
+        while i + 1 < len(ls):
+            eL, eR = ls[i], ls[i + 1]
+            sl = lambda l: (l[1][0] - l[0][0])/(l[1][1] - l[0][1])
+            if abs(sl(eL) - sl(eR)) > 0.03 or not (20 < xat(eR, yr) - xat(eL, yr) < 260): i += 1; continue
+            def pt(l, u, t, side): return (xat(l, yend + sgn*t) + side*u, yend + sgn*t)
+            # cắt từ chỗ MÉP THẲNG của bản vẽ dừng (loe cũ bắt đầu từ đó), không từ đỉnh loe module: không sót bướu / gãy của loe cũ
+            tend = lambda l: abs(yend - (max(l[0][1], l[1][1]) if top else min(l[0][1], l[1][1])))
+            tc = max(H, tend(eL), tend(eR)) + 2; ycut_ = yend + sgn*tc
+            def side_pts(l, side):
+                # MODULE CỦA DESIGNER (Figma 2138:1189, 05/11 "tham khảo nét dựng module ở đây"): một cubic từ mép tới mũi,
+                # đo theo MÉP NÉT kéo dài (u chìa ra ngoài, t cách đường cap / chân; đơn vị module cao 29):
+                #   thân đứng   : mũi u 8;  điểm đ.khiển gần mũi (1.5, t 8);  gần mép (0, t 13.5)
+                #   nét xiên 15°: phía góc tù  mũi 10.2, đ.khiển (1.45, t 6)
+                #                 phía góc nhọn mũi 5.8,  đ.khiển (−2.9 — LẤN VÀO mép, t 8) → đoạn lồi nhỏ rồi mũi nhọn
+                # → nội suy theo độ ngả λ = ngả / 0.268. Quy ra font: t × 69.8/29 (= cao loe thân H), u × 22.7/8 (= chìa loe H)
+                kt, ku = 69.8/29, 22.7/8
+                e = lambda t: xat(l, yend + sgn*t)
+                lean = (e(1.0) - e(0.0))*(-1)                            # dời ngang của mép khi tiến tới đầu nét (mỗi 1 u)
+                lam = abs(lean)/0.268
+                acute = side*lean < 0                                   # mép chạy ra xa phía này khi tới đầu nét
+                if acute: tip_u, p2_u, p2_t, p1_t = 8 - 2.23*lam, 1.5 - 4.37*lam, 8.0, 13.5 + 0.5*min(lam, 1.0)
+                else:     tip_u, p2_u, p2_t, p1_t = 8 + 2.23*lam, 1.5 - 0.05*lam, 8.0 - 2.0*min(lam, 1.5), 13.5
+                q = lambda u, t: (e(t*kt) + side*u*ku, yend + sgn*t*kt)
+                return [q(0, 29), q(0, p1_t), q(p2_u, p2_t), q(tip_u, 0)]
+            L0 = side_pts(eL, -1); R0 = side_pts(eR, +1)
+            cmds = [('M', pt(eL, 0, tc + 3, -1)), ('L', L0[0]), ('C', L0[1], L0[2], L0[3]), ('L', R0[3]),
+                    ('C', R0[2], R0[1], R0[0]), ('L', pt(eR, 0, tc + 3, 1)), ('Z',)]
+            piece = V.P(cmds); piece = pathops.op(piece, piece, pathops.PathOp.UNION)
+            ys = sorted((ycut_, yend - sgn*3))
+            cut = V.poly([(xat(eL, ys[0]) - 120, ys[0]), (xat(eR, ys[0]) + 120, ys[0]), (xat(eR, ys[1]) + 120, ys[1]), (xat(eL, ys[1]) - 120, ys[1])])
+            out = V.U(V.D(out, cut), piece); FLARE_LOG.append((round(xat(eL, yend)), round(xat(eR, yend)), yend))
+            i += 2
+    return L._q2c(out)
+
+def graft_end(p, donor, yend, xmin, xline, top=True, slash=True):
+    """thay ĐẦU / CHÂN một nét chéo của p bằng đầu / chân nét chéo cùng hướng của donor (nét cuối cùng bên phải ở đầu đó):
+    loe nhọn như mọi module (designer 05/11: "đỉnh loe không nhọn như các module khác"; chân K Medium/SemiBold vát).
+    Ánh xạ theo mép nét: ở mỗi cao độ, đoạn [mép trái, mép phải] của nét donor → đoạn tương ứng của nét đích (loe chìa ngoài
+    hai mép co giãn theo bề dày nét). slash: nét / (tay k K); không: nét \\ (chân K)"""
+    sg = (lambda a, b: (b[0] - a[0])*(b[1] - a[1]) > 0) if slash else (lambda a, b: (b[0] - a[0])*(b[1] - a[1]) < 0)
+    def lines(q, x_lo):
+        out = []
+        for c in _contours(q):
+            a = c['start']
+            for t, ps in c['segs']:
+                b = ps[-1]
+                if t == 'L' and math.hypot(b[0] - a[0], b[1] - a[1]) > 60 and sg(a, b) and min(a[0], b[0]) > x_lo: out.append((a, b))
+                a = b
+        return out
+    xat = lambda l, y: l[0][0] + (y - l[0][1])*(l[1][0] - l[0][0])/(l[1][1] - l[0][1])
+    yr = yend - 1 if top else yend + 1
+    rd = runs_at(donor, yr); dsplit = (rd[-2][1] + rd[-1][0])/2 if len(rd) > 1 else donor.bounds[0]
+    near = (lambda l: max(l[0][1], l[1][1]) > yend - 150) if top else (lambda l: min(l[0][1], l[1][1]) < yend + 150)   # chỉ mép chạy tới vùng đầu / chân (A: bỏ mép trong trên thanh ngang)
+    DL = [l for l in lines(donor, dsplit - 300) if near(l)]
+    TL = [l for l in lines(p, xline) if near(l)]
+    if top: ycut = min(max(l[0][1], l[1][1]) for l in DL + TL) - 4
+    else: ycut = max(min(l[0][1], l[1][1]) for l in DL + TL) + 4
+    span = lambda l: min(l[0][1], l[1][1]) - 6 <= ycut <= max(l[0][1], l[1][1]) + 6
+    DL = [l for l in DL if span(l)]; TL = [l for l in TL if span(l)]
+    DL.sort(key=lambda l: xat(l, ycut)); TL.sort(key=lambda l: xat(l, ycut))
+    vL, vR, kL, kR = DL[-2], DL[-1], TL[-2], TL[-1]
+    reg = (lambda x0: V.rect(x0, ycut, 5000, yend + 5)) if top else (lambda x0: V.rect(x0, yend - 5, 5000, ycut))
+    seam = V.rect(dsplit, ycut - 2, 5000, yend + 5) if top else V.rect(dsplit, yend - 5, 5000, ycut + 2)
+    piece = V.I(donor, seam)
+    def f(x, y):
+        a, b = xat(vL, y), xat(vR, y); u = (x - a)/(b - a); c, d = xat(kL, y), xat(kR, y); return (c + u*(d - c), y)
+    return L._q2c(V.U(V.D(p, reg(xmin)), V.xform(L._q2c(piece), f)))
+
+def graft_top(p, donor, ytop, xmin, xline=None):
+    return graft_end(p, donor, ytop, xmin, xmin - 60 if xline is None else xline, top=True, slash=True)
 
 def y_from_V(w):
     """y: v (V hoa thu nhỏ) + nét mảnh kéo xuống descender có loe chân; nét dày dừng khi lọt hẳn vào nét mảnh"""
