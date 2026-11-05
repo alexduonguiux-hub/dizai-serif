@@ -156,26 +156,11 @@ def glyph(ch, w):
         o = L.raw('j', w); return V.U(o, dot(o.bounds[2] - 8*S - v/2, w))
     if ch == 'i': return V.U(vstem(0, v, 0, XH, 'tltrblbr'), dot(v/2, w))
     if ch == 'l': return vstem(0, v, 0, ASC, 'tltrblbr')
-    if ch == 'v': return vee(w, 455 + wide)
-    if ch == 'y': return vee(w, 455 + wide, desc=True)
-    if ch == 'w':
-        Ww = 690 + 2*wide; a = 0.5*Ww
-        v1 = vee(w, a + 30, fl_r=''); v2 = V.move(vee(w, Ww - a + 30, fl_l=''), a - 30, 0)
-        return V.U(v1, v2)
-    if ch == 'x':
-        Wx = 440 + wide; hD = D/2/(XH/math.hypot(Wx, XH)); ht = t/2/(XH/math.hypot(Wx, XH))
-        a = stroke((Wx - hD, 0), (hD, XH), D, 'tltrblbr'); b = stroke((ht, 0), (Wx - ht, XH), t, 'tltrblbr')
-        return V.U(a, b)
-    if ch == 'k':
-        st = vstem(0, v, 0, ASC, 'tltrblbr'); ax = v + 265 + wide; lx = v + 300 + wide
-        ab, at = (v - 15, 130), (ax - t/2, XH)
-        arm = V.I(stroke(ab, at, t, 'tltr'), V.halfplane(0))
-        j = (ab[0] + (at[0] - ab[0])*0.42, ab[1] + (at[1] - ab[1])*0.42)
-        leg = stroke((lx - D/2, 0), j, D, 'blbr')
-        dx, dy = at[0] - ab[0], at[1] - ab[1]; Ln = math.hypot(dx, dy); nrm = (-dy/Ln, dx/Ln)
-        up0 = (ab[0] + nrm[0]*t/2, ab[1] + nrm[1]*t/2); up1 = (at[0] + nrm[0]*t/2, at[1] + nrm[1]*t/2)
-        leg = V.I(leg, side(up0, up1, left=False))            # chân không thò lên trên mép tay
-        return V.U(st, arm, leg)
+    if ch == 'v': return shrink_caps('v', w)
+    if ch == 'y': return y_from_V(w)
+    if ch == 'w': return shrink_caps('w', w)
+    if ch == 'x': return shrink_caps('x', w)
+    if ch == 'k': return k_from_K(w)
     if ch == 'z': return z_from_Z(w)
     if ch in 'oc': return L._q2c(oc(ch, w))
     if ch == 's': return s_from_S(w)
@@ -242,20 +227,60 @@ def s_from_S(w):
     stp.convertConicsToQuads()
     return L._q2c(V.U(p, L._q2c(stp)))
 
-Z_SX = 0.80                        # z = Z hoa thu: ngang 0.80, dọc về x-height
-Z_D = {'Regular': 6.0, 'Bold': 3.0}  # bù nét mỗi phía: thanh ≈ H (40 / Bold 55), chéo ≈ chéo Z
-def z_from_Z(w):
-    """z là Z hoa thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module") — giữ mỏ đầu thanh và nét chéo
-    của Z; thu ngang Z_SX, dọc về x-height, bù nét Z_D (nét viền góc vuông, mỏ giữ sắc)."""
-    from make_ref import outline
+# v w x y k z: CHỮ HOA của designer thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module",
+# "đồng bộ v w x y k theo chữ hoa") — giữ loe S5, đỉnh, mỏ của chữ hoa; thu ngang CAP_SX, dọc về x-height, bù nét
+# CAP_D mỗi phía (nét viền góc vuông, góc giữ sắc) để nét mảnh ≈ 44 / chéo dày ≈ 100 (Bold theo mẫu a Bold).
+CAP_SX = {'v': 0.80, 'w': 0.80, 'x': 0.80, 'z': 0.80, 'k': 0.85}
+CAP_D = {'Regular': 6.0, 'Bold': 3.0}
+def runs_at(p, y):
+    """các đoạn mực (x0, x1) trên đường ngang y: mỗi mảnh giao với dải 0.1 u là một đoạn"""
+    x0, _, x1, _ = p.bounds; r = V.I(p, V.rect(x0 - 10, y - 0.05, x1 + 10, y + 0.05))
+    return sorted((c.bounds[0], c.bounds[2]) for c in r.contours)
+def _caps(ch, w):
     ref = json.load(open(os.path.join(HERE, '..', 'ref_glyphs.json')))
-    Zp = V.P([(c[0], *[tuple(p) for p in c[1:]]) if c[0] != 'Z' else ('Z',) for c in ref[f'Z-{w}']['cmds']])
-    Zp = N(Zp); x0, y0, x1, y1 = Zp.bounds; d = Z_D[w]
-    sy = (XH - 2*d)/(y1 - y0); sx = Z_SX
-    p = V.xform(Zp, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d))
+    return N(V.P([(c[0], *[tuple(p) for p in c[1:]]) if c[0] != 'Z' else ('Z',) for c in ref[f'{ch.upper()}-{w}']['cmds']]))
+def _embolden(p, d):
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
-    stp.convertConicsToQuads()
-    return L._q2c(V.U(p, L._q2c(stp)))
+    stp.convertConicsToQuads(); return L._q2c(V.U(p, L._q2c(stp)))
+def shrink_caps(ch, w, top=XH):
+    P_ = _caps(ch, w); x0, y0, x1, y1 = P_.bounds; d = CAP_D[w]; sy = (top - 2*d)/(y1 - y0); sx = CAP_SX[ch]
+    p = V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d))
+    return _embolden(p, d)
+def z_from_Z(w): return shrink_caps('z', w)
+
+def k_from_K(w):
+    """k: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap), tay + chân thu về x-height; Bold: thân về 124.5 (thân Bold thường)"""
+    P_ = _caps('k', w); x0, y0, x1, y1 = P_.bounds
+    s0, s1 = runs_at(P_, 600)[0]                             # mép thân ở 600 (trên chỗ tay nhập thân)
+    v = W[w]['V']; kx = v/(s1 - s0)
+    FLR = 90                                                 # vùng loe phải của thân (đỉnh, chân) đi theo thân, không theo nét chéo
+    stem = V.U(V.I(P_, V.rect(x0 - 50, -50, s1 + 0.5, 800)), V.I(P_, V.rect(s1 - 1, 700 - FLR, s1 + 40, 800)),
+               V.I(P_, V.rect(s1 - 1, -50, s1 + 40, FLR)))
+    stem = V.xform(stem, lambda x, y: (s0 + (x - s0)*kx, y*ASC/700))
+    d = CAP_D[w]; sx = CAP_SX['k']; sy = (XH - 2*d)/(y1 - y0)
+    diag = V.D(V.I(P_, V.rect(s1 - 0.5, -50, x1 + 50, 800)), V.U(V.rect(s1 - 1, 700 - FLR, s1 + 40, 800), V.rect(s1 - 1, -50, s1 + 40, FLR)))
+    diag = _embolden(V.xform(diag, lambda x, y: (s0 + v - 0.5 + (x - s1)*sx, y*sy + d)), d)
+    return V.U(stem, V.I(diag, V.halfplane(0)))
+
+def y_from_V(w):
+    """y: v (V hoa thu nhỏ) + nét mảnh kéo xuống descender có loe chân; nét dày dừng khi lọt hẳn vào nét mảnh"""
+    v = shrink_caps('v', w); x0, _, x1, _ = v.bounds
+    def right_run(y): return runs_at(v, y)[-1]
+    ya, yb = XH*0.80, XH*0.50; (la, ra), (lb, rb) = right_run(ya), right_run(yb)   # đo nơi hai nét còn tách (Bold nhập sớm)
+    lx = lambda y: lb + (la - lb)*(y - yb)/(ya - yb); rx = lambda y: rb + (ra - rb)*(y - yb)/(ya - yb)
+    # cao độ nét dày lọt hẳn vào nét mảnh: mép trái v (nét dày) gặp mép trái nét mảnh
+    def left_edge(y): return runs_at(v, y)[0][0]
+    lo, hi = 0.0, XH*0.5
+    for _ in range(40):
+        m = (lo + hi)/2
+        if left_edge(m) < lx(m) - 0.5: hi = m                 # mép trái còn nằm ngoài nét mảnh: điểm dừng ở thấp hơn
+        else: lo = m
+    thick = V.I(v, V.halfplane(lo))
+    thin = V.I(v, side((lx(0), 0), (lx(XH), XH), left=False))
+    t = (rx(0) - lx(0))*abs(math.sin(math.atan2(XH, lx(XH) - lx(0))))
+    cb = ((lx(DESC) + rx(DESC))/2, DESC); ct = ((lx(40) + rx(40))/2, 40)
+    tail = stroke(cb, ct, t, 'blbr')
+    return V.U(thick, thin, tail)
 
 CHARS = 'fhijklmnsuvwxyz'      # o, c, r, t: đã có bản vẽ designer (lower.py)
 if __name__ == '__main__':

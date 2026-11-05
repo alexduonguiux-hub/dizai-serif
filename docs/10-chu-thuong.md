@@ -87,18 +87,10 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
 | **S hoa** (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") | S của designer | s: thu ngang 0.85, dọc về x-height, rồi bù nét bằng nét viền góc vuông (Regular 7, Bold 3 mỗi phía). Nét mảnh trên/dưới 40.5 (= H; Bold 55), sống 102 theo phương đứng (Bold 124 = thân Bold chữ thường). Bản dựng từ c (05/11) đã bỏ: s phải cùng dáng S hoa |
 
-Nét chéo (luật S3):
-
-| Nét | Regular | Bold |
-|---|---|---|
-| \ dày D | 100 | 122 |
-| / mảnh t | 44 | 56.7 |
-
-- Đỉnh dưới của v, w cắt phẳng 20.
-- w là hai chữ v chồng lên nhau, đỉnh giữa không có loe.
-- y: nét mảnh kéo xuống descender, có loe; nét dày dừng khi lọt hẳn vào nét mảnh.
-- k: tay mảnh mọc từ thân lên x-height; chân dày mọc từ tay, không thò lên trên mép tay.
-- z: là Z hoa của designer thu nhỏ, có đủ mỏ đầu thanh và nét chéo của Z (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module"). Thu ngang 0.80, dọc về x-height, bù nét 6 (Bold 3) mỗi phía, góc vuông giữ sắc. Thanh dày 39.4 (Bold 53.5).
+**v w x y k z = chữ hoa của designer thu nhỏ** (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module", "đồng bộ v w x y k theo chữ hoa"). Thay bản dựng theo luật nét chéo trước đó.
+- **Cách thu**: giữ loe S5, đỉnh, mỏ của chữ hoa. Thu ngang 0.80, dọc về x-height. Bù nét 6 (Bold 3) mỗi phía bằng nét viền góc vuông, góc giữ sắc. Kết quả nét mảnh ≈ 44, chéo dày ≈ 100, thanh z = 39 (Bold 54).
+- **k**: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap). Ở Bold, thân thu về 124.5 (thân Bold chữ thường). Loe phải ở đỉnh và chân đi theo thân. Chỉ tay và chân thu về x-height (ngang 0.85).
+- **y**: lấy v (từ V), kéo nét mảnh xuống descender, có loe chân. Nét dày dừng ở cao độ mép trái của nó gặp mép trái nét mảnh. Chữ hoa Y khác cấu trúc nên không dùng.
 - Chấm i, j: đường kính 118 (Bold 146), cách x-height 70.
 - t: đỉnh 640, có loe hai bên. Thanh ngang của f và t: dày H, mép trên ở x-height.
 
