@@ -15,6 +15,7 @@ import sys, os, json, math, unicodedata
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
 import vn_punct as V
 from make_ref import outline
+from lower import _q2c
 
 XH, OVT = 495.0, 8.4
 MARK_YL = XH + OVT + V.GAP_ML + 3
@@ -86,7 +87,7 @@ def build():
             if ch == 'đ': p = dstroke(S, w)
             else: p = compose(S, M, ch, w)
             b = 'd' if ch == 'đ' else unicodedata.normalize('NFD', ch)[0]; bb = V.bounds(outline(S[f'{b}-{w}']))
-            out[f'{ch}-{w}'] = [V.to_d(p)]; Wover[f'{ch}-{w}'] = round(bb[2])
+            out[f'{ch}-{w}'] = [V.to_d(_q2c(p))]; Wover[f'{ch}-{w}'] = round(bb[2])
         dd = dstroke(S, w); x0, _, x1, _ = V.bounds(dd); H = LV[w]['H']
         out[f'₫-{w}'] = [V.to_d(V.U(dd, V.rect(x0 + 20, -160, x1, -160 + H)))]
     out['_W'] = Wover

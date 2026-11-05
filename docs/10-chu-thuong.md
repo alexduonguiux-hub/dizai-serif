@@ -98,10 +98,13 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 
 **v w x y k z = chữ hoa của designer thu nhỏ** (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module", "đồng bộ v w x y k theo chữ hoa"). Thay bản dựng theo luật nét chéo trước đó.
 - **Cách thu**: giữ loe S5, đỉnh, mỏ của chữ hoa. Thu ngang 0.80, dọc về x-height. Bù nét 6 (Bold 3) mỗi phía bằng nét viền góc vuông, góc giữ sắc. Kết quả nét mảnh ≈ 44, chéo dày ≈ 100, thanh z = 39 (Bold 54).
-- **Ngòi dẹt cho v w x y** (designer 05/11: "đồng bộ lại độ dày các glyph"; "chữ v hơi rộng", "v và y", "x cũng rộng"): thu ngang thôi thì nét \ chỉ còn ≈ 0.88 thân (v, y nhẹ hơn chữ thường trung bình 40 %) mà chữ lại quá rộng (v 568, x 540, n 444). Nay thu hẹp hơn (v y 0.55, x 0.60) rồi cộng Minkowski với một đoạn thẳng (ngòi dẹt) nằm theo hướng nét /. Nét / gần như không dày thêm; nét \ dày thêm theo góc giữa hai nét.
-  - Ngòi: v y dài 47 ở 68° (Bold 41 ở 62°); x dài 32 ở 55° (Bold 36).
-  - w giữ như cũ (thu 0.80, không ngòi; rộng 654 / Bold 656) (designer 05/11: "giữ bề rộng chữ w như cũ"). w là hai chữ V chồng nhau ở giữa: ngòi làm lòng giữa Bold bít ("chữ w bold hơi dính").
-  - Kết quả Regular: v y rộng 413, nét \ 100, nét / 39. x rộng 426, nét \ 101, nét / 42. Bold: nét \ ≈ 123, nét / ≈ 54.
+- **Làm dày nét \\ cho v x y** (designer 05/11: "đồng bộ lại độ dày các glyph"; "chữ v hơi rộng", "v và y", "x cũng rộng"; "chữ y, x, v lỗi module").
+  - Vì sao: nếu chỉ thu ngang, nét \\ chỉ còn ≈ 0.88 thân (v y nhẹ hơn chữ thường trung bình 40 %), mà chữ lại quá rộng (v 568, x 540, n 444).
+  - Cách làm: thu hẹp hơn (v y 0.55, x 0.565), rồi dời song song hai mép nét \\ ra ngoài, mỗi bên ½ Δ theo phương ngang. Δ giải để nét \\ dày bằng thân (101.8 / Bold 124.5).
+  - Loe và vát ở đầu mép tịnh tiến theo mép, nên cung module loe giữ nguyên bán kính như chữ hoa. Đỉnh nối mép với nét / tính lại bằng giao điểm.
+  - Bản ngòi dẹt trước đó (cộng Minkowski với một đoạn thẳng) quét cả phần loe, làm cung module vỡ thành nhiều mảnh và méo đầu nét. Đã bỏ.
+  - Kết quả: v y rộng 411 (Bold 422), x 423 (Bold 434). Nét / Regular ≈ 37–42, Bold ≈ 48–52.
+  - w giữ như cũ (thu 0.80, không làm dày; rộng 654 / Bold 656) (designer 05/11: "giữ bề rộng chữ w như cũ"; "chữ w bold hơi dính").
 
 **Bề ngang Bold** (designer 05/11: "các chữ bold thường tăng độ rộng hơn nhiều so với regular"; luật tiến triển weight: bề rộng tăng ½ phần nét tăng):
 - Thân Bold dày thêm 22.6, chia đều hai phía (mỗi mép 11.3), không dồn ra ngoài như trước. Lòng co, vị trí thân giữ theo Regular.
@@ -120,7 +123,6 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 - **Chỗ nối a, r Bold** (designer 05/11: kiểm độ dày chỗ nối r, a với các chữ khác):
   - a Bold: lòng bụng không dời về thân nữa. Bụng a nối thân ở đáy, dời 9.9 làm chỗ nối Bold còn 76, mỏng hơn cả Regular (80). Nay 90.5.
   - r t f j Bold: mép trong tai / móc dày thêm B_BAR + 5 (B_JOIN), cho chỗ nối bằng b d p q Bold. r Bold: 77 → 80.5 (b d p q 82).
-- **Loe đầu nét v x y**: ngòi dẹt kéo đỉnh / đáy ra thêm ½ ngòi · sin góc. Trước đây phần này bị xén ở x-height, làm méo loe đầu nét (designer 05/11: "module 1 số chữ bị lỗi"). Nay dựng thấp hơn đúng phần đó, không xén; v y thu ngang 0.55, rộng 412.
 - **k**: tay, chân cắt ngoài mép thân rồi mới bù nét. Trước đó nhát cắt ăn 0.5 u vào thân K, bù nét làm dải này thành gờ 6 u dọc mép phải thân (designer 05/11: "chữ k bị lỗi nét").
 - **k**: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap). Ở Bold, thân thu về 124.5 (thân Bold chữ thường). Loe phải ở đỉnh và chân đi theo thân. Chỉ tay và chân thu về x-height (ngang 0.85).
 - **y**: lấy v (từ V), kéo nét mảnh xuống descender, có loe chân. Nét dày dừng ở cao độ mép trái của nó gặp mép trái nét mảnh. Chữ hoa Y khác cấu trúc nên không dùng.

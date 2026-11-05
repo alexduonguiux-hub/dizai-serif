@@ -310,12 +310,13 @@ def s_from_S(w):
 # v w x y k z: CHỮ HOA của designer thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module",
 # "đồng bộ v w x y k theo chữ hoa") — giữ loe S5, đỉnh, mỏ của chữ hoa; thu ngang CAP_SX, dọc về x-height, bù nét
 # CAP_D mỗi phía (nét viền góc vuông, góc giữ sắc) để nét mảnh ≈ 44 / chéo dày ≈ 100 (Bold theo mẫu a Bold).
-CAP_SX = {'v': 0.55, 'w': 0.80, 'x': 0.60, 'z': 0.80, 'k': 0.85}
-# Ngòi dẹt (luật S10 — đồng bộ độ dày): V hoa thu nhỏ chỉ còn nét \ ≈ 0.88 thân thường, nét / ≈ 0.45 → cộng Minkowski với một
-# đoạn thẳng dài NIB theo hướng nét / (nét / gần như không dày thêm, nét \ dày thêm ≈ NIB·sin góc giữa hai nét):
-# v x: nét \ = thân (102 / 124.5), nét / ≈ 40–45 / 56; w: hai chữ V chồng ở giữa nên ngòi ngắn (giữ lòng giữa mở).
-NIB = {'v': {'Regular': (47, 68), 'Bold': (41, 62)},
-       'x': {'Regular': (32, 55), 'Bold': (36, 55)}}
+CAP_SX = {'v': 0.55, 'w': 0.80, 'x': 0.565, 'z': 0.80, 'k': 0.85}
+# Làm dày nét \ (luật S10 — đồng bộ độ dày): V X hoa thu nhỏ chỉ còn nét \ ≈ 0.88 thân chữ thường → hai mép nét \ dời song
+# song ra ngoài (mỗi bên ½ Δ, đo ngang), Δ giải để nét \ = thân (101.8 / Bold 124.5). Loe / vát ở đầu mép tịnh tiến theo mép
+# nên cung module loe giữ nguyên bán kính như chữ hoa (designer 05/11: "chữ y, x, v lỗi module" — bản ngòi dẹt cộng Minkowski
+# trước đó quét cả phần loe, cung module vỡ thành nhiều mảnh). Đỉnh nối mép với nét / tính lại bằng giao điểm. y dựng từ v.
+# w giữ như cũ (designer 05/11: "giữ bề rộng chữ w như cũ").
+THICK = ('v', 'x')
 CAP_D = {'Regular': 6.0, 'Bold': 3.0}
 def runs_at(p, y):
     """các đoạn mực (x0, x1) trên đường ngang y: mỗi mảnh giao với dải 0.1 u là một đoạn"""
@@ -327,39 +328,90 @@ def _caps(ch, w):
 def _embolden(p, d):
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
     stp.convertConicsToQuads(); return L._q2c(V.U(p, L._q2c(stp)))
-def nib(p, Ln, ang):
-    """cộng Minkowski với đoạn thẳng dài Ln theo góc ang (ngòi dẹt, tâm ở giữa): hợp hai bản dời ±½ đoạn + dải quét từng cạnh"""
-    vx, vy = Ln*math.cos(math.radians(ang)), Ln*math.sin(math.radians(ang))
-    a = V.move(p, -vx/2, -vy/2); parts = [a, V.move(p, vx/2, vy/2)]; cur = start = None
-    for verb, pts in a.segments:
-        if verb == 'moveTo': cur = start = pts[0]; continue
-        if verb == 'closePath':
-            if cur == start: continue
-            verb, pts = 'lineTo', (start,)
-        end = pts[-1]; q = pathops.Path(); q.moveTo(*cur)
-        if verb == 'lineTo': q.lineTo(*end)
-        else: q.cubicTo(*pts[0], *pts[1], *pts[2])
-        q.lineTo(end[0] + vx, end[1] + vy)
-        if verb == 'lineTo': q.lineTo(cur[0] + vx, cur[1] + vy)
-        else: q.cubicTo(pts[1][0] + vx, pts[1][1] + vy, pts[0][0] + vx, pts[0][1] + vy, cur[0] + vx, cur[1] + vy)
-        q.close(); q.simplify(fix_winding=True); parts.append(q); cur = end
-    return L._q2c(V.U(*parts))
+def _contours(p):
+    out = []; cur = None
+    for v, ps in p.segments:
+        if v == 'moveTo': cur = {'start': tuple(ps[0]), 'segs': []}
+        elif v == 'closePath':
+            last = cur['segs'][-1][1][-1] if cur['segs'] else cur['start']
+            if math.hypot(last[0] - cur['start'][0], last[1] - cur['start'][1]) > 1e-6: cur['segs'].append(('L', [cur['start']]))
+            out.append(cur)
+        else: cur['segs'].append(('L' if v == 'lineTo' else 'C', [tuple(q) for q in ps]))
+    return out
 
-def shrink_caps(ch, w, top=XH, sx=None):
-    """chữ hoa thu về x-height; v w x: + ngòi dẹt; Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
-    if w == 'Bold' and sx is None and ch in NIB:
+def thicken(p, delta, ylo=90.0, yhi=400.0):
+    """nét \\ dày thêm delta (đo ngang): hai mép dời song song ra ngoài mỗi bên delta/2; điểm loe / vát ở đầu mép (y < ylo hoặc
+    > yhi, gần mép hơn mọi nét khác) tịnh tiến theo mép; đỉnh nối mép với nét khác = giao điểm mép mới với nét đó"""
+    CS = _contours(p); lines = []
+    for c in CS:
+        a = c['start']
+        for t, ps in c['segs']:
+            b = ps[-1]
+            if t == 'L' and math.hypot(b[0] - a[0], b[1] - a[1]) > 60: lines.append((a, b, (b[0] - a[0])*(b[1] - a[1]) < 0))
+            a = b
+    xat = lambda l, y: l[0][0] + (y - l[0][1])*(l[1][0] - l[0][0])/(l[1][1] - l[0][1])
+    oth = [l for l in lines if not l[2] and abs(l[1][1] - l[0][1]) > 1]; E = []
+    for l in sorted([l for l in lines if l[2]], key=lambda l: xat(l, 250)):
+        if E and abs(xat(l, 250) - xat(E[-1][0], 250)) < 3: E[-1].append(l)
+        else: E.append([l])
+    assert len(E) == 2
+    SH = (-delta/2, delta/2)
+    def dist(pt, l):
+        (a, b, _) = l; dx, dy = b[0] - a[0], b[1] - a[1]; return abs((pt[0] - a[0])*dy - (pt[1] - a[1])*dx)/math.hypot(dx, dy)
+    def onseg(pt, l): return dist(pt, l) < 0.6 and min(l[0][1], l[1][1]) - 0.6 <= pt[1] <= max(l[0][1], l[1][1]) + 0.6
+    def tag(pt):
+        for k, e in enumerate(E):
+            if any(onseg(pt, l) for l in e): return k, 'edge'
+        if pt[1] < ylo or pt[1] > yhi:
+            dmin, k = min([(min(dist(pt, l) for l in e), k) for k, e in enumerate(E)] + [(dist(pt, l), -1) for l in oth])
+            if k >= 0 and dmin < 45: return k, 'flare'
+        return None, None
+    def inter(k, a, b):
+        l = E[k][0]; q = (l[0][0] + SH[k], l[0][1]); d = (l[1][0] - l[0][0], l[1][1] - l[0][1]); ex, ey = b[0] - a[0], b[1] - a[1]
+        t = ((a[0] - q[0])*ey - (a[1] - q[1])*ex)/(d[0]*ey - d[1]*ex); return (q[0] + t*d[0], q[1] + t*d[1])
+    out = []
+    for c in CS:
+        segs = c['segs']; n = len(segs); A = [c['start']] + [ps[-1] for t, ps in segs]
+        def newA(i):
+            pt = A[i]; k, kind = tag(pt)
+            if k is None: return pt
+            if kind == 'edge' and ylo <= pt[1] <= yhi:
+                for j, other in ((i - 1, A[i - 1] if i > 0 else A[n - 1]), (i, A[i + 1] if i < n else A[1])):
+                    if segs[j % n][0] == 'L' and tag(other)[0] != k and math.hypot(other[0] - pt[0], other[1] - pt[1]) > 40:
+                        return inter(k, other, pt)
+            return (pt[0] + SH[k], pt[1])
+        NA = [newA(i) for i in range(n + 1)]; NA[n] = NA[0]; cmds = [('M', NA[0])]
+        for i, (t, ps) in enumerate(segs):
+            if t == 'L': cmds.append(('L', NA[i + 1]))
+            else:
+                d1, d2 = NA[i][0] - A[i][0], NA[i + 1][0] - A[i + 1][0]
+                cmds.append(('C', (ps[0][0] + d1, ps[0][1]), (ps[1][0] + d2, ps[1][1]), NA[i + 1]))
+        out.append(V.P(cmds + [('Z',)]))
+    return V.U(*out)
+
+def _thick_of(p):
+    """độ dày nét \\ (vuông góc) đo ở 0.78 / 0.70 x-height (trên chỗ hai nét x giao)"""
+    y1, y2 = XH*0.78, XH*0.70; (a1, b1), (a2, b2) = runs_at(p, y1)[0], runs_at(p, y2)[0]
+    th = math.atan2(y1 - y2, ((a1 + b1) - (a2 + b2))/2); return (b1 - a1)*abs(math.sin(th))
+
+def shrink_caps(ch, w, top=XH, sx=None, delta=None):
+    """chữ hoa thu về x-height; v x: nét \\ dày bằng thân (thicken); Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
+    if w == 'Bold' and sx is None and ch in THICK:
         R = shrink_caps(ch, 'Regular', top); tgt = R.bounds[2] - R.bounds[0] + L.B_STEM/2
         def wd(k): p = shrink_caps(ch, w, top, k); return p.bounds[2] - p.bounds[0]
         a, b = CAP_SX[ch], CAP_SX[ch]*1.05; ea, eb = wd(a), wd(b)
         for _ in range(3): c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, wd(c)
         sx = b
-    P_ = _caps(ch, w); x0, y0, x1, y1 = P_.bounds; d = CAP_D[w]; sx = sx or CAP_SX[ch]
-    # ngòi dẹt kéo đỉnh / đáy ra thêm ½ ngòi · sin góc → dựng thấp hơn đúng phần đó (không xén: xén làm méo loe đầu nét)
-    e = NIB[ch][w][0]/2*math.sin(math.radians(NIB[ch][w][1])) if ch in NIB else 0.0
-    sy = (top - 2*d - 2*e)/(y1 - y0)
-    p = _embolden(V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d + e)), d)
-    if ch in NIB: p = nib(p, *NIB[ch][w]); p = V.move(p, -p.bounds[0], 0)
-    return p
+    P_ = _caps(ch, w); x0, y0, x1, y1 = P_.bounds; d = CAP_D[w]; sx = sx or CAP_SX[ch]; sy = (top - 2*d)/(y1 - y0)
+    p = V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d))
+    if ch in THICK:
+        if delta is None:                                    # nét \\ tăng tuyến tính theo Δ → hai lần đo
+            t0 = _thick_of(_embolden(p, d)); t1 = _thick_of(_embolden(thicken(p, 40.0), d))
+            delta = 40.0*(W[w]['V'] - t0)/(t1 - t0)
+        p = thicken(p, delta)
+    p = _embolden(p, d)
+    return V.move(p, -p.bounds[0], 0)
+
 def z_from_Z(w):
     if w == 'Bold':                                          # z Bold chỉ rộng hơn z Regular ½ B_STEM (Z Bold rộng hơn Z Regular 48)
         zr = _caps('z', 'Regular').bounds; zb = _caps('z', 'Bold').bounds
