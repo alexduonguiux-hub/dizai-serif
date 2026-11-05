@@ -139,3 +139,7 @@ Thứ tự bắt buộc: build xong hẳn → `qa_outline.py` → `qa_kern.py` �
 - Nguồn mới là hình đã gộp (fillGeometry) của phép Subtract 2130:1187: vector 2130:1183 trừ hình chữ nhật 2130:1186. Đuôi cong lại, chân dịch phải, cắt phẳng ở đáy; cao 102 px (bản trước 114).
 - Tỉ lệ giữ nguyên (Regular × 1.54, Bold × 1.75 + bù nét), nên dấu thấp hơn: Regular 157, Bold 187. Chồng dấu cao nhất Ẳ: 1001 / 1051.
 - Móc dưới (U+0327, Ç ç) đổi từ × 0.62 lên × 0.80 dấu hỏi lật dọc, vì đuôi mới ngắn hơn: ở × 0.62 móc chỉ thò 57 dưới đường chân và lòng Bold bít. Nay đáy ở −97 / −121, liền một nét với chữ.
+
+## Đơn giản hoá điểm (designer 05/11: "simplify các điểm")
+- Dấu hỏi Bold (và móc dưới Bold) trước đây được làm dày bằng stroke + boolean, sinh hàng chục đoạn nhỏ.
+- Nay dùng `vn_punct.offset_path`: dời song song từng đoạn của chính vector (Tiller–Hanson: dời đa giác điều khiển, giao các cạnh kề; góc nối bằng giao hai tiếp tuyến). Kết quả 9 đoạn, đúng số đoạn của vector designer.

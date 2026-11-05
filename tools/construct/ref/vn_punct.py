@@ -262,6 +262,62 @@ def _q2c(p):
         elif v == 'closePath': out.close()
     return out
 HOOK_T = {'Regular': 54.0, 'Bold': 79.0}
+def offset_path(p, d):
+    """dời song song MỖI ĐOẠN của đường viền ra ngoài d (Tiller–Hanson: dời đa giác điều khiển rồi giao các cạnh kề) — số điểm
+    giữ nguyên như vector gốc; chỗ nối trơn giữ trơn, góc (mặt cắt) gặp nhau bằng giao điểm (miter)"""
+    def isect(p1, d1, p2, d2):
+        den = d1[0]*d2[1] - d1[1]*d2[0]
+        if abs(den) < 1e-9: return None
+        t = ((p2[0] - p1[0])*d2[1] - (p2[1] - p1[1])*d2[0])/den; return (p1[0] + t*d1[0], p1[1] + t*d1[1])
+    out = pathops.Path()
+    conts = []; cur = None
+    for v, ps in p.segments:
+        if v == 'moveTo': cur = {'s': ps[0], 'g': []}; last = ps[0]
+        elif v == 'lineTo': cur['g'].append([last, ps[0]]); last = ps[0]
+        elif v == 'curveTo': cur['g'].append([last, *ps]); last = ps[2]
+        elif v == 'closePath':
+            if math.dist(last, cur['s']) > 1e-6: cur['g'].append([last, cur['s']])
+            conts.append(cur['g'])
+    for g in conts:
+        area = sum(sg[0][0]*sg[-1][1] - sg[-1][0]*sg[0][1] for sg in g)
+        sgn = 1 if area > 0 else -1                                    # ngược kim đồng hồ: pháp tuyến ngoài = phải của hướng đi
+        def nrm(a, b):
+            dx, dy = b[0] - a[0], b[1] - a[1]; L = math.hypot(dx, dy) or 1; return (sgn*dy/L, -sgn*dx/L)
+        off = []
+        for sg in g:
+            pts = [q for q in sg]
+            # bỏ tay nắm trùng điểm đầu / cuối khi tính pháp tuyến
+            edges = [(pts[i], pts[i + 1]) for i in range(len(pts) - 1) if math.dist(pts[i], pts[i + 1]) > 1e-6]
+            ol = [((a[0] + nrm(a, b)[0]*d, a[1] + nrm(a, b)[1]*d), (b[0] - a[0], b[1] - a[1])) for a, b in edges]
+            if len(sg) == 2:
+                (q0, dd), = ol; off.append(['L', q0, (q0[0] + dd[0], q0[1] + dd[1])])
+            else:
+                P0 = ol[0][0]; P3 = (ol[-1][0][0] + ol[-1][1][0], ol[-1][0][1] + ol[-1][1][1])
+                if len(ol) == 3:
+                    P1 = isect(ol[0][0], ol[0][1], ol[1][0], ol[1][1]) or (pts[1][0] + nrm(pts[0], pts[1])[0]*d, pts[1][1] + nrm(pts[0], pts[1])[1]*d)
+                    P2 = isect(ol[1][0], ol[1][1], ol[2][0], ol[2][1]) or (pts[2][0] + nrm(pts[2], pts[3])[0]*d, pts[2][1] + nrm(pts[2], pts[3])[1]*d)
+                else:
+                    n0 = nrm(edges[0][0], edges[0][1]); n1 = nrm(edges[-1][0], edges[-1][1])
+                    P1 = (pts[1][0] + n0[0]*d, pts[1][1] + n0[1]*d); P2 = (pts[2][0] + n1[0]*d, pts[2][1] + n1[1]*d)
+                off.append(['C', P0, P1, P2, P3])
+        # nối các đoạn: điểm cuối đoạn i và đầu đoạn i+1 — trùng (trơn) thì lấy trung điểm, lệch (góc) thì giao hai tiếp tuyến
+        n = len(off)
+        for i in range(n):
+            a, b = off[i], off[(i + 1) % n]
+            ea = a[-1]; ta = (a[-1][0] - a[-2][0], a[-1][1] - a[-2][1]); sb = b[1]; tb = (b[2][0] - b[1][0], b[2][1] - b[1][1])
+            if math.dist(ea, sb) < 0.5: m = ((ea[0] + sb[0])/2, (ea[1] + sb[1])/2)
+            else: m = isect(ea, ta, sb, tb) or ((ea[0] + sb[0])/2, (ea[1] + sb[1])/2)
+            if a[0] == 'C': a[3] = (a[3][0] + m[0] - a[4][0], a[3][1] + m[1] - a[4][1])
+            a[-1] = m
+            if b[0] == 'C': b[2] = (b[2][0] + m[0] - b[1][0], b[2][1] + m[1] - b[1][1])
+            b[1] = m
+        out.moveTo(*off[0][1])
+        for sg in off:
+            if sg[0] == 'L': out.lineTo(*sg[2])
+            else: out.cubicTo(*sg[2], *sg[3], *sg[4])
+        out.close()
+    return out
+
 HOOK_VEC = {'Regular': 1.54, 'Bold': 1.75}       # thành phải vector 35 px → Regular 54 u; Bold 61 u + bù nét tới 79
 def hook_from_q(w):
     """dấu hỏi = VECTOR CỦA DESIGNER (Figma 2130:1183, hook_vec.json — designer 05/11 "Link vector dấu hỏi"): lật y, thu phóng
@@ -274,9 +330,10 @@ def hook_from_q(w):
         elif ps: cur += [p_[0] for p_ in ps]
         if v == 'closePath': runs.append((min(cur), max(cur)))
     r0 = max(runs, key=lambda r: r[1]); d = max(0.0, (HOOK_T[w] - (r0[1] - r0[0]))/2)
-    if d > 0.5:
-        st = pathops.Path(); st.addPath(hk); st.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
-        st.convertConicsToQuads(); hk = _q2c(I(_q2c(U(hk, st)), rect(-500, yb[1], 3000, 3000)))
+    if d > 0.5:                                                    # dời song song từng đoạn (giữ số điểm của vector — "simplify các điểm")
+        hk = offset_path(hk, d); b2 = bounds(hk)
+        # đáy cổ: mặt cắt phẳng dời xuống d → nâng cả dấu lại, đáy vẫn ở 0
+        hk = move(hk, 0, yb[1] - b2[1])
     return norm(hk)
 
 def marks(w):
