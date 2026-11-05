@@ -74,7 +74,7 @@ Gồm 15 chữ f h i j k l m n r s t u v w x y z, Regular và Bold (o, c đã c�
 | Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°) |
 | **Nửa c** (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") | c: vách = thân (36 / Bold 44 px), đầu cắt đứng | r (nửa trên, thu 0.70), f (nửa trên nâng lên ascender, 0.72), t (nửa dưới, 0.78), j (nửa dưới lật ngang, 0.78). Chỉ thu phần bên phải vách, vách giữ nguyên nên không có bậc chỗ thân gặp nửa c |
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
-| **c nhỏ** (designer 05/11: "làm lại s theo c mới") | luật c: mép ngoài elip, lòng elip đứng, vách = thân, đỉnh mảnh 16 px (Bold +12.7), đầu cắt đứng cách mép phải lòng 5 px | s: mỗi bụng là nửa trên của một c cao 300. Bụng được dựng với tỉ lệ ngang của c thật rồi thu phần bên phải vách về bề ngang s 330 (Bold 341). Bụng dưới là bản xoay 180°. Sống gồm hai mép Hermite đi từ vách trái bụng trên (ở tâm bụng, tiếp tuyến đứng) xuống vách phải bụng dưới; nối G1, dày bằng vách. Thay bản cũ thu từ S hoa |
+| **S hoa** (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") | S của designer | s: thu ngang 0.85, dọc về x-height, rồi bù nét bằng nét viền góc vuông (Regular 7, Bold 3 mỗi phía). Nét mảnh trên/dưới 40.5 (= H; Bold 55), sống 102 theo phương đứng (Bold 124 = thân Bold chữ thường). Bản dựng từ c (05/11) đã bỏ: s phải cùng dáng S hoa |
 
 Nét chéo (luật S3):
 
