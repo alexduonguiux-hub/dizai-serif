@@ -192,7 +192,7 @@ def glyph(ch, w):
         dg = V.poly([(0, H), (2*hD, H), (Wz, XH - H), (Wz - 2*hD, XH - H)])
         return V.U(top, bot, dg)
     if ch in 'oc': return L._q2c(oc(ch, w))
-    if ch == 's': return s_from_S(w)
+    if ch == 's': return s_from_c(w)
     raise KeyError(ch)
 
 # ---------- o c (khối vòng) ----------
@@ -218,6 +218,28 @@ def oc(ch, w):
     return V.U(bowl, top)
 
 # ---------- s (từ S chữ hoa) ----------
+# s (designer 05/11: "làm lại s theo c mới"): mỗi bụng là một c NHỎ dựng theo luật c — mép ngoài elip, lòng elip đứng,
+# vách = thân, đỉnh mảnh = đỉnh c (16 px; Bold +12.7), đầu cắt đứng cách mép phải lòng 5 px như c (150 / 155 px).
+# Bụng trên: nửa trên của c nhỏ (đầu cắt trên-phải); bụng dưới: bản xoay 180°. Sống: hai mép Hermite đi từ vách trái
+# bụng trên (ở tâm bụng, tiếp tuyến đứng) xuống vách phải bụng dưới — nối G1, dày đúng bằng vách.
+S_W, S_BH = 330.0, 300.0        # bề ngang s (Regular; Bold +11.3), chiều cao mỗi bụng (mép ngoài)
+def s_from_c(w):
+    wall = W[w]['V']; thin = 16*S + (0 if w == 'Regular' else L.B_BAR); Ws = S_W + (0 if w == 'Regular' else L.B_WIDE)
+    top, bot = 503.4, -11.3; ry = S_BH/2; cy = top - ry
+    # bụng là c tỉ lệ thật (rộng 2rx sao cho đầu cắt nằm ở Ws − 20), rồi thu phần BÊN PHẢI VÁCH về bề ngang Ws
+    rx = (Ws - 20 + wall + 4.5*S)/2; cx = rx
+    rxi, ryi = rx - wall + 0.5*S, ry - thin; cxi = cx + 0.5*S; cut = cxi + rxi - 5*S
+    ring = V.D(V.ellipse((cx, cy), rx, ry), V.ellipse((cxi, cy), rxi, ryi))
+    up = V.I(ring, V.rect(-50, cy - 0.5, cut, top + 50))                     # nửa trên, cắt đứng ở `cut`
+    k = (Ws - 20 - wall)/(cut - wall)
+    up = V.xform(up, lambda x, y: (x if x <= wall else wall + (x - wall)*k, y))
+    ym = (top + bot)/2; rot = lambda p: (Ws - p[0], 2*ym - p[1])
+    lo = N(V.xform(up, lambda x, y: rot((x, y))))
+    O, I_ = (cx - rx, cy), (cxi - rxi, cy)                                   # mép ngoài / mép lòng vách trái ở tâm bụng
+    Le = V.hermite([(O, (0, -1)), (rot(I_), (0, -1))])[0]; Re = V.hermite([(I_, (0, -1)), (rot(O), (0, -1))])[0]
+    sp = V.P([('M', Le[0]), ('C', Le[1], Le[2], Le[3]), ('L', Re[3]), ('C', Re[2], Re[1], Re[0]), ('Z',)])
+    return V.U(up, lo, N(sp))
+
 def s_from_S(w):
     from make_ref import outline
     src = {}
