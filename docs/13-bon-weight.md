@@ -232,3 +232,7 @@ Designer: "giảm bề ngang X, Y, V hoa". Không làm đậm / co cả glyph (l
 - V / Y: dưới nách chia theo đường từ đáy lòng tới điểm gốc; X: chỉ nới dải xa tâm giao (> 120 u) để không khấc;
 - sau phép hợp, bỏ gai mảnh (hai đoạn thẳng gần trùng hướng < 4°) — X Regular từng có gai sợi ở nách phải.
 Loe, nhát cắt ngang, độ dày nét giữ nguyên. Bề ngang: V 672→618 / 683→628 · X 642→591 / 665→612 · Y 632→584 / 655→605 (Regular / Bold); Medium, SemiBold nội suy. v x y w thường không đổi.
+
+## Cặp tròn × A (05/11)
+
+Designer: "ĐÂ, ĐĂ và ĐA kerning vẫn hơi xa". Trắng cặp theo tham chiếu cho DA / OA / AO khe mực nhỏ nhất 128–136 u ≈ 1.5 × khe HH (86): nêm trắng của A cộng bụng tròn thành lỗ. Luật mới (`spacing.py`, ROUND_A = 1.0): cặp D O (Đ Ð Ơ… theo chữ gốc) + A và A + O C G Q kéo vào tới khi khe mực nhỏ nhất ≤ khe HH. Kết quả DA −55 → −95 (Bold −100), OA −105, AO AC AG AQ −95 (Bold −100); áp cho mọi biến thể dấu (ĐÂ ĐĂ ĐẠ ĐÀ ĐOÀN…). Va chạm 0, âm tiết Việt không đổi, 4 weight nhất quán.
