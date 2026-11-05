@@ -148,10 +148,11 @@ def build_w(S, L, w):
     cf = M['circumflex']; b = bounds(cf); G['̌'] = above(xform(cf, lambda x, y: (x, b[1] + b[3] - y)))
     hn = M['horn']; b = bounds(hn); G['̛'] = move(hn, -b[0] - 30, XH - 70)          # bám mép phải chữ trước
     db = M['dotbelow']; b = bounds(db); G['̣'] = move(db, -(b[0] + b[2])/2, -11.3 - V.GAP_ML - (b[3] - b[1]))
-    # móc dưới (cedilla) = DẤU HỎI LẬT DỌC × 0.62 (designer 05/11: "Móc vẫn lỗi" ×3 — bản cổ chữ nhật + vòng không cùng hệ dấu):
+    # móc dưới (cedilla) = DẤU HỎI LẬT DỌC × 0.80 (designer 05/11: "Móc vẫn lỗi" ×3 — bản cổ chữ nhật + vòng không cùng hệ dấu):
     # đuôi dấu hỏi thành cổ đi lên chạm đáy chữ, cung tròn cuộn xuống thành móc, đầu cắt bên trái — cùng nét bút, cùng cách dựng
     # với dấu tiếng Việt (vn_punct.marks: hook)
-    fv = xform(M['hook'], lambda x, y: (x*0.62, -y*0.62)); b = bounds(fv)
+    # × 0.80: dấu hỏi mới đuôi ngắn hơn (× 0.62 làm móc chỉ thò 57 dưới đường chân, lòng Bold bít)
+    fv = xform(M['hook'], lambda x, y: (x*0.80, -y*0.80)); b = bounds(fv)
     top = I(fv, rect(-500, b[3] - 25, 500, b[3] + 1)); tb = bounds(top); xneck = (tb[0] + tb[2])/2
     G['\u0327'] = q2c(move(fv, -xneck, 15 - b[3]))
     # ---------- nhóm 2 ----------

@@ -134,3 +134,8 @@ Thứ tự bắt buộc: build xong hẳn → `qa_outline.py` → `qa_kern.py` �
   - Ngọn cổ = nét mảnh chữ thường (40.4 / Bold 53.1); thanh gạch dày bằng nét mảnh đó.
   - Giữ nguyên lòng o (trừ lòng o khỏi cổ). Cổ dày 0.75 thành o ở chân.
   - Điểm dày nhất 129 / Bold 155, gần chỗ bụng gặp thân của d b q (122 / 146). Trước đó là 137 / 166.
+
+## Dấu hỏi cập nhật lần 2 (designer 05/11: "update dấu hỏi lần nữa", Figma 2130:1187)
+- Nguồn mới là hình đã gộp (fillGeometry) của phép Subtract 2130:1187: vector 2130:1183 trừ hình chữ nhật 2130:1186. Đuôi cong lại, chân dịch phải, cắt phẳng ở đáy; cao 102 px (bản trước 114).
+- Tỉ lệ giữ nguyên (Regular × 1.54, Bold × 1.75 + bù nét), nên dấu thấp hơn: Regular 157, Bold 187. Chồng dấu cao nhất Ẳ: 1001 / 1051.
+- Móc dưới (U+0327, Ç ç) đổi từ × 0.62 lên × 0.80 dấu hỏi lật dọc, vì đuôi mới ngắn hơn: ở × 0.62 móc chỉ thò 57 dưới đường chân và lòng Bold bít. Nay đáy ở −97 / −121, liền một nét với chữ.
