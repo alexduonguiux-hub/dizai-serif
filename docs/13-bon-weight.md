@@ -8,7 +8,7 @@ Yêu cầu của designer ngày 05/11: "thêm 2 weight medium và semi bold". Ha
 | Weight | t | usWeightClass | Nét thân thường |
 |---|---|---|---|
 | Regular | 0 | 400 | 101.8 |
-| Medium | 1/3 | 500 | 109.3 |
+| Medium | 1/3 | 500 | 109.4 |
 | SemiBold | 2/3 | 600 | 116.9 |
 | Bold | 1 | 700 | 124.5 |
 
