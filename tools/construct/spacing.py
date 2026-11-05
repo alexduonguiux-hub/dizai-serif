@@ -33,6 +33,11 @@ lerp_w(SB_REF)
 G_CAP, K_F, MIN_GAP, KMIN = 300.0, 0.45, 26.0, -150.0
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
+WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.25, 0.38
+# cặp NÊM ĐỐI NÊM (designer 05/11: "KA, RA, LA, ƯA, XA…" thưa): khe nhỏ nhất ở CHÂN (đường chân) nên luật khe nhỏ nhất không
+# kéo vào, nhưng phía trên là hai khoảng trắng hình nêm đối nhau, sâu quá DEPTH 40 mà spacing một phía không bù hết.
+# U = trung bình theo cao độ (vùng chung) của phần trắng sâu quá 40 ở CẢ HAI phía (chỉ đếm cao độ cả hai cùng > 40, mỗi phía
+# tối đa 200). U > 110 → kern ≤ −0.25 (U − 110); sàn mềm của cặp nêm hạ xuống 0.38 khe chuẩn (chân gần như chân serif)
 KMIN_DASH = -60.0                    # cặp có gạch / dấu toán: gạch rơi vào miệng C c L… chỉ kéo vào vừa phải
 CAP, XH = 700.0, 495.0
 
@@ -108,7 +113,11 @@ def white(prof, side, b):
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
     spacing, kerning = {}, {}
-    for w in WEIGHTS:
+    # thứ tự: Regular, Bold trước; Medium / SemiBold lấy kern CLASS nội suy từ hai master (như variable font — QA kerning
+    # 05/11: kern đo riêng từng weight nhảy bậc ở ngưỡng hình học, vd. c- −60 / −60 / −60 / 0, L» −115 / −115 / 0 / 0),
+    # rồi chặn va chạm riêng theo outline của chính weight đó
+    from weights import TW
+    for w in ('Regular', 'Bold') + tuple(x for x in WEIGHTS if x not in ('Regular', 'Bold')):
         chars = [k.rsplit('-', 1)[0] for k in O if k.endswith('-' + w)]
         P = {ch: outline([O[f'{ch}-{w}']]) for ch in chars}
         PR = {ch: profile(P[ch]) for ch in chars}
@@ -191,12 +200,27 @@ def main():
                 k = -K_F*(wv - wr)
                 lo = KMIN_DASH if (a in '-–—=+×\u00ad' or b_ in '-–—=+×\u00ad') else KMIN
                 k = max(lo, min(0.0, k)); k = math.ceil(k/5)*5                # chỉ kéo vào; tròn về phía rộng
+                wedge = False
+                if kind(a) != 'punct' and kind(b_) != 'punct':
+                    La_, Ra_ = PR[a]; Lb_, Rb_ = PR[b_]
+                    wa_ = np.nanmax(Ra_) - Ra_; wb_ = Lb_ - np.nanmin(Lb_)
+                    m_ = (YS >= bnd[0]) & (YS <= bnd[1])
+                    both = m_ & ~np.isnan(wa_) & ~np.isnan(wb_) & (wa_ > DEPTH) & (wb_ > DEPTH)
+                    u = float(np.where(both, np.minimum(wa_ - DEPTH, 200) + np.minimum(wb_ - DEPTH, 200), 0)[m_].mean()) if m_.any() else 0.0
+                    if u > WEDGE_U0:
+                        wedge = True; k = min(k, max(lo, math.ceil(-WEDGE_G*(u - WEDGE_U0)/5)*5))
                 # sàn mềm: cặp chữ gốc giữ khe nhỏ nhất ≥ SOFT × khe chuẩn (ff ft vt yt… Regular chỉ 32–36 so với nn 70 — QA
                 # kerning 05/11); thiếu thì đẩy nhẹ ra (kern dương)
                 if kind(a) != 'punct' and kind(b_) != 'punct' and '\u031b' not in rc:   # sừng: đã có sàn riêng
                     g = pair_gap(a, b_, k); gm = float(np.nanmin(g)) if np.any(~np.isnan(g)) else 999.0
-                    if gm < SOFT*wr: k += math.ceil((SOFT*wr - gm)/5)*5
+                    fl_ = (WEDGE_SOFT if wedge else SOFT)*wr
+                    if gm < fl_: k += math.ceil((fl_ - gm)/5)*5
                 if k <= -10 or k >= 5: KC[f'{rc}|{lc}'] = k
+        if w not in ('Regular', 'Bold'):
+            KR, KB = kerning['Regular']['class'], kerning['Bold']['class']; t_ = TW[w]; KC = {}
+            for key in set(KR) | set(KB):
+                v = KR.get(key, 0.0) + (KB.get(key, 0.0) - KR.get(key, 0.0))*t_; v = math.ceil(v/5)*5
+                if v <= -10 or v >= 5: KC[key] = v
         # ---- chặn va chạm: mọi cặp ký tự chữ / số / dấu câu ----
         # sàn khe theo cao độ: vùng SỪNG (ơ ư Ơ Ư và chữ có dấu của chúng — chỗ viền phải khác chữ gốc) chỉ cần MIN_GAP_HORN:
         # sừng là chi tiết nhỏ ở cao, sàn 26 đẩy mọi cặp ư ơ + chữ sau ra ≈ +30 (ưu, ươ, ƯỜ thưa hẳn — QA kerning 05/11;
@@ -224,6 +248,7 @@ def main():
         nexc = len(EXC); top = sorted(KC.items(), key=lambda kv: kv[1])[:12]
         print(w, 'spacing', len(sp), '· class kern', len(KC), '· ngoại lệ chống va', nexc)
         print('   mạnh nhất:', ' '.join(f'{k.replace("|", "")}{v:.0f}' for k, v in top))
+    spacing = {x: spacing[x] for x in WEIGHTS}; kerning = {x: kerning[x] for x in WEIGHTS}
     json.dump(spacing, open(os.path.join(OUT, 'spacing.json'), 'w'), ensure_ascii=False)
     json.dump(kerning, open(os.path.join(OUT, 'kerning.json'), 'w'), ensure_ascii=False)
 

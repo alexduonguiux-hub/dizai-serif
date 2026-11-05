@@ -136,13 +136,29 @@ def _inner_pts(dstr, m, sel):
         if n: cur = q[-1]
     return pts
 
+# a (designer 05/11: "chữ a thường hơi đậm mực hơn các chữ khác"): mật độ mực trong dải x-height a 0.458 so với n 0.431
+# (+6 %; Bold +9 %) — nét không dày hơn luật (trục giữa 104 = n) nhưng lòng bụng nhỏ so với khối chữ. Nới lòng bụng quanh
+# tâm elip khớp của nó A_OPEN lần, giữ viền ngoài và thân.
+A_OPEN = 1.08
+A_OPEN_B = 1.14              # Bold: lòng co nhiều hơn (B_KG) nên cần nới thêm để a Bold ≈ n Bold (+5 % ở 1.08)
+def _a_open(o):
+    G = dict(GLYPH['a']); m = G['a_bowl']
+    cnt = _path('M' + SHAPES['a_bowl'].split('M')[2], m); ctr, M = _ell_from_pts(_samples(cnt))
+    big = V.xform(cnt, lambda x, y: (ctr[0] + (x - ctr[0])*A_OPEN, ctr[1] + (y - ctr[1])*A_OPEN))
+    stem = piece('a_stem', G['a_stem'], 'Regular')
+    sx0 = min(c.bounds[0] for c in V.I(stem, V.rect(-5000, 200, 5000, 260)).contours)
+    big = V.I(big, V.rect(-5000, -5000, min(cnt.bounds[2], sx0), 5000))   # không vượt mép trong thân (thân giữ đúng 102)
+    return V.D(o, big)
+
 def raw(ch, weight):
     spec = None   # GLYPH_BOLD (mẫu a Bold cũ, bụng đứng) không còn dùng: a Bold theo luật (bold())
     if spec:                                                   # bản vẽ Bold của designer
         o = V.U(*[_path(SHAPES[k], m) for k, m in spec]); return V.move(o, -o.bounds[0], 0)
     set_weight(weight)
     if weight == 'Regular':
-        o = V.U(*[piece(k, m, weight) for k, m in GLYPH[ch]]); return V.move(o, -o.bounds[0], 0)
+        o = V.U(*[piece(k, m, weight) for k, m in GLYPH[ch]])
+        if ch == 'a': o = _a_open(o)
+        return V.move(o, -o.bounds[0], 0)
     o = _q2c(bold(ch)); return V.move(o, -o.bounds[0], 0)
 
 def _stretch(ring_bounds):
@@ -166,7 +182,10 @@ def bold(ch):
         cpts = [st(*q) for q in _samples(_path('M' + SHAPES['a_bowl'].split('M')[2], bm))]; ctr, M = _ell_from_pts(cpts)
         # lòng a KHÔNG dời về thân (designer 05/11, kiểm độ dày chỗ nối): bụng a nối thân ở đáy, dời B_SHIFT làm chỗ nối Bold
         # còn 76 < Regular 80; không dời → 90.6 (đo đứng sát thân), dày theo weight như b d p q
-        bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, shift=(0, 0), k=B_KG['a']))
+        cin0 = _ell_path(ctr, M, shift=(0, 0), k=B_KG['a'])                 # lòng theo luật Bold (chưa nới)
+        cin = V.I(_ell_path(ctr, M, shift=(0, 0), k=1 - (1 - B_KG['a'])*(A_OPEN + (A_OPEN_B - A_OPEN)*TW[CUR_W])),
+                  V.rect(-5000, -5000, cin0.bounds[2], 5000))                   # nới a, không vượt mép lòng cũ phía thân
+        bowl = V.D(V.xform(outer, st), cin)
         return V.U(bowl, V.move(stem, (k - 1)*(outer.bounds[2] - c), 0))
     if ch in 'dbqp':
         bm, sm = G['bowl'], G['stem']

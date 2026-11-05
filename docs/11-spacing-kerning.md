@@ -92,3 +92,32 @@ Designer 05/11: "QA/QC lại hết các kerning cho đủ. Tôi thấy nhiều c
 - Sừng ư chìa 97 u (Bold 115), gấp khoảng 2.7 lần sừng ơ (36 / 52).
 - Đã so ba phương án: A giữ nguyên; B dời ½ (chìa ≈ 66 / 84); C dời hết bằng sừng ơ.
 - Designer chọn **giữ nguyên**. Vì vậy ưu, ưn, ưt, ƯT, ƯU giữ kern chống va +15…+50 (Bold +25…+60) ở sàn sừng 14. Đây là chủ ý, không phải lỗi; QA lần sau đừng "sửa" nhầm.
+
+## Quét lại kerning toàn bộ (05/11: "đảm bảo không thiếu trường hợp cặp chữ nào"; "KA, RA, LA, ƯA, XA…")
+
+### Luật mới trong spacing.py
+- **Cặp nêm đối nêm** (KA RA LA XA AA KV VV TT LT…):
+  - Tình trạng cũ: khe nhỏ nhất nằm ở chân, nên luật khe nhỏ nhất không kéo vào. Phía trên là hai khoảng trắng hình nêm đối nhau, sâu quá DEPTH 40 mà spacing một phía không bù hết, nên cặp trông thưa.
+  - U = trung bình theo cao độ của phần trắng sâu quá 40 ở CẢ HAI phía; mỗi phía tính tối đa 200.
+  - Khi U > 110: kern ≤ −0.25 (U − 110).
+  - Sàn mềm của các cặp này hạ từ 0.55 xuống 0.38 khe chuẩn, để chân gần như chân serif nhưng vẫn trên sàn va chạm 26.
+  - Kết quả: KA RA LA XA −15 (Regular) / −20 (Bold).
+- **Medium / SemiBold:** kern class = nội suy kern của hai master Regular / Bold, như cách variable font nội suy. Chặn va chạm vẫn tính riêng theo outline từng weight.
+  - Trước đây kern đo riêng từng weight nên nhảy bậc ở ngưỡng hình học, vd. c- −60 / −60 / −60 / 0, L» −115 / −115 / 0 / 0.
+
+### Bộ kiểm qa_kern.py mở rộng
+| Mục | Kiểm gì | Kết quả |
+|---|---|---|
+| A | va chạm mọi cặp | 0 ở cả 4 weight |
+| C | 5214 cặp âm tiết Việt | 12 cặp lệch, đều là cặp sừng đã chốt |
+| E | cặp chữ quá sát (< 0.38 khe chuẩn) | 0 |
+| F (mới) | dấu câu × dấu câu, trước đây không kiểm | va chạm 0 |
+| G (mới) | mọi ký tự có class kern trái / phải | thiếu 0 |
+| H (mới) | kern chạm trần mà khe còn rộng | các cặp gạch / dấu toán (- + = …) với số, chữ; trần −60 là chủ ý để gạch không rơi vào miệng chữ |
+| I (mới) | kern nhất quán giữa 4 weight | lệch 0 |
+
+### a bớt đậm
+- Designer: "chữ a thường hơi đậm mực hơn các chữ khác".
+- Đo mật độ mực trong dải x-height: a 0.458 so với n 0.431.
+- Sửa: nới lòng bụng 1.08 (Regular) → 1.14 (Bold) quanh tâm, không vượt mép trong thân.
+- Sau khi sửa: a ≈ n (Regular 0.432 / 0.431; Bold 0.506 / 0.493). Thân vẫn đúng 102 / 124.

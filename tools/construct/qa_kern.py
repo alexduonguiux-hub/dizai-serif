@@ -7,7 +7,10 @@ Kiểm:
  B. Cặp có dấu / sừng so với cặp gốc (ưn = un, Ĩn = In, đĩ = đi): lệch kern ≤ 12, trừ khi lệch chỉ vì sàn 26 (liệt kê riêng).
  C. Âm tiết tiếng Việt (phụ âm đầu × vần × 6 thanh, ba kiểu viết: thường / Hoa đầu / HOA): mọi cặp kề → thống kê B.
  D. Cặp kinh điển: AV AT LT LY TA VA WA AW PA FA RV KO To Ty Te Yo P. F, r. y. v, "A 11 17 — giá trị và khoảng trắng.
- E. Cặp chữ gốc quá sát: khe nhỏ nhất sau kern < 0.55 × khe chuẩn cùng loại (HH / nn / Hn / nH).
+ E. Cặp chữ gốc quá sát: khe nhỏ nhất sau kern < 0.38 × khe chuẩn cùng loại (HH / nn / Hn / nH) — sàn của cặp nêm đối nêm;
+    cặp thường còn sàn mềm 0.55 trong spacing.py.
+ F. Dấu câu × dấu câu: va chạm (< 26).  G. Mọi ký tự có class kern trái / phải.  H. Kern chạm trần mà khe còn rộng (thiếu kern).
+ I. Kern class nhất quán giữa 4 weight (Medium / SemiBold ≈ nội suy R → B ±25, không đổi dấu).
 """
 import json, os, sys, math, unicodedata, itertools, collections
 import numpy as np
@@ -110,7 +113,7 @@ def run(w):
             ra = 'n' if SPc.kind(a) == 'lower' else 'H'; rb = 'n' if SPc.kind(b) == 'lower' else 'H'
             if (ra, rb) not in refg: refg[(ra, rb)] = mingap(ra, rb)
             g = mingap(a, b)
-            if g < 0.55*refg[(ra, rb)]: E.append((a + b, round(g), kern(w, a, b)))
+            if g < SPc.WEDGE_SOFT*refg[(ra, rb)] - 2: E.append((a + b, round(g), kern(w, a, b)))   # sàn: 0.55 (thường) / 0.38 (cặp nêm đối nêm)
     E.sort(key=lambda t: t[1]); rep['E_tight'] = E; rep['E_ref'] = {f'{k[0]}{k[1]}': round(v) for k, v in refg.items()}
     # ---- D: cặp kinh điển ----
     D = {}
@@ -118,6 +121,34 @@ def run(w):
               'v,', '"A', '11', '17', 'Tb', 'Th', 'dT', 'fT', 'ĐO', 'Đo', 'đo', 'ươ', 'ưn', 'ơn', 'Ơn', 'ƯN', 'ĐÔ', 'Ỷe']:
         if all(c in SP[w] for c in p): D[p] = (kern(w, *p), round(mingap(*p), 1))
     rep['D_classic'] = D
+    # ---- F: dấu câu × dấu câu (spacing.py không kern / không chặn va cặp này) — chỉ kiểm va chạm ----
+    F = []
+    for a in chars:
+        if SPc.kind(a) != 'punct': continue
+        for b in chars:
+            if SPc.kind(b) != 'punct': continue
+            g = gap(a, b)
+            if np.any(~np.isnan(g)) and np.nanmin(g) < MIN_GAP - 0.5: F.append((a + b, round(float(np.nanmin(g)), 1)))
+    rep['F_punct_punct'] = F
+    # ---- G: phủ class: mọi ký tự có class trái / phải với đại diện có trong font (thiếu → cặp không bao giờ được kern) ----
+    Gm = []
+    for c in chars:
+        if c in SPc.NOKERN: continue
+        rc = unicodedata.normalize('NFC', SPc.rclass(c)); lc = unicodedata.normalize('NFC', SPc.lclass(c))
+        if rc not in SP[w] or lc not in SP[w]: Gm.append(c)
+    rep['G_no_class'] = Gm
+    # ---- H: cặp kern chạm trần (−150 / −60 gạch) mà khe vẫn còn rộng hơn khe chuẩn > 60: kern bị chặn, có thể thiếu ----
+    H = []
+    KMIN = SPc.KMIN
+    for key, v in KN[w]['class'].items():
+        rc, lc = key.split('|'); a = unicodedata.normalize('NFC', rc); b = unicodedata.normalize('NFC', lc)
+        if a not in PL or b not in PL: continue
+        lo = SPc.KMIN_DASH if (a in '-–—=+×\u00ad' or b in '-–—=+×\u00ad') else KMIN
+        if v <= lo:
+            ra = 'n' if SPc.kind(a) == 'lower' else 'H'; rb = 'n' if SPc.kind(b) == 'lower' else 'H'
+            g = mingap(a, b); r0 = mingap(ra, rb)
+            if g - r0 > 60: H.append((a + b, v, round(g), round(r0)))
+    rep['H_clamped'] = H
     rep['n_exc'] = len(KN[w]['exc']); rep['n_class'] = len(KN[w]['class'])
     return rep
 
@@ -132,7 +163,21 @@ def main():
         print('   ', r['B_accent_dev'][:25])
         print(' C âm tiết Việt:', r['C_vn_pairs']); print('   lệch:', r['C_vn_bad'][:25])
         print(' D kinh điển (kern, khe nhỏ nhất):', ' '.join(f'{k}{v[0]:+.0f}/{v[1]:.0f}' for k, v in r['D_classic'].items()))
-        E = r['E_tight']; print(f' E cặp chữ gốc sát (< 0.55 khe chuẩn {r["E_ref"]}): {len(E)}', E[:40])
+        E = r['E_tight']; print(f' E cặp chữ gốc sát (< 0.38 khe chuẩn {r["E_ref"]}): {len(E)}', E[:40])
+    # ---- I: nhất quán 4 weight: kern class Medium / SemiBold nằm gần nội suy R → B (±25), không đổi dấu ----
+    from weights import TW
+    keys = set().union(*[set(KN[w]['class']) for w in WEIGHTS]); I = []
+    for k in sorted(keys):
+        vs = {w: KN[w]['class'].get(k, 0.0) for w in WEIGHTS}
+        for w in ('Medium', 'SemiBold'):
+            e = vs['Regular'] + (vs['Bold'] - vs['Regular'])*TW[w]
+            if abs(vs[w] - e) > 25 or (vs['Regular']*vs['Bold'] < 0 and abs(vs['Regular'] - vs['Bold']) > 30):
+                I.append((k.replace('|', ''), [vs[x] for x in WEIGHTS])); break
+    allr['I_cross_weight'] = I
+    for w in WEIGHTS:
+        r = allr[w]
+        print(f' {w}: F dấu câu × dấu câu va chạm {len(r["F_punct_punct"])} {r["F_punct_punct"][:20]} · G thiếu class {r["G_no_class"]} · H kern chạm trần còn thưa {len(r["H_clamped"])} {r["H_clamped"][:15]}')
+    print(f' I kern lệch giữa 4 weight: {len(I)}', I[:30])
     json.dump(allr, open(os.path.join(OUT, 'qa_kern.json'), 'w'), ensure_ascii=False, indent=0)
 
 if __name__ == '__main__':
