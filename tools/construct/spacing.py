@@ -38,18 +38,19 @@ import re
 VN = re.search(r"const VN = '([^']*)'", src).group(1); VNL = re.search(r"const VNL = '([^']*)'", src).group(1)
 def _jsconst(name):
     m = re.search(r'const ' + name + r' = ("(?:[^"\\]|\\.)*")', src); return json.loads(m.group(1)) if m else ''
-SYM, COMB, LOWX = _jsconst('SYM'), _jsconst('COMB'), _jsconst('LOWX')       # ký tự bổ sung nhóm 1 + 2 (symbols.py)
-PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@') + list(SYM)
+SYM, COMB, LOWX = _jsconst('SYM'), _jsconst('COMB'), _jsconst('LOWX')
+LATU, LATL, MATH = _jsconst('LATU'), _jsconst('LATL'), _jsconst('MATH')       # nhóm 3
+PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@') + list(SYM) + list(MATH)
 SPACE = {'Regular': 230, 'Bold': 245}                                    # space / nbsp: chỉ bề ngang (≈ 0.46 n)
 # ký hiệu không kern class theo hình chữ (chỉ chống va): ký hiệu toán / đứng riêng — kern theo profile làm ~ · − ^ ` trượt
 # vào miệng C, lòng b d (C~ −150, ^d −150 — QA 05/11). Dấu câu đi liền chữ (… ‚ „ « » ‹ › ¡ ¿ { } gạch mềm) vẫn kern.
-NOKERN = set('*<>\\^_`|~•·©®™°±÷−‰§¶†‡£¥¢µ')
+NOKERN = set('*<>\\^_`|~•·©®™°±÷−‰§¶†‡£¥¢µ') | set(MATH)
 CAPS = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'); LOWER = list('abcdefghijklmnopqrstuvwxyz'); FIG = list('0123456789')
 
 def kind(ch):
     if ch in COMB: return 'mark'
-    if ch in CAPS or ch in VN: return 'caps'
-    if ch in LOWER or ch in VNL or ch in LOWX: return 'lower'
+    if ch in CAPS or ch in VN or ch in LATU: return 'caps'
+    if ch in LOWER or ch in VNL or ch in LOWX or ch in LATL: return 'lower'
     if ch in FIG: return 'fig'
     return 'punct'
 def base(ch):

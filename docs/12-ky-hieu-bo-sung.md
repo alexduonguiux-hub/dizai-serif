@@ -64,6 +64,35 @@ Code: `tools/construct/ref/symbols.py` → `designer_D.json` (gộp qua `make_re
 - Âm tiết Việt và cặp chữ gốc: không đổi so với trước.
 - `qa_outline` báo gai ở ™ Bold (đỉnh M thu nhỏ) và ¢ (góc cắt của c, có từ trước).
 
-## Chưa làm (nhóm 3)
-- Latin-1 cho từ nước ngoài: Ä Å Æ Ç Ë Î Ï Ð Ñ Ö Ø Û Ü Þ ß ä å æ ç ë î ï ð ñ ö ø û ü þ ÿ, cùng Œ œ Š š Ž ž Ÿ.
-- Ký hiệu toán ≠ ≤ ≥ ≈ ¬ ¦, phút / giây ′ ″.
+## Sửa sau duyệt (designer 05/11: "Lỗi")
+- `{ }`: mũi giữa răng cưa, đầu cắt ngang cụt. Nay chỉ dựng nửa trên rồi cắt ngang ở trục mũi 355 và lật gương, nên hai nửa trùng khít, mũi sạch. Đầu nét cắt đứng ở mép phải.
+- `< > ‹ › « »`: đỉnh lởm chởm vì hai nét bút chồng mặt cắt. Nay dựng bằng đa giác (như dấu mũ): mép ngoài gặp nhau thành đỉnh nhọn, mép trong lùi đúng độ dày bút từng nhánh (nhánh / mảnh 31, nhánh \ dày 68), hai đầu cắt đứng.
+- Móc dưới (Ç ç U+0327): bản đầu dài, mảnh, thả tới −230. Nay cổ ngắn, bụng móc dày, đáy khoảng −165.
+
+## Nhóm 3 (designer 05/11: "làm tiếp nhóm 3") — `symbols.py: group3()`
+
+| Ký tự | Dựng |
+|---|---|
+| Ä Ë Ï Ö Ü Ÿ ä ë ï ö ü ÿ | chữ gốc + hai chấm (chấm nặng, cách 0.75 Ø). Hoa: dấu ở đáy 750, tâm theo anchor của chữ hoa. Thường: đáy 542.4, tâm theo phần x-height. ï î dùng ı |
+| Å å | vòng (nét 0.34 V); Å: vòng sát đỉnh A hơn (khe 0.6 khe dấu) |
+| Î Û î û · Ñ ñ · Š Ž š ž | mũ, ngã: cùng dấu tiếng Việt; mũ ngược = mũ lật dọc |
+| Ç ç | móc dưới U+0327 bám đáy giữa chữ |
+| Ð | = Đ |
+| Ø ø | O / o + nét / mảnh 0.42 V, dốc khoảng 60°, chìa ra ngoài vòng 30 |
+| Æ | A bỏ chân phải (cắt dọc qua đỉnh) + E có thân đứng tại đỉnh A |
+| Œ | O cắt ở 0.60 bề ngang + E có thân trùng chỗ cắt |
+| æ œ | a + e / o + e chồng một vách |
+| Þ | thân P cao trọn cap, bụng P hạ 150 |
+| þ | p + đỉnh thân b (vươn lên ascender) |
+| ð | o + cổ nét bút cong lên trái, mảnh dần; thanh gạch thẳng hơi chếch, cắt cổ ở khoảng 585 |
+| ß | chân loe của l + MỘT nét bút liền (thân → vòm → eo → bụng dưới → đuôi dừng trước thân); bút đứng rộng đúng bằng thân chữ thường |
+| ≠ | = + nét / 0.45 V |
+| ≤ ≥ | < > × 0.84, nâng 85, thanh dưới 0.55 V |
+| ≈ | hai ~ × 0.78, cách ±92 quanh trục toán |
+| ¬ | thanh ngang + đuôi xuống bên phải |
+| ¦ | thanh 0.58 V gãy (−150 … 300, 410 … 860) |
+| ′ ″ | nháy thẳng ' nghiêng 14° |
+
+- Spacing / kern: chữ có dấu (Ä Ç Ñ Š…) dùng spacing và kern của chữ gốc (canh theo phần chữ gốc). Æ Œ Ø Ð Þ ß æ œ ø ð þ tự tính spacing, kern theo class của chính chúng. Ký hiệu toán ≠ ≤ ≥ ≈ ¬ ¦ ′ ″: chỉ chống va.
+- QA: va chạm 0 / 0; âm tiết Việt không đổi; `qa_outline` không có cờ mới.
+- Tổng: 322 ký tự mỗi weight.

@@ -14,7 +14,7 @@ VNL = re.search(r"const VNL = '([^']*)'", src).group(1)
 PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@')
 def _jsconst(name):
     m = re.search(r'const ' + name + r' = ("(?:[^"\\]|\\.)*")', src); return json.loads(m.group(1)) if m else ''
-SYMX = list(_jsconst('SYM')) + list(_jsconst('LOWX')) + list(_jsconst('COMB'))     # ký tự bổ sung nhóm 1 + 2
+SYMX = list(_jsconst('SYM')) + list(_jsconst('LOWX')) + list(_jsconst('COMB')) + list(_jsconst('LATU')) + list(_jsconst('LATL')) + list(_jsconst('MATH'))     # ký tự bổ sung nhóm 1 + 2
 FIG = list("0123456789")
 CAPS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 LOWER = list(re.search(r"const LOWER = '([^']*)'", src).group(1))

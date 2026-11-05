@@ -54,16 +54,23 @@ def q2c(p):
 def norm_x(p): b = bounds(p); return move(p, -b[0], 0)
 def scale(p, s, o=(0, 0)): return xform(p, lambda x, y: (o[0] + (x - o[0])*s, o[1] + (y - o[1])*s))
 
+def pen_w(theta, nib):
+    """độ dày bút dẹt theo hướng nét theta (như vn_punct.stroke): sqrt((N·sin(θ − PHI))² + m²)"""
+    return math.hypot(nib[0]*math.sin(theta - V.PHI), nib[1])
+
 def chevron(apex, h, w, nib, left=True):
-    """< (left) hoặc >: hai nét bút từ hai đầu về đỉnh; nét / mảnh, nét \\ dày (bút dẹt). apex = đỉnh nhọn, h = nửa chiều cao"""
-    sx = 1 if left else -1
-    top = (apex[0] + sx*w, apex[1] + h); bot = (apex[0] + sx*w, apex[1] - h)
-    a = stroke([line(top, apex)], nib); b = stroke([line(apex, bot)], nib)
-    c = U(a, b)
-    # đỉnh: cắt phẳng vuông góc trục (tránh mũi nhọn dài), đầu: cắt đứng
-    c = I(c, rect(min(apex[0], top[0]) - 400 if left else apex[0] - 400, -2000, max(apex[0], top[0]) + 400, 2000))
-    c = I(c, rect(-4000, -2000, top[0], 4000) if left else rect(top[0], -2000, 4000, 4000))
-    return c
+    """< (left) hoặc > : ĐA GIÁC (như dấu mũ): mép ngoài hai nhánh gặp nhau thành đỉnh nhọn; mép trong lùi vào đúng độ dày bút
+    của từng nhánh (nhánh trên / mảnh, nhánh dưới \\ dày theo bút dẹt), giao nhau ở đỉnh trong; hai đầu cắt đứng.
+    (designer 05/11: "Lỗi" — bản nét bút cũ chồng hai mặt cắt ở đỉnh thành mỏm lởm chởm)"""
+    ax, ay = apex; sx = 1 if left else -1; ex = ax + sx*w
+    a = math.atan2(h, w)                                             # góc nhánh với phương ngang
+    tu = pen_w(a if left else math.pi - a, nib); tl = pen_w(-a if left else math.pi + a, nib)
+    du, dl = tu/math.cos(a), tl/math.cos(a)                          # độ lệch đứng của mép trong
+    k = h/w                                                          # độ dốc nhánh
+    # mép trong: y = ay + k|x−ax| − du (nhánh trên), y = ay − k|x−ax| + dl (nhánh dưới) → giao ở |x−ax| = (du + dl)/(2k)
+    xi = (du + dl)/(2*k); yi = ay + k*xi - du
+    pts = [(ax, ay), (ex, ay + h), (ex, ay + h - du), (ax + sx*xi, yi), (ex, ay - h + dl), (ex, ay - h)]
+    return poly(pts if left else pts[::-1])
 
 def build_w(S, L, w):
     t = T[w]; Vv, H = t['V'], t['H']; d = t['dot']; r = d/2; bold = w == 'Bold'
@@ -88,14 +95,15 @@ def build_w(S, L, w):
     gv = M['grave']; b = bounds(gv); G['`'] = norm_x(move(gv, 0, 560 - b[1]))
     # { } : nét bút: đầu trên cong ra phải, thân thẳng, mũi nhọn ở trục 355 (như ngoặc tròn / vuông: −150 … 860)
     def brace():
-        x0, xm, xt = 0.0, 95.0, 190.0
-        top = [((xt, 860), (-1, 0)), ((xm, 780), (0, -1)), ((xm, 470), (0, -1)), ((x0, 355), (-1, -0.35))]
-        bot = [((x0, 355), (1, -0.35)), ((xm, 240), (0, -1)), ((xm, -70), (0, -1)), ((xt, -150), (1, 0))]
-        n = (t['N']*0.9, t['m']*1.2)
-        return U(stroke(hermite(top), n, taper=lambda u: 0.75 + 0.25*math.sin(math.pi*min(1, u*1.2))),
-                 stroke(hermite(bot), n, taper=lambda u: 0.75 + 0.25*math.sin(math.pi*min(1, (1 - u)*1.2))))
-    br = brace(); br = I(br, rect(-500, -150, 2000, 860)); G['{'] = norm_x(br)
-    b = bounds(G['{']); G['}'] = xform(G['{'], lambda x, y: (b[2] - x, y))
+        """{ : nửa trên là MỘT nét bút từ đầu trên (đi ngang sang trái) → thân đứng → kéo quá mũi; cắt NGANG đúng ở trục mũi 355
+        rồi lật gương xuống → hai nửa trùng khít ở mặt cắt, mũi nhọn sạch (designer 05/11: "Lỗi" — mũi răng cưa); đầu nét cắt
+        đứng ở mép phải"""
+        x0, xm, xt, ym = 0.0, 105.0, 215.0, 355.0
+        n = (t['N']*0.95, t['m']*1.25)
+        half = [((xt + 40, 815), (-1, 0)), ((xm, 715), (0, -1)), ((xm, 470), (0, -1)), ((x0 - 60, ym - 40), (-1, -0.55))]
+        top = I(stroke(hermite(half), n, taper=lambda u: 0.80 + 0.20*math.sin(math.pi*min(1.0, u*1.15))), rect(-500, ym, xt, 1200))
+        bot = xform(top, lambda x, y: (x, 2*ym - y))
+        return q2c(U(top, bot))
     # | : thanh đứng 0.58 V, −150 … 860 (như ngoặc)
     G['|'] = rect(0, -150, 0.58*Vv, 860)
     # ~ : ngã lớn (ngã dấu × 1.7) trên trục toán
@@ -115,10 +123,11 @@ def build_w(S, L, w):
     cf = M['circumflex']; b = bounds(cf); G['̌'] = above(xform(cf, lambda x, y: (x, b[1] + b[3] - y)))
     hn = M['horn']; b = bounds(hn); G['̛'] = move(hn, -b[0] - 30, XH - 70)          # bám mép phải chữ trước
     db = M['dotbelow']; b = bounds(db); G['̣'] = move(db, -(b[0] + b[2])/2, -11.3 - V.GAP_ML - (b[3] - b[1]))
-    # móc dưới (cedilla): nét bút từ đáy chữ xuống, cong sang phải rồi quặt về trái, đầu cắt ngang
-    ce = hermite([((0, 10), (0, -1)), ((0, -60), (0, -1)), ((70, -120), (1, -0.2)), ((40, -200), (-1, -0.6)), ((-60, -215), (-1, 0))])
-    ced = stroke(ce, (t['Nm']*0.75, t['mm']), taper=lambda u: 1.0 - 0.25*u); b = bounds(ced)
-    G['̧'] = move(ced, -(b[0] + b[2])/2 + 10, 0)
+    # móc dưới (cedilla) (designer 05/11: "Lỗi" — bản cũ dài, mảnh, thả tới −230): cổ ngắn từ đáy chữ, bụng móc phình sang phải
+    # (nét bút dày như dấu), quặt về trái mảnh dần; đáy ≈ −165
+    ce = hermite([((0, 25), (0, -1)), ((4, -45), (0.2, -1)), ((62, -95), (0.6, -1)), ((22, -158), (-1, -0.5)), ((-58, -162), (-1, 0.15))])
+    ced = stroke(ce, (t['Nm']*1.05, t['mm']*1.15), taper=lambda u: 1.0 if u < 0.6 else 1.0 - 0.9*(u - 0.6))
+    b = bounds(ced); G['\u0327'] = move(ced, -(b[0] + b[2])/2 + 8, 0)
     # ---------- nhóm 2 ----------
     sp = d + 0.8*d
     G['…'] = U(*[dot((r + k*sp, r - 3), d) for k in range(3)])
@@ -195,6 +204,102 @@ def build_w(S, L, w):
     # µ : u thường, thân trái kéo xuống descender (cắt bằng)
     u0 = ref_outline(L[f'u-{w}']); runs = I(u0, rect(-100, 249.95, 2000, 250.05)); xs = sorted(set(round(q[0], 1) for _, ps in runs.segments for q in ps))
     G['µ'] = U(u0, rect(xs[0], DESC, xs[1], 60))
+    G.update(group3(S, L, w, M, P, G))
+    return G
+
+# ---------------- nhóm 3 (designer 05/11: "làm tiếp nhóm 3") ----------------
+MARK_YL = 495 + 8.4 + V.GAP_ML + 3          # đáy dấu chữ thường (như vn_lower)
+def group3(S, L, w, M, P, G1):
+    t = T[w]; Vv, H = t['V'], t['H']; md = t['mdot']; G = {}
+    lw = lambda c: ref_outline(L[f'{c}-{w}'])
+    def xcen(p, top):                                         # tâm ngang phần thân chữ (bỏ đuôi / dấu)
+        b = bounds(I(p, rect(-500, -5, 3000, top))); return (b[0] + b[2])/2
+    # dấu dùng chung (đáy y = 0, tâm x = 0)
+    def c0(m): b = bounds(m); return move(m, -(b[0] + b[2])/2, -b[1])
+    MK = {'diaer': c0(U(dot((0, 0), md), dot((md + 0.75*md, 0), md))),
+          'ring': c0(D(ellipse((0, 0), 0.62*md + 18, 0.62*md + 18), ellipse((0, 0), 0.62*md + 18 - 0.34*Vv, 0.62*md + 18 - 0.34*Vv))),
+          'caron': c0(xform(M['circumflex'], lambda x, y: (x, -y))), 'tilde': c0(M['tilde']), 'circ': c0(M['circumflex'])}
+    ced = G1['\u0327']
+    def cap_acc(base, mk):
+        p = V.letter(S, base, w); cx = V.anchor_x(base, p)
+        if mk == 'ring':                                       # Å: vòng sát đỉnh A hơn (khe 0.6 khe dấu)
+            return U(p, move(MK[mk], cx, 700 + 11.3 + 0.6*V.GAP_ML))
+        return U(p, move(MK[mk], cx, V.MARK_Y))
+    def low_acc(base, mk, src=None):
+        p = src if src is not None else lw(base); cx = xcen(p, 495 + 25)
+        return U(p, move(MK[mk], cx, MARK_YL))
+    for ch, (b, mk) in {'Ä': ('A', 'diaer'), 'Å': ('A', 'ring'), 'Ë': ('E', 'diaer'), 'Î': ('I', 'circ'), 'Ï': ('I', 'diaer'),
+                        'Ñ': ('N', 'tilde'), 'Ö': ('O', 'diaer'), 'Û': ('U', 'circ'), 'Ü': ('U', 'diaer'), 'Ÿ': ('Y', 'diaer'),
+                        'Š': ('S', 'caron'), 'Ž': ('Z', 'caron')}.items():
+        G[ch] = cap_acc(b, mk)
+    dl = G1['ı']
+    for ch, (b, mk) in {'ä': ('a', 'diaer'), 'å': ('a', 'ring'), 'ë': ('e', 'diaer'), 'ñ': ('n', 'tilde'), 'ö': ('o', 'diaer'),
+                        'û': ('u', 'circ'), 'ü': ('u', 'diaer'), 'ÿ': ('y', 'diaer'), 'š': ('s', 'caron'), 'ž': ('z', 'caron')}.items():
+        G[ch] = low_acc(b, mk)
+    G['î'] = low_acc('i', 'circ', dl); G['ï'] = low_acc('i', 'diaer', dl)
+    # Ç ç: móc dưới (cùng nét U+0327) bám đáy giữa chữ
+    for ch, p in (('Ç', V.letter(S, 'C', w)), ('ç', lw('c'))):
+        b = bounds(p); G[ch] = U(p, move(ced, (b[0] + b[2])/2 + 15, b[1] + 25))
+    # Ð = Đ (cùng hình) · Ø ø: O / o + nét chéo / mảnh (bút dẹt) vượt vòng
+    G['Ð'] = V.dstroke(S, w)
+    for ch, p in (('Ø', V.letter(S, 'O', w)), ('ø', lw('o'))):
+        b = bounds(p); wd = b[2] - b[0]; sw = 0.42*Vv           # nét / mảnh, dốc ~60°, chìa ra ngoài vòng 30
+        a0, a1 = (b[0] + 0.14*wd, b[1] - 30), (b[2] - 0.14*wd, b[3] + 30)
+        ang = math.atan2(a1[1] - a0[1], a1[0] - a0[0]); nx, ny = -math.sin(ang)*sw/2, math.cos(ang)*sw/2
+        G[ch] = U(p, poly([(a0[0] - nx, a0[1] - ny), (a1[0] - nx, a1[1] - ny), (a1[0] + nx, a1[1] + ny), (a0[0] + nx, a0[1] + ny)]))
+    # Æ: A bỏ chân phải (cắt dọc qua đỉnh) + E có thân đứng tại đỉnh A
+    A_ = V.letter(S, 'A', w); E_ = V.letter(S, 'E', w); ab = bounds(A_)
+    top = I(A_, rect(-100, 690, 2000, 800)); tb = bounds(top); apx = (tb[0] + tb[2])/2
+    left = I(A_, rect(-100, -100, apx + 0.5*Vv, 800))
+    eb = bounds(E_); es = I(E_, rect(-100, 300, 2000, 300.1)); ex0 = bounds(es)[0]
+    G['Æ'] = U(left, move(E_, apx - 0.15*Vv - ex0, 0))
+    # Œ: O cắt ở 0.62 bề ngang + E có thân trùng chỗ cắt
+    O_ = V.letter(S, 'O', w); ob = bounds(O_); xcut = ob[0] + 0.60*(ob[2] - ob[0])
+    G['Œ'] = U(I(O_, rect(-100, -100, xcut, 800)), move(E_, xcut - Vv - ex0, 0))
+    # æ: a + e chồng — vách trái e trùng thân a; œ: o + e chồng một vách
+    a_ = lw('a'); e_ = lw('e'); o_ = lw('o'); abx = bounds(a_); ebx = bounds(e_); obx = bounds(o_)
+    G['æ'] = U(a_, move(e_, abx[2] - 0.62*Vv - ebx[0] - 25, 0))
+    G['œ'] = U(o_, move(e_, obx[2] - 0.80*Vv - ebx[0], 0))
+    # Þ: thân P cao trọn cap, bụng P hạ xuống 140 (giữa thân); þ: p có thân vươn lên ascender (đỉnh thân b)
+    P_ = V.letter(S, 'P', w); pb = bounds(P_); st = I(P_, rect(-100, 299.9, 2000, 300.1)); sr = sorted(set(round(q[0], 1) for _, ps in st.segments for q in ps))
+    s1 = sr[1]; stem = I(P_, rect(-100, -100, s1 + 0.5, 800)); bowl = I(P_, rect(s1 - 2, 300, 2000, 800))
+    G['Þ'] = U(stem, move(bowl, 0, -150))
+    p_ = lw('p'); b_ = lw('b'); bb = bounds(b_); pbx = bounds(p_)
+    G['þ'] = U(p_, move(I(b_, rect(-100, 300, bb[0] + 0.5*(bb[2] - bb[0]), 800)), pbx[0] - bb[0], 0))
+    # ð: o + cổ cong (nét bút) từ vai phải lên ascender, cắt chéo bằng thanh nhỏ
+    nb = (t['N']*0.9, t['m']*1.1)
+    ow = obx[2] - obx[0]
+    neck = hermite([((obx[2] - 0.32*Vv, 360), (0.05, 1)), ((obx[2] - 0.30*ow, 640), (-0.8, 1)), ((obx[0] + 0.28*ow, 712), (-1, 0.05))])
+    eth = U(o_, stroke(neck, nb, taper=lambda u: 1.0 - 0.55*u))
+    nx_ = obx[2] - 0.22*ow                                      # thanh gạch thẳng, hơi chếch lên phải, cắt ngang cổ ở 585
+    G['ð'] = U(eth, poly([(nx_ - 120, 560), (nx_ + 95, 610), (nx_ + 95, 610 + 0.85*H), (nx_ - 120, 560 + 0.85*H)]))
+    # ß: thân l thường (đỉnh vòm sang phải) + nét bút: vòm trên → eo → bụng dưới về chân
+    l_ = lw('l'); lb = bounds(l_); lsr = I(l_, rect(-100, 299.9, 2000, 300.1)); lx = sorted(set(round(q[0], 1) for _, ps in lsr.segments for q in ps))
+    # thân + vòm + bụng là MỘT nét bút liền (độ rộng bút đứng = thân chữ thường) — designer 05/11: "Lỗi" (đỉnh thân bậc ở
+    # chỗ nối vòm); chân loe lấy từ l
+    sw_ = lx[1] - lx[0]; mm = t['m']*1.15; NN = math.sqrt(max(sw_**2 - mm**2, 1))/math.sin(math.radians(90) - V.PHI)
+    foot = I(l_, rect(-100, -100, 2000, 160)); xr0 = lx[0] + sw_/2
+    sp = hermite([((xr0, 120), (0, 1)), ((xr0, 520), (0, 1)), ((xr0 + 135, 705), (1, 0)), ((xr0 + 265, 590), (0, -1)), ((xr0 + 150, 430), (-1, -0.3)),
+                  ((xr0 + 325, 230), (0.1, -1)), ((xr0 + 190, -8), (-1, -0.02)), ((lx[1] + 75, 8), (-1, 0.3))])
+    G['ß'] = q2c(U(foot, stroke(sp, (NN, mm))))
+    # toán / phút giây
+    YC_ = 330.0; mh = 0.55*Vv; ms = 500
+    eq = P['=']; eb_ = bounds(eq); cxq = (eb_[0] + eb_[2])/2; sw = 0.45*Vv
+    def slash(xc, yc, hh, lean=0.38):
+        dx = hh*lean; return poly([(xc - dx - sw/2, yc - hh), (xc - dx + sw/2, yc - hh), (xc + dx + sw/2, yc + hh), (xc + dx - sw/2, yc + hh)])
+    G['≠'] = U(eq, slash(cxq, YC_, 230))
+    lt, gt = G1['<'], G1['>']
+    def le(ch_):
+        b = bounds(ch_); sc_ = 0.84; c_ = scale(ch_, sc_, ((b[0] + b[2])/2, YC_)); c_ = move(c_, 0, 85)
+        cb = bounds(c_); return U(c_, rect(cb[0], YC_ - 230, cb[2], YC_ - 230 + mh))
+    G['≤'] = le(lt); G['≥'] = le(gt)
+    tl = scale(G1['~'], 0.78); tb_ = bounds(tl); tl = move(tl, 0, YC_ - (tb_[1] + tb_[3])/2)
+    G['≈'] = U(move(tl, 0, 92), move(tl, 0, -92))
+    G['¬'] = U(rect(0, YC_ - mh/2, ms, YC_ + mh/2), rect(ms - 0.62*Vv, YC_ - 200, ms, YC_ + mh/2))
+    G['¦'] = U(rect(0, -150, 0.58*Vv, 300), rect(0, 410, 0.58*Vv, 860))
+    q1 = P["'"]; qb = bounds(q1); sh = math.tan(math.radians(14))
+    pr = xform(q1, lambda x, y: (x + (y - qb[1])*sh, y)); G['′'] = pr
+    G['″'] = U(pr, move(pr, (bounds(pr)[2] - bounds(pr)[0]) + 0.35*Vv, 0))
     return G
 
 def build():
