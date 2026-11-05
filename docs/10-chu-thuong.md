@@ -2,7 +2,12 @@
 
 Nguồn: bản vẽ designer, Figma frame `2115:421` (cập nhật 04/11; trước đó `2112:126`): a, e, d, b, q, p, g (hai tầng), **a Bold (mẫu)**.
 
-Bản 2115:421 — designer: "các glyph này sẽ đồng bộ style với chữ hoa hơn": lòng a, d, b, q, p và vòng dưới g là **elip đứng lệch về phía thân** (như bụng D B chữ hoa); e và bụng trên g giữ lòng xoay.
+Bản 2115:421 — designer: "các glyph này sẽ đồng bộ style với chữ hoa hơn": lòng a, d, b, q, p và vòng dưới g là **elip đứng lệch về phía thân** (như bụng D B chữ hoa).
+
+Cập nhật 05/11 (designer: "cập nhật lại e và o"):
+- **e** lòng vòm và lòng bụng thành elip đứng, đầu cắt cao hơn (mặt trên ở 54.7 px).
+- **o** có bản vẽ riêng (`2123:788`): vòng 172 × 181 px, **lòng elip xoay như O hoa**; thay o dựng tạm.
+- c dựng từ bụng e nên tự theo e mới.
 - Code: `tools/construct/lower/src_lower.py` (hình gốc) và `tools/construct/lower/lower.py` (đổi đơn vị, Bold, chốt đường vượt).
 - Kết quả: `lower/lower.json`, được `ref/make_ref.py` gộp vào `ref_glyphs.json`.
 
@@ -54,7 +59,7 @@ Chữ thường Bold nhẹ hơn chữ hoa Bold (B/R của chữ hoa 1.26–1.43)
 
 ## Chữ suy ra từ module (TẠM, chờ designer duyệt hoặc vẽ lại)
 
-Gồm 17 chữ c f h i j k l m n o r s t u v w x y z, Regular và Bold.
+Gồm 16 chữ c f h i j k l m n r s t u v w x y z, Regular và Bold (o đã có bản vẽ).
 - Code: `tools/construct/lower/derive.py`, xuất ra `lower/lower_derived.json`.
 - Trong `ref_glyphs.json` các chữ này mang `src: "rule"`. Bold suy ra của d b q p e g cũng vậy; riêng a Bold là bản vẽ.
 
@@ -62,7 +67,6 @@ Gồm 17 chữ c f h i j k l m n o r s t u v w x y z, Regular và Bold.
 |---|---|---|
 | Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°), r và f (vai lật ngang, đầu cắt bên phải), t (vai xoay 180°: móc chân sang phải), j (vai lật dọc: móc sang trái) |
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
-| Vòng | khối bụng d | o: lòng elip đứng đặt giữa, vách 34 px hai bên |
 | Bụng e | bụng có đầu cắt đứng | c: bụng e cộng bản lật dọc của nó |
 | S hoa | S của designer | s: thu ngang 0.80, dọc về x-height, bù nét 10 (Bold 8) bằng nét viền góc vuông |
 

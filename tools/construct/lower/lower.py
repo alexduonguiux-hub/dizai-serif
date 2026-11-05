@@ -144,6 +144,10 @@ def bold(ch):
         x0, _, x1, _ = outer.bounds; edge = x1 if side > 0 else x0
         bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN, (side*B_SHIFT, 0)))
         return V.U(bowl, V.move(stem, (k - 1)*(edge - c), 0))
+    if ch == 'o':
+        m = G['o_ring']; outer = _path(_first_contour(SHAPES['o_ring']), m); c, k, st = _stretch(outer.bounds)
+        cpts = [st(*q) for q in _samples(_path('M' + SHAPES['o_ring'].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
+        return V.D(V.xform(outer, st), _ell_path(ctr, M))
     if ch == 'g':
         allp = V.U(*[_path(SHAPES[kk], m) for kk, m in GLYPH['g']]); c, k, st = _stretch(_path(_first_contour(SHAPES['g_bowl']), G['g_bowl']).bounds)
         out = []
@@ -219,7 +223,7 @@ def clean(p):
         p = snap(p)
     return p
 
-CHARS = 'aedbqpg'
+CHARS = 'aedbqpgo'
 if __name__ == '__main__':
     out = {}
     for c in CHARS:
