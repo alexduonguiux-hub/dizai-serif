@@ -12,6 +12,9 @@ src = open(os.path.join(HERE, "glyphs.js")).read()
 VN = re.search(r"const VN = '([^']*)'", src).group(1)
 VNL = re.search(r"const VNL = '([^']*)'", src).group(1)
 PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@')
+def _jsconst(name):
+    m = re.search(r'const ' + name + r' = ("(?:[^"\\]|\\.)*")', src); return json.loads(m.group(1)) if m else ''
+SYMX = list(_jsconst('SYM')) + list(_jsconst('LOWX')) + list(_jsconst('COMB'))     # ký tự bổ sung nhóm 1 + 2
 FIG = list("0123456789")
 CAPS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
 LOWER = list(re.search(r"const LOWER = '([^']*)'", src).group(1))
@@ -33,6 +36,7 @@ def entry(ch, w, grp):
     k = f"{ch}-{w}"; r = ref.get(k, {})
     rule = r.get("src") == "rule" or k in RULE_EXTRA
     xs = [float(v) for v in re.findall(r"-?\d+\.?\d*", outl[k])[0::2]]       # toạ độ x (cặp x y xen kẽ)
+    if k not in outl: return None
     return {"c": ch, "u": ord(ch), "g": grp, "a": r.get("W", 0) + 80, "W": r.get("W", 0), "p": short(outl[k]),
             "bx": [round(min(xs)), round(max(xs))] if xs else [0, 0],
             "s": "rule" if rule else "designer", "gd": [rg(x) for x in r.get("guides", []) if x["type"] != "handles"]}
@@ -48,7 +52,7 @@ def _rc(ch):
 data = {"weights": {}, "kern": {w: {"c": KN[w]["class"], "e": KN[w]["exc"]} for w in KN}}
 for w in ("Regular", "Bold"):
     L = []
-    for grp, chars in (("caps", CAPS), ("lower", LOWER), ("fig", FIG), ("vn", list(VN)), ("vnl", list(VNL)), ("punct", PUNCT)):
+    for grp, chars in (("caps", CAPS), ("lower", LOWER), ("fig", FIG), ("vn", list(VN)), ("vnl", list(VNL)), ("punct", PUNCT), ("sym", SYMX)):
         L += [entry(c, w, grp) for c in chars if f"{c}-{w}" in outl]
     for e in L:                                     # spacing (S14) + class kerning
         sp = SP[w].get(e["c"])

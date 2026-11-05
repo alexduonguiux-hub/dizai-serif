@@ -24,7 +24,7 @@ def kern(w, a, b):
     return K['class'].get(f'{SPc.rclass(a)}|{SPc.lclass(b)}', 0.0) if v is None else v
 
 def run(w):
-    chars = [k.rsplit('-', 1)[0] for k in O if k.endswith('-' + w)]
+    chars = [k.rsplit('-', 1)[0] for k in O if k.endswith('-' + w) and SPc.kind(k.rsplit('-', 1)[0]) != 'mark']   # dấu tổ hợp: đè chủ ý
     PR = {c: SPc.profile(outline([O[f'{c}-{w}']])) for c in chars}
     def placed(c): L, R = PR[c]; d = SP[w][c]['dx']; return L + d, R + d
     PL = {c: placed(c) for c in chars}

@@ -333,5 +333,9 @@ const VN = 'ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬĐÈÉẺẼẸÊỀ�
 const PUNCT = '.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@';
 const LOWER = 'abcdefghijklmnopqrstuvwxyz';
 const VNL = 'àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ₫';
-const ALL = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', ...VN, ...PUNCT, ...LOWER, ...VNL];
-if (typeof module !== 'undefined') module.exports = { makeGlyph, ALL, VN, VNL, PUNCT, LOWER, RULES, WIDTH, CAP, OVS, arcCmds };
+// ký tự bổ sung nhóm 1 + 2 (designer 05/11) — dựng trong ref/symbols.py → designer_D.json
+const SYM = "*<>\\^_`{}|~­…•·«»‹›‚„¡¿©®™°±÷−‰§¶†‡£¥¢µ";
+const COMB = "\u0300\u0301\u0302\u0303\u0306\u0308\u0309\u030a\u030c\u031b\u0323\u0327";
+const LOWX = "ıȷ";
+const ALL = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', ...VN, ...PUNCT, ...LOWER, ...VNL, ...SYM, ...COMB, ...LOWX];
+if (typeof module !== 'undefined') module.exports = { makeGlyph, ALL, VN, VNL, PUNCT, LOWER, SYM, COMB, LOWX, RULES, WIDTH, CAP, OVS, arcCmds };

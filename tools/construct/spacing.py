@@ -36,12 +36,20 @@ CAP, XH = 700.0, 495.0
 src = open(os.path.join(HERE, 'glyphs.js')).read()
 import re
 VN = re.search(r"const VN = '([^']*)'", src).group(1); VNL = re.search(r"const VNL = '([^']*)'", src).group(1)
-PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@')
+def _jsconst(name):
+    m = re.search(r'const ' + name + r' = ("(?:[^"\\]|\\.)*")', src); return json.loads(m.group(1)) if m else ''
+SYM, COMB, LOWX = _jsconst('SYM'), _jsconst('COMB'), _jsconst('LOWX')       # ký tự bổ sung nhóm 1 + 2 (symbols.py)
+PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@') + list(SYM)
+SPACE = {'Regular': 230, 'Bold': 245}                                    # space / nbsp: chỉ bề ngang (≈ 0.46 n)
+# ký hiệu không kern class theo hình chữ (chỉ chống va): ký hiệu toán / đứng riêng — kern theo profile làm ~ · − ^ ` trượt
+# vào miệng C, lòng b d (C~ −150, ^d −150 — QA 05/11). Dấu câu đi liền chữ (… ‚ „ « » ‹ › ¡ ¿ { } gạch mềm) vẫn kern.
+NOKERN = set('*<>\\^_`|~•·©®™°±÷−‰§¶†‡£¥¢µ')
 CAPS = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'); LOWER = list('abcdefghijklmnopqrstuvwxyz'); FIG = list('0123456789')
 
 def kind(ch):
+    if ch in COMB: return 'mark'
     if ch in CAPS or ch in VN: return 'caps'
-    if ch in LOWER or ch in VNL: return 'lower'
+    if ch in LOWER or ch in VNL or ch in LOWX: return 'lower'
     if ch in FIG: return 'fig'
     return 'punct'
 def base(ch):
@@ -107,13 +115,15 @@ def main():
         sp = {}
         for ch in chars:
             if base(ch) != ch and base(ch) in P: continue
-            k = kind(ch); t = T['lower'] if k == 'lower' else T['caps']
+            k = kind(ch)
+            if k == 'mark': continue
+            t = T['lower'] if k == 'lower' else T['caps']
             b = band(ch, PR[ch]); x0, _, x1, _ = P[ch].bounds
             ls, rs = t - white(PR[ch], 'L', b), t - white(PR[ch], 'R', b)
             if k == 'punct': ls, rs = max(ls, 20.0), max(rs, 20.0)
             sp[ch] = (round(ls - x0), round(x1 - x0 + ls + rs))          # (dịch outline, advance)
         for ch in chars:                                                   # chữ có dấu: theo chữ gốc
-            if ch not in sp:
+            if ch not in sp and kind(ch) != 'mark':
                 # canh theo PHẦN CHỮ GỐC (trung vị lệch profile ở các cao độ cả hai cùng có mực, trong vùng chữ), không theo
                 # mép mực: Đ / đ có thanh chìa trái, dấu / sừng có thể chìa ngang → canh theo mép mực đặt lệch cả chữ
                 # (QA kerning 05/11: Đ lệch 40.5 u, Bold 63.5, mọi cặp Đ + chữ sau đều sát / chạm)
@@ -128,7 +138,15 @@ def main():
                     need = round(ls - x0) - dxa                            # dịch thêm để lề trái thanh = lề quang học
                     if need > 0: dxa += need; adv += need
                 sp[ch] = (dxa, adv)
+        # dấu tổ hợp: bề ngang 0, đặt về TRƯỚC (đè lên chữ đứng trước): tâm dấu ở giữa ô n trước đó; sừng U+031B bám mép phải
+        # mực của chữ trước (= − lề phải n). Vị trí chính xác theo từng chữ sẽ làm bằng anchor GPOS mark khi xuất font.
+        n_dx, n_adv = sp['n']; n_rsb = n_adv - n_dx - round(P['n'].bounds[2])
+        for ch in chars:
+            if kind(ch) != 'mark': continue
+            sp[ch] = (-n_rsb, 0) if ch == '\u031b' else (-round(n_adv/2), 0)
         spacing[w] = {ch: {'dx': v[0], 'adv': v[1]} for ch, v in sp.items()}
+        for ch in (' ', '\u00a0'): spacing[w][ch] = {'dx': 0, 'adv': SPACE[w]}       # space, nbsp
+        chars = [c for c in chars if kind(c) != 'mark']                    # kerning: không kern dấu tổ hợp
 
         # ---- kerning theo class ----
         def placed(ch):                     # profile đặt theo spacing (gốc toạ độ = đầu ô)
@@ -161,12 +179,13 @@ def main():
                 b_ = rep_.get(('L', lc))
                 if b_ is None: continue
                 if kind(a) == 'punct' and kind(b_) == 'punct': continue
+                if a in NOKERN or b_ in NOKERN: continue
                 bnd = pband(a, b_); wv = W(a, b_, bnd)
                 ra = ref(a) if kind(a) != 'punct' else 'H'; rb = ref(b_) if kind(b_) != 'punct' else 'H'
                 wr = W(ra, rb, (0.0, XH if 'n' in (ra, rb) else CAP))
                 if wv is None or wr is None: continue
                 k = -K_F*(wv - wr)
-                lo = KMIN_DASH if (a in '-–—=+×' or b_ in '-–—=+×') else KMIN
+                lo = KMIN_DASH if (a in '-–—=+×\u00ad' or b_ in '-–—=+×\u00ad') else KMIN
                 k = max(lo, min(0.0, k)); k = math.ceil(k/5)*5                # chỉ kéo vào; tròn về phía rộng
                 # sàn mềm: cặp chữ gốc giữ khe nhỏ nhất ≥ SOFT × khe chuẩn (ff ft vt yt… Regular chỉ 32–36 so với nn 70 — QA
                 # kerning 05/11); thiếu thì đẩy nhẹ ra (kern dương)
