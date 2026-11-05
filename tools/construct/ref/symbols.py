@@ -140,13 +140,13 @@ def build_w(S, L, w):
     cf = M['circumflex']; b = bounds(cf); G['̌'] = above(xform(cf, lambda x, y: (x, b[1] + b[3] - y)))
     hn = M['horn']; b = bounds(hn); G['̛'] = move(hn, -b[0] - 30, XH - 70)          # bám mép phải chữ trước
     db = M['dotbelow']; b = bounds(db); G['̣'] = move(db, -(b[0] + b[2])/2, -11.3 - V.GAP_ML - (b[3] - b[1]))
-    # móc dưới (cedilla) — VẼ LẠI bằng module (designer 05/11: "vẽ lại thay vì fix ẩu"): cổ thẳng 0.30 V từ đáy chữ xuống
-    # −42 + một đoạn VÒNG ELIP (tâm (xc, −100), ngoài 60 × 54, thành phải dày 0.46 V, đáy mảnh 0.26 V): giữ nửa phải + đáy,
-    # đầu dưới-trái cắt đứng ở xc − 42
-    tn = 0.30*Vv; xc = tn - 4; yc = -100.0
-    rg = ering4(xc - 60, xc + 60, yc - 54, yc + 54, 0.20*Vv, 0.46*Vv, 0.24*Vv, 0.22*Vv)
-    hook = I(rg, U(rect(xc - 4, -400, 400, 200), rect(xc - 42, -400, 400, yc - 18)))
-    ced = U(rect(0, -50, tn, 30), hook)
+    # móc dưới (cedilla) — dựng bằng module (designer 05/11: "Móc vẫn lỗi" — nặng, vuông như số 5): cổ mảnh 0.24 V nối vào
+    # góc trên-trái của một đoạn VÒNG (ering4: ngoài 128 × 104, thành phải 0.40 V, đáy 0.18 V, trên 0.16 V, trái 0.16 V);
+    # giữ nửa phải + đáy, đầu dưới-trái cắt đứng ở tâm − 52
+    tn = 0.24*Vv; yc = -98.0; xc = tn + 4
+    rg = ering4(xc - 64, xc + 64, yc - 52, yc + 52, 0.16*Vv, 0.40*Vv, 0.18*Vv, 0.16*Vv)
+    hook = I(rg, U(rect(xc - 2, -400, 400, 200), rect(xc - 52, -400, 400, yc - 20)))
+    ced = q2c(U(rect(0, yc + 40, tn, 30), hook))
     b = bounds(ced); G['\u0327'] = move(ced, -(b[0] + b[2])/2 + 6, 0)
     # ---------- nhóm 2 ----------
     sp = d + 0.8*d
@@ -192,6 +192,9 @@ def build_w(S, L, w):
     sp_ = runs_y(S0, (b[1] + b[3])/2); spine = max(r_[1] - r_[0] for r_ in sp_)
     S0 = embolden(S0, max(0.0, (0.80*Vv - spine)*0.30)); b = bounds(S0); hs = b[3] - b[1]
     S0 = move(S0, -b[0], -b[1]); b = bounds(S0)
+    # bỏ ĐẦU NÉT DƯỚI của S (góc dưới-trái) trước khi chồng: đầu này nằm trong vòng giữa và lòi ra hai bên (designer 05/11:
+    # "vẫn lỗi dư nét"); chỗ đó do sống của S kia khép lại
+    S0 = q2c(D(S0, rect(-100, -100, b[0] + 0.46*(b[2] - b[0]), b[1] + 0.43*hs)))
     rot = xform(S0, lambda x, y: (b[2] - x, b[3] - y)); ov = 0.47*hs
     sec = q2c(U(move(S0, 0, hs - ov), rot)); bb = bounds(sec)
     G['§'] = move(sec, 0, 330 - (bb[1] + bb[3])/2)
@@ -313,9 +316,13 @@ def group3(S, L, w, M, P, G1):
     cyu = (425 + 712)/2
     stem = I(l_, rect(-100, -100, 2000, cyu))
     up = I(ering4(s0l, s1l + 255, 425, 712, vth, 0.84*vth, 0.42*H, 0.5*H), rect(s0l - 1, 400, 2000, 2000))
-    cyl = (465 - 11)/2
-    lo = I(ering4(s1l - 20, s1l + 280, -11, 465, 0.35*vth, 0.92*vth, 0.5*H, 0.45*H),
-           U(rect(s1l + 110, -400, 2000, 2000), rect(s1l + 45, -400, 2000, cyl)))
+    # vòng dưới: đỉnh trùng thành đáy của vòng trên (chung chỗ thắt), chỉ giữ nửa phải phía trên tâm → đầu cắt nằm gọn trong thành
+    # đáy vòng trên (designer 05/11: "Regular lỗi" — đầu cắt lộ ra trong lòng); đầu dưới-trái cắt ở chỗ vòng đủ dày
+    # tâm ngang vòng dưới = tâm vòng trên: đỉnh vòng dưới (ngoài / trong) trùng đúng thành đáy vòng trên, cùng tiếp tuyến ngang
+    # → chỗ thắt liền, không bậc
+    cxu = (s0l + s1l + 255)/2; xr_ = s1l + 280; y1l = 425 + 0.42*H; cyl = (y1l - 11)/2
+    lo = I(ering4(2*cxu - xr_, xr_, -11, y1l, 0.35*vth, 0.92*vth, 0.5*H, 0.42*H),
+           U(rect(cxu, -400, 2000, 2000), rect(s1l + 72, -400, 2000, cyl)))
     G['ß'] = q2c(U(stem, up, lo))
     # toán / phút giây
     YC_ = 330.0; mh = 0.55*Vv; ms = 500
