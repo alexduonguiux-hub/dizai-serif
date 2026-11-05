@@ -96,3 +96,17 @@ Code: `tools/construct/ref/symbols.py` → `designer_D.json` (gộp qua `make_re
 - Spacing / kern: chữ có dấu (Ä Ç Ñ Š…) dùng spacing và kern của chữ gốc (canh theo phần chữ gốc). Æ Œ Ø Ð Þ ß æ œ ø ð þ tự tính spacing, kern theo class của chính chúng. Ký hiệu toán ≠ ≤ ≥ ≈ ¬ ¦ ′ ″: chỉ chống va.
 - QA: va chạm 0 / 0; âm tiết Việt không đổi; `qa_outline` không có cờ mới.
 - Tổng: 322 ký tự mỗi weight.
+
+## Vẽ lại bằng module (designer 05/11: "Check lỗi", "vẽ lại thay vì fix ẩu")
+Các bản nét bút tự do (hermite + bút dẹt) của ß £ ð § móc dưới đã bỏ. Nay dựng lại hoàn toàn từ module hình học của bộ chữ: vòng elip, thân, chữ sẵn có.
+
+- **Vòng dựng theo mép (`ering4`):** elip ngoài nội tiếp hộp. Elip trong lùi vào mỗi phía đúng độ dày thành (trái / phải / dưới / trên), nên lòng lệch về phía thành mảnh, không còn là vòng đồng tâm.
+- **ß:** thân l (cả chân loe) + vòng trên kín + vòng dưới mở dưới-trái.
+  - Vòng trên: mép trái trùng mép trái thân, thành trái bằng thân, nên thân đi thẳng lên rồi uốn liền vào vòng (không vai vuông). Thành phải 0.84 V, đỉnh 0.5 H.
+  - Vòng dưới: thành phải 0.92 V, bỏ phần trên-trái. Đầu dưới-trái cắt đứng.
+- **£:** thân và móc của f thường (bỏ thanh f và chân loe) + thanh giữa ở 300 + thanh đáy 0.6 H + 14 + hai cung bracket r 70 chuyển từ thân xuống thanh đáy.
+- **ð:** cổ là một đoạn vòng elip đi tiếp thành phải của o. Elip ngoài có điểm cực phải trùng điểm cực phải của o (cùng cao độ, tiếp tuyến đứng), nên mép liền. Đỉnh ở 712, mảnh 0.5 H, đầu cắt đứng. Thanh gạch thẳng.
+- **§:** S hoa của designer (ngang 0.64, dọc 0.58, bù nét tới sống khoảng 0.8 V). S dưới là S trên xoay 180°, chồng đúng một bụng, nên vòng giữa kín.
+- **Móc dưới (U+0327, Ç ç):** cổ thẳng 0.30 V + một đoạn vòng (`ering4`, thành phải 0.46 V, đáy 0.24 V): giữ nửa phải và đáy, đầu dưới-trái cắt đứng.
+- **þ:** p + đúng phần thân b phía trên x-height, canh theo mép thân p.
+- **µ:** u + thân trái kéo xuống descender, đo đúng hai mép thân.

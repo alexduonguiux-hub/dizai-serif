@@ -51,6 +51,23 @@ def q2c(p):
         elif v == 'closePath': out.close()
     return out
 
+def runs_y(p, y):
+    """các đoạn mực (x0, x1) cắt ngang ở cao độ y"""
+    s = I(p, rect(-3000, y - 0.05, 3000, y + 0.05)); out = []
+    for v, ps in s.segments:
+        if v == 'moveTo': cur = []
+        if ps: cur += [q[0] for q in ps]
+        if v == 'closePath' and cur: out.append((min(cur), max(cur)))
+    return sorted(out)
+def ering(c, ro, ri, rot=0):
+    """vòng elip: elip ngoài ro = (rx, ry) trừ elip trong ri (cùng tâm)"""
+    return D(ellipse(c, ro[0], ro[1], rot), ellipse(c, ri[0], ri[1], rot))
+def ering4(x0, x1, y0, y1, wl, wr, wb, wt):
+    """vòng elip dựng theo MÉP: elip ngoài nội tiếp hộp (x0, y0, x1, y1); elip trong lùi vào mỗi phía đúng độ dày thành
+    (trái wl, phải wr, dưới wb, trên wt) → lòng lệch về phía thành mảnh, không phải vòng đồng tâm"""
+    o = ellipse(((x0 + x1)/2, (y0 + y1)/2), (x1 - x0)/2, (y1 - y0)/2)
+    ix0, ix1, iy0, iy1 = x0 + wl, x1 - wr, y0 + wb, y1 - wt
+    return D(o, ellipse(((ix0 + ix1)/2, (iy0 + iy1)/2), (ix1 - ix0)/2, (iy1 - iy0)/2))
 def norm_x(p): b = bounds(p); return move(p, -b[0], 0)
 def scale(p, s, o=(0, 0)): return xform(p, lambda x, y: (o[0] + (x - o[0])*s, o[1] + (y - o[1])*s))
 
@@ -123,11 +140,14 @@ def build_w(S, L, w):
     cf = M['circumflex']; b = bounds(cf); G['̌'] = above(xform(cf, lambda x, y: (x, b[1] + b[3] - y)))
     hn = M['horn']; b = bounds(hn); G['̛'] = move(hn, -b[0] - 30, XH - 70)          # bám mép phải chữ trước
     db = M['dotbelow']; b = bounds(db); G['̣'] = move(db, -(b[0] + b[2])/2, -11.3 - V.GAP_ML - (b[3] - b[1]))
-    # móc dưới (cedilla) (designer 05/11: "Lỗi" — bản cũ dài, mảnh, thả tới −230): cổ ngắn từ đáy chữ, bụng móc phình sang phải
-    # (nét bút dày như dấu), quặt về trái mảnh dần; đáy ≈ −165
-    ce = hermite([((0, 25), (0, -1)), ((4, -45), (0.2, -1)), ((62, -95), (0.6, -1)), ((22, -158), (-1, -0.5)), ((-58, -162), (-1, 0.15))])
-    ced = stroke(ce, (t['Nm']*1.05, t['mm']*1.15), taper=lambda u: 1.0 if u < 0.6 else 1.0 - 0.9*(u - 0.6))
-    b = bounds(ced); G['\u0327'] = move(ced, -(b[0] + b[2])/2 + 8, 0)
+    # móc dưới (cedilla) — VẼ LẠI bằng module (designer 05/11: "vẽ lại thay vì fix ẩu"): cổ thẳng 0.30 V từ đáy chữ xuống
+    # −42 + một đoạn VÒNG ELIP (tâm (xc, −100), ngoài 60 × 54, thành phải dày 0.46 V, đáy mảnh 0.26 V): giữ nửa phải + đáy,
+    # đầu dưới-trái cắt đứng ở xc − 42
+    tn = 0.30*Vv; xc = tn - 4; yc = -100.0
+    rg = ering4(xc - 60, xc + 60, yc - 54, yc + 54, 0.20*Vv, 0.46*Vv, 0.24*Vv, 0.22*Vv)
+    hook = I(rg, U(rect(xc - 4, -400, 400, 200), rect(xc - 42, -400, 400, yc - 18)))
+    ced = U(rect(0, -50, tn, 30), hook)
+    b = bounds(ced); G['\u0327'] = move(ced, -(b[0] + b[2])/2 + 6, 0)
     # ---------- nhóm 2 ----------
     sp = d + 0.8*d
     G['…'] = U(*[dot((r + k*sp, r - 3), d) for k in range(3)])
@@ -165,14 +185,16 @@ def build_w(S, L, w):
     pc = P['%']; b = bounds(pc)
     lo = I(pc, rect(b[2] - 2*(118 + (8 if bold else 0)) - 5, -50, b[2] + 5, 330))
     G['‰'] = U(pc, move(lo, 2*(118 + (8 if bold else 0)) + 0.35*Vv, 0))
-    # § : hai s thường (× SEC) chồng nhau — s dưới = s trên xoay 180°; dời dọc để bụng dưới của s trên trùng bụng trên của
-    # s dưới → vòng kín ở giữa (§ cổ điển); tổng cao từ −110 tới 700
-    s0 = ref_outline(L[f's-{w}']); SEC = 0.82; s0 = scale(s0, SEC); b = bounds(s0); hs = b[3] - b[1]
-    s0 = move(s0, -b[0], -b[1]); b = bounds(s0)
-    rot = xform(s0, lambda x, y: (b[2] - x, b[3] - y))
-    ov = 0.50*hs                                                  # phần chồng: đúng một bụng
-    top_ = move(s0, 0, hs - ov); sec = q2c(U(top_, rot)); bb = bounds(sec)
-    G['§'] = move(sec, 0, (700 - 110)/2 - (bb[1] + bb[3])/2 + 0)
+    # § (designer 05/11: "Check lỗi" ×2): S HOA của designer thu nhỏ (ngang 0.62, dọc 0.52), bù nét tới sống ≈ 0.85 V; S dưới =
+    # S trên xoay 180°, chồng ĐÚNG MỘT BỤNG → bụng dưới S trên + bụng trên S dưới ghép thành vòng kín; cao ≈ −40 … 700
+    S0 = V.letter(S, 'S', w); b = bounds(S0); S0 = move(S0, -b[0], -b[1])
+    S0 = xform(S0, lambda x, y: (x*0.64, y*0.58)); b = bounds(S0)
+    sp_ = runs_y(S0, (b[1] + b[3])/2); spine = max(r_[1] - r_[0] for r_ in sp_)
+    S0 = embolden(S0, max(0.0, (0.80*Vv - spine)*0.30)); b = bounds(S0); hs = b[3] - b[1]
+    S0 = move(S0, -b[0], -b[1]); b = bounds(S0)
+    rot = xform(S0, lambda x, y: (b[2] - x, b[3] - y)); ov = 0.47*hs
+    sec = q2c(U(move(S0, 0, hs - ov), rot)); bb = bounds(sec)
+    G['§'] = move(sec, 0, 330 - (bb[1] + bb[3])/2)
     # ¶ : bụng đặc (nửa elip trái) + hai thân 0.5 V, −150 … 700
     st = 0.5*Vv; bx = 300
     bowl = I(ellipse((bx, 520), bx, 180), rect(0, 0, bx + 1, 800))
@@ -189,11 +211,14 @@ def build_w(S, L, w):
             bars += [arm, xform(arm, lambda x, y: (-x, y))]
         return norm_x(U(stem, *bars))
     G['†'] = dag([520]); G['‡'] = dag([540, 120])
-    # £ : nét bút: móc trên (cong như f) → thân → chân cong vào thanh đáy; thanh giữa ngang ở 330
-    pn = (t['N']*0.95, t['m']*1.1)
-    spine = hermite([((440, 590), (-0.2, 1)), ((330, 700), (-1, 0)), ((200, 600), (0, -1)), ((200, 200), (0, -1)), ((80, 40), (-1, -0.8))])
-    lb = U(stroke(spine, pn, taper=lambda u: 0.75 + 0.25*min(1, 2*u)), rect(40, 0, 480, 0.6*H + 14), rect(50, 300, 380, 300 + 0.6*H + 14))
-    G['£'] = norm_x(I(lb, rect(-100, 0, 2000, 711)))
+    # £ — VẼ LẠI bằng module: thân + móc trên của f thường (bỏ thanh f và chân loe) + thanh giữa ở 300 và thanh đáy 0.6 H + 14
+    # + hai cung bracket (r 70) chuyển từ thân xuống thanh đáy
+    f_ = ref_outline(L[f'f-{w}']); fs0, fs1 = runs_y(f_, 300)[0]; bt = 0.6*H + 14
+    fhook = I(f_, U(rect(fs0 - 1, bt - 1, fs1 + 1, 560), rect(-100, 560, 2000, 900)))
+    rb = 70
+    br_l = D(rect(fs0 - rb, bt - 1, fs0 + 1, bt + rb), ellipse((fs0 - rb, bt + rb), rb, rb))
+    br_r = D(rect(fs1 - 1, bt - 1, fs1 + rb, bt + rb), ellipse((fs1 + rb, bt + rb), rb, rb))
+    G['£'] = norm_x(q2c(U(fhook, br_l, br_r, rect(fs0 - 150, 0, fs1 + 250, bt), rect(fs0 - 110, 300, fs1 + 125, 300 + bt))))
     # ¥ : Y hoa + hai thanh 0.70 H, khe 60 (luật ¥ €)
     yy = V.letter(S, 'Y', w); b = bounds(yy); bh = 0.70*H*1.4
     G['¥'] = U(yy, rect(b[0] + 0.12*(b[2] - b[0]), 300, b[2] - 0.12*(b[2] - b[0]), 300 + bh),
@@ -202,8 +227,8 @@ def build_w(S, L, w):
     c0 = ref_outline(L[f'c-{w}']); b = bounds(c0); xcn = (b[0] + b[2])/2 + 10
     G['¢'] = U(c0, rect(xcn - 0.55*H, -100, xcn + 0.55*H, XH + 110))
     # µ : u thường, thân trái kéo xuống descender (cắt bằng)
-    u0 = ref_outline(L[f'u-{w}']); runs = I(u0, rect(-100, 249.95, 2000, 250.05)); xs = sorted(set(round(q[0], 1) for _, ps in runs.segments for q in ps))
-    G['µ'] = U(u0, rect(xs[0], DESC, xs[1], 60))
+    u0 = ref_outline(L[f'u-{w}']); s0_, s1_ = runs_y(u0, 300)[0]            # mép thân trái đo đúng (lỗi bậc: "Check lỗi")
+    G['µ'] = U(u0, rect(s0_, DESC, s1_, 120))
     G.update(group3(S, L, w, M, P, G))
     return G
 
@@ -265,23 +290,33 @@ def group3(S, L, w, M, P, G1):
     s1 = sr[1]; stem = I(P_, rect(-100, -100, s1 + 0.5, 800)); bowl = I(P_, rect(s1 - 2, 300, 2000, 800))
     G['Þ'] = U(stem, move(bowl, 0, -150))
     p_ = lw('p'); b_ = lw('b'); bb = bounds(b_); pbx = bounds(p_)
-    G['þ'] = U(p_, move(I(b_, rect(-100, 300, bb[0] + 0.5*(bb[2] - bb[0]), 800)), pbx[0] - bb[0], 0))
+    bs0, bs1 = runs_y(b_, 600)[0]; ps0, ps1 = runs_y(p_, -100)[0]      # chỉ thân b phía trên x-height, canh theo mép thân p
+    G['þ'] = U(p_, move(I(b_, rect(-100, 380, bs1 + 0.3, 800)), ps0 - bs0, 0))
     # ð: o + cổ cong (nét bút) từ vai phải lên ascender, cắt chéo bằng thanh nhỏ
     nb = (t['N']*0.9, t['m']*1.1)
     ow = obx[2] - obx[0]
-    neck = hermite([((obx[2] - 0.32*Vv, 360), (0.05, 1)), ((obx[2] - 0.30*ow, 640), (-0.8, 1)), ((obx[0] + 0.28*ow, 712), (-1, 0.05))])
-    eth = U(o_, stroke(neck, nb, taper=lambda u: 1.0 - 0.55*u))
-    nx_ = obx[2] - 0.22*ow                                      # thanh gạch thẳng, hơi chếch lên phải, cắt ngang cổ ở 585
-    G['ð'] = U(eth, poly([(nx_ - 120, 560), (nx_ + 95, 610), (nx_ + 95, 610 + 0.85*H), (nx_ - 120, 560 + 0.85*H)]))
+    # ð — VẼ LẠI bằng module: cổ = một đoạn VÒNG ELIP đi tiếp thành phải của o — elip ngoài có điểm cực phải trùng điểm cực
+    # phải của o (cùng cao độ, tiếp tuyến đứng → mép trơn liền), đỉnh ở 712; elip trong lùi đúng thành o ở bên phải, đỉnh mảnh
+    # 0.5 H; giữ phần trên cao độ cực phải, đầu trên-trái cắt đứng
+    ys_ = [obx[1] + k*(obx[3] - obx[1])/80 for k in range(1, 80)]
+    yr = max(ys_, key=lambda y: runs_y(o_, y)[-1][1]); xr = runs_y(o_, yr)[-1][1]; wl = runs_y(o_, yr)[-1][1] - runs_y(o_, yr)[-1][0]
+    cxn = obx[0] + 0.50*ow; Rx, Ry = xr - cxn, 712 - yr
+    neck = I(ering((cxn, yr), (Rx, Ry), (Rx - wl, Ry - 0.5*H)), rect(cxn - 35, yr, 2000, 2000))
+    eth = U(o_, neck); nx_ = cxn + 0.62*Rx
+    G['ð'] = U(eth, poly([(nx_ - 110, 575), (nx_ + 85, 615), (nx_ + 85, 615 + 0.85*H), (nx_ - 110, 575 + 0.85*H)]))
     # ß: thân l thường (đỉnh vòm sang phải) + nét bút: vòm trên → eo → bụng dưới về chân
     l_ = lw('l'); lb = bounds(l_); lsr = I(l_, rect(-100, 299.9, 2000, 300.1)); lx = sorted(set(round(q[0], 1) for _, ps in lsr.segments for q in ps))
-    # thân + vòm + bụng là MỘT nét bút liền (độ rộng bút đứng = thân chữ thường) — designer 05/11: "Lỗi" (đỉnh thân bậc ở
-    # chỗ nối vòm); chân loe lấy từ l
-    sw_ = lx[1] - lx[0]; mm = t['m']*1.15; NN = math.sqrt(max(sw_**2 - mm**2, 1))/math.sin(math.radians(90) - V.PHI)
-    foot = I(l_, rect(-100, -100, 2000, 160)); xr0 = lx[0] + sw_/2
-    sp = hermite([((xr0, 120), (0, 1)), ((xr0, 520), (0, 1)), ((xr0 + 135, 705), (1, 0)), ((xr0 + 265, 590), (0, -1)), ((xr0 + 150, 430), (-1, -0.3)),
-                  ((xr0 + 325, 230), (0.1, -1)), ((xr0 + 190, -8), (-1, -0.02)), ((lx[1] + 75, 8), (-1, 0.3))])
-    G['ß'] = q2c(U(foot, stroke(sp, (NN, mm))))
+    # ß — VẼ LẠI bằng module (như B): thân l (cả chân loe) tới 560 + VÒNG TRÊN kín + VÒNG DƯỚI mở dưới-trái; vòng dựng theo
+    # MÉP (ering4): thành phải dày như thân, thành trái chìm trong thân (mảnh), trên / dưới mảnh 0.5 H
+    s0l, s1l = runs_y(l_, 300)[0]; vth = s1l - s0l
+    # vòng trên: mép trái trùng mép trái thân, thành trái = thân → thân đi thẳng lên rồi uốn liền vào vòng (không vai vuông)
+    cyu = (425 + 712)/2
+    stem = I(l_, rect(-100, -100, 2000, cyu))
+    up = I(ering4(s0l, s1l + 255, 425, 712, vth, 0.84*vth, 0.42*H, 0.5*H), rect(s0l - 1, 400, 2000, 2000))
+    cyl = (465 - 11)/2
+    lo = I(ering4(s1l - 20, s1l + 280, -11, 465, 0.35*vth, 0.92*vth, 0.5*H, 0.45*H),
+           U(rect(s1l + 110, -400, 2000, 2000), rect(s1l + 45, -400, 2000, cyl)))
+    G['ß'] = q2c(U(stem, up, lo))
     # toán / phút giây
     YC_ = 330.0; mh = 0.55*Vv; ms = 500
     eq = P['=']; eb_ = bounds(eq); cxq = (eb_[0] + eb_[2])/2; sw = 0.45*Vv
