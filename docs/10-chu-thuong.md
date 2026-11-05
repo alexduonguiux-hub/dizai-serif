@@ -107,6 +107,13 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
   - **k và z** (designer 05/11: "kiểm tra lại module chữ k và z"): chân k (nét \\) và chéo z (nét /) cũng chỉ ≈ 0.89 thân (Regular 90.6 / 89.7, Bold 116 / 106). Nay dùng cùng cách dời song song hai mép: chân k và chéo z = 101.8 / Bold 124.4. Tay k (45 / 55) và thanh z (39 / 54) là nét mảnh, giữ nguyên. Mỏ, loe tịnh tiến theo mép, giữ cung chữ hoa. Thu ngang chỉnh để giữ bề rộng: k 0.785 (rộng 452 / Bold 472), z 0.772 (387 / 398).
   - w giữ như cũ (thu 0.80, không làm dày; rộng 654 / Bold 656) (designer 05/11: "giữ bề rộng chữ w như cũ"; "chữ w bold hơi dính").
 
+**Nét tròn Bold dày thêm đúng B_STEM như thân** (designer 05/11: "kiểm tra lại độ dày các chữ còn lại").
+- Đo bằng đường tròn nội tiếp (độ dày thật vuông góc nét), ở thành bụng xa thân. Regular đều: nét đậm 96–104 ở mọi chữ.
+- Bold trước đó lệch: co lòng 10.5 % chung cho mọi chữ, nên lòng nhỏ co ít. Kết quả o +17.6, s +17.5, g +13.4, a +13.5, trong khi thân +22.6.
+- Nay hệ số co lòng giải riêng cho từng chữ: o 0.140, g 0.196, a 0.193 (`B_KG`). s bù nét Bold 7 (trước 4), thu ngang 0.772 để giữ bề rộng.
+- Kết quả Bold: o 123.7, g 123.8, a 119.0, s 120.4, e 122, b d p q 125, c 129.
+- w Regular 94: giữ như cũ theo designer.
+
 **Bề ngang Bold** (designer 05/11: "các chữ bold thường tăng độ rộng hơn nhiều so với regular"; luật tiến triển weight: bề rộng tăng ½ phần nét tăng):
 - Thân Bold dày thêm 22.6, chia đều hai phía (mỗi mép 11.3), không dồn ra ngoài như trước. Lòng co, vị trí thân giữ theo Regular.
 - Chữ một thân: +23 (a b d f i j l p q r t). n h u: +23. m: +34 (thân giữa chia đều cho hai lòng). k: +20 (thân dày đều hai phía; chéo giữ vươn ngang của Regular tính từ mép phải thân).

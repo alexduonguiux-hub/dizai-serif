@@ -290,9 +290,9 @@ def s_from_c(w):
     sp = V.P([('M', Le[0]), ('C', Le[1], Le[2], Le[3]), ('L', Re[3]), ('C', Re[2], Re[1], Re[0]), ('Z',)])
     return V.U(up, lo, N(sp))
 
-S_SX = {'Regular': 0.85, 'Bold': 0.786}   # s = S hoa thu ngang, dọc về x-height (0.70). Bold thu hẹp hơn: S Bold vốn rộng
+S_SX = {'Regular': 0.85, 'Bold': 0.772}   # s = S hoa thu ngang, dọc về x-height (0.70). Bold thu hẹp hơn: S Bold vốn rộng
 # hơn S Regular nhiều — s Bold chỉ rộng hơn s Regular ≈ 11 u như mọi vòng chữ thường (designer 05/11: "chữ s thường bold bề ngang hơi rộng")
-S_D = {'Regular': 7.0, 'Bold': 4.0}   # bù nét mỗi phía (góc vuông giữ sắc): mảnh ≈ H, vách/sống ≈ S hoa (Bold theo mẫu a Bold)
+S_D = {'Regular': 7.0, 'Bold': 7.0}   # Bold 7 (trước 4): sống s Bold = Regular + B_STEM (designer 05/11: "kiểm tra lại độ dày các chữ còn lại")
 def s_from_S(w):
     """s là S hoa của designer thu nhỏ (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") — cùng dáng, cùng đầu
     nét; thu ngang S_SX, dọc về x-height, rồi bù nét S_D (nét viền góc vuông) để độ dày khớp chữ hoa."""

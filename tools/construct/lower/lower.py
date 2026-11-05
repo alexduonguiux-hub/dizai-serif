@@ -25,6 +25,10 @@ B_STEM = 22.6                  # thân 102 → 124.5 (36 → 44 px): dày RA PH�
 B_WIDE = 11.3                  # vòng (mép ngoài) giãn ngang +11.3 quanh tâm (bụng a 130 → 134 px)
 B_MAJ, B_MIN = 12.7, 12.7      # (tham chiếu) a: lòng 39 × 47 → 34.5 × 42.5 px = −12.7 u mỗi bán trục
 B_K = 0.105                    # lòng co THEO TỈ LỆ bán trục −10.5 % (trung bình a: 11.5 % / 9.6 %): lòng lớn co nhiều hơn
+# nét tròn Bold dày thêm đúng B_STEM như thân (designer 05/11: "kiểm tra lại độ dày các chữ còn lại"): co lòng 10.5 % chung
+# cho mọi chữ làm lòng nhỏ co ít → o +17.6, g +13.4, a +13.5 (thân +22.6). Hệ số co lòng giải riêng để thành bụng xa thân
+# (đo bằng đường tròn nội tiếp) = Regular + B_STEM: o 101.2 → 123.8, g 101.1 → 123.7, a 96.6 → 119.2
+B_KG = {'o': 0.1396, 'g': 0.1955, 'a': 0.1929}
 B_SHIFT = 9.9                  # lòng dời về phía thân 9.9 (a: lệch tâm 10 → 13.5 px)
 B_BAR = 12.7                   # nét ngang mảnh (thanh e) dày thêm bằng phần lòng co
 B_THIN = 6.4                   # nét nối / tai g: nở đều mỗi phía (= nửa phần trên)
@@ -88,9 +92,9 @@ def _ell_from_pts(pts):
     a, b, c, d, e = sol; Q = np.array([[a, b/2], [b/2, c]]); ctr = np.linalg.solve(2*Q, -np.array([d, e]))
     k = 1 + ctr @ Q @ ctr; w, V_ = np.linalg.eigh(Q/k)
     return ctr, V_ @ np.diag(1/np.sqrt(w))
-def _ell_path(ctr, M, dmaj=0.0, dmin=0.0, shift=(0.0, 0.0)):
-    U, Sg, _ = np.linalg.svd(M); rot = math.degrees(math.atan2(U[1, 0], U[0, 0]))
-    return V.ellipse((ctr[0] + shift[0], ctr[1] + shift[1]), Sg[0]*(1 - B_K), Sg[1]*(1 - B_K), rot)
+def _ell_path(ctr, M, dmaj=0.0, dmin=0.0, shift=(0.0, 0.0), k=None):
+    U, Sg, _ = np.linalg.svd(M); rot = math.degrees(math.atan2(U[1, 0], U[0, 0])); k = B_K if k is None else k
+    return V.ellipse((ctr[0] + shift[0], ctr[1] + shift[1]), Sg[0]*(1 - k), Sg[1]*(1 - k), rot)
 def _samples(p, n=12):
     pts = []; cur = None
     for v, ps in p.segments:
@@ -151,7 +155,7 @@ def bold(ch):
         cpts = [st(*q) for q in _samples(_path('M' + SHAPES['a_bowl'].split('M')[2], bm))]; ctr, M = _ell_from_pts(cpts)
         # lòng a KHÔNG dời về thân (designer 05/11, kiểm độ dày chỗ nối): bụng a nối thân ở đáy, dời B_SHIFT làm chỗ nối Bold
         # còn 76 < Regular 80; không dời → 90.6 (đo đứng sát thân), dày theo weight như b d p q
-        bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, shift=(0, 0)))
+        bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, shift=(0, 0), k=B_KG['a']))
         return V.U(bowl, V.move(stem, (k - 1)*(outer.bounds[2] - c), 0))
     if ch in 'dbqp':
         bm, sm = G['bowl'], G['stem']
@@ -203,14 +207,14 @@ def bold(ch):
     if ch == 'o':
         m = G['o_ring']; outer = _path(_first_contour(SHAPES['o_ring']), m); c, k, st = _stretch(outer.bounds)
         cpts = [st(*q) for q in _samples(_path('M' + SHAPES['o_ring'].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
-        return V.D(V.xform(outer, st), _ell_path(ctr, M))
+        return V.D(V.xform(outer, st), _ell_path(ctr, M, k=B_KG['o']))
     if ch == 'g':
         allp = V.U(*[_path(SHAPES[kk], m) for kk, m in GLYPH['g']]); c, k, st = _stretch(_path(_first_contour(SHAPES['g_bowl']), G['g_bowl']).bounds)
         out = []
         for kk in ('g_bowl', 'g_loop'):
             m = G[kk]; outer = _path(_first_contour(SHAPES[kk]), m)
             cpts = [st(*q) for q in _samples(_path('M' + SHAPES[kk].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
-            out.append(V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN)))
+            out.append(V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN, k=B_KG['g'])))
         for kk in ('g_link', 'g_ear'):
             p = _path(SHAPES[kk], G[kk]); px = (p.bounds[0] + p.bounds[2])/2
             q = _dil(p, B_THIN)
