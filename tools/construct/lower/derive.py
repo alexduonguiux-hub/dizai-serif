@@ -176,11 +176,7 @@ def glyph(ch, w):
         up0 = (ab[0] + nrm[0]*t/2, ab[1] + nrm[1]*t/2); up1 = (at[0] + nrm[0]*t/2, at[1] + nrm[1]*t/2)
         leg = V.I(leg, side(up0, up1, left=False))            # chân không thò lên trên mép tay
         return V.U(st, arm, leg)
-    if ch == 'z':
-        Wz = 400 + wide; hD = D/2/((XH - 2*H)/math.hypot(Wz, XH - 2*H))
-        top = V.rect(0, XH - H, Wz, XH); bot = V.rect(0, 0, Wz, H)
-        dg = V.poly([(0, H), (2*hD, H), (Wz, XH - H), (Wz - 2*hD, XH - H)])
-        return V.U(top, bot, dg)
+    if ch == 'z': return z_from_Z(w)
     if ch in 'oc': return L._q2c(oc(ch, w))
     if ch == 's': return s_from_S(w)
     raise KeyError(ch)
@@ -242,6 +238,21 @@ def s_from_S(w):
     x0, y0, x1, y1 = Sp.bounds; d = S_D[w]
     sy = (503.4 + 11.3 - 2*d)/(y1 - y0); sx = S_SX
     p = V.xform(Sp, lambda x, y: ((x - x0)*sx, (y - y0)*sy - 11.3 + d))
+    stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
+    stp.convertConicsToQuads()
+    return L._q2c(V.U(p, L._q2c(stp)))
+
+Z_SX = 0.80                        # z = Z hoa thu: ngang 0.80, dọc về x-height
+Z_D = {'Regular': 6.0, 'Bold': 3.0}  # bù nét mỗi phía: thanh ≈ H (40 / Bold 55), chéo ≈ chéo Z
+def z_from_Z(w):
+    """z là Z hoa thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module") — giữ mỏ đầu thanh và nét chéo
+    của Z; thu ngang Z_SX, dọc về x-height, bù nét Z_D (nét viền góc vuông, mỏ giữ sắc)."""
+    from make_ref import outline
+    ref = json.load(open(os.path.join(HERE, '..', 'ref_glyphs.json')))
+    Zp = V.P([(c[0], *[tuple(p) for p in c[1:]]) if c[0] != 'Z' else ('Z',) for c in ref[f'Z-{w}']['cmds']])
+    Zp = N(Zp); x0, y0, x1, y1 = Zp.bounds; d = Z_D[w]
+    sy = (XH - 2*d)/(y1 - y0); sx = Z_SX
+    p = V.xform(Zp, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d))
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
     stp.convertConicsToQuads()
     return L._q2c(V.U(p, L._q2c(stp)))

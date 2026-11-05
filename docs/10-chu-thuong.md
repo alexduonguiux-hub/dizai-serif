@@ -97,7 +97,7 @@ Nét chéo (luật S3):
 - w là hai chữ v chồng lên nhau, đỉnh giữa không có loe.
 - y: nét mảnh kéo xuống descender, có loe; nét dày dừng khi lọt hẳn vào nét mảnh.
 - k: tay mảnh mọc từ thân lên x-height; chân dày mọc từ tay, không thò lên trên mép tay.
-- z: hai thanh mảnh H và một nét chéo dày. Chưa có mỏ như Z hoa.
+- z: là Z hoa của designer thu nhỏ, có đủ mỏ đầu thanh và nét chéo của Z (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module"). Thu ngang 0.80, dọc về x-height, bù nét 6 (Bold 3) mỗi phía, góc vuông giữ sắc. Thanh dày 39.4 (Bold 53.5).
 - Chấm i, j: đường kính 118 (Bold 146), cách x-height 70.
 - t: đỉnh 640, có loe hai bên. Thanh ngang của f và t: dày H, mép trên ở x-height.
 
@@ -108,7 +108,6 @@ QA (`qa_outline.py`): còn các mũi nhọn chủ ý.
 **Chưa làm:**
 - Spacing và kerning chữ thường (trang duyệt đang dùng bề ngang mực + 80).
 - Dấu chữ thường (á, ơ, ư, đ…).
-- Mỏ cho z.
 
 ## Dấu tiếng Việt cho chữ thường (TẠM, luật S11)
 
