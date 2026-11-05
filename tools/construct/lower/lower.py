@@ -39,8 +39,9 @@ def _map_pts(dstr, f):
     return ' '.join(out)
 
 def _bold_px(key, dstr):
-    if key == 'stem':                          # mép phải (x ≥ 44, cả loe ngoài) là phía ngoài: dời ra +B_STEM
-        return _map_pts(dstr, lambda x, y: (x + B_STEM/S, y) if x >= 43.99 else (x, y))
+    if key == 'stem':                          # thân dày +B_STEM chia đều hai phía (mỗi mép 11.3, cả loe): Bold chỉ rộng thêm ½ phần nét
+        h = B_STEM/2/S
+        return _map_pts(dstr, lambda x, y: (x + h, y) if x >= 43.99 else ((x - h, y) if x <= 8.01 else (x, y)))
     return dstr
 
 def piece(key, m, weight):
@@ -140,7 +141,8 @@ def bold(ch):
         # cả loe chân), vai dày xuống B_BAR (đầu cắt dày theo); bụng: mép ngoài giãn +B_WIDE, lòng elip co B_K, dời về thân B_SHIFT
         dS, dH = B_STEM/S, B_BAR/S
         def fs(x, y):
-            if x >= 128.99: x += dS
+            if x >= 128.99: x += dS/2                                           # thân chia đều hai phía
+            elif 84.9 <= x <= 93.01: x -= dS/2
             if (x, y) in ((14.5005, 24.2497), (0.0, 57.249)) or abs(y + 19.7501) < 1e-3: y += dH
             return x, y
         stem = _path(_map_pts(SHAPES['a_stem'], fs), G['a_stem'])
@@ -160,29 +162,26 @@ def bold(ch):
     if ch in 'rtfj':
         # r t (bản vẽ 05/11) và f j (dựng từ khối r t): thân + 8 px (B_STEM) RA PHÍA NGOÀI (r t f: trái; j: phải), loe phía đó
         # trượt theo; tai / móc / thanh dày vào trong + 4.5 px (B_BAR): mép trong tai, móc dời vào, đầu cắt dày theo; thanh dày xuống.
-        dS, dH = B_STEM/S, B_BAR/S; side = 1 if ch == 'j' else -1; out = []
-        def outer_shift(lo_hi, m):
-            """dời các điểm ở phía ngoài (theo toạ độ toàn cục) của một khối: lo_hi = (ngưỡng mép trái cục bộ, mép phải cục bộ)"""
-            lo, hi = lo_hi; glob_left_is_local_low = m[0] > 0
-            want_local_low = (side < 0) == glob_left_is_local_low
-            return (lambda x, y: (x - dS, y) if x < lo else (x, y)) if want_local_low else (lambda x, y: (x + dS, y) if x > hi else (x, y))
+        # thân chia đều hai phía (mỗi mép h = ½ B_STEM, loe theo mép); tai / móc trượt theo mép trong; thanh dài thêm hai đầu
+        dS, dH = B_STEM/S, B_BAR/S; h = dS/2; out = []
         for key, m in GLYPH[ch]:
             d = SHAPES[key]
-            if key in ('r_stem', 't_stem', 'f_stem', 'j_stem'): d = _map_pts(d, outer_shift((0.01, 35.99), m))
-            elif key == 'fl1': d = _map_pts(d, lambda x, y: (x + dS if x > 35.9 else x, y))              # loe trái (khối lật ngang)
-            elif key == 'fl2': d = _map_pts(d, outer_shift((8.01, 43.9), m))
+            if key in ('r_stem', 't_stem', 'f_stem', 'j_stem'):
+                d = _map_pts(d, lambda x, y: (x - h, y) if x < 0.01 else ((x + h, y) if x > 35.99 else (x, y)))
+            elif key == 'fl1': d = _map_pts(d, lambda x, y: (x + h, y) if x > 35.9 else ((x - h, y) if x < 0.01 else (x, y)))
+            elif key == 'fl2': d = _map_pts(d, lambda x, y: (x - h, y) if x < 8.01 else ((x + h, y) if x > 43.9 else (x, y)))
             elif key == 'r_ear':
                 inner = {(86.9834, 34.5068), (70.6928, 20.6864), (52.007, 16.6259), (37.7812, 25.9814), (28.0556, 32.3776),
                          (22.0545, 43.9654)}
-                d = _map_pts(d, lambda x, y: (x, y + dH) if (x, y) in inner else (x, y))
+                d = _map_pts(d, lambda x, y: (x + h, y + dH) if (x, y) in inner else (x + h, y))
             elif key == 't_hook':
                 inner = {(69.0, 34.5107), (56.2644, 20.6885), (49.2621, 16.5), (41.5, 20.9814), (33.8969, 27.3775), (36.0, 43.5)}
                 def f(x, y):
-                    if (x, y) in inner: return x, y + dH
-                    if x < 0.01: return x - dS, y                                                       # mép ngoài móc theo thân
-                    return x, y
+                    if (x, y) in inner: return x + h, y + dH
+                    if x < 0.01: return x - h, y                                                        # mép ngoài theo thân
+                    return x + h, y
                 d = _map_pts(d, f)
-            elif key == 't_bar': d = _map_pts(d, lambda x, y: (x - dS if x < 0.01 else x, y + dH if y > 13.9 else y))
+            elif key == 't_bar': d = _map_pts(d, lambda x, y: (x - h if x < 0.01 else (x + h if x > 95.99 else x), y + dH if y > 13.9 else y))
             out.append(_path(d, m))
         return V.U(*out)
     if ch == 'c':

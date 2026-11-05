@@ -86,20 +86,63 @@ def arch_stem(w):
 # cao (đầu cắt 12.75 → 57.25 px) nên chỗ vai mọc khỏi thân phẳng, không có khuyết. Dựng như tai r của designer (2127:982):
 # đầu vai lùi vào trong thân N_OFF px, mép ngoài vai mọc từ đáy đầu vai theo đường cong của tai r (C 10.9 24.1 / 38.3 0,
 # thu theo bề rộng vai) → khuyết cong rõ ở chỗ vai gặp đỉnh thân.
-N_OFF = {'Regular': 12.0, 'Bold': 16.0}
-D_N_ARCH = ("M60.5 0 C129 8.09688e-05 129 59.75 129 59.75 L129 154.127 C129 161.088 130.817 167.929 134.271 173.973 L137 178.75 "
+N_OFF = {'Regular': 12.0, 'Bold': 12.0}
+# mép ngoài vai: bản a có tay nắm suy biến (cp2 trùng điểm cuối 129 59.75) → độ cong vọt ở chỗ vai chuyển sang thân phải, sau
+# chốt đường vượt tay nắm còn lật ngược thành gợn (designer 05/11: "độ cong của các nét này không smooth"). Thay bằng tay nắm
+# thật (κ 0.6, gần ellipse — song song lòng vai), tiếp tuyến ngang ở đỉnh, đứng ở thân.
+D_N_ARCH = ("M60.5 0 C101.6 0 129 23.9 129 59.75 L129 154.127 C129 161.088 130.817 167.929 134.271 173.973 L137 178.75 "
             "L93 178.75 L93 58.25 C93 -19.7501 14.5005 24.2497 0 57.249 C9.35 36.5 33 0 60.5 0 Z")
 D_N_ARCH_B = ("M63.5 0 C146.996 6.64214e-05 143 59.7435 143 59.75 L143 154.127 C143 161.088 144.817 167.929 148.271 173.973 L151 178.75 "
               "L99 178.75 L99 58.25 C98.9999 -9.75002 8.00126 38.2489 0 62.249 C9.8 39.5 34.6 0 63.5 0 Z")
 def n_arch(w):
-    return L._path(D_N_ARCH if w == 'Regular' else D_N_ARCH_B, (1, 0, 0, 0, 1, 188.25048828125))
+    """Bold (designer 05/11: "m n h u bold bị mất nét góc", "bold thường tăng độ rộng hơn nhiều so với regular"): dựng từ vai
+    Regular — thân dày chia đều hai phía (mỗi mép ½ B_STEM, cả loe chân), lòng vai dày xuống B_BAR; góc nách giữ dáng Regular"""
+    d = D_N_ARCH
+    if w == 'Bold':
+        h, dH = L.B_STEM/2/S, L.B_BAR/S
+        def f(x, y):
+            if x >= 128.99: x += h
+            elif 84.9 <= x <= 93.01: x -= h
+            if (x, y) in ((14.5005, 24.2497), (0.0, 57.249)) or abs(y + 19.7501) < 1e-3: y += dH
+            return x, y
+        d = L._map_pts(d, f)
+    return L._path(d, (1, 0, 0, 0, 1, 188.25048828125))
+
+# Vai n m h u dựng bằng HAI ELLIPSE như các chữ tròn (designer 05/11: "nên thử áp dụng cách dựng bằng 2 ellipse như các chữ
+# tròn khác"; trước đó: "độ cong của các nét này không smooth", "đường cong không tự nhiên"):
+# - ellipse NGOÀI: tâm ở cao độ ARCH_CY (chỗ thân phải bắt đầu thẳng), mép phải = mép ngoài thân phải, đỉnh = đường vượt 503.4,
+#   đi qua điểm khuyết trên mép phải thân trái (ARCH_NOTCH) → khuyết cong ở chỗ vai mọc khỏi thân;
+# - ellipse TRONG (lòng): cùng cao độ tâm, mép phải = mép trong thân phải, đỉnh thấp hơn đường vượt đúng nét vai trên (ARCH_TOP:
+#   Regular 40.4 = nét mảnh, Bold + B_BAR), đi qua nách (ARCH_CROTCH) trên mép phải thân trái.
+# Mỗi nửa trên là một cung ellipse liền (độ cong biến thiên đều); trục nhấn nghiêng tự sinh vì tâm lòng lệch trái tâm ngoài.
+ARCH_CY = 340.8
+ARCH_NOTCH = {'Regular': 448.4, 'Bold': 458.9}
+ARCH_CROTCH = {'Regular': 420.8, 'Bold': 418.2}
+ARCH_TOP = {'Regular': 40.4, 'Bold': 40.4 + 12.7}
+
+def _ell_through(xr, top, cy, px, py):
+    """ellipse trục đứng/ngang: mép phải xr, đỉnh top, tâm ở cao độ cy, qua (px, py) bên trái tâm → (cx, rx, ry)"""
+    ry = top - cy; r = math.sqrt(1 - ((py - cy)/ry)**2); rx = (xr - px)/(1 + r); return xr - rx, rx, ry
+
+def shoulder(w, xl, xi, xo, ext=0.5):
+    """vai giữa thân trái (mép phải xl) và thân phải (xi … xo), từ cao độ ARCH_CY lên đường vượt.
+    m vai sau (ext 60): ellipse ngoài kéo sang trái đè lên vai trước → hai cung ngoài cắt nhau thành nách nhọn trên thân giữa"""
+    cy = ARCH_CY; top = L.OV_T if hasattr(L, 'OV_T') else 503.4
+    co, ao, bo = _ell_through(xo, top, cy, xl, ARCH_NOTCH[w])
+    ci, ai, bi = _ell_through(xi, top - ARCH_TOP[w], cy, xl, ARCH_CROTCH[w])
+    outer = V.I(V.ellipse((co, cy), ao, bo), V.rect(xl - ext, cy, xo, top + 5))
+    inner = V.I(V.ellipse((ci, cy), ai, bi), V.rect(xl if ext > 1 else xl - 5, cy - 1, xi, top))
+    return V.U(V.D(outer, inner), V.rect(xi, 290, xo, cy + 0.5))
 
 def n_like(w, asc=False, arches=1):
-    v = W[w]['V']; s0, s1 = arch_stem(w); A = n_arch(w); o = N_OFF[w]*S
-    parts = [vstem(0, v, 0, ASC if asc else XH, 'tlblbr' + ('tr' if asc else ''))]
+    v = W[w]['V']; vr = W['Regular']['V']; h = (v - vr)/2; s0, s1 = arch_stem('Regular'); o = N_OFF[w]*S
+    parts = [vstem(-h, vr + h, 0, ASC if asc else XH, 'tlblbr' + ('tr' if asc else ''))]       # thân Bold dày đều hai phía
+    xl = vr + h
     for i in range(arches):
-        dx = o + i*(s0 + o)
-        parts += [V.move(A, dx, 0), vstem(dx + s0, dx + s1, 0, 300, 'bl')]
+        dx = o + i*(s0 + o) + ((i + 1)*h/arches if arches > 1 else 0.0)   # m: rộng thêm ½ nét tăng của thân giữa, chia đều hai lòng
+        xi, xo = dx + s0 - h, dx + s1 + h
+        parts += [shoulder(w, xl, xi, xo, ext=60 if i else 0.5), vstem(xi, xo, 0, 300, 'blbr')]
+        xl = xo
     return V.U(*parts)
 
 def ear(w, dy=0.0):
@@ -166,8 +209,9 @@ def glyph(ch, w):
     if ch == 'f': return L.raw('f', w)                       # khối r nâng lên ascender + thanh t (lower.py)
     if ch == 'j':                                            # móc t lật ngang + đỉnh thân t (lower.py) + chấm
         o = L.raw('j', w); return V.U(o, dot(o.bounds[2] - 8*S - v/2, w))
-    if ch == 'i': return V.U(vstem(0, v, 0, XH, 'tltrblbr'), dot(v/2, w))
-    if ch == 'l': return vstem(0, v, 0, ASC, 'tltrblbr')
+    h = (v - W['Regular']['V'])/2                           # thân Bold dày đều hai phía
+    if ch == 'i': return V.U(vstem(-h, v - h, 0, XH, 'tltrblbr'), dot(v/2 - h, w))
+    if ch == 'l': return vstem(-h, v - h, 0, ASC, 'tltrblbr')
     if ch == 'v': return shrink_caps('v', w)
     if ch == 'y': return y_from_V(w)
     if ch == 'w': return shrink_caps('w', w)
@@ -243,7 +287,12 @@ def s_from_S(w):
 # v w x y k z: CHỮ HOA của designer thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module",
 # "đồng bộ v w x y k theo chữ hoa") — giữ loe S5, đỉnh, mỏ của chữ hoa; thu ngang CAP_SX, dọc về x-height, bù nét
 # CAP_D mỗi phía (nét viền góc vuông, góc giữ sắc) để nét mảnh ≈ 44 / chéo dày ≈ 100 (Bold theo mẫu a Bold).
-CAP_SX = {'v': 0.80, 'w': 0.80, 'x': 0.80, 'z': 0.80, 'k': 0.85}
+CAP_SX = {'v': 0.565, 'w': 0.80, 'x': 0.60, 'z': 0.80, 'k': 0.85}
+# Ngòi dẹt (luật S10 — đồng bộ độ dày): V hoa thu nhỏ chỉ còn nét \ ≈ 0.88 thân thường, nét / ≈ 0.45 → cộng Minkowski với một
+# đoạn thẳng dài NIB theo hướng nét / (nét / gần như không dày thêm, nét \ dày thêm ≈ NIB·sin góc giữa hai nét):
+# v x: nét \ = thân (102 / 124.5), nét / ≈ 40–45 / 56; w: hai chữ V chồng ở giữa nên ngòi ngắn (giữ lòng giữa mở).
+NIB = {'v': {'Regular': (47, 68), 'Bold': (41, 62)},
+       'x': {'Regular': (32, 55), 'Bold': (36, 55)}}
 CAP_D = {'Regular': 6.0, 'Bold': 3.0}
 def runs_at(p, y):
     """các đoạn mực (x0, x1) trên đường ngang y: mỗi mảnh giao với dải 0.1 u là một đoạn"""
@@ -255,25 +304,70 @@ def _caps(ch, w):
 def _embolden(p, d):
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
     stp.convertConicsToQuads(); return L._q2c(V.U(p, L._q2c(stp)))
-def shrink_caps(ch, w, top=XH):
-    P_ = _caps(ch, w); x0, y0, x1, y1 = P_.bounds; d = CAP_D[w]; sy = (top - 2*d)/(y1 - y0); sx = CAP_SX[ch]
-    p = V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d))
-    return _embolden(p, d)
-def z_from_Z(w): return shrink_caps('z', w)
+def nib(p, Ln, ang):
+    """cộng Minkowski với đoạn thẳng dài Ln theo góc ang (ngòi dẹt, tâm ở giữa): hợp hai bản dời ±½ đoạn + dải quét từng cạnh"""
+    vx, vy = Ln*math.cos(math.radians(ang)), Ln*math.sin(math.radians(ang))
+    a = V.move(p, -vx/2, -vy/2); parts = [a, V.move(p, vx/2, vy/2)]; cur = start = None
+    for verb, pts in a.segments:
+        if verb == 'moveTo': cur = start = pts[0]; continue
+        if verb == 'closePath':
+            if cur == start: continue
+            verb, pts = 'lineTo', (start,)
+        end = pts[-1]; q = pathops.Path(); q.moveTo(*cur)
+        if verb == 'lineTo': q.lineTo(*end)
+        else: q.cubicTo(*pts[0], *pts[1], *pts[2])
+        q.lineTo(end[0] + vx, end[1] + vy)
+        if verb == 'lineTo': q.lineTo(cur[0] + vx, cur[1] + vy)
+        else: q.cubicTo(pts[1][0] + vx, pts[1][1] + vy, pts[0][0] + vx, pts[0][1] + vy, cur[0] + vx, cur[1] + vy)
+        q.close(); q.simplify(fix_winding=True); parts.append(q); cur = end
+    return L._q2c(V.I(L._q2c(V.U(*parts)), V.rect(-100, 0, 2000, XH)))
 
-def k_from_K(w):
-    """k: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap), tay + chân thu về x-height; Bold: thân về 124.5 (thân Bold thường)"""
+def shrink_caps(ch, w, top=XH, sx=None):
+    """chữ hoa thu về x-height; v w x: + ngòi dẹt; Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
+    if w == 'Bold' and sx is None and ch in NIB:
+        R = shrink_caps(ch, 'Regular', top); tgt = R.bounds[2] - R.bounds[0] + L.B_STEM/2
+        def wd(k): p = shrink_caps(ch, w, top, k); return p.bounds[2] - p.bounds[0]
+        a, b = CAP_SX[ch], CAP_SX[ch]*1.05; ea, eb = wd(a), wd(b)
+        for _ in range(3): c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, wd(c)
+        sx = b
+    P_ = _caps(ch, w); x0, y0, x1, y1 = P_.bounds; d = CAP_D[w]; sy = (top - 2*d)/(y1 - y0); sx = sx or CAP_SX[ch]
+    p = _embolden(V.xform(P_, lambda x, y: ((x - x0)*sx, (y - y0)*sy + d)), d)
+    if ch in NIB: p = nib(p, *NIB[ch][w]); p = V.move(p, -p.bounds[0], 0)
+    return p
+def z_from_Z(w):
+    if w == 'Bold':                                          # z Bold chỉ rộng hơn z Regular ½ B_STEM (Z Bold rộng hơn Z Regular 48)
+        zr = _caps('z', 'Regular').bounds; zb = _caps('z', 'Bold').bounds
+        wr = (zr[2] - zr[0])*CAP_SX['z'] + 2*CAP_D['Regular']
+        old = CAP_SX['z']; CAP_SX['z'] = (wr + L.B_STEM/2 - 2*CAP_D['Bold'])/(zb[2] - zb[0])
+        try: return shrink_caps('z', w)
+        finally: CAP_SX['z'] = old
+    return shrink_caps('z', w)
+
+def k_from_K(w, sxk=None):
+    """k: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap), tay + chân thu về x-height; Bold: thân về 124.5 (thân Bold thường),
+    dày ra đều hai phía (mép trái lùi ½ B_STEM), phần chéo giữ đúng vươn ngang của Regular tính từ mép phải thân → k Bold rộng
+    hơn Regular đúng B_STEM (như n)"""
     P_ = _caps('k', w); x0, y0, x1, y1 = P_.bounds
     s0, s1 = runs_at(P_, 600)[0]                             # mép thân ở 600 (trên chỗ tay nhập thân)
     v = W[w]['V']; kx = v/(s1 - s0)
+    if w == 'Bold' and sxk is None:                          # giải sxk để vươn chéo (từ mép phải thân) = Regular
+        R = k_from_K('Regular'); tgt = R.bounds[2] - runs_at(R, 600)[0][1]
+        def ext(k): p = k_from_K(w, k); return p.bounds[2] - runs_at(p, 600)[0][1]
+        a, b = 0.6, 0.9; ea, eb = ext(a), ext(b)
+        for _ in range(4):                                   # secant
+            c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, ext(c)
+        sxk = b
+    elif sxk is None: sxk = CAP_SX['k']
+    h = (v - W['Regular']['V'])/2 if w == 'Bold' else 0.0
     FLR = 90                                                 # vùng loe phải của thân (đỉnh, chân) đi theo thân, không theo nét chéo
     stem = V.U(V.I(P_, V.rect(x0 - 50, -50, s1 + 0.5, 800)), V.I(P_, V.rect(s1 - 1, 700 - FLR, s1 + 40, 800)),
                V.I(P_, V.rect(s1 - 1, -50, s1 + 40, FLR)))
-    stem = V.xform(stem, lambda x, y: (s0 + (x - s0)*kx, y*ASC/700))
-    d = CAP_D[w]; sx = CAP_SX['k']; sy = (XH - 2*d)/(y1 - y0)
-    diag = V.D(V.I(P_, V.rect(s1 - 0.5, -50, x1 + 50, 800)), V.U(V.rect(s1 - 1, 700 - FLR, s1 + 40, 800), V.rect(s1 - 1, -50, s1 + 40, FLR)))
-    diag = _embolden(V.xform(diag, lambda x, y: (s0 + v - 0.5 + (x - s1)*sx, y*sy + d)), d)
-    return V.U(stem, V.I(diag, V.halfplane(0)))
+    stem = V.xform(stem, lambda x, y: (s0 - h + (x - s0)*kx, y*ASC/700))
+    d = CAP_D[w]; sx = sxk; sy = (XH - 2*d)/(y1 - y0)
+    diag = V.D(V.I(P_, V.rect(s1 + 0.5, -50, x1 + 50, 800)), V.U(V.rect(s1 - 1, 700 - FLR, s1 + 40, 800), V.rect(s1 - 1, -50, s1 + 40, FLR)))
+    diag = _embolden(V.xform(diag, lambda x, y: (s0 - h + v - 0.5 + (x - s1)*sx, y*sy + d)), d)
+    xr = s0 - h + v - 0.5                                    # tay / chân sau khi bù nét không lấn qua mép phải thân (bậc 6 u)
+    return V.U(stem, V.I(V.I(diag, V.halfplane(0)), V.rect(xr, -100, 2000, 2000)))
 
 def y_from_V(w):
     """y: v (V hoa thu nhỏ) + nét mảnh kéo xuống descender có loe chân; nét dày dừng khi lọt hẳn vào nét mảnh"""

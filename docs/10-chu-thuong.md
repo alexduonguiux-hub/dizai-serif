@@ -98,6 +98,25 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 
 **v w x y k z = chữ hoa của designer thu nhỏ** (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module", "đồng bộ v w x y k theo chữ hoa"). Thay bản dựng theo luật nét chéo trước đó.
 - **Cách thu**: giữ loe S5, đỉnh, mỏ của chữ hoa. Thu ngang 0.80, dọc về x-height. Bù nét 6 (Bold 3) mỗi phía bằng nét viền góc vuông, góc giữ sắc. Kết quả nét mảnh ≈ 44, chéo dày ≈ 100, thanh z = 39 (Bold 54).
+- **Ngòi dẹt cho v w x y** (designer 05/11: "đồng bộ lại độ dày các glyph"; "chữ v hơi rộng", "v và y", "x cũng rộng"): thu ngang thôi thì nét \ chỉ còn ≈ 0.88 thân (v, y nhẹ hơn chữ thường trung bình 40 %) mà chữ lại quá rộng (v 568, x 540, n 444). Nay thu hẹp hơn (v y 0.565, x 0.60) rồi cộng Minkowski với một đoạn thẳng (ngòi dẹt) nằm theo hướng nét /. Nét / gần như không dày thêm; nét \ dày thêm theo góc giữa hai nét.
+  - Ngòi: v y dài 47 ở 68° (Bold 41 ở 62°); x dài 32 ở 55° (Bold 36).
+  - w giữ như cũ (thu 0.80, không ngòi; rộng 654 / Bold 656) (designer 05/11: "giữ bề rộng chữ w như cũ"). w là hai chữ V chồng nhau ở giữa: ngòi làm lòng giữa Bold bít ("chữ w bold hơi dính").
+  - Kết quả Regular: v y rộng 413, nét \ 100, nét / 39. x rộng 426, nét \ 101, nét / 42. Bold: nét \ ≈ 123, nét / ≈ 54.
+
+**Bề ngang Bold** (designer 05/11: "các chữ bold thường tăng độ rộng hơn nhiều so với regular"; luật tiến triển weight: bề rộng tăng ½ phần nét tăng):
+- Thân Bold dày thêm 22.6, chia đều hai phía (mỗi mép 11.3), không dồn ra ngoài như trước. Lòng co, vị trí thân giữ theo Regular.
+- Chữ một thân: +23 (a b d f i j l p q r t). n h u: +23. m: +34 (thân giữa chia đều cho hai lòng). k: +20 (thân dày đều hai phía; chéo giữ vươn ngang của Regular tính từ mép phải thân).
+- Chữ tròn c e g o: +11. s +13. v x y z: +11, w +2 (Bold giải hệ số thu ngang để đúng Regular + 11.3).
+- Trước đây n h u Bold rộng hơn Regular 51, m 79, k 46.
+- Vai n m h u Bold suy ra từ chính vai Regular (mép ngoài +11.3, mép lòng −11.3, vai dày xuống +12.7), nên giữ khuyết cong chỗ vai gặp thân (designer 05/11: "chữ m, n, h, u bold bị mất nét góc lúc nãy").
+- **Vai n m h u dựng bằng hai ellipse** (designer 05/11: "độ cong của các nét này không smooth", "đường cong không tự nhiên", "nên thử áp dụng cách dựng bằng 2 ellipse như các chữ tròn khác"). Mỗi nửa trên là một cung ellipse liền, độ cong biến thiên đều. Thay cho vai a ghép hai đoạn, vốn có độ cong nhảy ở đỉnh và tay nắm suy biến ở chỗ vai chuyển sang thân phải.
+  - Hai ellipse cùng tâm cao 340.8 (chỗ thân phải bắt đầu thẳng).
+  - Ellipse ngoài: mép phải = mép ngoài thân phải, đỉnh = đường vượt 503.4. Đi qua khuyết trên mép phải thân trái (Regular 448.4, Bold 458.9).
+  - Ellipse trong (lòng): mép phải = mép trong thân phải, đỉnh thấp hơn đường vượt 40.4 (Bold 53.1). Đi qua nách (Regular 420.8, Bold 418.2).
+  - Tâm lòng lệch trái tâm ngoài, nên trục nhấn tự nghiêng: mảnh ở vai trái, dày dần sang thân phải.
+  - m: ellipse ngoài vai sau kéo sang trái, đè lên vai trước. Hai cung ngoài cắt nhau thành nách nhọn trên thân giữa.
+  - Chân thân phải có loe hai bên.
+- **k**: tay, chân cắt ngoài mép thân rồi mới bù nét. Trước đó nhát cắt ăn 0.5 u vào thân K, bù nét làm dải này thành gờ 6 u dọc mép phải thân (designer 05/11: "chữ k bị lỗi nét").
 - **k**: thân K giữ nguyên chiều cao (= ascender 698.6 ≈ cap). Ở Bold, thân thu về 124.5 (thân Bold chữ thường). Loe phải ở đỉnh và chân đi theo thân. Chỉ tay và chân thu về x-height (ngang 0.85).
 - **y**: lấy v (từ V), kéo nét mảnh xuống descender, có loe chân. Nét dày dừng ở cao độ mép trái của nó gặp mép trái nét mảnh. Chữ hoa Y khác cấu trúc nên không dùng.
 - Chấm i, j: đường kính 118 (Bold 146), cách x-height 70.
