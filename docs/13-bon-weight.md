@@ -71,3 +71,35 @@ Yêu cầu của designer ngày 05/11: "thêm 2 weight medium và semi bold". Ha
 - **Æ, "lỗi vòng khuyết":**
   - Lỗi: đỉnh lòng A nằm trái thân E, để lại một đoạn xiên ngắn từ đỉnh lòng xuống thân.
   - Sửa: lòng dựng lại thành tam giác giới hạn bởi mép trong nét chéo trái, mép trái thân E và mặt trên thanh A. Lòng có một đỉnh nhọn ở thân.
+
+## QA độ dày nét toàn bộ glyph (designer 05/11: "đồng bộ hết độ dày các glyph", "đảm bảo không glyph nào lỗi nét")
+
+### Công cụ: `tools/construct/qa_stroke.py`
+- Đo bề dày theo trục giữa (medial axis) trên ảnh raster 0.5 px/u.
+- Tỉa nhánh vào góc loe và đầu nét; bỏ vùng khớp.
+- Các phép kiểm:
+  - Chữ / số gốc: nét chính so với H / n / 0, lệch tối đa ±10 %.
+  - Ký hiệu: trong ±10 % trung vị nhóm cùng luật. Bốn nhóm: gạch / toán, ngoặc, ký hiệu chữ, nháy thẳng.
+  - Chéo weight: nét chính tăng R → M → SB → B, và tỉ lệ B/R khớp nhóm.
+
+### Đã sửa
+| Glyph | Trước | Sau |
+|---|---|---|
+| w | hai nét \ mảnh hơn v 11 % | dùng chung `thicken` với v x z (hàm mở rộng cho 4 mép) |
+| e Medium → Bold | nhẹ hơn n tới 12 % | lòng co như o (`B_KG['e']`) |
+| ~ ≈ | nét 116 / 90, gấp đôi nhóm toán (60) | cùng đường sin của dấu ngã, vẽ lại bằng bút nhóm toán, nét 0.60 V |
+| – — | 0.9 × gạch nối | dày bằng gạch nối |
+| { } | thân 0.70 V | 0.85 V, như ( ) [ ] |
+| § | nét 66 (0.65 V) | nét 0.85 V (90), cùng nhóm ngoặc |
+| vòng ̊ (Å å) | 0.34 V, mảnh hơn mọi dấu ~30 % | 0.66 N dấu, bằng đáy trăng |
+
+### Móc dưới (U+0327, Ç ç) vẽ lại
+Designer: "đuôi móc không giống các font cùng dòng".
+- Cổ đứng mảnh.
+- ¾ vòng elip (ering4): cong sang phải rồi về trái, mở hẳn về trái.
+- Thành phải 0.62 thân thường; trên / đáy là nét mảnh.
+- Đuôi phẳng mặt trên, cắt đứng thẳng hàng mép trái cổ.
+
+### Còn lại, đã kiểm tay (không phải lỗi)
+- 2 3 5 8: tương phản theo bản vẽ / luật số của designer. Đo trực tiếp thì thành bụng 3 5 Bold vẫn dày lên.
+- Æ Bold, ‹ › Bold, ! ¡ ' “ ;: lệch do thước đo trên glyph nhỏ hoặc hình giọt. Đo trực tiếp thì thân / diện tích tăng đều.

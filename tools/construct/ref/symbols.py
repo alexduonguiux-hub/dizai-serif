@@ -79,6 +79,13 @@ def contours_of(p):
 def norm_x(p): b = bounds(p); return move(p, -b[0], 0)
 def scale(p, s, o=(0, 0)): return xform(p, lambda x, y: (o[0] + (x - o[0])*s, o[1] + (y - o[1])*s))
 
+def wave(w, k):
+    """sóng ~ ≈ (QA độ dày 05/11): đường sin của dấu ngã × k, bút nhóm toán — nét dày nhất 0.60 V"""
+    t = T[w]; A_, kx = V._B(w, 32, 28)*k, V._B(w, 1.0, 1.14)*k
+    f = lambda x: (x*kx, A_*math.sin(2*math.pi*(x + 130)/260)); df = lambda x: (kx, A_*2*math.pi/260*math.cos(2*math.pi*(x + 130)/260))
+    tl_ = V.hermite([(f(x), df(x)) for x in (-130, -65, 0, 65, 130)]); kn = 0.60*t['V']/(0.87*t['Nm'])
+    return V.norm(V.stroke(tl_, (t['Nm']*kn, t['mm']*kn), taper=lambda u: 0.8 + 0.2*math.sin(math.pi*u)))
+
 def pen_w(theta, nib):
     """độ dày bút dẹt theo hướng nét theta (như vn_punct.stroke): sqrt((N·sin(θ − PHI))² + m²)"""
     return math.hypot(nib[0]*math.sin(theta - V.PHI), nib[1])
@@ -124,7 +131,7 @@ def build_w(S, L, w):
         thân đứng 0.70 V (470 … 715); đầu trên = ¼ vòng elip (ering4: thành đứng = thân, đỉnh 0.55 thân) từ đỉnh thân cong sang
         phải tới đầu cắt đứng ở xt, đỉnh 860; mũi = ¼ vòng elip từ chân thân cong vào trục 355, đầu mũi cắt đứng mảnh;
         nửa dưới = gương quanh 355"""
-        w_ = 0.70*Vv; xm, xt, x0, ym = 112.0, 225.0, 0.0, 355.0
+        w_ = 0.85*Vv; xm, xt, x0, ym = 120.0, 240.0, 0.0, 355.0     # thân 0.85 V = giữa ngoặc tròn, ngoặc vuông 0.86 V (QA độ dày 05/11)
         sl, sr = xm - w_/2, xm + w_/2
         stem = rect(sl, 470 - 1, sr, 715 + 1)
         cyh = 715.0; ryh = 860 - cyh
@@ -139,7 +146,9 @@ def build_w(S, L, w):
     # | : thanh đứng 0.58 V, −150 … 860 (như ngoặc)
     G['|'] = rect(0, -150, 0.58*Vv, 860)
     # ~ : ngã lớn (ngã dấu × 1.7) trên trục toán
-    tl = scale(M['tilde'], 1.7); b = bounds(tl); G['~'] = norm_x(move(tl, 0, YC - (b[1] + b[3])/2))
+    # ~ (QA độ dày 05/11: ngã dấu × 1.7 làm nét 116 = gấp đôi nhóm toán + − = < 60): cùng đường sin của dấu ngã × 1.7 nhưng
+    # vẽ lại bằng bút nhóm toán — nét dày nhất 0.60 V
+    tl = wave(w, 1.7); b = bounds(tl); G['~'] = norm_x(move(tl, 0, YC - (b[1] + b[3])/2))
     # gạch mềm = gạch nối
     G['­'] = P['-']
     # ı ȷ : i j bỏ chấm (chấm i đáy ở XH + 70)
@@ -151,7 +160,8 @@ def build_w(S, L, w):
     G['̀'] = above(M['grave']); G['́'] = above(M['acute']); G['̂'] = above(M['circumflex'])
     G['̃'] = above(M['tilde']); G['̆'] = above(M['breve']); G['̉'] = above(M['hook'])
     md = t['mdot']; G['̈'] = above(U(dot((0, 0), md), dot((md + 0.75*md, 0), md)))
-    ro = 0.62*md + 18; G['̊'] = above(D(ellipse((0, 0), ro, ro), ellipse((0, 0), ro - 0.34*Vv, ro - 0.34*Vv)))
+    ro = 0.62*md + 18; rw_ = 0.66*t['Nm']   # nét vòng = đáy trăng 0.66 N dấu (QA độ dày 05/11: 0.34 V mảnh hơn mọi dấu khác ~30 %)
+    G['̊'] = above(D(ellipse((0, 0), ro, ro), ellipse((0, 0), ro - rw_, ro - rw_)))
     cf = M['circumflex']; b = bounds(cf); G['̌'] = above(xform(cf, lambda x, y: (x, b[1] + b[3] - y)))
     hn = M['horn']; b = bounds(hn); G['̛'] = move(hn, -b[0] - 30, XH - 70)          # bám mép phải chữ trước
     db = M['dotbelow']; b = bounds(db); G['̣'] = move(db, -(b[0] + b[2])/2, -11.3 - V.GAP_ML - (b[3] - b[1]))
@@ -159,9 +169,21 @@ def build_w(S, L, w):
     # đuôi dấu hỏi thành cổ đi lên chạm đáy chữ, cung tròn cuộn xuống thành móc, đầu cắt bên trái — cùng nét bút, cùng cách dựng
     # với dấu tiếng Việt (vn_punct.marks: hook)
     # × 0.80: dấu hỏi mới đuôi ngắn hơn (× 0.62 làm móc chỉ thò 57 dưới đường chân, lòng Bold bít)
-    fv = xform(M['hook'], lambda x, y: (x*0.80, -y*0.80)); b = bounds(fv)
-    top = I(fv, rect(-500, b[3] - 25, 500, b[3] + 1)); tb = bounds(top); xneck = (tb[0] + tb[2])/2
-    G['\u0327'] = q2c(move(fv, -xneck, 15 - b[3]))
+    # VẼ LẠI 05/11 (designer: "đuôi móc không giống các font cùng dòng" — bản dấu hỏi lật cuộn ngược lên ở đầu trái): móc dưới
+    # kiểu serif = CỔ ĐỨNG mảnh + ¾ VÒNG ELIP (ering4) cong sang phải rồi về trái, đuôi thon cắt đứng ở dưới-trái.
+    # Thành phải dày 0.62 thân thường, trên / trái = nét mảnh thường hl, đáy 0.85 hl; khe & cỡ theo Regular, nở theo weight.
+    # Gốc: tâm cổ x = 0, đỉnh cổ y = 15 (đáy chữ ở −25 sau khi đặt: Ç ç đặt ở b[1] + 25)
+    hl_ = 40.4 + 12.7*tw; vl_ = 101.8 + 22.6*tw; nw = 1.1*hl_
+    Wc, Hc = 165 + 40*tw, 130 + 10*tw; y1c = -65.0
+    # mép trái lòng = mép trái cổ: cổ đi thẳng xuống thành mép lòng, vòng mở hẳn về trái (bỏ cả thành trái);
+    # đuôi = thành đáy (mép trên phẳng ở đáy lòng), cắt đứng dưới mép trái cổ
+    x0c = -nw/2 - hl_; cxc = x0c + Wc/2; cyc = y1c - Hc/2
+    ringc = ering4(x0c, x0c + Wc, y1c - Hc, y1c, hl_, 0.62*vl_, 0.85*hl_, hl_)
+    ringc = I(ringc, rect(-nw/2, -2000, 2000, 2000))          # đuôi cắt đứng thẳng hàng mép trái cổ
+    # mở hẳn: bỏ mọi mực bên trái tâm lòng trong khoảng cao của lòng (sót mép thành trái cong làm vòng khép kín)
+    iy0, iy1 = y1c - Hc + 0.85*hl_, y1c - hl_; cxi_ = (x0c + hl_ + x0c + Wc - 0.62*vl_)/2
+    ringc = D(ringc, rect(-2000, iy0, cxi_, iy1))
+    G['\u0327'] = q2c(U(ringc, rect(-nw/2, y1c - 0.5*hl_, nw/2, 15)))
     # ---------- nhóm 2 ----------
     sp = d + 0.8*d
     G['…'] = U(*[dot((r + k*sp, r - 3), d) for k in range(3)])
@@ -204,7 +226,9 @@ def build_w(S, L, w):
     S0 = V.letter(S, 'S', w); b = bounds(S0); S0 = move(S0, -b[0], -b[1])
     S0 = xform(S0, lambda x, y: (x*0.64, y*0.58)); b = bounds(S0)
     sp_ = runs_y(S0, (b[1] + b[3])/2); spine = max(r_[1] - r_[0] for r_ in sp_)
-    S0 = embolden(S0, max(0.0, (0.80*Vv - spine)*0.30)); b = bounds(S0); hs = b[3] - b[1]
+    # QA độ dày 05/11: S thu 0.64 × 0.58 còn nét ~0.62 V (đo trục giữa: § 66 so với ( ) [ ] { } ! € 88) — embolden mỗi phía
+    # 0.115 V → nét chính 0.85 V, cùng nhóm ngoặc (đo "spine" theo run ngang cũ ăn cả độ nghiêng sống nên không nở)
+    S0 = embolden(S0, 0.115*Vv); b = bounds(S0); hs = b[3] - b[1]
     S0 = move(S0, -b[0], -b[1]); b = bounds(S0)
     # bỏ ĐẦU NÉT DƯỚI của S (góc dưới-trái) trước khi chồng: đầu này nằm trong vòng giữa và lòi ra hai bên (designer 05/11:
     # "vẫn lỗi dư nét"); chỗ đó do sống của S kia khép lại
@@ -276,7 +300,7 @@ def group3(S, L, w, M, P, G1):
     # dấu dùng chung (đáy y = 0, tâm x = 0)
     def c0(m): b = bounds(m); return move(m, -(b[0] + b[2])/2, -b[1])
     MK = {'diaer': c0(U(dot((0, 0), md), dot((md + 0.75*md, 0), md))),
-          'ring': c0(D(ellipse((0, 0), 0.62*md + 18, 0.62*md + 18), ellipse((0, 0), 0.62*md + 18 - 0.34*Vv, 0.62*md + 18 - 0.34*Vv))),
+          'ring': c0(D(ellipse((0, 0), 0.62*md + 18, 0.62*md + 18), ellipse((0, 0), 0.62*md + 18 - 0.66*t['Nm'], 0.62*md + 18 - 0.66*t['Nm']))),
           'caron': c0(xform(M['circumflex'], lambda x, y: (x, -y))), 'tilde': c0(M['tilde']), 'circ': c0(M['circumflex'])}
     ced = G1['\u0327']
     def cap_acc(base, mk):
@@ -397,7 +421,7 @@ def group3(S, L, w, M, P, G1):
         b = bounds(ch_); sc_ = 0.84; c_ = scale(ch_, sc_, ((b[0] + b[2])/2, YC_)); c_ = move(c_, 0, 85)
         cb = bounds(c_); return U(c_, rect(cb[0], YC_ - 230, cb[2], YC_ - 230 + mh))
     G['≤'] = le(lt); G['≥'] = le(gt)
-    tl = scale(G1['~'], 0.78); tb_ = bounds(tl); tl = move(tl, 0, YC_ - (tb_[1] + tb_[3])/2)
+    tl = wave(w, 1.7*0.78); tb_ = bounds(tl); tl = move(tl, 0, YC_ - (tb_[1] + tb_[3])/2)   # ≈: sóng nhỏ hơn, cùng nét ~
     G['≈'] = U(move(tl, 0, 92), move(tl, 0, -92))
     G['¬'] = U(rect(0, YC_ - mh/2, ms, YC_ + mh/2), rect(ms - 0.62*Vv, YC_ - 200, ms, YC_ + mh/2))
     G['¦'] = U(rect(0, -150, 0.58*Vv, 300), rect(0, 410, 0.58*Vv, 860))

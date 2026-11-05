@@ -316,7 +316,7 @@ CAP_SX = {'v': 0.55, 'w': 0.80, 'x': 0.565, 'z': 0.772, 'k': 0.785}
 # nên cung module loe giữ nguyên bán kính như chữ hoa (designer 05/11: "chữ y, x, v lỗi module" — bản ngòi dẹt cộng Minkowski
 # trước đó quét cả phần loe, cung module vỡ thành nhiều mảnh). Đỉnh nối mép với nét / tính lại bằng giao điểm. y dựng từ v.
 # w giữ như cũ (designer 05/11: "giữ bề rộng chữ w như cũ").
-THICK = ('v', 'x', 'z')                                      # z: chéo / (designer 05/11: "kiểm tra lại module chữ k và z")
+THICK = ('v', 'w', 'x', 'z')   # w (QA độ dày 05/11: hai nét \\ của w mảnh hơn v 10 %)                                      # z: chéo / (designer 05/11: "kiểm tra lại module chữ k và z")
 CAP_D = {'Regular': 6.0, 'Bold': 3.0}
 def runs_at(p, y):
     """các đoạn mực (x0, x1) trên đường ngang y: mỗi mảnh giao với dải 0.1 u là một đoạn"""
@@ -354,8 +354,8 @@ def thicken(p, delta, ylo=90.0, yhi=400.0, fs=False):
     for l in sorted([l for l in lines if l[2]], key=lambda l: xat(l, 250)):
         if E and abs(xat(l, 250) - xat(E[-1][0], 250)) < 3: E[-1].append(l)
         else: E.append([l])
-    assert len(E) == 2
-    SH = (-delta/2, delta/2)
+    assert len(E) in (2, 4), len(E)                          # v x z k: một nét \ (2 mép); w: hai nét \ (4 mép)
+    SH = tuple(-delta/2 if k % 2 == 0 else delta/2 for k in range(len(E)))
     def dist(pt, l):
         (a, b, _) = l; dx, dy = b[0] - a[0], b[1] - a[1]; return abs((pt[0] - a[0])*dy - (pt[1] - a[1])*dx)/math.hypot(dx, dy)
     def onseg(pt, l): return dist(pt, l) < 0.6 and min(l[0][1], l[1][1]) - 0.6 <= pt[1] <= max(l[0][1], l[1][1]) + 0.6

@@ -532,8 +532,8 @@ def punct(S, w):
     # gạch nối và gạch ngang: dày 0.58 V (nằm giữa H và V), tâm ở 330 (giữa cap, hạ quang học)
     hy = 0.58*V; yc = 330
     G['-'] = rect(0, yc - hy/2, 250 + Bw(0, 20), yc + hy/2)
-    G['–'] = rect(0, yc - hy/2*0.9, 420, yc + hy/2*0.9)
-    G['—'] = rect(0, yc - hy/2*0.9, 920, yc + hy/2*0.9)
+    G['–'] = rect(0, yc - hy/2, 420, yc + hy/2)                       # – — dày bằng gạch nối (QA độ dày 05/11: 0.9 → mảnh hơn 7 %)
+    G['—'] = rect(0, yc - hy/2, 920, yc + hy/2)
     # ngoặc tròn (designer 04/11: "( ) nên có glyph phổ biến của dòng serif"): lưỡi liềm từ hai elip đồng tâm —
     # dày nhất ở giữa tm = 0.85 V, thon dần về hai đầu mảnh te ≈ 0.55 H, cắt ngang ở −150 và 860 (tâm 355).
     tm, te = 0.85*V, 0.55*H; cy_, half = 355, 505

@@ -28,7 +28,7 @@ B_K = 0.105                    # lòng co THEO TỈ LỆ bán trục −10.5 % (
 # nét tròn Bold dày thêm đúng B_STEM như thân (designer 05/11: "kiểm tra lại độ dày các chữ còn lại"): co lòng 10.5 % chung
 # cho mọi chữ làm lòng nhỏ co ít → o +17.6, g +13.4, a +13.5 (thân +22.6). Hệ số co lòng giải riêng để thành bụng xa thân
 # (đo bằng đường tròn nội tiếp) = Regular + B_STEM: o 101.2 → 123.8, g 101.1 → 123.7, a 96.6 → 119.2
-B_KG = {'o': 0.1396, 'g': 0.1955, 'a': 0.1929}
+B_KG = {'o': 0.1396, 'g': 0.1955, 'a': 0.1929, 'e': 0.1396}   # e (QA độ dày 05/11): co 10.5 % chung làm thành e Bold nhẹ hơn n 12 % → như o
 B_SHIFT = 9.9                  # lòng dời về phía thân 9.9 (a: lệch tâm 10 → 13.5 px)
 B_BAR = 12.7                   # nét ngang mảnh (thanh e) dày thêm bằng phần lòng co
 B_THIN = 6.4                   # nét nối / tai g: nở đều mỗi phía (= nửa phần trên)
@@ -247,7 +247,7 @@ def bold(ch):
         e2 = _ell_from_pts([st(*q) for q in _inner_pts(SHAPES['e_bowl'], bowl_m, lambda p: 32 < p[0] < 155 and 15 < p[1] < 91.5)])
         bar = V.xform(_path(SHAPES['e_bar'], bar_m), st); bx0, by0, bx1, by1 = bar.bounds; cy = (by0 + by1)/2; hb = by1 - by0 + B_BAR
         barB = V.xform(bar, lambda x, y: (x, cy + (y - cy)*hb/(by1 - by0)))
-        arch = V.D(V.xform(arch_o, st), _ell_path(*e1, B_MAJ, B_MIN))
+        arch = V.D(V.xform(arch_o, st), _ell_path(*e1, B_MAJ, B_MIN, k=B_KG['e']))
         # đầu cắt đuôi e (designer 05/11: "e bold đuôi móc cao và nhọn quá"): lòng co làm mép lòng cắt mặt cắt cao hơn và nhọn
         # hơn. Dời lòng bụng sang phải tới khi mặt cắt đuôi Bold = mặt cắt Regular + B_BAR (đầu cắt dày như nét mảnh).
         bo_st = V.xform(bowl_o, st); x_cut = bo_st.bounds[2]
@@ -259,11 +259,11 @@ def bold(ch):
         target = y_face_reg + B_BAR
         # giữ mép TRÁI lòng bụng (khớp mép lòng mắt e ở đầu trái thanh — designer 05/11: "chỗ này e bold hơi kỳ"), chỉ giãn
         # lòng về bên phải (hệ số k quanh mép trái) tới khi mặt cắt đuôi = Regular + B_BAR
-        cnt0 = _ell_path(*e2)
+        cnt0 = _ell_path(*e2, k=B_KG['e'])
         # mép lòng bụng ngay dưới thanh trùng mép lòng mắt ngay trên thanh (không bậc ở đầu trái thanh)
         def xin(p, y):
             q = V.I(p, V.rect(-5000, y - 0.3, 5000, y + 0.3)); return q.bounds[0] if list(q.segments) else None
-        cnt_a = _ell_path(*e1); xa = xin(cnt_a, cy + hb/2 + 1); xb = xin(cnt0, cy - hb/2 - 1)
+        cnt_a = _ell_path(*e1, k=B_KG['e']); xa = xin(cnt_a, cy + hb/2 + 1); xb = xin(cnt0, cy - hb/2 - 1)
         if xa is not None and xb is not None: cnt0 = V.move(cnt0, xa - xb, 0)
         xl = cnt0.bounds[0]
         def cnt(k): return V.xform(cnt0, lambda x, y: (xl + (x - xl)*k, y))
