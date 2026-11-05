@@ -315,7 +315,19 @@ def group3(S, L, w, M, P, G1):
     top = I(A_, rect(-100, 690, 2000, 800)); tb = bounds(top); apx = (tb[0] + tb[2])/2
     left = I(A_, rect(-100, -100, apx + 0.5*Vv, 800))
     eb = bounds(E_); es = I(E_, rect(-100, 300, 2000, 300.1)); ex0 = bounds(es)[0]
-    G['Æ'] = U(left, move(E_, apx - 0.15*Vv - ex0, 0))
+    # góc trên-trái (designer 05/11: "lỗi glyph góc trái"): đỉnh A (vượt 712) nhô trên thanh E và loe trái đầu thân E chìa ra
+    # ngoài nét chéo → cắt cả khối ở mặt trên thanh E (cap 700) và theo đúng mép ngoài nét chéo trái của A kéo dài (phần trên 400)
+    ae = U(left, move(E_, apx - 0.15*Vv - ex0, 0))
+    (xa, _), (xb, _) = runs_y(A_, 300)[0], runs_y(A_, 600)[0]
+    dx_ = (xb - xa)/300; cut_l = poly([(xa + dx_*(400 - 300), 400), (xa + dx_*(1200 - 300), 1200), (3000, 1200), (3000, 400)])
+    # lòng (designer 05/11: "lỗi vòng khuyết"): đỉnh lòng A nằm trái thân E → còn đoạn xiên ngắn (mép trong chéo phải A) từ đỉnh
+    # lòng xuống thân. Lòng dựng lại = tam giác: mép trong chéo trái A × mép trái thân E × mặt trên thanh A — một đỉnh nhọn ở thân
+    cA = min(contours_of(A_), key=lambda c: abs(c.area)); cb_ = bounds(cA); ybar = cb_[1]
+    (_, xi0), (_, xi1) = runs_y(A_, ybar + 20)[0], runs_y(A_, ybar + 220)[0]
+    sl = (xi1 - xi0)/200; exl = apx - 0.15*Vv; xil = lambda y: xi0 + sl*(y - ybar - 20)
+    ytop = ybar + 20 + (exl - xi0)/sl
+    ae = D(ae, poly([(xil(ybar), ybar), (exl + 1, ybar), (exl + 1, ytop), (xil(ytop) , ytop)]))
+    G['Æ'] = I(I(ae, U(rect(-100, -100, 3000, 400.5), cut_l)), rect(-100, -100, 3000, bounds(I(E_, rect(-100, 600, 2000, 900)))[3]))
     # Œ: O cắt ở 0.62 bề ngang + E có thân trùng chỗ cắt
     O_ = V.letter(S, 'O', w); ob = bounds(O_); xcut = ob[0] + 0.60*(ob[2] - ob[0])
     G['Œ'] = U(I(O_, rect(-100, -100, xcut, 800)), move(E_, xcut - Vv - ex0, 0))

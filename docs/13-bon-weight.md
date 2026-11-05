@@ -65,3 +65,9 @@ Yêu cầu của designer ngày 05/11: "thêm 2 weight medium và semi bold". Ha
 - **g Medium → Bold, "lỗi so với g Regular":**
   - Lòng bụng trên và lòng vòng dưới trước bị thay bằng một elip khớp gần đúng, làm mất hình lòng của bản vẽ (góc dưới-phải nặng ngay từ Medium). Nay lòng Bold = chính lòng Regular, thu nhỏ quanh tâm theo cùng hệ số `B_KG['g']`.
   - Nét nối và tai g trước được nở bằng stroke + boolean, sinh điểm thừa và bậc ở chỗ nối. Nay dùng `offset_path` (dời song song từng đoạn), giữ đúng số điểm của bản vẽ.
+- **Æ, "lỗi glyph góc trái":**
+  - Lỗi: đỉnh A (vượt lên 712) nhô trên thanh E, và loe trái đầu thân E chìa ra ngoài nét chéo.
+  - Sửa: cắt cả khối ở mặt trên thanh E (cap 700). Phần trên 400 cắt theo mép ngoài nét chéo trái của A kéo dài, nên góc trên-trái là một góc nhọn ở đường cap.
+- **Æ, "lỗi vòng khuyết":**
+  - Lỗi: đỉnh lòng A nằm trái thân E, để lại một đoạn xiên ngắn từ đỉnh lòng xuống thân.
+  - Sửa: lòng dựng lại thành tam giác giới hạn bởi mép trong nét chéo trái, mép trái thân E và mặt trên thanh A. Lòng có một đỉnh nhọn ở thân.
