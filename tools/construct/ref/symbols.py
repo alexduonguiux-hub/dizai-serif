@@ -17,7 +17,7 @@ import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import pathops
 import vn_punct as V
-from vn_punct import T, U, D, I, rect, poly, ellipse, move, xform, bounds, stroke, hermite, line, arc, wedge, dot, comma_shape
+from vn_punct import T, TW, WEIGHTS, U, D, I, rect, poly, ellipse, move, xform, bounds, stroke, hermite, line, arc, wedge, dot, comma_shape
 from make_ref import outline as ref_outline
 
 XH, DESC, YC = 495.0, -200.8, 330.0
@@ -98,7 +98,7 @@ def chevron(apex, h, w, nib, left=True):
     return poly(pts if left else pts[::-1])
 
 def build_w(S, L, w):
-    t = T[w]; Vv, H = t['V'], t['H']; d = t['dot']; r = d/2; bold = w == 'Bold'
+    t = T[w]; Vv, H = t['V'], t['H']; d = t['dot']; r = d/2; tw = TW[w]
     nib = (t['N']*0.8, t['m']*0.85)
     P = V.punct(S, w); M = V.marks(w); G = {}
     # ---------- nhóm 1 ----------
@@ -120,15 +120,22 @@ def build_w(S, L, w):
     gv = M['grave']; b = bounds(gv); G['`'] = norm_x(move(gv, 0, 560 - b[1]))
     # { } : nét bút: đầu trên cong ra phải, thân thẳng, mũi nhọn ở trục 355 (như ngoặc tròn / vuông: −150 … 860)
     def brace():
-        """{ : nửa trên là MỘT nét bút từ đầu trên (đi ngang sang trái) → thân đứng → kéo quá mũi; cắt NGANG đúng ở trục mũi 355
-        rồi lật gương xuống → hai nửa trùng khít ở mặt cắt, mũi nhọn sạch (designer 05/11: "Lỗi" — mũi răng cưa); đầu nét cắt
-        đứng ở mép phải"""
-        x0, xm, xt, ym = 0.0, 105.0, 215.0, 355.0
-        n = (t['N']*0.95, t['m']*1.25)
-        half = [((xt + 40, 815), (-1, 0)), ((xm, 715), (0, -1)), ((xm, 470), (0, -1)), ((x0 - 60, ym - 40), (-1, -0.55))]
-        top = I(stroke(hermite(half), n, taper=lambda u: 0.80 + 0.20*math.sin(math.pi*min(1.0, u*1.15))), rect(-500, ym, xt, 1200))
+        """{ — dựng bằng MODULE (designer 05/11: "simplify các điểm"; bản nét bút cũ có hàng chục điểm, đầu nét gãy nhẹ):
+        thân đứng 0.70 V (470 … 715); đầu trên = ¼ vòng elip (ering4: thành đứng = thân, đỉnh 0.55 thân) từ đỉnh thân cong sang
+        phải tới đầu cắt đứng ở xt, đỉnh 860; mũi = ¼ vòng elip từ chân thân cong vào trục 355, đầu mũi cắt đứng mảnh;
+        nửa dưới = gương quanh 355"""
+        w_ = 0.70*Vv; xm, xt, x0, ym = 112.0, 225.0, 0.0, 355.0
+        sl, sr = xm - w_/2, xm + w_/2
+        stem = rect(sl, 470 - 1, sr, 715 + 1)
+        cyh = 715.0; ryh = 860 - cyh
+        hook = I(ering4(sl, 2*xt - sl, 2*cyh - 860, 860, w_, w_, 0.55*w_, 0.55*w_), rect(sl - 1, cyh, xt, 900))
+        cyt = 470.0; ryt = cyt - ym
+        tip = I(ering4(2*x0 - sr, sr, ym, 2*cyt - ym, w_, w_, 0.16*w_, 0.16*w_), rect(x0, ym, sr + 1, cyt))
+        top = q2c(U(stem, hook, tip))
         bot = xform(top, lambda x, y: (x, 2*ym - y))
         return q2c(U(top, bot))
+    br = brace(); G['{'] = norm_x(br)
+    b = bounds(G['{']); G['}'] = xform(G['{'], lambda x, y: (b[2] - x, y))
     # | : thanh đứng 0.58 V, −150 … 860 (như ngoặc)
     G['|'] = rect(0, -150, 0.58*Vv, 860)
     # ~ : ngã lớn (ngã dấu × 1.7) trên trục toán
@@ -190,8 +197,8 @@ def build_w(S, L, w):
     G['÷'] = U(G['−'], dot((ms/2, YC + 150), 0.95*d), dot((ms/2, YC - 150), 0.95*d))
     # ‰: % + một vòng nữa bên phải vòng dưới
     pc = P['%']; b = bounds(pc)
-    lo = I(pc, rect(b[2] - 2*(118 + (8 if bold else 0)) - 5, -50, b[2] + 5, 330))
-    G['‰'] = U(pc, move(lo, 2*(118 + (8 if bold else 0)) + 0.35*Vv, 0))
+    lo = I(pc, rect(b[2] - 2*(118 + 8*tw) - 5, -50, b[2] + 5, 330))
+    G['‰'] = U(pc, move(lo, 2*(118 + 8*tw) + 0.35*Vv, 0))
     # § (designer 05/11: "Check lỗi" ×2): S HOA của designer thu nhỏ (ngang 0.62, dọc 0.52), bù nét tới sống ≈ 0.85 V; S dưới =
     # S trên xoay 180°, chồng ĐÚNG MỘT BỤNG → bụng dưới S trên + bụng trên S dưới ghép thành vòng kín; cao ≈ −40 … 700
     S0 = V.letter(S, 'S', w); b = bounds(S0); S0 = move(S0, -b[0], -b[1])
@@ -314,8 +321,9 @@ def group3(S, L, w, M, P, G1):
     G['Œ'] = U(I(O_, rect(-100, -100, xcut, 800)), move(E_, xcut - Vv - ex0, 0))
     # æ: a + e chồng — vách trái e trùng thân a; œ: o + e chồng một vách
     a_ = lw('a'); e_ = lw('e'); o_ = lw('o'); abx = bounds(a_); ebx = bounds(e_); obx = bounds(o_)
-    G['æ'] = U(a_, move(e_, abx[2] - 0.62*Vv - ebx[0] - 25, 0))
-    G['œ'] = U(o_, move(e_, obx[2] - 0.80*Vv - ebx[0], 0))
+    vl = 101.8 + 22.6*TW[w]                                        # thân chữ thường của weight (phần chồng theo chữ thường, không theo V hoa)
+    G['æ'] = U(a_, move(e_, abx[2] - 0.62*vl - ebx[0] - 25, 0))
+    G['œ'] = U(o_, move(e_, obx[2] - 0.80*vl - ebx[0], 0))
     # Þ: thân P cao trọn cap, bụng P hạ xuống 140 (giữa thân); þ: p có thân vươn lên ascender (đỉnh thân b)
     P_ = V.letter(S, 'P', w); pb = bounds(P_); st = I(P_, rect(-100, 299.9, 2000, 300.1)); sr = sorted(set(round(q[0], 1) for _, ps in st.segments for q in ps))
     s1 = sr[1]; stem = I(P_, rect(-100, -100, s1 + 0.5, 800)); bowl = I(P_, rect(s1 - 2, 300, 2000, 800))
@@ -335,7 +343,7 @@ def group3(S, L, w, M, P, G1):
     cxn = obx[0] + 0.50*ow; Rx, Ry = xr - cxn, 712 - yr
     # đồng bộ độ dày (designer 05/11: "kiểm tra đồng bộ độ dày"): ngọn cổ = nét mảnh H; lòng o giữ nguyên (trừ lòng o khỏi cổ)
     # → chỗ cổ nhập vòng dày đúng thành o (trước: 137 / Bold 165 so với thành o 101 / 124; ngọn 22 / 36 so với H 40 / 53)
-    hl = 40.4 if w == 'Regular' else 40.4 + 12.7                           # nét mảnh chữ thường (ARCH_TOP)
+    hl = 40.4 + 12.7*TW[w]                           # nét mảnh chữ thường (ARCH_TOP)
     neck = I(ering((cxn, yr), (Rx, Ry), (Rx - 0.75*wl, Ry - hl)), rect(cxn - 35, yr, 2000, 2000))
     oc = [c for c in contours_of(o_)]; outer_o = max(oc, key=lambda c: (bounds(c)[2] - bounds(c)[0])*(bounds(c)[3] - bounds(c)[1]))
     counter_o = D(pathops.op(outer_o, outer_o, pathops.PathOp.UNION), o_)
@@ -383,7 +391,7 @@ def group3(S, L, w, M, P, G1):
 
 def build():
     S = V.load(); L = lower_src(); out = {}
-    for w in ('Regular', 'Bold'):
+    for w in WEIGHTS:
         for ch, p in build_w(S, L, w).items():
             p = q2c(p)
             if ch not in COMB: p = norm_x(p)

@@ -84,7 +84,7 @@ if __name__ == "__main__":
     data = json.load(open(os.path.join(OUT, "parts.json")))
     letters = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
     figs = list("0123456789")
-    for w in ("Regular", "Bold"):
+    for w in ("Regular", "Medium", "SemiBold", "Bold"):
         sheet(data, letters[:13], w, path=os.path.join(OUT, f"sheet-{w}-1.svg"))
         sheet(data, letters[13:], w, path=os.path.join(OUT, f"sheet-{w}-2.svg"))
         sheet(data, figs, w, path=os.path.join(OUT, f"sheet-{w}-fig.svg"))

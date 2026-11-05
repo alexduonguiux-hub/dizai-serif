@@ -94,7 +94,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
 <div class="wrap">
   <header>
-    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.4 · Regular, Bold</span></div>
+    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.5 · Regular, Medium, SemiBold, Bold</span></div>
     <p class="lede">Toàn bộ glyph hiện có của hai weight để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật (chưa có bản vẽ tay); còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả hai weight, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
   </header>
   <div class="summary" id="summary"></div>
@@ -140,7 +140,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 <script>
 (function () {
   const D = JSON.parse(document.getElementById('data').textContent);
-  const W = ['Regular', 'Bold'];
+  const W = ['Regular', 'Medium', 'SemiBold', 'Bold'];
   const G = { CAP: 700, OV: 11.3, MARK: 750, DOT: -47.3, TOP: 1110, BOT: -260 };
   const SB = 40, SPACE = 230;
   const GRP = { caps: 'Chữ hoa', lower: 'Chữ thường', fig: 'Số', vn: 'Chữ Việt hoa', vnl: 'Chữ Việt thường', punct: 'Dấu câu', sym: 'Ký hiệu bổ sung' };
@@ -192,7 +192,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     return D.weights[weight].filter(g => {
       if (grp !== 'all' && g.g !== grp) return false;
       if (srcSel === 'flag') { if (!flags[key(weight, g.c)]) return false; }
-      else if (srcSel !== 'all' && g.s !== srcSel) return false;
+      else if (srcSel !== 'all' && (srcSel === 'rule' ? g.s === 'designer' : g.s !== srcSel)) return false;   // 'Dựng theo luật' gồm cả nội suy
       if (!q) return true;
       if (g.c === q || g.c.normalize('NFD')[0] === q.toUpperCase()) return true;
       return hex(g.u).toLowerCase().includes(ql.replace(/^u\+?/, 'u+'));
@@ -204,13 +204,13 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     document.getElementById('count').textContent = `${gl.length} glyph hiển thị`;
     document.getElementById('grid').innerHTML = gl.map(g => {
       const f = flags[key(weight, g.c)];
-      return `<div class="cell${g.s === 'rule' ? ' rule' : ''}${f ? ' flag-' + f.s : ''}" role="option" tabindex="0" data-c="${esc(g.c)}" aria-selected="${sel === g.c}" title="${esc(g.c)} ${hex(g.u)} · ${GRP[g.g]} · ${g.s === 'rule' ? 'dựng theo luật' : 'bản vẽ designer'}">${cellSVG(g)}<div class="nm">${esc(g.c)} ${hex(g.u).slice(2)}</div></div>`;
+      return `<div class="cell${g.s !== 'designer' ? ' rule' : ''}${f ? ' flag-' + f.s : ''}" role="option" tabindex="0" data-c="${esc(g.c)}" aria-selected="${sel === g.c}" title="${esc(g.c)} ${hex(g.u)} · ${GRP[g.g]} · ${g.s !== 'designer' ? 'dựng theo luật' : 'bản vẽ designer'}">${cellSVG(g)}<div class="nm">${esc(g.c)} ${hex(g.u).slice(2)}</div></div>`;
     }).join('');
   }
 
   function renderSummary() {
     document.getElementById('summary').innerHTML = W.map(w => {
-      const gs = D.weights[w], r = gs.filter(g => g.s === 'rule').length;
+      const gs = D.weights[w], r = gs.filter(g => g.s !== 'designer').length;
       return `<span>${w}: <b>${gs.length}</b> glyph · <b>${gs.length - r}</b> bản vẽ · <b>${r}</b> dựng theo luật</span>`;
     }).join('') + `<span>${Object.keys(GRP).map(k => `${GRP[k]} <b>${D.weights.Regular.filter(g => g.g === k).length}</b>`).join(' · ')}</span>`;
   }
@@ -220,7 +220,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     if (!sel) { el.innerHTML = '<p class="note">Bấm một glyph để xem lớn ở cả hai weight.</p>'; return; }
     const g = byC[weight][sel], f = flags[key(weight, sel)] || {};
     const advs = W.map(w => { const x = byC[w][sel]; return x ? `${w[0]} mực ${x.W} · adv ${x.a}` : ''; }).join(' · ');
-    const srcs = W.map(w => { const x = byC[w][sel]; return x ? `${w}: ${x.s === 'rule' ? 'dựng theo luật (TẠM)' : 'bản vẽ designer'}` : ''; }).join(' · ');
+    const srcs = W.map(w => { const x = byC[w][sel]; return x ? `${w}: ${x.s === 'rule' ? 'dựng theo luật (TẠM)' : (x.s === 'interp' ? 'nội suy từ bản vẽ' : 'bản vẽ designer')}` : ''; }).join(' · ');
     el.innerHTML = `<div class="head"><span class="big">${esc(g.c)}</span><span class="meta">${hex(g.u)} · ${GRP[g.g]} · ${advs}</span></div>
       <div class="meta">${srcs}</div>
       <div class="row"><label class="chk"><input type="checkbox" id="inkchk" ${showInk ? 'checked' : ''}> Tô mực (bỏ để xem guide trên nền mờ)</label></div>

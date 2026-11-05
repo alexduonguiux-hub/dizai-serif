@@ -21,6 +21,9 @@ XH, OVT = 495.0, 8.4
 MARK_YL = XH + OVT + V.GAP_ML + 3
 HORN_A = 48.0          # góc bám sừng trên vòng o (Ơ hoa 38°): vòng thường nhỏ, bám cao hơn để đầu sừng vươn rõ khỏi x-height (≈ +70)
 LV = {'Regular': dict(V=36*700/247.5, H=39.6), 'Bold': dict(V=44*700/247.5, H=52.3)}
+sys.path.insert(0, os.path.join(HERE, '..'))
+from weights import WEIGHTS, lerp_w
+lerp_w(LV)
 VN_LOWER = 'àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ'
 MODS = {'̆': 'breve', '̂': 'circumflex', '̛': 'horn'}
 TONE = {'́': 'acute', '̀': 'grave', '̉': 'hook', '̃': 'tilde', '̣': 'dotbelow'}
@@ -81,7 +84,7 @@ def dstroke(S, w):
 
 def build():
     S = load(); out = {}; Wover = {}
-    for w in ('Regular', 'Bold'):
+    for w in WEIGHTS:
         M = V.marks(w)
         for ch in VN_LOWER:
             if ch == 'đ': p = dstroke(S, w)

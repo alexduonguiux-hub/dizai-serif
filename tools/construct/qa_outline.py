@@ -75,15 +75,19 @@ if __name__ == '__main__':
     BASE = {'$': 'S', '€': 'C', '&': '8', 'Æ': 'AE', 'Œ': 'OE', 'æ': 'ae', 'œ': 'oe', '™': 'TM', '®': 'R', '©': 'C', '¢': 'c',
             'Ð': 'D', 'Ø': 'O', 'ø': 'o', 'Þ': 'P', 'þ': 'pb', 'µ': 'u', '¥': 'Y', '£': 'f', 'ð': 'o', 'ß': 'l', '§': 'S', '‰': '%'}
     for k, v in ref.items():
-        if not allg and v.get('src') != 'rule': continue
+        if not allg and v.get('src') not in ('rule', 'interp'): continue
         iss = check(v['cmds'])
         ch, w = k.rsplit('-', 1); bases = BASE.get(ch) or unicodedata.normalize('NFD', ch)[0]
         bks = [f'{b}-{w}' for b in bases if f'{b}-{w}' in ref and b != ch]
-        if v.get('src') == 'rule' and bks:
+        if v.get('src') == 'interp': bks = [f'{ch}-Regular', f'{ch}-Bold']        # nội suy: lỗi kế thừa từ chính chữ đó ở hai master
+        if v.get('src') in ('rule', 'interp') and bks:
             # lỗi kế thừa nguyên vẹn từ chữ gốc (mũi mỏ E, đầu nhọn S/C, đỉnh M, đầu cắt e…) không tính là lỗi dựng. Ký tự ghép
             # (Æ Œ æ œ ™ ® Ë…) dời toạ độ chữ gốc → so theo HÌNH góc (cùng loại, cùng góc ±2°), không theo toạ độ
             bi = [y for bk in bks for y in check(ref[bk]['cmds'])]
-            keep = [x for x in iss if not any(x[0] == y[0] and abs(x[3] - y[3]) <= 2 for y in bi)]
+            if v.get('src') == 'interp':                           # nội suy: góc nằm giữa góc hai master (±2°) = kế thừa
+                keep = [x for x in iss if not (any(x[0] == y[0] for y in bi) and
+                        min(y[3] for y in bi if y[0] == x[0]) - 2 <= x[3] <= max(y[3] for y in bi if y[0] == x[0]) + 2)]
+            else: keep = [x for x in iss if not any(x[0] == y[0] and abs(x[3] - y[3]) <= 2 for y in bi)]
             inherited += len(iss) - len(keep); iss = keep
         if iss: rep[k] = iss
     print('bỏ qua (kế thừa từ bản vẽ designer):', inherited)

@@ -98,7 +98,7 @@ def n_arch(w):
     """Bold (designer 05/11: "m n h u bold bị mất nét góc", "bold thường tăng độ rộng hơn nhiều so với regular"): dựng từ vai
     Regular — thân dày chia đều hai phía (mỗi mép ½ B_STEM, cả loe chân), lòng vai dày xuống B_BAR; góc nách giữ dáng Regular"""
     d = D_N_ARCH
-    if w == 'Bold':
+    if w != 'Regular':
         h, dH = L.B_STEM/2/S, L.B_BAR/S
         def f(x, y):
             if x >= 128.99: x += h
@@ -251,7 +251,7 @@ def oc(ch, w):
         m = (1, 0, 0, 0, 1, 189)
         outer = L._path(L._first_contour(SHAPES['bowl']), m); x0, y0, x1, y1 = outer.bounds
         cx, cy = (x0 + x1)/2, (y0 + y1)/2; rx, ry = 48*S, 74.5*S                 # lòng giữa: vách 34 px hai bên như d
-        if w == 'Bold':
+        if w != 'Regular':
             c, k, st = L._stretch(outer.bounds); outer = V.xform(outer, st); rx, ry = rx*k*(1 - L.B_K), ry*(1 - L.B_K)
         return V.D(outer, V.ellipse((cx, cy), rx, ry))
     # c: bụng e (có đầu cắt) + bản lật dọc của nó làm nửa trên
@@ -298,7 +298,7 @@ def s_from_S(w):
     nét; thu ngang S_SX, dọc về x-height, rồi bù nét S_D (nét viền góc vuông) để độ dày khớp chữ hoa."""
     from make_ref import outline
     src = {}
-    for f in ('designer_A.json', 'designer_B.json'): src.update(json.load(open(os.path.join(HERE, '..', 'ref', f))))
+    for f in ('designer_A.json', 'designer_B.json', 'designer_M.json'): src.update(json.load(open(os.path.join(HERE, '..', 'ref', f))))
     Sp = outline(src[f'S-{w}'])
     x0, y0, x1, y1 = Sp.bounds; d = S_D[w]
     sy = (503.4 + 11.3 - 2*d)/(y1 - y0); sx = S_SX[w]
@@ -396,7 +396,7 @@ def _thick_of(p, y1=XH*0.78, y2=XH*0.70, i=0):
 
 def shrink_caps(ch, w, top=XH, sx=None, delta=None):
     """chữ hoa thu về x-height; v x: nét \\ dày bằng thân (thicken); Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
-    if w == 'Bold' and sx is None and ch in THICK:
+    if w != 'Regular' and sx is None and ch in THICK:
         R = shrink_caps(ch, 'Regular', top); tgt = R.bounds[2] - R.bounds[0] + L.B_STEM/2
         def wd(k): p = shrink_caps(ch, w, top, k); return p.bounds[2] - p.bounds[0]
         a, b = CAP_SX[ch], CAP_SX[ch]*1.05; ea, eb = wd(a), wd(b)
@@ -424,7 +424,7 @@ def k_from_K(w, sxk=None, kd=None):
     P_ = _caps('k', w); x0, y0, x1, y1 = P_.bounds
     s0, s1 = runs_at(P_, 600)[0]                             # mép thân ở 600 (trên chỗ tay nhập thân)
     v = W[w]['V']; kx = v/(s1 - s0)
-    if w == 'Bold' and sxk is None:                          # giải sxk để vươn chéo (từ mép phải thân) = Regular
+    if w != 'Regular' and sxk is None:                          # giải sxk để vươn chéo (từ mép phải thân) = Regular
         R = k_from_K('Regular'); tgt = R.bounds[2] - runs_at(R, 600)[0][1]
         def ext(k): p = k_from_K(w, k); return p.bounds[2] - runs_at(p, 600)[0][1]
         a, b = 0.6, 0.9; ea, eb = ext(a), ext(b)
@@ -432,7 +432,7 @@ def k_from_K(w, sxk=None, kd=None):
             c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, ext(c)
         sxk = b
     elif sxk is None: sxk = CAP_SX['k']
-    h = (v - W['Regular']['V'])/2 if w == 'Bold' else 0.0
+    h = (v - W['Regular']['V'])/2 if w != 'Regular' else 0.0
     FLR = 90                                                 # vùng loe phải của thân (đỉnh, chân) đi theo thân, không theo nét chéo
     stem = V.U(V.I(P_, V.rect(x0 - 50, -50, s1 + 0.5, 800)), V.I(P_, V.rect(s1 - 1, 700 - FLR, s1 + 40, 800)),
                V.I(P_, V.rect(s1 - 1, -50, s1 + 40, FLR)))
@@ -467,12 +467,18 @@ def y_from_V(w):
     tail = stroke(cb, ct, t, 'blbr')
     return V.U(thick, thin, tail)
 
+# ---------- 4 weight: bảng tham số nội suy (weights.lerp_w); "w != 'Regular'" = nhánh đậm, phần thêm vào nhân TW[w] qua L.set_weight
+sys.path.insert(0, os.path.join(HERE, '..'))
+from weights import WEIGHTS, lerp_w
+for _d in (W, N_OFF, ARCH_NOTCH, ARCH_JOIN, ARCH_TOP, ARCH_TILT, S_SX, S_D, CAP_D): lerp_w(_d)
+ARCH_CROTCH = {w: ARCH_NOTCH[w] - ARCH_JOIN[w] for w in ARCH_NOTCH}
+
 CHARS = 'fhijklmnsuvwxyz'      # o, c, r, t: đã có bản vẽ designer (lower.py)
 if __name__ == '__main__':
     out = {}
     for c in CHARS:
-        for w in ('Regular', 'Bold'):
-            o = L._q2c(glyph(c, w)); o = V.move(o, -o.bounds[0], 0)
+        for w in WEIGHTS:
+            L.set_weight(w); o = L._q2c(glyph(c, w)); o = V.move(o, -o.bounds[0], 0)
             out[f'{c}-{w}'] = [V.to_d(L.clean(o))]
     json.dump(out, open(os.path.join(HERE, 'lower_derived.json'), 'w'))
     from make_ref import outline

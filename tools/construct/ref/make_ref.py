@@ -74,7 +74,7 @@ def build(paths, strong=False):
 if __name__ == "__main__":
     src = {}
     Wover = {}
-    for f in ("designer_A.json", "designer_B.json", "designer_C.json", "designer_D.json", "../lower/lower.json", "../lower/lower_derived.json",
+    for f in ("designer_A.json", "designer_B.json", "designer_M.json", "designer_C.json", "designer_D.json", "../lower/lower.json", "../lower/lower_derived.json",
               "../lower/lower_vn.json"):
         if os.path.exists(os.path.join(HERE, f)):
             d = json.load(open(os.path.join(HERE, f))); Wover.update(d.pop("_W", {})); src.update(d)   # designer_C: chữ có dấu giữ bề ngang của chữ gốc (dấu được phép tràn)
@@ -86,10 +86,15 @@ if __name__ == "__main__":
     Rset = Cset | (set(json.load(open(DD))) if os.path.exists(DD) else set()) | (set(json.load(open(LD))) if os.path.exists(LD) else set()) | \
         ({k for k in json.load(open(LV)) if k != "_W"} if os.path.exists(LV) else set()) | \
         ({k for k in json.load(open(LW)) if k.endswith("-Bold") and k != "a-Bold"} if os.path.exists(LW) else set())
-    out = {k: build(v, k in Rset) for k, v in src.items()}   # QA: dọn nét thừa (mạnh cho glyph dựng theo luật)
+    MK = set(json.load(open(os.path.join(HERE, "designer_M.json")))) if os.path.exists(os.path.join(HERE, "designer_M.json")) else set()
+    out = {k: build(v, k in Rset) for k, v in src.items()}   # nội suy (M): KHÔNG dọn mạnh (dọn mạnh từng cắt mất mực N Medium); interp.py tự làm trơn chỗ nối   # QA: dọn nét thừa (mạnh cho glyph dựng theo luật)
     for k, w in Wover.items(): out[k]["W"] = w
     C = json.load(open(os.path.join(HERE, "designer_C.json"))) if os.path.exists(os.path.join(HERE, "designer_C.json")) else {}
     for k in out: out[k]["src"] = "rule" if k in Rset else "designer"   # nguồn: A/B = bản vẽ designer; C = dựng theo luật (vn_punct.py)
+    MP = os.path.join(HERE, "designer_M.json")                      # Medium / SemiBold nội suy từ bản vẽ (interp.py)
+    if os.path.exists(MP):
+        for k in json.load(open(MP)):
+            if k in out and k not in Rset: out[k]["src"] = "interp"
 
     json.dump(out, open(os.path.join(HERE, "..", "ref_glyphs.json"), "w"), separators=(",", ":"))
     print("ok", len(out), {k: (v["W"], sum(g["type"] == "ellipse" for g in v["guides"]), sum(g["type"] == "circle" for g in v["guides"])) for k, v in list(out.items())[:8]})

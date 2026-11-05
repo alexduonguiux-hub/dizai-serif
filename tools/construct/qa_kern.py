@@ -123,7 +123,8 @@ def run(w):
 
 def main():
     allr = {}
-    for w in ('Regular', 'Bold'):
+    sys.path.insert(0, HERE); from weights import WEIGHTS
+    for w in WEIGHTS:
         r = run(w); allr[w] = r
         print(f'===== {w}: class {r["n_class"]} · ngoại lệ {r["n_exc"]}')
         print(f' A va chạm (< 26): {len(r["A_collisions"])}', r['A_collisions'][:10])

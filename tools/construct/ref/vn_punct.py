@@ -23,6 +23,11 @@ T = {
     'Regular': dict(N=105, m=26, Nm=78, mm=26, V=102, H=40, t=44, dot=120, mdot=100, sx=1.0),
     'Bold':    dict(N=146, m=46, Nm=108, mm=44, V=139, H=68, t=74, dot=164, mdot=138, sx=1.08),
 }
+# 4 weight (designer 05/11): bảng nét nội suy Regular → Bold; 'tw' = vị trí weight (0 … 1)
+sys.path.insert(0, os.path.join(HERE, '..'))
+from weights import WEIGHTS, TW, lerp_w
+T['Regular']['tw'] = 0.0; T['Bold']['tw'] = 1.0; lerp_w(T)
+def _B(w, a, b): return a + (b - a)*TW[w]
 CAP, OV = 700, 11.3
 GAP_ML, GAP_MM = 36, 30          # khe dấu–chữ, dấu–dấu (S11)
 MARK_Y = CAP + OV + GAP_ML + 3   # 750: đáy dấu thấp nhất trên chữ hoa
@@ -246,7 +251,7 @@ def norm(p, cx=None):
 # Bold = tâm nét Regular phóng đều 1.2 (giữ tỉ lệ vòng/đuôi), bút 0.70 × bút dấu Bold.
 HOOK_B = (1.2, 0.70); HOOK_END = -20; HOOK_TAIL = (0, 4); HOOK_R = 58; HOOK_C = 106
 Q_NARROW = (20, 200, 45)   # ? hẹp ngang 45 u: Regular 420 → 375, Bold 436 → 391
-HOOK_S = {'Regular': 0.38, 'Bold': 0.52}
+HOOK_S = lerp_w({'Regular': 0.38, 'Bold': 0.52})
 def _q2c(p):
     """quadratic (sau boolean / stroke) → cubic; nhiều điểm điều khiển: điểm on-curve ngầm ở giữa"""
     out = pathops.Path(); cur = None
@@ -261,7 +266,7 @@ def _q2c(p):
                 out.cubicTo(cur[0] + 2/3*(c[0] - cur[0]), cur[1] + 2/3*(c[1] - cur[1]), e[0] + 2/3*(c[0] - e[0]), e[1] + 2/3*(c[1] - e[1]), *e); cur = e
         elif v == 'closePath': out.close()
     return out
-HOOK_T = {'Regular': 54.0, 'Bold': 79.0}
+HOOK_T = lerp_w({'Regular': 54.0, 'Bold': 79.0})
 def offset_path(p, d):
     """dời song song MỖI ĐOẠN của đường viền ra ngoài d (Tiller–Hanson: dời đa giác điều khiển rồi giao các cạnh kề) — số điểm
     giữ nguyên như vector gốc; chỗ nối trơn giữ trơn, góc (mặt cắt) gặp nhau bằng giao điểm (miter)"""
@@ -318,7 +323,7 @@ def offset_path(p, d):
         out.close()
     return out
 
-HOOK_VEC = {'Regular': 1.54, 'Bold': 1.75}       # thành phải vector 35 px → Regular 54 u; Bold 61 u + bù nét tới 79
+HOOK_VEC = lerp_w({'Regular': 1.54, 'Bold': 1.75})       # thành phải vector 35 px → Regular 54 u; Bold 61 u + bù nét tới 79
 def hook_from_q(w):
     """dấu hỏi = VECTOR CỦA DESIGNER (Figma 2130:1183, hook_vec.json — designer 05/11 "Link vector dấu hỏi"): lật y, thu phóng
     HOOK_VEC; Bold bù nét (góc vuông) cho thành phải = HOOK_T Bold. Móc dưới (U+0327, Ç ç) = dấu này lật dọc."""
@@ -362,23 +367,23 @@ def marks(w):
     # trăng: nửa elip trục nghiêng (như lòng O): ngoài là nửa elip, lòng là elip xoay 18° → dày dưới-trái, mảnh dưới-phải; đầu mảnh
     # trăng (designer 04/11: "dấu ă cũng hơi lỗi"): lưỡi liềm ĐỐI XỨNG — nửa elip ngoài (ro, rv) trừ lòng elip có tâm nâng
     # lên 0.5 rv: đáy dày tb = 0.66 N, hai đầu thon te = 0.42 N, cắt ngang; lòng sâu nên không bẹt ở Bold.
-    ro, rv = 112*sx, (90 if sx == 1 else 100); tb, te = 0.66*nib[0], 0.42*nib[0]
+    ro, rv = 112*sx, _B(w, 90, 100); tb, te = 0.66*nib[0], 0.42*nib[0]
     ci = 0.5*rv; ryi = ci + rv - tb; rxi = (ro - te)/math.sqrt(1 - (ci/ryi)**2)
     br = D(ellipse((0, 0), ro, rv), ellipse((0, ci), rxi, ryi))
     M['breve'] = norm(I(br, halfplane(0, above=False)))
     # ngã: sóng; đoạn đi lên mảnh, đoạn đi xuống dày; hai đầu thon
     # tâm nét là một chu kỳ sin: y = 32 sin(2π(x+130)/260), đỉnh ở −65, đáy ở +65 (độ cong đỉnh R ≈ 53 > nửa nét)
-    A_, kx = (32, 1.0) if sx == 1 else (28, 1.14)   # Bold: sóng giãn ngang 1.14, biên độ 28 → bán kính đỉnh ≈ 75 > nửa nét
+    A_, kx = _B(w, 32, 28), _B(w, 1.0, 1.14)   # Bold: sóng giãn ngang 1.14, biên độ 28 → bán kính đỉnh ≈ 75 > nửa nét
     f = lambda x: (x*kx, A_*math.sin(2*math.pi*(x + 130)/260)); df = lambda x: (kx, A_*2*math.pi/260*math.cos(2*math.pi*(x + 130)/260))
     tl = hermite([(f(x), df(x)) for x in (-130, -65, 0, 65, 130)])
     M['tilde'] = norm(stroke(tl, nib, taper=lambda u: 0.8 + 0.2*math.sin(math.pi*u)))
     # hỏi: móc ? thu nhỏ; vòng là cung tròn HOOK_R (độ cong đều), rồi đuôi cong về giữa; bút 0.8 bút dấu (xem HOOK_*)
     hc, hr = (4, HOOK_C), HOOK_R; a_end = math.radians(HOOK_END)
     e = (hc[0] + hr*math.cos(a_end), hc[1] + hr*math.sin(a_end)); te = (math.sin(a_end), -math.cos(a_end))
-    k = 1.0 if sx == 1 else HOOK_B[0]
+    k = _B(w, 1.0, HOOK_B[0])
     hk = arc(hc, hr, hr, 168, HOOK_END) + hermite([(e, te), (HOOK_TAIL, (-0.1, -1))])
     hk = [tuple((q[0]*k, q[1]*k) for q in sg) for sg in hk]
-    M['hook'] = norm(xform(stroke(hk, (nib[0]*(0.8 if sx == 1 else HOOK_B[1]), nib[1]), taper=lambda u: 1.1 - 0.25*u),
+    M['hook'] = norm(xform(stroke(hk, (nib[0]*_B(w, 0.8, HOOK_B[1]), nib[1]), taper=lambda u: 1.1 - 0.25*u),
                            lambda x, y: (x*sx, y)))
     # hỏi VẼ LẠI (designer 05/11: "Vẽ lại dấu hỏi và các móc"): luật S11 "hỏi = móc ? thu nhỏ" — lấy ĐÚNG phần móc của dấu ?
     # (đầu số 2 của designer + cổ, bỏ chấm), thu HOOK_S, bù nét để nét dày bằng nét dấu cũ (Regular 54, Bold 79) — cùng hình,
@@ -397,7 +402,9 @@ def marks(w):
 # ---------- chữ gốc ----------
 def load():
     S = {}
-    for f in ('designer_A.json', 'designer_B.json'): S.update(json.load(open(os.path.join(HERE, f))))
+    for f in ('designer_A.json', 'designer_B.json', 'designer_M.json'):          # M: Medium / SemiBold nội suy (interp.py)
+        if os.path.exists(os.path.join(HERE, f)):
+            d = json.load(open(os.path.join(HERE, f))); d.pop('_W', None); S.update(d)
     return S
 def letter(S, ch, w): return ref_outline(S[f'{ch}-{w}'])
 
@@ -482,7 +489,7 @@ def wedge(xc, ytop, ybot, wt, wb, conc=0.18):
 
 def punct(S, w):
     t = T[w]; d = t['dot']; r = d/2; V, H = t['V'], t['H']; nib = (t['N'], t['m']); G = {}
-    bold = w == 'Bold'
+    bold = w != 'Regular'; Bw = lambda a, b: _B(w, a, b)
     G['.'] = dot((r, r - 3), d)
     G[','] = comma_shape(t, w)
     up = 480 - d                                          # chấm trên của : ; — đỉnh ở 480 (x-height tạm, S10)
@@ -497,7 +504,7 @@ def punct(S, w):
         return xs[0], xs[-1]
     a0_, a1_ = span(y_cut)
     c0 = ((a0_ + a1_)/2, y_cut)
-    sx = c0[0] - (95 if not bold else 100); y_end = 250 + 0.1*d; we = 0.78*V
+    sx = c0[0] - Bw(95, 100); y_end = 250 + 0.1*d; we = 0.78*V
     # thân: hai mép là hai cung Hermite đi tiếp từ đúng hai mép sống 2 tại chỗ cắt (cùng điểm, cùng tiếp tuyến) xuống thẳng
     # đứng, rộng 0.78 V, cắt ngang. Mép nối G1 với sống 2 nên không còn bậc ở mép phải (bản trước lệch 4 u).
     e0, e1 = span(y_cut + 3); top2 = I(two, rect(-50, y_cut - 0.5, 1000, 800))
@@ -524,13 +531,13 @@ def punct(S, w):
     G['”'] = U(rq, move(rq, sp, 0)); G['“'] = U(lq, move(lq, sp, 0))
     # gạch nối và gạch ngang: dày 0.58 V (nằm giữa H và V), tâm ở 330 (giữa cap, hạ quang học)
     hy = 0.58*V; yc = 330
-    G['-'] = rect(0, yc - hy/2, 250 + (20 if bold else 0), yc + hy/2)
+    G['-'] = rect(0, yc - hy/2, 250 + Bw(0, 20), yc + hy/2)
     G['–'] = rect(0, yc - hy/2*0.9, 420, yc + hy/2*0.9)
     G['—'] = rect(0, yc - hy/2*0.9, 920, yc + hy/2*0.9)
     # ngoặc tròn (designer 04/11: "( ) nên có glyph phổ biến của dòng serif"): lưỡi liềm từ hai elip đồng tâm —
     # dày nhất ở giữa tm = 0.85 V, thon dần về hai đầu mảnh te ≈ 0.55 H, cắt ngang ở −150 và 860 (tâm 355).
     tm, te = 0.85*V, 0.55*H; cy_, half = 355, 505
-    Ao, Bo = 230 + (20 if bold else 0), 545          # Bo chỉ hơn nửa chiều cao 8 %: hai đầu cong vào rõ như ngoặc serif
+    Ao, Bo = 230 + Bw(0, 20), 545          # Bo chỉ hơn nửa chiều cao 8 %: hai đầu cong vào rõ như ngoặc serif
     ko = Ao*math.sqrt(1 - (half/Bo)**2); ki = ko - te                      # bề lệch ngang của mép ngoài / trong ở hai đầu
     Ai = Ao - tm; Bi = half/math.sqrt(1 - (ki/Ai)**2)
     Co = Ao
@@ -539,7 +546,7 @@ def punct(S, w):
     par = move(par, -bounds(par)[0], 0); G['('] = par
     pb = bounds(par); G[')'] = xform(par, lambda x, y: (pb[2] - x, y))
     # ngoặc vuông: thân 0.86 V, tay H×1.15 dài 0.5 cap/ 2.3
-    bv, bh, bl = 0.86*V, 1.15*H, 150 + (10 if bold else 0)
+    bv, bh, bl = 0.86*V, 1.15*H, 150 + Bw(0, 10)
     br = U(rect(0, -150, bv, 860), rect(0, -150, bl, -150 + bh), rect(0, 860 - bh, bl, 860)); G['['] = br
     G[']'] = xform(br, lambda x, y: (bl - x, y))
     # gạch chéo: nét / (mảnh theo bút) nhưng đủ đậm để đứng một mình: 0.58 V
@@ -561,7 +568,7 @@ def punct(S, w):
     # %: hai vòng nhỏ kiểu O (lòng nghiêng 30°) + nét chéo
     def ring(c, rx, ry):
         o = ellipse(c, rx, ry); i = ellipse((c[0], c[1]), rx - 0.6*V, ry - 0.36*V - 4, 30); return D(o, i)
-    pw = 640 + (30 if bold else 0); rx, ry = 118 + (8 if bold else 0), 150
+    pw = 640 + Bw(0, 30); rx, ry = 118 + Bw(0, 8), 150
     G['%'] = U(ring((rx, 700 - ry), rx, ry), ring((pw - rx, ry), rx, ry),
               poly([(pw*0.2, -11), (pw*0.2 + 0.6*V, -11), (pw*0.8 + 0.6*V, 711), (pw*0.8, 711)]))
     # $: S của designer + nét đứng H xuyên qua, vươn ±90
@@ -575,8 +582,8 @@ def punct(S, w):
     #   cắt bỏ góc trên-phải của bụng dưới (từ tâm bụng dưới lên tới eo) → vòng trên mở ở chân phải và chảy thành chân;
     #   chân là nét chéo dày D (như chân K, X), từ eo xuống chân phải, cắt ngang ở baseline, cắt trên ở eo.
     e8 = letter(S, '8', w); eb = bounds(e8)
-    lc = (261, 210) if not bold else (275, 210)                 # tâm lòng dưới (đo từ bản vẽ 8)
-    waist = 413 if not bold else 405
+    lc = (Bw(261, 275), 210)                 # tâm lòng dưới (đo từ bản vẽ 8)
+    waist = Bw(413, 405)
     # & serif cổ điển: chân dày (\\) cắt chéo qua TAY mảnh (/) — bụng dưới bị cắt ở góc −40° (dưới-phải), từ đó một nét
     # mảnh t đi lên-phải (đúng logic bút: nét / mảnh, nét \\ dày) tới đầu tay ở 0.52 cap bên phải; phần trên-phải còn lại
     # của bụng dưới cắt bỏ để vòng trên chảy thành chân.
@@ -592,7 +599,7 @@ def punct(S, w):
     m0, _ = mid_at(a0); mid, t0 = mid_at(ang)
     tg0 = (m0[0] - lc[0], m0[1] - lc[1]); tg0 = (-tg0[1], tg0[0])        # tiếp tuyến bụng (ngược chiều kim đồng hồ)
     tg = (mid[0] - lc[0], mid[1] - lc[1]); tg = (-tg[1], tg[0])
-    tt = t['t']; tip = (eb[2] + (115 if not bold else 135), 0.52*CAP)
+    tt = t['t']; tip = (eb[2] + Bw(115, 135), 0.52*CAP)
     # tay đi trùng nét bụng từ góc −62° tới góc cắt −40° (che mặt cắt, mối nối liền), rồi thon dần về t
     va = (1/math.hypot(1, 1.15), 1.15/math.hypot(1, 1.15)); pre = (tip[0] - 90*va[0], tip[1] - 90*va[1])
     over = (tip[0] + 80*va[0], tip[1] + 80*va[1])
@@ -600,8 +607,8 @@ def punct(S, w):
     arm = stroke(arm_c, (1, 1), wabs=lambda u: t0*(0.8 + 0.2*u/0.5) if u < 0.5 else tt + (t0 - tt)*max(0, 1 - (u - 0.5)/0.3)**2)   # gốc hẹp hơn nét bụng: nắp đầu nằm trọn trong bụng
     arm = I(arm, rect(-100, -300, 3000, tip[1]))                     # đầu tay cắt NGANG ở 0.52 cap, như đầu tay K ở cap
     amp = U(amp, arm)
-    Dd = 100 if not bold else 146
-    top, foot = ((lc[0] + 55, waist), (eb[2] + 70, 0)) if not bold else ((lc[0] + 60, waist), (eb[2] + 85, 0))
+    Dd = Bw(100, 146)
+    top, foot = ((lc[0] + Bw(55, 60), waist), (eb[2] + Bw(70, 85), 0))
     L = math.dist(top, foot); nx, ny = (foot[1] - top[1])/L, -(foot[0] - top[0])/L
     ext = lambda p, k: (p[0] + (foot[0] - top[0])/L*k, p[1] + (foot[1] - top[1])/L*k)
     a, b = ext(top, -120), ext(foot, 160)
@@ -657,7 +664,7 @@ def to_d(p):
 
 def build():
     S = load(); out = {}; Wover = {}; meta = {}
-    for w in ('Regular', 'Bold'):
+    for w in WEIGHTS:
         M = marks(w)
         for bch, (base, mod) in BASES.items():
             for mk, tone in TONES.items():

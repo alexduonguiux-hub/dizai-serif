@@ -39,7 +39,7 @@ def entry(ch, w, grp):
     if k not in outl: return None
     return {"c": ch, "u": ord(ch), "g": grp, "a": r.get("W", 0) + 80, "W": r.get("W", 0), "p": short(outl[k]),
             "bx": [round(min(xs)), round(max(xs))] if xs else [0, 0],
-            "s": "rule" if rule else "designer", "gd": [rg(x) for x in r.get("guides", []) if x["type"] != "handles"]}
+            "s": "interp" if r.get("src") == "interp" else ("rule" if rule else "designer"), "gd": [rg(x) for x in r.get("guides", []) if x["type"] != "handles"]}
 
 import unicodedata as _ud
 SP = json.load(open(os.path.join(ROOT, "out", "construct", "spacing.json")))
@@ -50,7 +50,7 @@ def _base(ch):
 def _rc(ch):
     nfd = _ud.normalize("NFD", ch); return nfd[0] + "\u031b" if "\u031b" in nfd else _base(ch)
 data = {"weights": {}, "kern": {w: {"c": KN[w]["class"], "e": KN[w]["exc"]} for w in KN}}
-for w in ("Regular", "Bold"):
+for w in ("Regular", "Medium", "SemiBold", "Bold"):
     L = []
     for grp, chars in (("caps", CAPS), ("lower", LOWER), ("fig", FIG), ("vn", list(VN)), ("vnl", list(VNL)), ("punct", PUNCT), ("sym", SYMX)):
         L += [entry(c, w, grp) for c in chars if f"{c}-{w}" in outl]

@@ -34,6 +34,16 @@ B_BAR = 12.7                   # nét ngang mảnh (thanh e) dày thêm bằng p
 B_THIN = 6.4                   # nét nối / tai g: nở đều mỗi phía (= nửa phần trên)
 B_JOIN = 5.0                   # chỗ nối tai / móc–thân (r t f j) Bold dày thêm ngoài B_BAR, cho bằng chỗ nối bụng–thân b d p q
 TOK = r'[MLCZ]|-?[\d.]+(?:e-?\d+)?'
+# ---------- 4 weight (designer 05/11: "thêm 2 weight medium và semi bold"): mọi phần "Bold thêm vào" ở trên nhân TW[w] ----------
+sys.path.insert(0, os.path.join(HERE, '..'))
+from weights import WEIGHTS, TW
+_B0 = dict(B_STEM=B_STEM, B_WIDE=B_WIDE, B_MAJ=B_MAJ, B_MIN=B_MIN, B_K=B_K, B_SHIFT=B_SHIFT, B_BAR=B_BAR, B_THIN=B_THIN,
+           B_JOIN=B_JOIN, B_KG=dict(B_KG))
+CUR_W = 'Bold'
+def set_weight(w):
+    """đặt các hằng B_* = giá trị Bold × TW[w] (Regular 0, Medium 1/3, SemiBold 2/3, Bold 1)"""
+    global CUR_W; CUR_W = w; t = TW[w]; g = globals()
+    for k, v in _B0.items(): g[k] = {kk: vv*t for kk, vv in v.items()} if isinstance(v, dict) else v*t
 
 # ---------- khối (px cục bộ) ----------
 def _map_pts(dstr, f):
@@ -130,6 +140,7 @@ def raw(ch, weight):
     spec = None   # GLYPH_BOLD (mẫu a Bold cũ, bụng đứng) không còn dùng: a Bold theo luật (bold())
     if spec:                                                   # bản vẽ Bold của designer
         o = V.U(*[_path(SHAPES[k], m) for k, m in spec]); return V.move(o, -o.bounds[0], 0)
+    set_weight(weight)
     if weight == 'Regular':
         o = V.U(*[piece(k, m, weight) for k, m in GLYPH[ch]]); return V.move(o, -o.bounds[0], 0)
     o = _q2c(bold(ch)); return V.move(o, -o.bounds[0], 0)
@@ -311,7 +322,7 @@ CHARS = 'aedbqpgocrt'
 if __name__ == '__main__':
     out = {}
     for c in CHARS:
-        for w in ('Regular', 'Bold'):
+        for w in WEIGHTS:
             out[f'{c}-{w}'] = [V.to_d(clean(raw(c, w)))]
     json.dump(out, open(os.path.join(HERE, 'lower.json'), 'w'))
     from make_ref import outline

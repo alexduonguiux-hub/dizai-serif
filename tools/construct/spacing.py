@@ -27,6 +27,9 @@ STEP = 5.0; Y0, Y1 = -260.0, 1100.0
 YS = np.arange(Y0, Y1 + 0.1, STEP)
 DEPTH = 40.0
 SB_REF = {'Regular': {'caps': 40.0, 'lower': 32.0}, 'Bold': {'caps': 44.0, 'lower': 36.0}}
+sys.path.insert(0, HERE)
+from weights import WEIGHTS, lerp_w
+lerp_w(SB_REF)
 G_CAP, K_F, MIN_GAP, KMIN = 300.0, 0.45, 26.0, -150.0
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
@@ -41,7 +44,7 @@ def _jsconst(name):
 SYM, COMB, LOWX = _jsconst('SYM'), _jsconst('COMB'), _jsconst('LOWX')
 LATU, LATL, MATH = _jsconst('LATU'), _jsconst('LATL'), _jsconst('MATH')       # nhóm 3
 PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@') + list(SYM) + list(MATH)
-SPACE = {'Regular': 230, 'Bold': 245}                                    # space / nbsp: chỉ bề ngang (≈ 0.46 n)
+SPACE = lerp_w({'Regular': 230, 'Bold': 245})                                    # space / nbsp: chỉ bề ngang (≈ 0.46 n)
 # ký hiệu không kern class theo hình chữ (chỉ chống va): ký hiệu toán / đứng riêng — kern theo profile làm ~ · − ^ ` trượt
 # vào miệng C, lòng b d (C~ −150, ^d −150 — QA 05/11). Dấu câu đi liền chữ (… ‚ „ « » ‹ › ¡ ¿ { } gạch mềm) vẫn kern.
 NOKERN = set('*<>\\^_`|~•·©®™°±÷−‰§¶†‡£¥¢µ') | set(MATH)
@@ -105,7 +108,7 @@ def white(prof, side, b):
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
     spacing, kerning = {}, {}
-    for w in ('Regular', 'Bold'):
+    for w in WEIGHTS:
         chars = [k.rsplit('-', 1)[0] for k in O if k.endswith('-' + w)]
         P = {ch: outline([O[f'{ch}-{w}']]) for ch in chars}
         PR = {ch: profile(P[ch]) for ch in chars}
@@ -146,7 +149,7 @@ def main():
             if kind(ch) != 'mark': continue
             sp[ch] = (-n_rsb, 0) if ch == '\u031b' else (-round(n_adv/2), 0)
         spacing[w] = {ch: {'dx': v[0], 'adv': v[1]} for ch, v in sp.items()}
-        for ch in (' ', '\u00a0'): spacing[w][ch] = {'dx': 0, 'adv': SPACE[w]}       # space, nbsp
+        for ch in (' ', '\u00a0'): spacing[w][ch] = {'dx': 0, 'adv': round(SPACE[w])}       # space, nbsp
         chars = [c for c in chars if kind(c) != 'mark']                    # kerning: không kern dấu tổ hợp
 
         # ---- kerning theo class ----
