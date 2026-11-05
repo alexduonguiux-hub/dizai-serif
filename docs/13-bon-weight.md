@@ -147,3 +147,70 @@ Designer: "giảm bề ngang chữ X hoa 1 chút", "các chữ XVY hoa giảm b�
 - **Kerning:** designer thấy "kerning chữ k và i hơi xa".
   - Lề phải k chỉ còn 14, nhưng giữa đầu tay và chân là khe chữ V sâu (khoảng trắng trung bình của ki là 218, so với ni 116).
   - Rút lề phải k thêm 12 (`spacing.NOTCH_RS`).
+
+
+## Cập nhật sau phản hồi (05/11, muộn)
+
+### Bỏ module loe dựng lại và phép thu hẹp X V Y
+Designer: "hư hết rồi — coi lại bản gốc", "bản của bạn lỗi quá".
+
+- Loe đầu nét chéo của bản vẽ gốc (Figma 2138:1200) đã đúng module 2138:1189: phía góc tù loe dài, phía góc nhọn lồi nhỏ rồi mũi nhọn. Bản dựng lại loe theo module (mục "Module loe đầu nét chéo" ở trên) đã bỏ; A K trở về bản vẽ.
+- Phép thu hẹp X V Y (dời song song mép nét) làm méo loe, nên đã tắt (`narrow_caps.NARROW = {}`). V X Y giữ đúng bản vẽ gốc.
+- **V Bold** lấy bản designer vừa vẽ (Figma 2138:1203): xoay 180°, x = (w − x)·k, y = y·k − 11.3 với k = 711.3/251. Cùng cách quy đổi này cho ra V Regular (6:646) trùng từng điểm với dữ liệu hiện có.
+
+### Chân K / k đồng bộ 4 weight
+Designer: "chân các chữ k và K các weight không đồng bộ", "chân góc nghiêng nó phải cong như này".
+
+- Phía góc nhọn của chân (bên trái nét \): mép đi theo nét xuống tới khoảng 45 u trên đường chân, gù nhẹ rồi vòng về mũi. Mũi chìa 23 u ra ngoài đầu mép kéo dài, bằng độ chìa loe thân H.
+- Cùng số đo ở K Regular và K Bold. Medium / SemiBold nội suy theo; k thường dựng từ K nên theo luôn.
+- Đầu tay k = đầu nét / của v (`derive.graft_top`), cùng module loe nét xiên.
+- `interp.lerp`: điểm nằm trên đường chân / cap ở một master và sát đường đó (< 20) ở master kia thì đặt lên đường đó, để không nội suy ra vát xiên.
+
+### R, M
+- **R "hở bụng":** đường cong đáy bụng dừng ở x 293 (Bold 337), rồi đi ngược tới đầu chân ở 311 (Bold 366), để lại khe nêm. Đã lấp bằng tam giác nằm trong mực.
+- **M Bold "chân lỗi":** mép trong thân phải thiếu loe (`L487.4 0 L487.4 547`). Đã thêm loe như M Regular: chìa 22.6, cao 69.8.
+- **Kiểm toàn bộ chân / đỉnh thân 26 chữ hoa:** loe khớp giữa Regular và Bold. Các khác biệt còn lại (C E F G L T Z) là mép cắt đầu tay / thanh, do designer vẽ Bold cao hơn, không phải loe thiếu.
+
+### @
+Designer: "kiểm tra lại vòng khuyết trong của chữ @".
+
+- Elip lòng xoay vượt qua mép thân, cắt vào đoạn thân đang uốn, làm mép lòng gãy.
+- Nay lòng giữ trọn một hình, chỉ bóp phẳng theo mép trái thẳng của thân (đo ở cao 400), như lòng a thường.
+
+### Đơn giản hoá outline cho variable (`compat_masters.py`, gọi cuối `build.py`)
+Designer: "Simplify lại để dễ làm variables".
+
+1. Đơn giản hoá từng master:
+   - bỏ điểm thẳng hàng (lệch < 0.35 u) và đoạn < 1.2 u;
+   - gộp hai đoạn cong (hoặc thẳng + cong) nối trơn (gãy < 10°) khi một cubic khớp sai số < 1.5 u.
+2. Ghép cặp Regular ↔ Bold: cùng số contour, cùng chuỗi đoạn.
+3. Đơn giản hoá đồng thời hai master: chỉ bỏ điểm bỏ được ở cả hai.
+4. Medium / SemiBold = nội suy đúng 1/3, 2/3. Cả 4 weight cùng cấu trúc điểm.
+
+Kết quả: 6 691 → 5 723 đoạn mỗi weight. Ví dụ o: 4 + 4 đoạn; n: 17; H: 20.
+
+### Kerning (QA theo skill dizai-serif-qa)
+- **Khe ≥ 26:** đạt mọi cặp, 4 weight.
+- **Âm tiết Việt (5 214 cặp × 3 kiểu viết):** 12 cặp lệch > 12, đều là ơ + t / y (sừng chạm).
+- **Cặp có dấu lệch cặp gốc:** chỉ còn chữ có sừng đứng trước chữ hoa có nét chéo (ơY, ờV…), tổ hợp hiếm trong tiếng Việt. Sừng chặn.
+- **ƯA "hơi xa":** khe chân U / Ư + A là 134, gấp đôi HA (67). Kéo thêm 20 (`spacing.KADJ`), ƯA = UA giữ luật ơn = on.
+
+### Kerning theo skill DINHTUONG60s (type-qa-qc §3.1, S1c)
+Designer: "hãy dùng skill kerning của Dinh Tuong đã đo sẵn". Thay cho các chỉnh tay ở trên: lề A, lề k, UA / AU / ƯA.
+
+- **Đo trắng cặp W(a, b)** (`ref_kern.white`): khe giữa hai mép mực ngoài cùng, cộng trắng mỗi phía đo từ mép mực ngoài cùng của chính chữ đó. Mỗi phía chặn ở D = 0.12 × x-height. Lấy trung bình theo cao độ: vùng x-height nếu cặp có chữ thường, vùng cap nếu không.
+- **Tỉ số:** W(a, b) / W(n, n) hoặc / W(H, H).
+- **Tham chiếu** (`ref_kern.py`): 4 font serif có sẵn (Liberation Serif, DejaVu Serif, Caladea, FreeSerif), Regular + Bold, tính cả kerning GPOS của chúng. Đo cho 3 844 cặp A–Z a–z 0–9 → `out/construct/ref_ratios.json`.
+- **Kern Đìzai** (`spacing.py`):
+  - Mọi cặp chữ / số: kern = tỉ số tham chiếu × W(n n | H H) − W(a, b, kern 0).
+  - Tỉ số dùng trung bình Regular + Bold cho cả hai master; Medium / SemiBold nội suy.
+  - Ư Ơ ư ơ dùng cặp gốc.
+  - |k| ≤ 0.4 advance của chữ hẹp hơn; làm tròn về phía rộng; va chạm ≥ 26 (sừng 14) chặn ở bước sau.
+- **Kiểm** (`pair_white.py`): Regular 3 580 / 3 844 cặp trong dải tham chiếu, 0 cặp chật đáng kể; Bold 3 589.
+  - Còn thưa: chéo × chéo (vv yy RA KA XA AA WW rv…). Loe chân hai chữ chạm sàn 26 trước khi phần trên khít như tham chiếu (serif tham chiếu cho chân gần chồng nhau). Đây là giới hạn của sàn.
+  - Ví dụ Regular: AT / TA 0.90 → 0.25 / 0.29 (tham chiếu 0.24 / 0.26); OO 1.11 → 0.90 (0.86); ki 0.92 (0.86).
+- **qa_kern:**
+  - va chạm 0;
+  - âm tiết Việt: 0 cặp lệch > 12 ngoài sàn (trước 12 cặp ơt / ơy);
+  - cặp có dấu lệch cặp gốc: 402 → 138 (Regular);
+  - kern giữa 4 weight nhất quán.

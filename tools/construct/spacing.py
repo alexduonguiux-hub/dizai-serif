@@ -33,15 +33,21 @@ lerp_w(SB_REF)
 G_CAP, K_F, MIN_GAP, KMIN = 300.0, 0.45, 26.0, -150.0
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
-WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.25, 0.38
+WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.35, 0.32   # designer 05/11 lần 2: "RA KA XA cũng hơi xa" — 0.25 / 0.38 → 0.35 / 0.32
 # cặp NÊM ĐỐI NÊM (designer 05/11: "KA, RA, LA, ƯA, XA…" thưa): khe nhỏ nhất ở CHÂN (đường chân) nên luật khe nhỏ nhất không
 # kéo vào, nhưng phía trên là hai khoảng trắng hình nêm đối nhau, sâu quá DEPTH 40 mà spacing một phía không bù hết.
 # U = trung bình theo cao độ (vùng chung) của phần trắng sâu quá 40 ở CẢ HAI phía (chỉ đếm cao độ cả hai cùng > 40, mỗi phía
 # tối đa 200). U > 110 → kern ≤ −0.25 (U − 110); sàn mềm của cặp nêm hạ xuống 0.38 khe chuẩn (chân gần như chân serif)
-KMIN_DASH = -60.0
+KMIN_DASH = -60.0                    # cặp có gạch / dấu toán: gạch rơi vào miệng C c L… chỉ kéo vào vừa phải
 # lề phải bù KHẤC SÂU (designer 05/11: "kerning chữ k và i hơi xa"): k phải là khe chữ V sâu giữa đầu tay và chân (trắng sâu quá 40
 # trung bình 105, gấp ~5 lần chữ thường khác); đo trắng chặn ở DEPTH 40 nên lề phải 14 vẫn thưa (ki trắng TB 218, ni 116) → rút 12
-NOTCH_RS = {'k': -12.0}                    # cặp có gạch / dấu toán: gạch rơi vào miệng C c L… chỉ kéo vào vừa phải
+NOTCH_RS = {}   # bỏ (05/11): ki … theo trắng cặp tham chiếu
+# A (designer 05/11: "RA KA XA… ĐA DA… AT TA cũng cần kiểm lại cho gần hơn" — mọi cặp có A thưa): hai khoảng trắng nêm của A
+# lớn (trắng sâu quá 40 trung bình 120 / 114, cao nhất bộ hoa cùng V W X Y) mà spacing chặn ở DEPTH 40 → rút lề hai bên 15
+SIDE_ADJ = {}   # bỏ (05/11): kern cặp chữ theo trắng cặp tham chiếu (REF_KERN) đã bao
+# chỉnh tay theo designer (05/11: "ƯA hơi xa"): U / Ư + A (mọi A có dấu cùng class trái 'A') khe chân 134 — gấp đôi HA (67);
+# kéo thêm 20 ở hai master (ƯA = UA theo luật ơn = on). Medium / SemiBold nội suy theo
+KADJ = {}   # bỏ (05/11): UA ƯA AU theo trắng cặp tham chiếu   # + AU ("và AU"): A + U / Ư / Ú … (cùng class trái 'U')
 CAP, XH = 700.0, 495.0
 
 src = open(os.path.join(HERE, 'glyphs.js')).read()
@@ -137,7 +143,7 @@ def main():
             b = band(ch, PR[ch]); x0, _, x1, _ = P[ch].bounds
             ls, rs = t - white(PR[ch], 'L', b), t - white(PR[ch], 'R', b)
             if k == 'punct': ls, rs = max(ls, 20.0), max(rs, 20.0)
-            rs += NOTCH_RS.get(ch, 0.0)
+            rs += NOTCH_RS.get(ch, 0.0); ls += SIDE_ADJ.get(ch, (0.0, 0.0))[0]; rs += SIDE_ADJ.get(ch, (0.0, 0.0))[1]
             sp[ch] = (round(ls - x0), round(x1 - x0 + ls + rs))          # (dịch outline, advance)
         for ch in chars:                                                   # chữ có dấu: theo chữ gốc
             if ch not in sp and kind(ch) != 'mark':
@@ -189,6 +195,12 @@ def main():
             c = unicodedata.normalize('NFC', cl); return c if c in P else None
         rep_ = {('R', rc): rep('R', rc) for rc in rcls}; rep_.update({('L', lc): rep('L', lc) for lc in lcls})
         KC = {}
+        RF = os.path.join(OUT, 'ref_ratios.json')
+        REFR = None
+        if os.path.exists(RF):                                             # trung bình tỉ số Regular + Bold tham chiếu cho CẢ HAI master:
+            RR = json.load(open(RF)); REFR = {p_: [(RR['Regular'][p_][0] + RR['Bold'][p_][0])/2] for p_ in RR['Regular'] if p_ in RR['Bold']}
+            # (font Bold tham chiếu dàn khác Regular của chúng → kern đổi dấu giữa hai master, vd. Fa −30 / +5)
+        from ref_kern import white as _white
         for rc in rcls:
             a = rep_.get(('R', rc))
             if a is None: continue
@@ -219,6 +231,19 @@ def main():
                     g = pair_gap(a, b_, k); gm = float(np.nanmin(g)) if np.any(~np.isnan(g)) else 999.0
                     fl_ = (WEDGE_SOFT if wedge else SOFT)*wr
                     if gm < fl_: k += math.ceil((fl_ - gm)/5)*5
+                k += KADJ.get(f'{rc}|{lc}', 0)
+                # TRẮNG CẶP THEO THAM CHIẾU (skill type-qa-qc §3.1 S1c, DINHTUONG60s; designer 05/11 "dùng skill kerning của Dinh
+                # Tuong đã đo sẵn"): cặp chữ / số → kern để W(a, b) / W(n n | H H) = trung vị của các font serif tham chiếu
+                # (ref_kern.py); Ư Ơ ư ơ dùng cặp gốc (ƯA = UA). Giới hạn: |k| ≤ 0.4 advance hẹp hơn; va chạm chặn ở bước sau
+                ra_, rb_ = base(a), base(b_)
+                if REFR is not None and ra_ + rb_ in REFR:
+                    lower_ = ra_.islower() or rb_.islower()
+                    band_ = (0.0, XH) if lower_ else (0.0, CAP)
+                    Wn = _white(placed('n' if lower_ else 'H'), placed('n' if lower_ else 'H'), sp['n' if lower_ else 'H'][1], 0.0, band_, YS, 0.12*XH)
+                    W0 = _white(placed(ra_), placed(rb_), sp[ra_][1], 0.0, band_, YS, 0.12*XH)
+                    if Wn and W0 is not None:
+                        k = REFR[ra_ + rb_][0]*Wn - W0
+                        lim = 0.4*min(sp[ra_][1], sp[rb_][1]); k = max(-lim, min(lim, k)); k = math.ceil(k/5)*5
                 if k <= -10 or k >= 5: KC[f'{rc}|{lc}'] = k
         if w not in ('Regular', 'Bold'):
             KR, KB = kerning['Regular']['class'], kerning['Bold']['class']; t_ = TW[w]; KC = {}

@@ -650,7 +650,16 @@ def punct(S, w):
     # thân "a" đi xuống, vòng chữ U (bán kính ≈ 118) sang phải, nhập vào vòng ngoài ở góc 0° rồi chạy ngược chiều kim đồng hồ tới 300°
     ring_o = arc((cx0, cy), R0, R0, 0, 300)
     stem_c = hermite([((cx0 + 100, 470), (0, -1)), ((cx0 + 100, 300), (0, -1)), ((cx0 + 217, 166), (1, 0)), ((cx0 + R0, cy), (0, 1))])
-    at = U(stroke(stem_c + ring_o, (t['N']*0.8, t['m']*0.85)), D(ellipse((cx0 - 12, cy + 10), 128, 160), ellipse((cx0 - 12 + 6, cy + 10), 128 - 0.62*V, 160 - 0.32*V, 25)))
+    pen_at = stroke(stem_c + ring_o, (t['N']*0.8, t['m']*0.85))
+    # lòng a trong @ (designer 05/11: "kiểm tra lại vòng khuyết trong của chữ @"): elip lòng xoay vượt qua mép thân, cắt vào
+    # đoạn thân đang uốn (dưới 300) → mép lòng gãy, bậc. Lòng giữ trọn một hình, chỉ bóp phẳng theo MÉP TRÁI THẲNG của thân
+    # (như lòng a thường); đoạn thân uốn không chạm lòng
+    xs_ = None
+    for v_, ps_ in I(pen_at, rect(-1000, 399.95, 3000, 400.05)).segments:
+        for q_ in ps_:
+            if abs(q_[0] - (cx0 + 100)) < 0.8*t['N'] and (xs_ is None or q_[0] < xs_): xs_ = q_[0]
+    cnt_ = I(ellipse((cx0 - 12 + 6, cy + 10), 128 - 0.62*V, 160 - 0.32*V, 25), rect(-1000, -1000, xs_ - 0.5, 3000))
+    at = U(pen_at, D(ellipse((cx0 - 12, cy + 10), 128, 160), cnt_))
     G['@'] = at
     return G
 
