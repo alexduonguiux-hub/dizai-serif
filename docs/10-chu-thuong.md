@@ -9,6 +9,11 @@ Cập nhật 05/11 — **r, t có bản vẽ** (designer: "update chữ t và r"
 - **t**: thân 36 px, đỉnh 631 có loe hai bên; thanh 14 px (−24 / +36 px quanh thân); móc chân ngắn có mặt cắt đứng (69 px).
 - Bold theo luật mẫu a: thân +8 px (22.6 u) ra phía ngoài, tức bên trái, loe trái trượt theo; tai r, móc t và thanh dày vào trong +4.5 px (12.7 u), đầu cắt dày theo.
 
+**f, j dựng từ khối r, t** (designer 05/11: "đồng bộ móc f và j theo r, t"):
+- **f** = khối r (thân, loe trên trái, tai) nâng lên ascender, đỉnh thân 698.6, đỉnh tai 707. Loe chân hai bên như r. Thanh ngang là thanh t, đặt cùng vị trí so với thân.
+- **j** = móc chân t lật ngang (đầu cắt sang trái), đáy ở −209. Đỉnh thân ở x-height, loe hai bên như đỉnh t. Có chấm.
+- Bold dùng cùng luật với r, t. Thân dày ra phía ngoài: f sang trái, j sang phải.
+
 Cập nhật 05/11 (designer: "cập nhật lại e và o"):
 - **e** lòng vòm và lòng bụng thành elip đứng, đầu cắt cao hơn (mặt trên ở 54.7 px).
 - **o** có bản vẽ riêng (`2123:788`): vòng 172 × 181 px, **lòng elip xoay như O hoa**; thay o dựng tạm.
@@ -77,7 +82,7 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 | Module | Nguồn (designer) | Dùng cho |
 |---|---|---|
 | Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°) |
-| **Nửa c** (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") | c: vách = thân (36 / Bold 44 px), đầu cắt đứng | f (nửa trên nâng lên ascender, 0.60), j (nửa dưới lật ngang, 0.64). r và t nay đã có bản vẽ. Móc trên 0.60, móc dưới 0.64 (designer 05/11: "móc trên chữ f và móc dưới chữ t hơi dài ra", "đồng bộ móc r và j theo f, t"). Chỉ thu phần bên phải vách, vách giữ nguyên nên không có bậc chỗ thân gặp nửa c |
+| **Nửa c** (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") | c: vách = thân (36 / Bold 44 px), đầu cắt đứng | (không còn dùng: f, j nay dựng từ khối r, t — xem dòng dưới) (designer 05/11: "móc trên chữ f và móc dưới chữ t hơi dài ra", "đồng bộ móc r và j theo f, t"). Chỉ thu phần bên phải vách, vách giữ nguyên nên không có bậc chỗ thân gặp nửa c |
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
 | **S hoa** (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") | S của designer | s: thu ngang 0.85, dọc về x-height, rồi bù nét bằng nét viền góc vuông (Regular 7, Bold 3 mỗi phía). Nét mảnh trên/dưới 40.5 (= H; Bold 55), sống 102 theo phương đứng (Bold 124 = thân Bold chữ thường). Bản dựng từ c (05/11) đã bỏ: s phải cùng dáng S hoa |
 

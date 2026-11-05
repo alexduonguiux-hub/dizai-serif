@@ -144,17 +144,20 @@ def bold(ch):
         x0, _, x1, _ = outer.bounds; edge = x1 if side > 0 else x0
         bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN, (side*B_SHIFT, 0)))
         return V.U(bowl, V.move(stem, (k - 1)*(edge - c), 0))
-    if ch in 'rt':
-        # r, t (bản vẽ 05/11): thân + 8 px (B_STEM) RA PHÍA NGOÀI = bên trái (loe trái trượt theo); tai r / móc t / thanh dày
-        # vào trong + 4.5 px (B_BAR): mép dưới tai r hạ xuống, mép trên móc t nâng lên (đầu cắt dày theo), thanh dày xuống.
-        dS, dH = B_STEM/S, B_BAR/S; out = []
+    if ch in 'rtfj':
+        # r t (bản vẽ 05/11) và f j (dựng từ khối r t): thân + 8 px (B_STEM) RA PHÍA NGOÀI (r t f: trái; j: phải), loe phía đó
+        # trượt theo; tai / móc / thanh dày vào trong + 4.5 px (B_BAR): mép trong tai, móc dời vào, đầu cắt dày theo; thanh dày xuống.
+        dS, dH = B_STEM/S, B_BAR/S; side = 1 if ch == 'j' else -1; out = []
+        def outer_shift(lo_hi, m):
+            """dời các điểm ở phía ngoài (theo toạ độ toàn cục) của một khối: lo_hi = (ngưỡng mép trái cục bộ, mép phải cục bộ)"""
+            lo, hi = lo_hi; glob_left_is_local_low = m[0] > 0
+            want_local_low = (side < 0) == glob_left_is_local_low
+            return (lambda x, y: (x - dS, y) if x < lo else (x, y)) if want_local_low else (lambda x, y: (x + dS, y) if x > hi else (x, y))
         for key, m in GLYPH[ch]:
             d = SHAPES[key]
-            if key in ('r_stem', 't_stem'): d = _map_pts(d, lambda x, y: (x - dS if x < 0.01 else x, y))
-            elif key == 'fl1': d = _map_pts(d, lambda x, y: (x + dS if x > 35.9 else x, y))              # lật ngang: x lớn = trái
-            elif key == 'fl2':
-                if m[0] < 0: d = _map_pts(d, lambda x, y: (x + dS if x > 43.9 else x, y))               # lật ngang
-                else: d = _map_pts(d, lambda x, y: (x - dS if x < 8.01 else x, y))
+            if key in ('r_stem', 't_stem', 'f_stem', 'j_stem'): d = _map_pts(d, outer_shift((0.01, 35.99), m))
+            elif key == 'fl1': d = _map_pts(d, lambda x, y: (x + dS if x > 35.9 else x, y))              # loe trái (khối lật ngang)
+            elif key == 'fl2': d = _map_pts(d, outer_shift((8.01, 43.9), m))
             elif key == 'r_ear':
                 inner = {(86.9834, 34.5068), (70.6928, 20.6864), (52.007, 16.6259), (37.7812, 25.9814), (28.0556, 32.3776),
                          (22.0545, 43.9654)}

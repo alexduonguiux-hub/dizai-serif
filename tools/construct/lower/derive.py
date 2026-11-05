@@ -151,19 +151,9 @@ def glyph(ch, w):
     if ch == 'u':
         n = n_like(w); return N(V.xform(n, lambda x, y: (-x, XH - y)))
     if ch == 'r': return V.U(vstem(0, v, 0, XH, 'tlblbr'), c_half(w, True, C_KX['r']))
-    if ch == 'f':
-        dy = ASC + 8.4 - 503.4
-        bar = V.rect(-95, XH - H, v + 165, XH)
-        return V.U(vstem(0, v, 0, C_MID + dy + 20, 'blbr'), V.move(c_half(w, True, C_KX['f']), 0, dy), bar)
-    if ch == 't':
-        top = 640.0; bar = V.rect(-110, XH - H, v + 150, XH)
-        return V.U(vstem(0, v, C_MID - 20, top, 'tltr'), c_half(w, False, C_KX['t']), bar)
-    if ch == 'j':
-        dy = DESC - 8.4 + 11.3
-        hk = V.move(N(V.xform(c_half(w, False, C_KX['j']), lambda x, y: (-x, y))), 0, dy)
-        hk = V.move(hk, -hk.bounds[0], 0); x1 = hk.bounds[2]
-        st = vstem(x1 - v, x1, C_MID + dy - 20, XH, 'tltr')
-        return V.U(hk, st, dot(x1 - v/2, w))
+    if ch == 'f': return L.raw('f', w)                       # khối r nâng lên ascender + thanh t (lower.py)
+    if ch == 'j':                                            # móc t lật ngang + đỉnh thân t (lower.py) + chấm
+        o = L.raw('j', w); return V.U(o, dot(o.bounds[2] - 8*S - v/2, w))
     if ch == 'i': return V.U(vstem(0, v, 0, XH, 'tltrblbr'), dot(v/2, w))
     if ch == 'l': return vstem(0, v, 0, ASC, 'tltrblbr')
     if ch == 'v': return vee(w, 455 + wide)

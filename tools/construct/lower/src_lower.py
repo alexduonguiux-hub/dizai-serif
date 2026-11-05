@@ -78,11 +78,17 @@ SHAPES = {'a_stem': D_A_STEM, 'a_bowl': D_A_BOWL, 'a_stem_B': D_A_STEM_B, 'a_bow
           'g_bowl': D_G_BOWL, 'g_loop': D_G_LOOP, 'g_link': D_G_LINK, 'g_ear': D_G_EAR, 'e_arch': D_E_ARCH, 'e_bowl': D_E_BOWL, 'e_bar': D_E_BAR,
           'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O, 'c_shape': D_C,
           'r_stem': D_RECT36(176), 'r_ear': D_R_EAR, 'fl1': D_FL1, 'fl2': D_FL2, 't_stem': D_RECT36(169), 't_hook': D_T_HOOK,
-          't_bar': 'M0 0 L96 0 L96 14 L0 14 L0 0 Z'}
+          't_bar': 'M0 0 L96 0 L96 14 L0 14 L0 0 Z',
+          'f_stem': D_RECT36(247), 'j_stem': D_RECT36(192)}
 GLYPH_BOLD = {   # bản vẽ Bold của designer (dùng thẳng, không suy)
     'a': [('a_stem_B', (1, 0, 1910, 0, 1, 188.2505)), ('a_bowl_B', (1, 0, 1895, 0, 1, 245))],
 }
 GLYPH = {
+    # f, j: dựng từ khối r, t (designer 05/11: "đồng bộ móc f và j theo r, t"): f = r nâng lên ascender (thân 698.6, tai 707)
+    # + thanh t; j = móc t lật ngang ở descender (đáy 441 px = −209 u) + đỉnh thân như t (loe hai bên) ở x-height
+    'f': [('f_stem', (1, 0, 1954, 0, 1, 120)), ('r_ear', (1, 0, 1966.0166, 0, 1, 117)), ('fl1', (-1, 0, 1990, 0, 1, 120)),
+          ('fl2', (1, 0, 1946, 0, -1, 367)), ('t_bar', (1, 0, 1930, 0, 1, 192))],
+    'j': [('j_stem', (-1, 0, 2289, 0, 1, 191)), ('t_hook', (-1, 0, 2289, 0, -1, 441)), ('fl2', (1, 0, 2245, 0, 1, 191))],
     'r': [('r_stem', (1, 0, 1954, 0, 1, 191)), ('r_ear', (1, 0, 1966.0166, 0, 1, 188)), ('fl1', (-1, 0, 1990, 0, 1, 191)),
           ('fl2', (1, 0, 1946, 0, -1, 367))],
     't': [('t_stem', (1, 0, 2253, 0, 1, 144)), ('t_hook', (1, 0, 2253, 0, -1, 371)), ('fl2', (-1, 0, 2297, 0, 1, 144)),
