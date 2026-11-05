@@ -102,6 +102,17 @@ def hook(w, right=True, ybot=-11.3):
     else: f = lambda x, y: (x - s0, top + ybot - y)
     return V.I(N(V.xform(arch(w), f)), V.halfplane(ybot + 300, above=False))
 
+# ---------- móc / tai từ c (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") ----------
+# Vách trái c dày đúng bằng thân (36 px; Bold 44 px) nên nửa c ghép khít vào thân. Đầu cắt là đầu cắt c (nét mảnh cong,
+# cắt đứng). Nửa c thu ngang C_KX phần BÊN PHẢI VÁCH (vách = thân giữ nguyên, không bậc ở chỗ thân gặp nửa c).
+C_MID = (503.4 - 11.3)/2                                     # chia đôi c ở tâm lòng
+C_KX = {'r': 0.70, 'f': 0.72, 't': 0.78, 'j': 0.78}
+def c_half(w, top, kx):
+    c = L.clean(L._q2c(L.raw('c', w)))
+    wall = W[w]['V']                                         # vách c = thân: giữ nguyên, chỉ thu phần bên phải vách
+    c = V.xform(c, lambda x, y: (x if x <= wall else wall + (x - wall)*kx, y))
+    return V.I(c, V.halfplane(C_MID, above=top))
+
 # ---------- chéo ----------
 def vee(w, Wd, f=20.0, desc=False, fl_l='tltr', fl_r='tltr'):
     """v (desc: y): nét trái dày \\, nét phải mảnh /, đỉnh dưới cắt phẳng f; Wd = khoảng hai mép ngoài ở x-height"""
@@ -139,19 +150,20 @@ def glyph(ch, w):
     if ch == 'm': return n_like(w, arches=2)
     if ch == 'u':
         n = n_like(w); return N(V.xform(n, lambda x, y: (-x, XH - y)))
-    if ch == 'r': return V.U(vstem(0, v, 0, XH, 'tlblbr'), ear(w))
+    if ch == 'r': return V.U(vstem(0, v, 0, XH, 'tlblbr'), c_half(w, True, C_KX['r']))
     if ch == 'f':
-        dy = ASC + 8.4 - 505.6
+        dy = ASC + 8.4 - 503.4
         bar = V.rect(-95, XH - H, v + 165, XH)
-        return V.U(vstem(0, v, 0, 300 + dy + 40, 'blbr'), ear(w, dy), bar)
+        return V.U(vstem(0, v, 0, C_MID + dy + 20, 'blbr'), V.move(c_half(w, True, C_KX['f']), 0, dy), bar)
     if ch == 't':
-        top = 640.0; s0, s1 = arch_stem(w); bar = V.rect(-110, XH - H, v + 150, XH)
-        return V.U(vstem(0, v, 200, top, 'tltr'), hook(w, right=True), bar)
+        top = 640.0; bar = V.rect(-110, XH - H, v + 150, XH)
+        return V.U(vstem(0, v, C_MID - 20, top, 'tltr'), c_half(w, False, C_KX['t']), bar)
     if ch == 'j':
-        s0, s1 = arch_stem(w); hk = hook(w, right=False, ybot=DESC - 8.4)
-        st = V.move(vstem(0, v, DESC + 200, XH, 'tltr'), (hk.bounds[2] - v), 0)
-        sx = hk.bounds[2] - v/2
-        return V.U(hk, st, dot(sx, w))
+        dy = DESC - 8.4 + 11.3
+        hk = V.move(N(V.xform(c_half(w, False, C_KX['j']), lambda x, y: (-x, y))), 0, dy)
+        hk = V.move(hk, -hk.bounds[0], 0); x1 = hk.bounds[2]
+        st = vstem(x1 - v, x1, C_MID + dy - 20, XH, 'tltr')
+        return V.U(hk, st, dot(x1 - v/2, w))
     if ch == 'i': return V.U(vstem(0, v, 0, XH, 'tltrblbr'), dot(v/2, w))
     if ch == 'l': return vstem(0, v, 0, ASC, 'tltrblbr')
     if ch == 'v': return vee(w, 455 + wide)

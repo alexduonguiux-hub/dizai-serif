@@ -71,7 +71,8 @@ Gồm 15 chữ f h i j k l m n r s t u v w x y z, Regular và Bold (o, c đã c�
 
 | Module | Nguồn (designer) | Dùng cho |
 |---|---|---|
-| Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°), r và f (vai lật ngang, đầu cắt bên phải), t (vai xoay 180°: móc chân sang phải), j (vai lật dọc: móc sang trái) |
+| Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°) |
+| **Nửa c** (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") | c: vách = thân (36 / Bold 44 px), đầu cắt đứng | r (nửa trên, thu 0.70), f (nửa trên nâng lên ascender, 0.72), t (nửa dưới, 0.78), j (nửa dưới lật ngang, 0.78). Chỉ thu phần bên phải vách, vách giữ nguyên nên không có bậc chỗ thân gặp nửa c |
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
 | S hoa | S của designer | s: thu ngang 0.80, dọc về x-height, bù nét 10 (Bold 8) bằng nét viền góc vuông |
 
@@ -92,7 +93,6 @@ Nét chéo (luật S3):
 
 QA (`qa_outline.py`): còn các mũi nhọn chủ ý.
 - Mũi loe ở phía góc nhọn của nét chéo (x, k).
-- Đầu cắt kế thừa từ vai a (r, f, t, j).
 - Góc đầu cắt ở c, e Bold.
 
 **Chưa làm:**
