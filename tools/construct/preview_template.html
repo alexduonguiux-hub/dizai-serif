@@ -102,7 +102,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   <div class="bar" role="toolbar" aria-label="Bộ lọc glyph">
     <div class="seg" id="wsel" role="group" aria-label="Weight"></div>
     <div class="seg" id="gsel" role="group" aria-label="Nhóm">
-      <button data-g="all" aria-pressed="true">Tất cả</button><button data-g="caps" aria-pressed="false">Chữ hoa</button><button data-g="lower" aria-pressed="false">Chữ thường</button><button data-g="fig" aria-pressed="false">Số</button><button data-g="vn" aria-pressed="false">Chữ Việt</button><button data-g="punct" aria-pressed="false">Dấu câu</button>
+      <button data-g="all" aria-pressed="true">Tất cả</button><button data-g="caps" aria-pressed="false">Chữ hoa</button><button data-g="lower" aria-pressed="false">Chữ thường</button><button data-g="fig" aria-pressed="false">Số</button><button data-g="vn" aria-pressed="false">Chữ Việt hoa</button><button data-g="vnl" aria-pressed="false">Chữ Việt thường</button><button data-g="punct" aria-pressed="false">Dấu câu</button>
     </div>
     <div class="seg" id="ssel" role="group" aria-label="Nguồn">
       <button data-s="all" aria-pressed="true">Mọi nguồn</button><button data-s="designer" aria-pressed="false">Bản vẽ</button><button data-s="rule" aria-pressed="false">Dựng theo luật</button><button data-s="flag" aria-pressed="false">Đã đánh dấu</button>
@@ -143,7 +143,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   const W = ['Regular', 'Bold'];
   const G = { CAP: 700, OV: 11.3, MARK: 750, DOT: -47.3, TOP: 1110, BOT: -260 };
   const SB = 40, SPACE = 230;
-  const GRP = { caps: 'Chữ hoa', lower: 'Chữ thường', fig: 'Số', vn: 'Chữ Việt', punct: 'Dấu câu' };
+  const GRP = { caps: 'Chữ hoa', lower: 'Chữ thường', fig: 'Số', vn: 'Chữ Việt hoa', vnl: 'Chữ Việt thường', punct: 'Dấu câu' };
   let weight = 'Regular', grp = 'all', srcSel = 'all', query = '', sel = null, gridGuides = false;
   const byC = {}; for (const w of W) { byC[w] = {}; for (const g of D.weights[w]) byC[w][g.c] = g; }
   const hex = u => 'U+' + u.toString(16).toUpperCase().padStart(4, '0');

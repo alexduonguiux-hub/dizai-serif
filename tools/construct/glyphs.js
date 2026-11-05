@@ -332,5 +332,6 @@ function makeGlyphRaw(ch, W8, Wover) { const save = WIDTH[W8][ch]; WIDTH[W8][ch]
 const VN = 'ÀÁẢÃẠĂẰẮẲẴẶÂẦẤẨẪẬĐÈÉẺẼẸÊỀẾỂỄỆÌÍỈĨỊÒÓỎÕỌÔỒỐỔỖỘƠỜỚỞỠỢÙÚỦŨỤƯỪỨỬỮỰỲÝỶỸỴ';
 const PUNCT = '.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@';
 const LOWER = 'abcdefghijklmnopqrstuvwxyz';
-const ALL = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', ...VN, ...PUNCT, ...LOWER];
-if (typeof module !== 'undefined') module.exports = { makeGlyph, ALL, VN, PUNCT, LOWER, RULES, WIDTH, CAP, OVS, arcCmds };
+const VNL = 'àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêềếểễệìíỉĩịòóỏõọôồốổỗộơờớởỡợùúủũụưừứửữựỳýỷỹỵ₫';
+const ALL = [...'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789', ...VN, ...PUNCT, ...LOWER, ...VNL];
+if (typeof module !== 'undefined') module.exports = { makeGlyph, ALL, VN, VNL, PUNCT, LOWER, RULES, WIDTH, CAP, OVS, arcCmds };

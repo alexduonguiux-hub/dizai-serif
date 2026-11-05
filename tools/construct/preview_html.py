@@ -10,6 +10,7 @@ outl = json.load(open(os.path.join(ROOT, "out", "construct", "outlines.json")))
 ref = json.load(open(os.path.join(HERE, "ref_glyphs.json")))
 src = open(os.path.join(HERE, "glyphs.js")).read()
 VN = re.search(r"const VN = '([^']*)'", src).group(1)
+VNL = re.search(r"const VNL = '([^']*)'", src).group(1)
 PUNCT = list('.,:;!?\'"’‘”“-–—()[]/+=×#%$€&@')
 FIG = list("0123456789")
 CAPS = list("ABCDEFGHIJKLMNOPQRSTUVWXYZ")
@@ -39,7 +40,7 @@ def entry(ch, w, grp):
 data = {"weights": {}}
 for w in ("Regular", "Bold"):
     L = []
-    for grp, chars in (("caps", CAPS), ("lower", LOWER), ("fig", FIG), ("vn", list(VN)), ("punct", PUNCT)):
+    for grp, chars in (("caps", CAPS), ("lower", LOWER), ("fig", FIG), ("vn", list(VN)), ("vnl", list(VNL)), ("punct", PUNCT)):
         L += [entry(c, w, grp) for c in chars if f"{c}-{w}" in outl]
     data["weights"][w] = L
 js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")

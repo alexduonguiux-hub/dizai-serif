@@ -91,6 +91,29 @@ QA (`qa_outline.py`): còn các mũi nhọn chủ ý.
 - Dấu chữ thường (á, ơ, ư, đ…).
 - Mỏ cho z.
 
+## Dấu tiếng Việt cho chữ thường (TẠM, luật S11)
+
+Phạm vi: 67 chữ, cùng ₫, cho Regular và Bold.
+- Code: `tools/construct/lower/vn_lower.py`, xuất ra `lower/lower_vn.json`.
+- Trong `ref_glyphs.json` các chữ này mang `src: "rule"`. Chữ có dấu giữ bề ngang của chữ gốc (`_W`).
+
+Cách đặt dấu:
+- **Bộ dấu**: dùng chung với chữ hoa (`vn_punct.marks`), cùng nét bút S15. Sắc và huyền là cặp đối xứng gương, mũ, trăng lưỡi liềm, ngã, hỏi, nặng, sừng.
+- **Đáy dấu thấp nhất ở 542.4** = x-height 495 + vượt 8.4 + khe 36 + 3, cách tính như chữ hoa (700 + 11.3 + 36 + 3).
+- **Tâm ngang dấu** là tâm hộp mực của phần x-height, nên bỏ qua đuôi y và sừng.
+- **Mũ đi với sắc, huyền, hỏi**: dấu thanh nằm bên phải mũ. Mọi dấu khác chồng lên, khe ≥ 30.
+- **i có dấu trên** dùng i không chấm; ị giữ chấm.
+- **Nặng** nằm dưới đáy thật của chữ, khe 36. Ở ỵ, dấu nặng dời sang trái tới khi cách đuôi 36.
+- **Sừng ơ** bám vòng o ở **góc 48°**; chữ hoa Ơ bám ở 38°. Vòng chữ thường nhỏ, sừng ở 38° chỉ nhô 33 khỏi x-height nên ơ đọc thành σ. Ở 48°, đầu sừng nhô khoảng 70.
+- **Sừng ư** bám mép ngoài thân phải ở cùng cao độ với ơ. Sừng thay cho loe ngoài ở đỉnh thân phải, như Ư.
+- **đ**: thanh ngang H cắt qua thân d ở 600, vươn ra ngoài thân 0.62 V và vào trong 0.9 V, như Đ.
+- **₫**: đ cộng gạch dưới dày H ở −160.
+
+QA (máy đo, 67 chữ × 2 weight):
+- Khe dấu–chữ nhỏ nhất 38 (luật ≥ 36).
+- Khe dấu–dấu và dấu–sừng nhỏ nhất 32.1 (luật ≥ 30).
+- Chữ cao nhất là ẳ Bold, đỉnh ở 873.5.
+
 ## Lịch sử e
 
 - **Bản 1**: lòng đứng, có nét chéo.

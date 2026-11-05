@@ -73,13 +73,17 @@ def build(paths, strong=False):
 
 if __name__ == "__main__":
     src = {}
-    for f in ("designer_A.json", "designer_B.json", "designer_C.json", "../lower/lower.json", "../lower/lower_derived.json"):
-        if os.path.exists(os.path.join(HERE, f)): src.update(json.load(open(os.path.join(HERE, f))))
-    Wover = src.pop("_W", {})   # designer_C: chữ có dấu giữ bề ngang của chữ gốc (dấu được phép tràn)
+    Wover = {}
+    for f in ("designer_A.json", "designer_B.json", "designer_C.json", "../lower/lower.json", "../lower/lower_derived.json",
+              "../lower/lower_vn.json"):
+        if os.path.exists(os.path.join(HERE, f)):
+            d = json.load(open(os.path.join(HERE, f))); Wover.update(d.pop("_W", {})); src.update(d)   # designer_C: chữ có dấu giữ bề ngang của chữ gốc (dấu được phép tràn)
     Cset = set(json.load(open(os.path.join(HERE, "designer_C.json")))) if os.path.exists(os.path.join(HERE, "designer_C.json")) else set()
     # chữ thường dựng theo luật (TẠM): toàn bộ lower_derived + Bold suy từ mẫu (trừ a Bold là bản vẽ designer)
     LD = os.path.join(HERE, "../lower/lower_derived.json"); LW = os.path.join(HERE, "../lower/lower.json")
+    LV = os.path.join(HERE, "../lower/lower_vn.json")
     Rset = Cset | (set(json.load(open(LD))) if os.path.exists(LD) else set()) | \
+        ({k for k in json.load(open(LV)) if k != "_W"} if os.path.exists(LV) else set()) | \
         ({k for k in json.load(open(LW)) if k.endswith("-Bold") and k != "a-Bold"} if os.path.exists(LW) else set())
     out = {k: build(v, k in Rset) for k, v in src.items()}   # QA: dọn nét thừa (mạnh cho glyph dựng theo luật)
     for k, w in Wover.items(): out[k]["W"] = w
