@@ -129,7 +129,7 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
     Regular.
   - **Tương phản theo weight:** nét mảnh tăng chậm hơn nét dày. Ghi tỉ lệ t/V và H/V cho
     từng weight thành bảng, giống nhau ở mọi glyph.
-- **S14 Spacing và kerning.**
+- **S14 Spacing và kerning** (v0.6, `docs/11-spacing-kerning.md`, `tools/construct/spacing.py`): spacing trắng quang học độ sâu 40, chuẩn H 40/44, n 32/36; kerning class chữ gốc (Ơ Ư ơ ư class phải riêng) theo khe nhỏ nhất so với cặp chuẩn, −0.45 × phần dư, chỉ kéo vào, ≥ −150 (gạch/dấu toán ≥ −60); ngoại lệ chống va giữ khe ≥ 26 kể cả dấu/sừng.
   - Sidebearing đo theo khoảng trắng quang học so với H (hoa), sâu 40, ±6.
   - Số được dàn khoảng (spacing), không kern: mỗi bên bằng khoảng trắng của 0.
   - Mọi cặp giữ khe mực ≥ 26.

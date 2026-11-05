@@ -37,11 +37,23 @@ def entry(ch, w, grp):
             "bx": [round(min(xs)), round(max(xs))] if xs else [0, 0],
             "s": "rule" if rule else "designer", "gd": [rg(x) for x in r.get("guides", []) if x["type"] != "handles"]}
 
-data = {"weights": {}}
+import unicodedata as _ud
+SP = json.load(open(os.path.join(ROOT, "out", "construct", "spacing.json")))
+KN = json.load(open(os.path.join(ROOT, "out", "construct", "kerning.json")))
+def _base(ch):
+    if ch in "Đđ": return {"Đ": "D", "đ": "d"}[ch]
+    return _ud.normalize("NFD", ch)[0]
+def _rc(ch):
+    nfd = _ud.normalize("NFD", ch); return nfd[0] + "\u031b" if "\u031b" in nfd else _base(ch)
+data = {"weights": {}, "kern": {w: {"c": KN[w]["class"], "e": KN[w]["exc"]} for w in KN}}
 for w in ("Regular", "Bold"):
     L = []
     for grp, chars in (("caps", CAPS), ("lower", LOWER), ("fig", FIG), ("vn", list(VN)), ("vnl", list(VNL)), ("punct", PUNCT)):
         L += [entry(c, w, grp) for c in chars if f"{c}-{w}" in outl]
+    for e in L:                                     # spacing (S14) + class kerning
+        sp = SP[w].get(e["c"])
+        if sp: e["a"], e["dx"] = sp["adv"], sp["dx"]
+        e["rc"], e["lc"] = _rc(e["c"]), _base(e["c"])
     data["weights"][w] = L
 js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 

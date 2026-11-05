@@ -280,14 +280,23 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     document.getElementById('flaglist').textContent = rows.length ? rows.join('\n') : 'Chưa có glyph nào được đánh dấu.';
   }
 
+  // kerning: ngoại lệ theo cặp ký tự trước, rồi class (chữ gốc; Ơ Ư ơ ư có class phải riêng)
+  function kernOf(w, a, b) {
+    const K = (D.kern || {})[w]; if (!K) return 0;
+    const e = K.e[a.c + '|' + b.c]; if (e !== undefined) return e;
+    return K.c[a.rc + '|' + b.lc] || 0;
+  }
   // chữ mẫu xếp bằng chính outline: mỗi từ là một SVG, dòng tự xuống theo khung
   function wordSVG(word, w, px) {
     // khung SVG mở theo mực thật: sừng Ư/Ơ và dấu được phép tràn ra ngoài bề ngang chữ, không bị cắt ở mép từ
-    let x = 0, lo = 0, hi = 0; const parts = [];
+    let x = 0, lo = 0, hi = 0, prev = null; const parts = [];
     for (const ch of word) {
       const g = byC[w][ch] || byC[w][ch.toLocaleUpperCase('vi')];   // chữ thường chưa vẽ: tạm hiện chữ hoa
-      if (g) { parts.push(`<path class="ink" transform="translate(${x + SB} 0)" d="${g.p}"/>`); lo = Math.min(lo, x + SB + g.bx[0]); hi = Math.max(hi, x + SB + g.bx[1]); x += g.a; }
-      else { parts.push(`<rect class="miss" x="${x + 30}" y="0" width="420" height="700"/>`); x += 480; }
+      if (g) {
+        if (prev) x += kernOf(w, prev, g);                                   // kerning (class + ngoại lệ chống va)
+        const dx = g.dx ?? SB;
+        parts.push(`<path class="ink" transform="translate(${x + dx} 0)" d="${g.p}"/>`); lo = Math.min(lo, x + dx + g.bx[0]); hi = Math.max(hi, x + dx + g.bx[1]); x += g.a; prev = g; }
+      else { parts.push(`<rect class="miss" x="${x + 30}" y="0" width="420" height="700"/>`); x += 480; prev = null; }
     }
     const top = 1080, bot = -240, k = px / 1000, x0 = Math.min(0, lo - 10), x1 = Math.max(x, hi + 10);
     const ml = (x0 * k).toFixed(1), mr = ((x - x1) * k).toFixed(1);
@@ -329,7 +338,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   // tên bộ chữ trên đầu trang, xếp bằng chính glyph Bold
   (function () {
     const m = document.getElementById('mast'); let x = 0; const ps = [];
-    for (const ch of 'ĐÌZAI SERIF') { if (ch === ' ') { x += SPACE; continue; } const g = byC.Bold[ch]; if (!g) continue; ps.push(`<path class="ink" transform="translate(${x + SB} 0)" d="${g.p}"/>`); x += g.a; }
+    for (const ch of 'ĐÌZAI SERIF') { if (ch === ' ') { x += SPACE; continue; } const g = byC.Bold[ch]; if (!g) continue; ps.push(`<path class="ink" transform="translate(${x + (g.dx ?? SB)} 0)" d="${g.p}"/>`); x += g.a; }
     m.setAttribute('viewBox', `0 -1080 ${x} 1120`); m.innerHTML = `<g transform="scale(1,-1)">${ps.join('')}</g>`;
   })();
 

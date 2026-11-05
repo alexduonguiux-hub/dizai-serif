@@ -222,7 +222,21 @@ def bold(ch):
         bar = V.xform(_path(SHAPES['e_bar'], bar_m), st); bx0, by0, bx1, by1 = bar.bounds; cy = (by0 + by1)/2; hb = by1 - by0 + B_BAR
         barB = V.xform(bar, lambda x, y: (x, cy + (y - cy)*hb/(by1 - by0)))
         arch = V.D(V.xform(arch_o, st), _ell_path(*e1, B_MAJ, B_MIN))
-        bowl = V.D(V.xform(bowl_o, st), _ell_path(*e2, B_MAJ, B_MIN))
+        # đầu cắt đuôi e (designer 05/11: "e bold đuôi móc cao và nhọn quá"): lòng co làm mép lòng cắt mặt cắt cao hơn và nhọn
+        # hơn. Dời lòng bụng sang phải tới khi mặt cắt đuôi Bold = mặt cắt Regular + B_BAR (đầu cắt dày như nét mảnh).
+        bo_st = V.xform(bowl_o, st); x_cut = bo_st.bounds[2]
+        def cross(p):                                          # đáy lòng tại mặt cắt (mép trên đầu cắt)
+            q = V.I(p, V.rect(x_cut - 0.6, -5000, x_cut - 0.4, 5000)); return q.bounds[1] if list(q.segments) else None
+        ry_reg = cross(_ell_path(*e2, 0, 0)) if False else None
+        reg_bowl = _path(SHAPES['e_bowl'], bowl_m); xr = reg_bowl.bounds[2]
+        qr = V.I(reg_bowl, V.rect(xr - 0.6, -5000, xr - 0.4, 5000)); y_face_reg = qr.bounds[3]   # mép trên mặt cắt Regular
+        target = y_face_reg + B_BAR
+        lo, hi = 0.0, 80.0
+        for _ in range(30):
+            mid = (lo + hi)/2; yc = cross(_ell_path(*e2, shift=(mid, 0)))
+            if yc is None or yc < target: hi = mid
+            else: lo = mid
+        bowl = V.D(bo_st, _ell_path(*e2, shift=(lo, 0)))
         # đầu phải thanh lấp thẳng đứng tới mép ngoài phần thò dưới mặt nối vòm–bụng
         fill = V.rect(bx1 - 40, cy - hb/2, bx1, by0)
         return V.U(arch, bowl, barB, fill)

@@ -139,3 +139,6 @@ QA (máy đo, 67 chữ × 2 weight):
 - **Bản 1**: lòng đứng, có nét chéo.
 - **Bản 2**: vòm, thanh ngang, bụng có đầu cắt đứng.
 - **Bản 3** (hiện tại): như bản 2, nhưng lòng là elip xoay.
+
+
+**Đuôi e Bold** (designer 05/11: "e bold đuôi móc cao và nhọn quá"): lòng bụng e Bold dời sang phải tới khi mặt cắt đuôi = Regular + 12.7 (69.6 → 82.5), góc gặp tù như Regular.
