@@ -224,11 +224,17 @@ def bold(ch):
         out = []
         for kk in ('g_bowl', 'g_loop'):
             m = G[kk]; outer = _path(_first_contour(SHAPES[kk]), m)
-            cpts = [st(*q) for q in _samples(_path('M' + SHAPES[kk].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
-            out.append(V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN, k=B_KG['g'])))
+            # lòng Bold = CHÍNH lòng Regular (giãn st) thu nhỏ quanh tâm elip khớp, hệ số (1 − k) — giữ hình lòng của bản vẽ
+            # (designer 05/11: "g bold bị lỗi so với g regular" — thay lòng bằng elip khớp làm lòng bụng trên lệch hình, góc
+            # dưới-phải nặng ngay từ Medium)
+            cin = V.xform(_path('M' + SHAPES[kk].split('M')[2], m), st)
+            cpts = _samples(cin); ctr, M = _ell_from_pts(cpts); kk_ = 1 - B_KG['g']
+            cin = V.xform(cin, lambda x, y, c=ctr: (c[0] + (x - c[0])*kk_, c[1] + (y - c[1])*kk_))
+            out.append(V.D(V.xform(outer, st), cin))
         for kk in ('g_link', 'g_ear'):
             p = _path(SHAPES[kk], G[kk]); px = (p.bounds[0] + p.bounds[2])/2
-            q = _dil(p, B_THIN)
+            # nở đều B_THIN bằng dời song song từng đoạn (giữ số điểm, không sinh bậc ở chỗ nối như stroke + boolean)
+            q = V.offset_path(p, B_THIN) if B_THIN > 0 else p
             if kk == 'g_ear': q = _q2c(V.I(q, V.rect(-9999, -9999, p.bounds[2], 9999)))   # mặt cắt tai giữ phẳng
             out.append(V.move(q, (k - 1)*(px - c), 0))
         return V.U(*out)

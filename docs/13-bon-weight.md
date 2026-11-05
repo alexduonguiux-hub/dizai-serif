@@ -58,3 +58,10 @@ Yêu cầu của designer ngày 05/11: "thêm 2 weight medium và semi bold". Ha
   - usWin bao Ẳ Bold 1051.
 - Thêm tnum.
 - Khi xuất variable font: master chữ hoa đã tương thích điểm sau bước căn của `interp.py`.
+
+## Sửa sau khi có 4 weight (05/11)
+- **ß, "vẫn dư nét dưới bụng":** lòng vòng dưới lệch trái (thành trái 0.35, thành phải 0.92 thân), nên đỉnh lòng ở `cxi = cxu − 0.285·thân`, không phải ở `cxu`. Trước đây eo và vòng dưới cắt ở `cxu`, để lại một bậc nhỏ dưới bụng. Nay cắt ở `cxi`: đáy eo chạy ngang rồi vào đúng tiếp tuyến ngang ở đỉnh lòng.
+- **ß, "glyph dưới bị dính":** đầu cắt dưới-trái của vòng dưới trước chỉ cách mép loe chân thân 25 (Regular) và 8 (Bold). Nay cách đúng 50 ở mọi weight, theo luật khe nhỏ cố định theo Regular.
+- **g Medium → Bold, "lỗi so với g Regular":**
+  - Lòng bụng trên và lòng vòng dưới trước bị thay bằng một elip khớp gần đúng, làm mất hình lòng của bản vẽ (góc dưới-phải nặng ngay từ Medium). Nay lòng Bold = chính lòng Regular, thu nhỏ quanh tâm theo cùng hệ số `B_KG['g']`.
+  - Nét nối và tai g trước được nở bằng stroke + boolean, sinh điểm thừa và bậc ở chỗ nối. Nay dùng `offset_path` (dời song song từng đoạn), giữ đúng số điểm của bản vẽ.

@@ -363,11 +363,16 @@ def group3(S, L, w, M, P, G1):
     # tâm ngang vòng dưới = tâm vòng trên: đỉnh vòng dưới (ngoài / trong) trùng đúng thành đáy vòng trên, cùng tiếp tuyến ngang
     # → chỗ thắt liền, không bậc
     cxu = (s0l + s1l + 255)/2; xr_ = s1l + 280; y1l = 425 + 0.42*H; cyl = (y1l - 11)/2
+    # lòng vòng dưới lệch trái (thành trái 0.35, phải 0.92 thân) → đỉnh lòng ở cxi, không phải cxu. Cắt / nối eo tại cxi để
+    # mép đáy eo chạy ngang rồi vào đúng tiếp tuyến ngang ở đỉnh lòng (designer 05/11: "vẫn dư nét dưới bụng" — cắt ở cxu để lại bậc)
+    cxi = cxu - 0.285*vth
+    # đầu cắt dưới-trái cách mép loe chân thân một khe cố định theo Regular (designer 05/11: "glyph dưới bị dính" — Bold chỉ còn 8)
+    xcut = runs_y(l_, 1)[0][1] + 50
     lo = I(ering4(2*cxu - xr_, xr_, -11, y1l, 0.35*vth, 0.92*vth, 0.5*H, 0.42*H),
-           U(rect(cxu, -400, 2000, 2000), rect(s1l + 72, -400, 2000, cyl)))
+           U(rect(cxi, cyl, 2000, 2000), rect(xcut, -400, 2000, cyl + 1)))
     # chỗ thắt (designer 05/11: "còn dư lỗi glyph" — cung đáy vòng trên mỏng dần chạm thân thành mũi nhọn): đoạn từ thân tới đáy
     # vòng là thanh ngang đúng bề dày thành đáy (0.42 H), tiếp tuyến ngang ở đáy vòng → liền; góc gặp thân vuông
-    waist = rect(s1l - 1, 425, cxu, 425 + 0.42*H)
+    waist = rect(s1l - 1, 425, cxi + 1, 425 + 0.42*H)
     G['ß'] = q2c(U(stem, up, lo, waist))
     # toán / phút giây
     YC_ = 330.0; mh = 0.55*Vv; ms = 500
