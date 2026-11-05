@@ -144,6 +144,16 @@ def bold(ch):
         x0, _, x1, _ = outer.bounds; edge = x1 if side > 0 else x0
         bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN, (side*B_SHIFT, 0)))
         return V.U(bowl, V.move(stem, (k - 1)*(edge - c), 0))
+    if ch == 'c':
+        # c: vách trái = thân Bold (36 → 36 + B_STEM); đỉnh/đáy và đầu cắt + B_BAR (nét mảnh); lòng vẫn cắt qua mặt cắt
+        # (miệng c mở). Lòng Bold là elip đứng: mép trái ở x = 36 + B_STEM, cắt mặt cắt ở mép trong đầu cắt Bold.
+        from src_lower import D_C_OUTER, C_CTR, C_R, C_CUT, C_TT
+        m = G['c_shape']; tr = _tr(m); dS, dH = B_STEM/S, B_BAR/S
+        ry = C_R[1] - dH; yt = C_TT + dH; dy = C_CTR[1] - yt; q = math.sqrt(1 - (dy/ry)**2)
+        left = (C_CTR[0] - C_R[0]) + dS; rx = (C_CUT - left)/(1 + q); cx = left + rx
+        outer = _path(D_C_OUTER, m); c0, k, st = _stretch(outer.bounds)
+        ctr = tr(cx, C_CTR[1]); counter = V.ellipse(ctr, rx*S, ry*S)
+        return V.xform(V.D(outer, counter), st)
     if ch == 'o':
         m = G['o_ring']; outer = _path(_first_contour(SHAPES['o_ring']), m); c, k, st = _stretch(outer.bounds)
         cpts = [st(*q) for q in _samples(_path('M' + SHAPES['o_ring'].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
@@ -223,7 +233,7 @@ def clean(p):
         p = snap(p)
     return p
 
-CHARS = 'aedbqpgo'
+CHARS = 'aedbqpgoc'
 if __name__ == '__main__':
     out = {}
     for c in CHARS:

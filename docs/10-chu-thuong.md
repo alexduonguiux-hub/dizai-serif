@@ -7,7 +7,13 @@ Bản 2115:421 — designer: "các glyph này sẽ đồng bộ style với ch�
 Cập nhật 05/11 (designer: "cập nhật lại e và o"):
 - **e** lòng vòm và lòng bụng thành elip đứng, đầu cắt cao hơn (mặt trên ở 54.7 px).
 - **o** có bản vẽ riêng (`2123:788`): vòng 172 × 181 px, **lòng elip xoay như O hoa**; thay o dựng tạm.
-- c dựng từ bụng e nên tự theo e mới.
+- **c** có bản vẽ riêng (`2123:922`, designer: "có thêm chữ c mới"), thay c dựng tạm.
+  - Mép ngoài là elip, lòng là elip đứng, hai đầu cắt đứng ở x 150 px. Cùng hệ với C hoa.
+  - c Bold theo luật mẫu a:
+    - vách trái 36 → 44 px (= thân Bold);
+    - đỉnh, đáy và đầu cắt dày thêm 12.7 (nét mảnh);
+    - lòng vẫn là elip đứng và cắt qua mặt cắt, nên miệng c vẫn mở;
+    - mép ngoài giãn ngang +11.3.
 - Code: `tools/construct/lower/src_lower.py` (hình gốc) và `tools/construct/lower/lower.py` (đổi đơn vị, Bold, chốt đường vượt).
 - Kết quả: `lower/lower.json`, được `ref/make_ref.py` gộp vào `ref_glyphs.json`.
 
@@ -59,7 +65,7 @@ Chữ thường Bold nhẹ hơn chữ hoa Bold (B/R của chữ hoa 1.26–1.43)
 
 ## Chữ suy ra từ module (TẠM, chờ designer duyệt hoặc vẽ lại)
 
-Gồm 16 chữ c f h i j k l m n r s t u v w x y z, Regular và Bold (o đã có bản vẽ).
+Gồm 15 chữ f h i j k l m n r s t u v w x y z, Regular và Bold (o, c đã có bản vẽ).
 - Code: `tools/construct/lower/derive.py`, xuất ra `lower/lower_derived.json`.
 - Trong `ref_glyphs.json` các chữ này mang `src: "rule"`. Bold suy ra của d b q p e g cũng vậy; riêng a Bold là bản vẽ.
 
@@ -67,7 +73,6 @@ Gồm 16 chữ c f h i j k l m n r s t u v w x y z, Regular và Bold (o đã có
 |---|---|---|
 | Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°), r và f (vai lật ngang, đầu cắt bên phải), t (vai xoay 180°: móc chân sang phải), j (vai lật dọc: móc sang trái) |
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
-| Bụng e | bụng có đầu cắt đứng | c: bụng e cộng bản lật dọc của nó |
 | S hoa | S của designer | s: thu ngang 0.80, dọc về x-height, bù nét 10 (Bold 8) bằng nét viền góc vuông |
 
 Nét chéo (luật S3):

@@ -6,6 +6,7 @@ Thang: cap 247.5 px = 700 u; baseline Y 367.
 
 Cấu tạo (designer):
   a  = thân a (vai + thân + loe chân) + bụng elip (lòng elip đứng lệch về thân)
+  c  = mép ngoài elip, lòng elip đứng, hai đầu cắt đứng (2123:922)
   o  = vòng 172 × 181, lòng elip xoay (2123:788)
   e  = vòm (2112:154) + bụng có đầu cắt đứng (2112:159) + thanh ngang 14 px (2112:164); lòng là elip xoay
   a Bold = bản vẽ mẫu 2115:551 (dùng thẳng)
@@ -55,13 +56,21 @@ D_STEM = ("M49.2705 4.77734 C45.8169 10.8212 44 17.662 44 24.623 L44 222.377 C44
           "L52 247 L8 247 L8 24.623 C8 17.662 6.1831 10.8212 2.72949 4.77734 "
           "L0 0 L52 0 L49.2705 4.77734 Z")
 
+# c (2123:922, designer 05/11): mép ngoài elip, lòng elip đứng (tâm 95.5, 90.5; bán trục 59.5 × 74.5), hai đầu cắt đứng ở x 150
+D_C = ("M95 0 C114.181 0 133.371 3.60945 150 11.291 L150 46.502 C136.293 28.0081 115.217 16 95.5 16 C62.6391 16 36 49.3548 36 90.5 "
+       "C36 131.645 62.6391 165 95.5 165 C115.217 165 136.293 152.991 150 134.497 L150 169.708 C133.371 177.39 114.181 181 95 181 "
+       "C42.5329 181 0 140.482 0 90.5 C0 40.5182 42.5329 0 95 0 Z")
+D_C_OUTER = ("M95 0 C114.181 0 133.371 3.60945 150 11.291 L150 169.708 C133.371 177.39 114.181 181 95 181 "
+             "C42.5329 181 0 140.482 0 90.5 C0 40.5182 42.5329 0 95 0 Z")
+C_CTR, C_R, C_CUT, C_TT = (95.5, 90.5), (59.5, 74.5), 150.0, 46.502     # lòng, mặt cắt, mép trong đầu cắt trên (px)
 SHAPES = {'a_stem': D_A_STEM, 'a_bowl': D_A_BOWL, 'a_stem_B': D_A_STEM_B, 'a_bowl_B': D_A_BOWL_B,
           'g_bowl': D_G_BOWL, 'g_loop': D_G_LOOP, 'g_link': D_G_LINK, 'g_ear': D_G_EAR, 'e_arch': D_E_ARCH, 'e_bowl': D_E_BOWL, 'e_bar': D_E_BAR,
-          'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O}
+          'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O, 'c_shape': D_C}
 GLYPH_BOLD = {   # bản vẽ Bold của designer (dùng thẳng, không suy)
     'a': [('a_stem_B', (1, 0, 1910, 0, 1, 188.2505)), ('a_bowl_B', (1, 0, 1895, 0, 1, 245))],
 }
 GLYPH = {
+    'c': [('c_shape', (1, 0, 1688, 0, 1, 188))],
     'o': [('o_ring', (-1, 0, 1668, 0, 1, 188))],
     'g': [('g_bowl', (-1, 0, 1338, 0, -1, 323)), ('g_loop', (-1, 0, 1338, 0, -1, 437)), ('g_link', (1, 0, 1220, 0, 1, 316)),
           ('g_ear', (0.4999999701976776, -0.866025447845459, 1343.1304, -0.866025447845459, -0.4999999701976776, 245.2441))],
