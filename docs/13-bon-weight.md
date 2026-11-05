@@ -103,3 +103,11 @@ Designer: "đuôi móc không giống các font cùng dòng".
 ### Còn lại, đã kiểm tay (không phải lỗi)
 - 2 3 5 8: tương phản theo bản vẽ / luật số của designer. Đo trực tiếp thì thành bụng 3 5 Bold vẫn dày lên.
 - Æ Bold, ‹ › Bold, ! ¡ ' “ ;: lệch do thước đo trên glyph nhỏ hoặc hình giọt. Đo trực tiếp thì thân / diện tích tăng đều.
+
+## w vẽ lại từ module v (designer 05/11: "cân nhắc làm lại chữ w thường khác")
+- **Bản cũ:** W hoa thu nhỏ, hai nét giữa bắt chéo. Ở x-height thành một cụm mực đặc với lòng tam giác nhỏ, nên w tối hơn các chữ thường khác.
+- **Bản mới:** `derive.w_from_v`, hai module v ghép lại.
+  - Mỗi v dựng như v (`shrink_caps`; nét \ dày = thân, qua `thicken`) nhưng hẹp hơn, `W_SX = 0.47` (v là 0.55).
+  - Hai nét ngoài giữ loe của v. Hai nét trong bỏ loe, kéo thẳng theo mép nét.
+  - Đỉnh giữa cắt phẳng ở x-height, rộng đúng bằng đáy nhọn của v.
+- **Bề ngang:** w = 1.45 × v. Medium / SemiBold / Bold rộng hơn Regular đúng phần B_STEM (hai nét dày).

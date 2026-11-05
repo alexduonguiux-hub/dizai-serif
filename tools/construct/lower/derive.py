@@ -237,7 +237,7 @@ def glyph(ch, w):
     if ch == 'l': return vstem(-h, v - h, 0, ASC, 'tltrblbr')
     if ch == 'v': return shrink_caps('v', w)
     if ch == 'y': return y_from_V(w)
-    if ch == 'w': return shrink_caps('w', w)
+    if ch == 'w': return w_from_v(w)
     if ch == 'x': return shrink_caps('x', w)
     if ch == 'k': return k_from_K(w)
     if ch == 'z': return z_from_Z(w)
@@ -412,6 +412,42 @@ def shrink_caps(ch, w, top=XH, sx=None, delta=None):
         p = thicken(p, delta, fs=(ch == 'z'))
     p = _embolden(p, d)
     return V.move(p, -p.bounds[0], 0)
+
+W_SX = 0.47          # v dùng cho w: hẹp hơn v (0.55) → hai chữ v ghép lại rộng ≈ 1.45 v
+def w_from_v(w, sx=None):
+    """w (designer 05/11: "cân nhắc làm lại chữ w thường khác" — bản W hoa thu nhỏ có nét giữa bắt chéo, cụm mực đặc ở giữa):
+    hai MODULE v ghép lại. v dựng như v (shrink_caps, nét \\ dày = thân) nhưng hẹp hơn (W_SX). Hai nét ngoài giữ loe của v;
+    hai nét trong bỏ loe, kéo thẳng theo mép nét lên quá x-height; đỉnh giữa cắt phẳng ở x-height, rộng đúng đáy nhọn v.
+    Bold: sx giải để w Bold rộng hơn Regular ½ B_STEM × 2 (hai nét dày)"""
+    if w != 'Regular' and sx is None:
+        tgt = w_from_v('Regular').bounds[2] + L.B_STEM
+        a, b = W_SX, W_SX*1.05; ea, eb = w_from_v(w, a).bounds[2], w_from_v(w, b).bounds[2]
+        for _ in range(3): c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, w_from_v(w, c).bounds[2]
+        sx = b
+    sx = sx or W_SX
+    p = shrink_caps('v', w, sx=sx)
+    # v không có lòng: bỏ lỗ mảnh (v hẹp ở Regular để lại một khe hình tam giác trong nét / sau thicken + embolden)
+    cs = list(p.contours); p = max(cs, key=lambda c: c.bounds[2] - c.bounds[0]); p = pathops.op(p, p, pathops.PathOp.UNION)
+    lines = []
+    for c in _contours(p):
+        a = c['start']
+        for t, ps in c['segs']:
+            b = ps[-1]
+            if t == 'L' and math.hypot(b[0] - a[0], b[1] - a[1]) > 100: lines.append((a, b))
+            a = b
+    xat = lambda l, y: l[0][0] + (y - l[0][1])*(l[1][0] - l[0][0])/(l[1][1] - l[0][1])
+    bs = sorted([l for l in lines if (l[1][0] - l[0][0])*(l[1][1] - l[0][1]) < 0], key=lambda l: xat(l, 300))   # \\ : mép ngoài, mép trong
+    fs = sorted([l for l in lines if (l[1][0] - l[0][0])*(l[1][1] - l[0][1]) > 0], key=lambda l: xat(l, 300))   # / : mép trong, mép ngoài
+    eL, eR = bs[0], bs[-1]; tL, tR = fs[0], fs[-1]
+    f = runs_at(p, 1)[0]; f = f[1] - f[0]                                  # đáy nhọn (cắt phẳng) của v
+    top = [l for l in (eR, tL)]; xs = (xat(eR, XH) + xat(tL, XH))/2           # chỗ tách hai nửa ở đỉnh (giữa khe hai nét)
+    def band(l0, l1, y0, y1): return V.poly([(xat(l0, y0), y0), (xat(l1, y0), y0), (xat(l1, y1), y1), (xat(l0, y1), y1)])
+    lowp = V.I(p, V.rect(-1000, -1000, 3000, XH - 60))
+    v1 = V.U(V.I(p, V.rect(-1000, -1000, xs, 2000)), lowp, band(tL, tR, XH - 80, XH + 60))      # nét / phải: bỏ loe
+    v2 = V.U(V.I(p, V.rect(xs, -1000, 3000, 2000)), lowp, band(eL, eR, XH - 80, XH + 60))      # nét \\ trái: bỏ loe
+    dx = f + xat(tL, XH) - xat(eR, XH)
+    o = V.I(V.U(L._q2c(v1), V.move(L._q2c(v2), dx, 0)), V.rect(-1000, -1000, 3000, XH))
+    return V.move(L._q2c(o), -o.bounds[0], 0)
 
 def z_from_Z(w):
     """z: Z hoa thu nhỏ; chéo / dày bằng thân (thicken); Bold rộng hơn Regular ½ B_STEM (shrink_caps tự giải)"""
