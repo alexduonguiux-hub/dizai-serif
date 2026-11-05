@@ -214,3 +214,13 @@ Designer: "hãy dùng skill kerning của Dinh Tuong đã đo sẵn". Thay cho c
   - âm tiết Việt: 0 cặp lệch > 12 ngoài sàn (trước 12 cặp ơt / ơy);
   - cặp có dấu lệch cặp gốc: 402 → 138 (Regular);
   - kern giữa 4 weight nhất quán.
+
+### g, £ (05/11)
+- **Vòng dưới g:** designer thấy "hông bụng dưới chữ g hơi nhọn cho độ cong lài hơn".
+  - Elip 144 × 88 px với κ 0.552 cho bán kính cong ở hông chỉ ≈ 27 px.
+  - Đổi sang siêu elip: tay nắm đứng ở hông κ 0.68, tay nắm ngang ở đỉnh / đáy 0.58. Lòng 0.62 / 0.56 để thành vòng vẫn đều.
+- **£ vẽ lại lần 2:** designer muốn "giống các font khác nhưng đồng bộ concept". Lấy cấu trúc £ của font serif, dựng bằng module Đìzai:
+  - móc trên: nửa trên vòng elip, cắt đứng như đầu nét trên C;
+  - thân 0.9 V; chân là ¼ vòng elip đồng tâm cong sang trái, liền tiếp tuyến vào đáy;
+  - thanh đáy dày bằng nét mảnh; đầu phải đúng hai cubic đầu tay dưới E (Figma 6:924);
+  - thanh giữa ở 300, đầu phải cắt xiên như thanh giữa E.

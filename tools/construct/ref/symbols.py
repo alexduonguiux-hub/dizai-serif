@@ -267,14 +267,31 @@ def build_w(S, L, w):
             bars += [arm, xform(arm, lambda x, y: (-x, y))]
         return norm_x(U(stem, *bars))
     G['†'] = dag([520]); G['‡'] = dag([540, 120])
-    # £ — VẼ LẠI bằng module: thân + móc trên của f thường (bỏ thanh f và chân loe) + thanh giữa ở 300 và thanh đáy 0.6 H + 14
-    # + hai cung bracket (r 70) chuyển từ thân xuống thanh đáy
-    f_ = ref_outline(L[f'f-{w}']); fs0, fs1 = runs_y(f_, 300)[0]; bt = 0.6*H + 14
-    fhook = I(f_, U(rect(fs0 - 1, bt - 1, fs1 + 1, 560), rect(-100, 560, 2000, 900)))
-    rb = 70
-    br_l = D(rect(fs0 - rb, bt - 1, fs0 + 1, bt + rb), ellipse((fs0 - rb, bt + rb), rb, rb))
-    br_r = D(rect(fs1 - 1, bt - 1, fs1 + rb, bt + rb), ellipse((fs1 + rb, bt + rb), rb, rb))
-    G['£'] = norm_x(q2c(U(fhook, br_l, br_r, rect(fs0 - 150, 0, fs1 + 250, bt), rect(fs0 - 110, 300, fs1 + 125, 300 + bt))))
+    # £ — VẼ LẠI lần 2 (designer 05/11: "vẽ lại ký hiệu Bảng anh cho giống các font khác nhưng đồng bộ concept"): cấu trúc £ của
+    # font serif (móc trên cong phải · thân cong về trái ở chân vào thanh đáy · thanh giữa · thanh đáy vểnh đầu phải) dựng bằng
+    # MODULE của Đìzai:
+    #   móc trên  = nửa trên vòng elip (ering4: thành trái = thân, đỉnh 0.55 V, phải 0.5 thân), cắt đứng như đầu nét trên C;
+    #   thân      = 0.9 V; chân thân = ¼ vòng elip (thành phải = thân, đáy = nét mảnh) cong sang trái, liền tiếp tuyến vào đáy;
+    #   thanh đáy = nét mảnh H, đầu phải = module đầu tay dưới E (mép đứng 93 rồi cong lõm vào, tay nắm 0.69);
+    #   thanh giữa= nét mảnh H ở 300, đầu phải cắt xiên như thanh giữa E (dài thêm 0.17 H ở mép dưới)
+    sw = 0.9*Vv; hb = H; sx0 = 196.0; sx1 = sx0 + sw
+    ytop = 712.0; xcut = sx0 + 0.86*(1.0*560 - sx0)*0.62 + 60
+    hook = I(ering4(sx0, 560.0, 380.0, ytop, sw, 0.5*sw, 0.4*sw, 0.55*Vv), U(rect(sx0 - 1, 546.0, xcut, 900), rect(sx0 - 1, 380, sx1, 547)))
+    yb = 170.0                                                     # chân thân bắt đầu cong ở cao này
+    rxq = 150.0; cxq = sx1 - rxq
+    foot = I(D(ellipse((cxq, yb), rxq, yb), ellipse((cxq, yb), rxq - sw, yb - hb)), rect(cxq, -1, sx1 + 1, yb + 1))   # ¼ vòng: phải = thân, đáy = mảnh
+    stem = rect(sx0, yb, sx1, 547.0)
+    xe = sx1 + 300.0; eh = 93.0
+    # đầu phải = đúng hai cubic của đầu tay dưới E (Figma 6:924: …L99 233 C109.3 233 119.3 229 126.7 222 C129 219.8 130.7 216.9 132 214
+    # L132 247), quy về đơn vị font (k = 700/247), đáy tay dày = nét mảnh của weight
+    kE = 700/247.0; ey = lambda yf: hb + (14 - (247 - yf))*0 + ((247 - yf) - 14)*kE
+    base = U(rect(cxq - 70, 0, xe - 33*kE + 1, hb),
+             V.P([('M', (xe - 33*kE, 0)), ('L', (xe, 0)), ('L', (xe, ey(214))),
+                  ('C', (xe - 1.33*kE, ey(216.94)), (xe - 2.97*kE, ey(219.76)), (xe - 5.31*kE, ey(221.98))),
+                  ('C', (xe - 12.73*kE, ey(229.01)), (xe - 22.68*kE, hb), (xe - 33*kE, hb)), ('Z',)]))
+    ym = 300.0; xl = sx0 - 105; xr = sx1 + 120
+    bar = poly([(xl, ym), (xr, ym), (xr + 0.17*hb*2.0, ym + hb), (xl, ym + hb)])
+    G['£'] = norm_x(q2c(U(hook, stem, foot, base, bar)))
     # ¥ : Y hoa + hai thanh 0.70 H, khe 60 (luật ¥ €)
     yy = V.letter(S, 'Y', w); b = bounds(yy); bh = 0.70*H*1.4
     G['¥'] = U(yy, rect(b[0] + 0.12*(b[2] - b[0]), 300, b[2] - 0.12*(b[2] - b[0]), 300 + bh),

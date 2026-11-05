@@ -16,6 +16,20 @@ import sys, re, os, json
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
 import pathops
 from src_lower import SHAPES, GLYPH, GLYPH_BOLD, S, BASE
+# vòng dưới g (designer 05/11: "hông bụng dưới chữ g hơi nhọn cho độ cong lài hơn"): elip 144 × 88 px κ 0.552 → bán kính cong ở
+# hông b²/a ≈ 27 px. Siêu elip: tay nắm đứng ở hai hông κ 0.68, tay nắm ngang ở đỉnh / đáy κ 0.58; lòng (80 × 56) 0.62 / 0.56
+def _sell(cx, cy, a, b, ks, kt, rev=False):
+    P = [(cx, cy - b), (cx + a, cy), (cx, cy + b), (cx - a, cy)]
+    C = [((cx + kt*a, cy - b), (cx + a, cy - ks*b)), ((cx + a, cy + ks*b), (cx + kt*a, cy + b)),
+         ((cx - kt*a, cy + b), (cx - a, cy + ks*b)), ((cx - a, cy - ks*b), (cx - kt*a, cy - b))]
+    if rev:
+        P = [P[0], P[3], P[2], P[1]]; C = [(C[3][1], C[3][0]), (C[2][1], C[2][0]), (C[1][1], C[1][0]), (C[0][1], C[0][0])]
+    f = lambda q: '%.4f %.4f' % q
+    d = 'M' + f(P[0])
+    for i in range(4): d += ' C' + f(C[i][0]) + ' ' + f(C[i][1]) + ' ' + f(P[(i + 1) % 4])
+    return d + ' Z'
+SHAPES = dict(SHAPES)
+SHAPES['g_loop'] = _sell(72, 44, 72, 44, 0.68, 0.58) + ' ' + _sell(72, 44, 40, 28, 0.62, 0.56, rev=True)
 import math
 import vn_punct as V
 
