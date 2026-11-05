@@ -254,8 +254,27 @@ def build_w(S, L, w):
     # thân dày theo tỉ lệ V_w / V_R, nét ngang giữ nguyên, mép chéo song song, loe giữ đầu nhọn trên đường cap / chân
     def sup(ch, s=0.42):
         g = scale(V.letter(S, ch, 'Bold'), s)
-        dx = 0.5*s*T['Bold']['V']*(Vv/T['Regular']['V'] - 1)
-        if dx > 0.05: g = sharpen(xdilate(g, dx), 2*dx)
+        dx = max(0.3, 0.5*s*T['Bold']['V']*(Vv/T['Regular']['V'] - 1))   # M: Regular cũng qua cùng phép (0.3 u) → hai master cùng cấu trúc
+        if ch == 'T' and Vv == T['Regular']['V']: dx = 0.0
+        if True:
+            if ch == 'T':                                    # T: chỉ thân (dưới thanh) dày thêm; tay + mỏ giữ nguyên module
+                x0_, y0_, x1_, y1_ = bounds(g); mid = I(g, rect(x0_ - 1, y0_ + 0.5*(y1_ - y0_), x1_ + 1, y0_ + 0.5*(y1_ - y0_) + 1))
+                sx0, sx1 = bounds(mid)[0], bounds(mid)[2]
+                # mặt dưới thanh = đoạn ngang cao nhất dưới đỉnh (bản vẽ T: mặt dưới thanh thẳng ngang, gặp thân góc vuông)
+                hz = []; cur_ = None
+                for v_, ps_ in g.segments:
+                    if v_ == 'moveTo': cur_ = ps_[0]
+                    elif v_ in ('lineTo', 'curveTo'):
+                        e_ = ps_[-1]
+                        if v_ == 'lineTo' and abs(e_[1] - cur_[1]) < 0.05 and y0_ + 0.5*(y1_ - y0_) < e_[1] < y1_ - 1: hz.append(e_[1])
+                        cur_ = e_
+                yb = max(hz)
+                # dời điểm (không boolean): điểm thân + loe chân (dưới mặt thanh, trong cột thân ± 14 u) sang hai phía ±dx
+                # → cùng cấu trúc điểm ở mọi weight (nội suy Medium / SemiBold đúng), tay + mỏ giữ nguyên
+                cx_ = (sx0 + sx1)/2
+                g = xform(g, lambda x, y: ((x - dx if x < cx_ else x + dx), y) if (y <= yb + 0.01 and sx0 - 14 <= x <= sx1 + 14) else (x, y))
+            else:                                            # M: thân + chéo dày theo phương ngang, đáy chữ V kéo nhọn lại
+                g = sharpen(xdilate(g, dx), 2*dx)
         b = bounds(g); return move(g, -b[0], 700 - b[3])
     tT = sup('T'); tM = sup('M'); G['™'] = U(tT, move(tM, bounds(tT)[2] + 0.35*Vv, 0))
     # °: vòng nhỏ đỉnh ở cap
