@@ -88,5 +88,7 @@ Designer 05/11: "QA/QC lại hết các kerning cho đủ. Tôi thấy nhiều c
 - E. Cặp chữ gốc sát (< 0.55 khe chuẩn): 0 / 0.
 - Ngoại lệ chống va: 1176 / 1506, gần hết là cặp có dấu chạm chữ bên cạnh.
 
-**Còn mở (chờ designer):**
-- **Sừng ư chìa 97 u (Bold 115), gấp khoảng 2.7 lần sừng ơ (36 / 52).** Vì vậy ưu, ưn, ưt, ƯT, ƯU vẫn phải đẩy +20…+50 (Bold +30…+60) và đọc thưa. Luật S14 / skill: "sừng ơ / ư một tấm chung, cùng hình, ngắn". Đề xuất: dời chân sừng ư vào trong để sừng chìa ngang sừng ơ.
+**Sừng ư / Ư — đã quyết (designer 05/11: "giữ ư như cũ"):**
+- Sừng ư chìa 97 u (Bold 115), gấp khoảng 2.7 lần sừng ơ (36 / 52).
+- Đã so ba phương án: A giữ nguyên; B dời ½ (chìa ≈ 66 / 84); C dời hết bằng sừng ơ.
+- Designer chọn **giữ nguyên**. Vì vậy ưu, ưn, ưt, ƯT, ƯU giữ kern chống va +15…+50 (Bold +25…+60) ở sàn sừng 14. Đây là chủ ý, không phải lỗi; QA lần sau đừng "sửa" nhầm.
