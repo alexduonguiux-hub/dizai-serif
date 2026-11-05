@@ -4,6 +4,12 @@ Nguồn: bản vẽ designer, Figma frame `2115:421` (cập nhật 04/11; trư�
 
 Bản 2115:421 — designer: "các glyph này sẽ đồng bộ style với chữ hoa hơn": lòng a, d, b, q, p và vòng dưới g là **elip đứng lệch về phía thân** (như bụng D B chữ hoa).
 
+**Đồng bộ theo bụng mới** (designer 05/11: "đồng bộ các chữ còn lại theo bụng mới"):
+- **c** = khối bụng d (mép ngoài elip xoay 15°, lòng elip đứng lệch về miệng), cắt đứng bên phải, cách mép phải lòng 5 px (luật đầu cắt c). Bold dùng luật bụng (giãn +11.3, lòng −10.5 %, dời về miệng 9.9) rồi cắt theo cùng luật. Bản c đứng `2123:922` không còn dùng.
+- **Bụng trên g** dựng cùng hệ: elip 144 × 134 px xoay 15°; lòng elip đứng 84 × 102 px lệch phải 6 px; vách 30 px (= 34 × 144/164), đỉnh và đáy 16 px. Vòng dưới, cổ nối và tai giữ như bản vẽ.
+- Không đổi: o (bản vẽ trong frame), s (theo S hoa), n m h u (vai a).
+- QA: hai mũi nhọn ở góc đầu cắt c (mặt cắt đứng gặp lòng xoay).
+
 Cập nhật 05/11 — **frame `2120:665`** (designer: "update lại một số chữ thường"):
 - **a**: bụng mới là elip 123 × 132 px, xoay ~28°, lòng lệch về thân. Khối thân và vai giữ nguyên.
 - **e**: lòng vòm thành elip xoay; mặt nối vòm–bụng dời xuống 1 px (y 279).

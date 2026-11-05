@@ -125,12 +125,24 @@ def raw(ch, weight):
     if spec:                                                   # bản vẽ Bold của designer
         o = V.U(*[_path(SHAPES[k], m) for k, m in spec]); return V.move(o, -o.bounds[0], 0)
     if weight == 'Regular':
+        if ch == 'c': o = _q2c(c_from_bowl('Regular')); return V.move(o, -o.bounds[0], 0)
         o = V.U(*[piece(k, m, weight) for k, m in GLYPH[ch]]); return V.move(o, -o.bounds[0], 0)
     o = _q2c(bold(ch)); return V.move(o, -o.bounds[0], 0)
 
 def _stretch(ring_bounds):
     x0, _, x1, _ = ring_bounds; c = (x0 + x1)/2; k = (x1 - x0 + B_WIDE)/(x1 - x0)
     return c, k, (lambda x, y: (c + (x - c)*k, y))
+
+def c_from_bowl(weight):
+    m = GLYPH['c'][0][1]; outer = _path(_first_contour(SHAPES['bowl']), m)
+    cpts = [q for q in _samples(_path('M' + SHAPES['bowl'].split('M')[2], m))]
+    if weight == 'Bold':
+        c0, k, st = _stretch(outer.bounds); outer = V.xform(outer, st); cpts = [st(*q) for q in cpts]
+        ctr, M = _ell_from_pts(cpts); counter = _ell_path(ctr, M, shift=(B_SHIFT, 0))
+    else:
+        ctr, M = _ell_from_pts(cpts); U_, Sg, _ = np.linalg.svd(M); counter = _ell_path(ctr, M); counter = V.ellipse((ctr[0], ctr[1]), Sg[0], Sg[1], math.degrees(math.atan2(U_[1, 0], U_[0, 0])))
+    cut = counter.bounds[2] - 5*S
+    return V.I(V.D(outer, counter), V.rect(-5000, -5000, cut, 5000))
 
 def bold(ch):
     """Bold theo mẫu a: vòng giãn +B_WIDE; lòng (elip) co B_MAJ/B_MIN, dời về phía thân B_SHIFT; thân +B_STEM ra ngoài"""
@@ -186,23 +198,16 @@ def bold(ch):
             out.append(_path(d, m))
         return V.U(*out)
     if ch == 'c':
-        # c: vách trái = thân Bold (36 → 36 + B_STEM); đỉnh/đáy và đầu cắt + B_BAR (nét mảnh); lòng vẫn cắt qua mặt cắt
-        # (miệng c mở). Lòng Bold là elip đứng: mép trái ở x = 36 + B_STEM, cắt mặt cắt ở mép trong đầu cắt Bold.
-        from src_lower import D_C_OUTER, C_CTR, C_R, C_CUT, C_TT
-        m = G['c_shape']; tr = _tr(m); dS, dH = B_STEM/S, B_BAR/S
-        ry = C_R[1] - dH; yt = C_TT + dH; dy = C_CTR[1] - yt; q = math.sqrt(1 - (dy/ry)**2)
-        left = (C_CTR[0] - C_R[0]) + dS; rx = (C_CUT - left)/(1 + q); cx = left + rx
-        outer = _path(D_C_OUTER, m); c0, k, st = _stretch(outer.bounds)
-        ctr = tr(cx, C_CTR[1]); counter = V.ellipse(ctr, rx*S, ry*S)
-        return V.xform(V.D(outer, counter), st)
+        # c = khối bụng d (bụng mới, mép ngoài xoay 15°, lòng lệch về miệng), cắt đứng bên phải cách mép phải lòng 5 px (luật c)
+        return c_from_bowl('Bold')
     if ch == 'o':
         m = G['o_ring']; outer = _path(_first_contour(SHAPES['o_ring']), m); c, k, st = _stretch(outer.bounds)
         cpts = [st(*q) for q in _samples(_path('M' + SHAPES['o_ring'].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
         return V.D(V.xform(outer, st), _ell_path(ctr, M))
     if ch == 'g':
-        allp = V.U(*[_path(SHAPES[kk], m) for kk, m in GLYPH['g']]); c, k, st = _stretch(_path(_first_contour(SHAPES['g_bowl']), G['g_bowl']).bounds)
+        allp = V.U(*[_path(SHAPES[kk], m) for kk, m in GLYPH['g']]); c, k, st = _stretch(_path(_first_contour(SHAPES['g_bowl2']), G['g_bowl2']).bounds)
         out = []
-        for kk in ('g_bowl', 'g_loop'):
+        for kk in ('g_bowl2', 'g_loop'):
             m = G[kk]; outer = _path(_first_contour(SHAPES[kk]), m)
             cpts = [st(*q) for q in _samples(_path('M' + SHAPES[kk].split('M')[2], m))]; ctr, M = _ell_from_pts(cpts)
             out.append(V.D(V.xform(outer, st), _ell_path(ctr, M, B_MAJ, B_MIN)))
