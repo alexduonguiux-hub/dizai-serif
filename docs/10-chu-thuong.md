@@ -4,6 +4,13 @@ Nguồn: bản vẽ designer, Figma frame `2115:421` (cập nhật 04/11; trư�
 
 Bản 2115:421 — designer: "các glyph này sẽ đồng bộ style với chữ hoa hơn": lòng a, d, b, q, p và vòng dưới g là **elip đứng lệch về phía thân** (như bụng D B chữ hoa).
 
+Cập nhật 05/11 — **frame `2120:665`** (designer: "update lại một số chữ thường"):
+- **a**: bụng mới là elip 123 × 132 px, xoay ~28°, lòng lệch về thân. Khối thân và vai giữ nguyên.
+- **e**: lòng vòm thành elip xoay; mặt nối vòm–bụng dời xuống 1 px (y 279).
+- **d b q p**: khối bụng mới 164 × 183.5 px, **xoay 15°**, lòng elip lệch về thân. Thân giữ nguyên.
+- **o, g, t, r**: không đổi.
+- **a Bold**: mẫu a Bold cũ có bụng đứng, không còn khớp nên bỏ. Nay dựng theo cùng luật như d b q p: thân +22.6 ra phía ngoài, kể cả loe chân; vai dày xuống +12.7, đầu cắt dày theo; bụng giãn +11.3, lòng co 10.5 %, dời về thân 9.9.
+
 Cập nhật 05/11 — **r, t có bản vẽ** (designer: "update chữ t và r", `2127:982`, `2127:1008`), thay bản dựng từ nửa c:
 - **r**: thân 36 px; loe trên chỉ phía trái; loe chân hai bên; tai riêng có mặt cắt đứng (rộng 87 px).
 - **t**: thân 36 px, đỉnh 631 có loe hai bên; thanh 14 px (−24 / +36 px quanh thân); móc chân ngắn có mặt cắt đứng (69 px).

@@ -121,7 +121,7 @@ def _inner_pts(dstr, m, sel):
     return pts
 
 def raw(ch, weight):
-    spec = GLYPH_BOLD.get(ch) if weight == 'Bold' else None
+    spec = None   # GLYPH_BOLD (mẫu a Bold cũ, bụng đứng) không còn dùng: a Bold theo luật (bold())
     if spec:                                                   # bản vẽ Bold của designer
         o = V.U(*[_path(SHAPES[k], m) for k, m in spec]); return V.move(o, -o.bounds[0], 0)
     if weight == 'Regular':
@@ -135,6 +135,19 @@ def _stretch(ring_bounds):
 def bold(ch):
     """Bold theo mẫu a: vòng giãn +B_WIDE; lòng (elip) co B_MAJ/B_MIN, dời về phía thân B_SHIFT; thân +B_STEM ra ngoài"""
     G = dict(GLYPH[ch])
+    if ch == 'a':
+        # a Bold (bản a 05/11 bụng xoay; mẫu a Bold cũ bụng đứng không còn khớp): cùng luật — thân + B_STEM ra phía ngoài (phải,
+        # cả loe chân), vai dày xuống B_BAR (đầu cắt dày theo); bụng: mép ngoài giãn +B_WIDE, lòng elip co B_K, dời về thân B_SHIFT
+        dS, dH = B_STEM/S, B_BAR/S
+        def fs(x, y):
+            if x >= 128.99: x += dS
+            if (x, y) in ((14.5005, 24.2497), (0.0, 57.249)) or abs(y + 19.7501) < 1e-3: y += dH
+            return x, y
+        stem = _path(_map_pts(SHAPES['a_stem'], fs), G['a_stem'])
+        bm = G['a_bowl']; outer = _path(_first_contour(SHAPES['a_bowl']), bm); c, k, st = _stretch(outer.bounds)
+        cpts = [st(*q) for q in _samples(_path('M' + SHAPES['a_bowl'].split('M')[2], bm))]; ctr, M = _ell_from_pts(cpts)
+        bowl = V.D(V.xform(outer, st), _ell_path(ctr, M, shift=(B_SHIFT, 0)))
+        return V.U(bowl, V.move(stem, (k - 1)*(outer.bounds[2] - c), 0))
     if ch in 'dbqp':
         bm, sm = G['bowl'], G['stem']
         outer = _path(_first_contour(SHAPES['bowl']), bm); c, k, st = _stretch(outer.bounds)
@@ -201,10 +214,10 @@ def bold(ch):
         return V.U(*out)
     if ch == 'e':
         arch_m, bowl_m, bar_m = G['e_arch'], G['e_bowl'], G['e_bar']
-        arch_o = _path("M86 0 C133.496 0 172 38.8865 172 86.8555 L172 89 L0 89 L0 86.8555 C0 38.8865 38.5035 0 86 0 Z", arch_m)
+        arch_o = _path("M86 0 C133.496 0 172 38.8865 172 86.8555 L172 90 L0 90 L0 86.8555 C0 38.8865 38.5035 0 86 0 Z", arch_m)
         bowl_o = _path("M88.5 0 C114.943 0 138.677 11.6383 154.894 30.0879 L154.894 91 L0 91 L0 88.8076 C0 39.7607 39.6228 0 88.5 0 Z", bowl_m)
         c, k, st = _stretch(V.U(arch_o, bowl_o).bounds)
-        e1 = _ell_from_pts([st(*q) for q in _inner_pts(SHAPES['e_arch'], arch_m, lambda p: 30 < p[0] < 140 and p[1] < 89.5)])
+        e1 = _ell_from_pts([st(*q) for q in _inner_pts(SHAPES['e_arch'], arch_m, lambda p: 30 < p[0] < 140 and p[1] < 90.5)])
         e2 = _ell_from_pts([st(*q) for q in _inner_pts(SHAPES['e_bowl'], bowl_m, lambda p: 32 < p[0] < 155 and 15 < p[1] < 91.5)])
         bar = V.xform(_path(SHAPES['e_bar'], bar_m), st); bx0, by0, bx1, by1 = bar.bounds; cy = (by0 + by1)/2; hb = by1 - by0 + B_BAR
         barB = V.xform(bar, lambda x, y: (x, cy + (y - cy)*hb/(by1 - by0)))
