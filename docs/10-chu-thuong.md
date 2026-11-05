@@ -92,7 +92,9 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 | Vai + thân + loe chân | thân a (Bold: a Bold mẫu) | n, h (thân trái lên ascender), m (hai vai), u (n xoay 180°) |
 | **Nửa c** (designer 05/11: "cập nhật lại các chữ thường còn lại theo c mới") | c: vách = thân (36 / Bold 44 px), đầu cắt đứng | (không còn dùng: f, j nay dựng từ khối r, t — xem dòng dưới) (designer 05/11: "móc trên chữ f và móc dưới chữ t hơi dài ra", "đồng bộ móc r và j theo f, t"). Chỉ thu phần bên phải vách, vách giữ nguyên nên không có bậc chỗ thân gặp nửa c |
 | Loe | thân d: dài 69.6, chìa 22.6, mũi trên mặt cắt ngang | mọi đầu thân và đầu nét chéo tự do (i, j, l, k, v, w, x, y) |
-| **S hoa** (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") | S của designer | s: thu ngang 0.85, dọc về x-height, rồi bù nét bằng nét viền góc vuông (Regular 7, Bold 3 mỗi phía). Nét mảnh trên/dưới 40.5 (= H; Bold 55), sống 102 theo phương đứng (Bold 124 = thân Bold chữ thường). Bản dựng từ c (05/11) đã bỏ: s phải cùng dáng S hoa |
+| **S hoa** (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") | S của designer | s: thu ngang 0.85 (Bold 0.786), dọc về x-height, rồi bù nét bằng nét viền góc vuông (Regular 7, Bold 4 mỗi phía).
+  - Nét mảnh trên/dưới 40.5 (= H; Bold 57). Sống 102 theo phương đứng (Bold 126).
+  - Bold thu hẹp hơn (designer 05/11: "chữ s thường bold bề ngang hơi rộng"): S Bold vốn rộng hơn S Regular nhiều. Nay s Bold rộng 362, Regular 349 (+13), như vòng chữ thường Bold (+11). Bản dựng từ c (05/11) đã bỏ: s phải cùng dáng S hoa |
 
 **v w x y k z = chữ hoa của designer thu nhỏ** (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module", "đồng bộ v w x y k theo chữ hoa"). Thay bản dựng theo luật nét chéo trước đó.
 - **Cách thu**: giữ loe S5, đỉnh, mỏ của chữ hoa. Thu ngang 0.80, dọc về x-height. Bù nét 6 (Bold 3) mỗi phía bằng nét viền góc vuông, góc giữ sắc. Kết quả nét mảnh ≈ 44, chéo dày ≈ 100, thanh z = 39 (Bold 54).

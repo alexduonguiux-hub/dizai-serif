@@ -211,8 +211,9 @@ def s_from_c(w):
     sp = V.P([('M', Le[0]), ('C', Le[1], Le[2], Le[3]), ('L', Re[3]), ('C', Re[2], Re[1], Re[0]), ('Z',)])
     return V.U(up, lo, N(sp))
 
-S_SX = 0.85                       # s = S hoa thu: ngang 0.85, dọc về x-height (0.70)
-S_D = {'Regular': 7.0, 'Bold': 3.0}   # bù nét mỗi phía (góc vuông giữ sắc): mảnh ≈ H, vách/sống ≈ S hoa (Bold theo mẫu a Bold)
+S_SX = {'Regular': 0.85, 'Bold': 0.786}   # s = S hoa thu ngang, dọc về x-height (0.70). Bold thu hẹp hơn: S Bold vốn rộng
+# hơn S Regular nhiều — s Bold chỉ rộng hơn s Regular ≈ 11 u như mọi vòng chữ thường (designer 05/11: "chữ s thường bold bề ngang hơi rộng")
+S_D = {'Regular': 7.0, 'Bold': 4.0}   # bù nét mỗi phía (góc vuông giữ sắc): mảnh ≈ H, vách/sống ≈ S hoa (Bold theo mẫu a Bold)
 def s_from_S(w):
     """s là S hoa của designer thu nhỏ (designer 05/11: "chữ s thường phải giống chữ s hoa chứ?") — cùng dáng, cùng đầu
     nét; thu ngang S_SX, dọc về x-height, rồi bù nét S_D (nét viền góc vuông) để độ dày khớp chữ hoa."""
@@ -221,7 +222,7 @@ def s_from_S(w):
     for f in ('designer_A.json', 'designer_B.json'): src.update(json.load(open(os.path.join(HERE, '..', 'ref', f))))
     Sp = outline(src[f'S-{w}'])
     x0, y0, x1, y1 = Sp.bounds; d = S_D[w]
-    sy = (503.4 + 11.3 - 2*d)/(y1 - y0); sx = S_SX
+    sy = (503.4 + 11.3 - 2*d)/(y1 - y0); sx = S_SX[w]
     p = V.xform(Sp, lambda x, y: ((x - x0)*sx, (y - y0)*sy - 11.3 + d))
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
     stp.convertConicsToQuads()
