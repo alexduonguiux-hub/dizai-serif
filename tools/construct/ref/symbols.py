@@ -140,14 +140,12 @@ def build_w(S, L, w):
     cf = M['circumflex']; b = bounds(cf); G['̌'] = above(xform(cf, lambda x, y: (x, b[1] + b[3] - y)))
     hn = M['horn']; b = bounds(hn); G['̛'] = move(hn, -b[0] - 30, XH - 70)          # bám mép phải chữ trước
     db = M['dotbelow']; b = bounds(db); G['̣'] = move(db, -(b[0] + b[2])/2, -11.3 - V.GAP_ML - (b[3] - b[1]))
-    # móc dưới (cedilla) — dựng bằng module (designer 05/11: "Móc vẫn lỗi" — nặng, vuông như số 5): cổ mảnh 0.24 V nối vào
-    # góc trên-trái của một đoạn VÒNG (ering4: ngoài 128 × 104, thành phải 0.40 V, đáy 0.18 V, trên 0.16 V, trái 0.16 V);
-    # giữ nửa phải + đáy, đầu dưới-trái cắt đứng ở tâm − 52
-    tn = 0.24*Vv; yc = -98.0; xc = tn + 4
-    rg = ering4(xc - 64, xc + 64, yc - 52, yc + 52, 0.16*Vv, 0.40*Vv, 0.18*Vv, 0.16*Vv)
-    hook = I(rg, U(rect(xc - 2, -400, 400, 200), rect(xc - 52, -400, 400, yc - 20)))
-    ced = q2c(U(rect(0, yc + 40, tn, 30), hook))
-    b = bounds(ced); G['\u0327'] = move(ced, -(b[0] + b[2])/2 + 6, 0)
+    # móc dưới (cedilla) = DẤU HỎI LẬT DỌC × 0.62 (designer 05/11: "Móc vẫn lỗi" ×3 — bản cổ chữ nhật + vòng không cùng hệ dấu):
+    # đuôi dấu hỏi thành cổ đi lên chạm đáy chữ, cung tròn cuộn xuống thành móc, đầu cắt bên trái — cùng nét bút, cùng cách dựng
+    # với dấu tiếng Việt (vn_punct.marks: hook)
+    fv = xform(M['hook'], lambda x, y: (x*0.62, -y*0.62)); b = bounds(fv)
+    top = I(fv, rect(-500, b[3] - 25, 500, b[3] + 1)); tb = bounds(top); xneck = (tb[0] + tb[2])/2
+    G['\u0327'] = q2c(move(fv, -xneck, 15 - b[3]))
     # ---------- nhóm 2 ----------
     sp = d + 0.8*d
     G['…'] = U(*[dot((r + k*sp, r - 3), d) for k in range(3)])
@@ -282,7 +280,11 @@ def group3(S, L, w, M, P, G1):
     G['î'] = low_acc('i', 'circ', dl); G['ï'] = low_acc('i', 'diaer', dl)
     # Ç ç: móc dưới (cùng nét U+0327) bám đáy giữa chữ
     for ch, p in (('Ç', V.letter(S, 'C', w)), ('ç', lw('c'))):
-        b = bounds(p); G[ch] = U(p, move(ced, (b[0] + b[2])/2 + 15, b[1] + 25))
+        # cổ móc đặt đúng điểm THẤP NHẤT của đáy chữ (đáy nằm ngang, cổ đứng → góc rõ; đặt lệch thì mép cổ gặp đường cong ở góc
+        # nông, thành chỗ gãy — QA 05/11)
+        b = bounds(p); xs_ = [b[0] + k*(b[2] - b[0])/200 for k in range(201)]
+        xlow = min(xs_, key=lambda x: min([y0 for y0, _ in [(r_[0], 0) for r_ in [(bounds(I(p, rect(x - 0.3, -500, x + 0.3, 2000)))[1],)] if r_]] or [9e9]))
+        G[ch] = U(p, move(ced, xlow, b[1] + 25))
     # Ð = Đ (cùng hình) · Ø ø: O / o + nét chéo / mảnh (bút dẹt) vượt vòng
     G['Ð'] = V.dstroke(S, w)
     for ch, p in (('Ø', V.letter(S, 'O', w)), ('ø', lw('o'))):
@@ -338,7 +340,10 @@ def group3(S, L, w, M, P, G1):
     cxu = (s0l + s1l + 255)/2; xr_ = s1l + 280; y1l = 425 + 0.42*H; cyl = (y1l - 11)/2
     lo = I(ering4(2*cxu - xr_, xr_, -11, y1l, 0.35*vth, 0.92*vth, 0.5*H, 0.42*H),
            U(rect(cxu, -400, 2000, 2000), rect(s1l + 72, -400, 2000, cyl)))
-    G['ß'] = q2c(U(stem, up, lo))
+    # chỗ thắt (designer 05/11: "còn dư lỗi glyph" — cung đáy vòng trên mỏng dần chạm thân thành mũi nhọn): đoạn từ thân tới đáy
+    # vòng là thanh ngang đúng bề dày thành đáy (0.42 H), tiếp tuyến ngang ở đáy vòng → liền; góc gặp thân vuông
+    waist = rect(s1l - 1, 425, cxu, 425 + 0.42*H)
+    G['ß'] = q2c(U(stem, up, lo, waist))
     # toán / phút giây
     YC_ = 330.0; mh = 0.55*Vv; ms = 500
     eq = P['=']; eb_ = bounds(eq); cxq = (eb_[0] + eb_[2])/2; sw = 0.45*Vv

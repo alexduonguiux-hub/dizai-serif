@@ -72,16 +72,18 @@ if __name__ == '__main__':
     ref = json.load(open(os.path.join(HERE, 'ref_glyphs.json')))
     import unicodedata
     allg = '--all' in sys.argv; rep = {}; inherited = 0
-    BASE = {'$': 'S', '€': 'C', '&': '8'}
+    BASE = {'$': 'S', '€': 'C', '&': '8', 'Æ': 'AE', 'Œ': 'OE', 'æ': 'ae', 'œ': 'oe', '™': 'TM', '®': 'R', '©': 'C', '¢': 'c',
+            'Ð': 'D', 'Ø': 'O', 'ø': 'o', 'Þ': 'P', 'þ': 'pb', 'µ': 'u', '¥': 'Y', '£': 'f', 'ð': 'o', 'ß': 'l', '§': 'S', '‰': '%'}
     for k, v in ref.items():
         if not allg and v.get('src') != 'rule': continue
         iss = check(v['cmds'])
-        ch, w = k.rsplit('-', 1); b = BASE.get(ch) or unicodedata.normalize('NFD', ch)[0]
-        bk = f'{b}-{w}'
-        if v.get('src') == 'rule' and bk in ref and ref[bk].get('src') != 'rule':
-            # lỗi kế thừa nguyên vẹn từ bản vẽ designer (mũi mỏ E, đầu nhọn S/C…) không tính là lỗi dựng
-            bi = check(ref[bk]['cmds'])
-            keep = [x for x in iss if not any(x[0] == y[0] and math.dist(x[2], y[2]) < 1.5 for y in bi)]
+        ch, w = k.rsplit('-', 1); bases = BASE.get(ch) or unicodedata.normalize('NFD', ch)[0]
+        bks = [f'{b}-{w}' for b in bases if f'{b}-{w}' in ref and b != ch]
+        if v.get('src') == 'rule' and bks:
+            # lỗi kế thừa nguyên vẹn từ chữ gốc (mũi mỏ E, đầu nhọn S/C, đỉnh M, đầu cắt e…) không tính là lỗi dựng. Ký tự ghép
+            # (Æ Œ æ œ ™ ® Ë…) dời toạ độ chữ gốc → so theo HÌNH góc (cùng loại, cùng góc ±2°), không theo toạ độ
+            bi = [y for bk in bks for y in check(ref[bk]['cmds'])]
+            keep = [x for x in iss if not any(x[0] == y[0] and abs(x[3] - y[3]) <= 2 for y in bi)]
             inherited += len(iss) - len(keep); iss = keep
         if iss: rep[k] = iss
     print('bỏ qua (kế thừa từ bản vẽ designer):', inherited)

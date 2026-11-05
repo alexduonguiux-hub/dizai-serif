@@ -107,6 +107,13 @@ Các bản nét bút tự do (hermite + bút dẹt) của ß £ ð § móc dư�
 - **£:** thân và móc của f thường (bỏ thanh f và chân loe) + thanh giữa ở 300 + thanh đáy 0.6 H + 14 + hai cung bracket r 70 chuyển từ thân xuống thanh đáy.
 - **ð:** cổ là một đoạn vòng elip đi tiếp thành phải của o. Elip ngoài có điểm cực phải trùng điểm cực phải của o (cùng cao độ, tiếp tuyến đứng), nên mép liền. Đỉnh ở 712, mảnh 0.5 H, đầu cắt đứng. Thanh gạch thẳng.
 - **§:** S hoa của designer (ngang 0.64, dọc 0.58, bù nét tới sống khoảng 0.8 V). S dưới là S trên xoay 180°, chồng đúng một bụng, nên vòng giữa kín.
-- **Móc dưới (U+0327, Ç ç):** cổ thẳng 0.30 V + một đoạn vòng (`ering4`, thành phải 0.46 V, đáy 0.24 V): giữ nửa phải và đáy, đầu dưới-trái cắt đứng.
+- **Móc dưới (U+0327, Ç ç):** dấu hỏi (`vn_punct.marks: hook`) lật dọc × 0.62. Đuôi dấu hỏi thành cổ đi lên chạm đáy chữ, cung cuộn xuống thành móc, cùng nét bút với dấu tiếng Việt. Ba bản trước (nét bút tự do; cổ chữ nhật + vòng) đều bị designer báo lỗi. Ở Ç ç, cổ đặt đúng điểm thấp nhất của đáy chữ: đáy nằm ngang, cổ đứng, nên chỗ gặp là góc rõ, không gãy nông.
+- **ß, chỗ thắt:** đoạn từ thân tới đáy vòng trên là thanh ngang dày đúng thành đáy (0.42 H), nên không còn mũi nhọn. Tâm vòng dưới bằng tâm vòng trên, đỉnh vòng dưới trùng thành đáy vòng trên.
+- **§:** bỏ đầu nét dưới của S trước khi chồng. Lòng vòng giữa là một elip nội tiếp hộp của lòng: lấp kín rồi khoét lại, nên không còn góc nhát cắt ló vào.
+
+## QA trước khi đưa preview (designer 05/11: "QA/QC kỹ trước khi đưa preview")
+Thứ tự bắt buộc: build xong hẳn → `qa_outline.py` → `qa_kern.py` → render lớn mọi glyph vừa đổi, cả hai weight, kèm điểm neo → chữ mẫu → rồi mới đăng.
+- `qa_outline.py` nhận lỗi kế thừa theo HÌNH góc (cùng loại, cùng góc ±2°), không theo toạ độ. Nhờ vậy ký tự ghép (Æ Œ æ œ ™ ® Ë € …) không bị báo lại các góc cố ý của chữ gốc (mũi mỏ E, đầu nhọn C, đỉnh M, đầu cắt e).
+- Kết quả hiện tại: chỉ còn hai góc cắt đã biết (c, e Bold). Va chạm 0, cặp sát 0.
 - **þ:** p + đúng phần thân b phía trên x-height, canh theo mép thân p.
 - **µ:** u + thân trái kéo xuống descender, đo đúng hai mép thân.
