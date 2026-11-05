@@ -16,7 +16,7 @@ from make_ref import outline
 import vn_punct as V
 import derive as Dv
 
-NARROW = {'V': 0.92, 'X': 0.92, 'Y': 0.92}
+NARROW = {}   # TẮT (designer 05/11: "bản của bạn lỗi quá" — dời mép nét làm méo loe); V X Y = bản vẽ gốc, V Bold = Figma 2138:1203
 ORIG = os.path.join(HERE, 'designer_AB_orig.json')
 
 def segs_of(p):

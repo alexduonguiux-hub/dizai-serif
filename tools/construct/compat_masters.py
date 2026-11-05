@@ -15,6 +15,7 @@ import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, 'font'))
 sys.path.insert(0, os.path.join(HERE, 'ref'))
 from compat import compat, lerp_segs, to_d
+from interp import contours, tocubic
 from weights import WEIGHTS, TW
 OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
 
@@ -70,7 +71,8 @@ def fit(s1, s2):
     err = max(min(math.dist(p, q) for q in Q) for p in pts)
     return c, err
 
-def simplify_pair(R, B, tol=0.8):
+KINK, TOL = 10.0, 1.5     # góc thật: gãy ≥ 10°; sai số cho phép 1.5 u (< 0.2 % cao chữ)
+def simplify_pair(R, B, tol=TOL):
     """R, B: chuỗi đoạn vòng cùng độ dài, cùng loại. Bỏ điểm neo chung khi bỏ được ở cả hai"""
     changed = True
     while changed and len(R) > 2:
@@ -88,8 +90,8 @@ def simplify_pair(R, B, tol=0.8):
                     a, b, c = start(s1), end(s1), end(s2); L = math.dist(a, c)
                     dev = abs((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0]))/L if L > 1e-9 else 0
                     m = ['L', a, c] if (dev < 0.35 or tiny) else None
-                elif s1[0] == 'C' and s2[0] == 'C' and (kink < 6.0 or tiny):
-                    m, err = fit(s1, s2); m = m if err < tol else None
+                elif (s1[0] == 'C' or s2[0] == 'C') and (kink < KINK or tiny):
+                    m, err = fit(tocubic(s1), tocubic(s2)); m = m if err < tol else None
                 else: m = None
                 if m is None: ok = False; break
                 if out == 'R': newR = m
@@ -105,14 +107,19 @@ def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
     chars = sorted({k.rsplit('-', 1)[0] for k in O})
     stat = {'glyph': 0, 'ghép được': 0, 'không ghép': [], 'đoạn trước': 0, 'đoạn sau': 0}
+    pre = dict(O)
     for c in chars:
         kr, kb = f'{c}-Regular', f'{c}-Bold'
         if kr not in O or kb not in O: continue
         stat['glyph'] += 1
+        # đơn giản hoá TỪNG master trước (bỏ điểm thừa của boolean / làm đậm), rồi mới ghép cặp
+        for k_ in (kr, kb):
+            cs = [simplify_pair([list(x) for x in g], [list(x) for x in g])[0] for g in contours([O[k_]])]
+            O[k_] = to_d(cs)
         try: C = compat(O[kr], O[kb])
         except Exception as e: stat['không ghép'].append(c); continue
         if not C: continue
-        before = sum(len(a) for a, _ in C)
+        before = sum(len(g) for g in contours([pre[kr]]))
         out = []
         for Rr, Bb in C:
             Rr, Bb = simplify_pair([list(s) for s in Rr], [list(s) for s in Bb]); out.append((Rr, Bb))

@@ -91,3 +91,6 @@ if __name__ == "__main__":
     outl = {k: d_of(outline(v), lambda x: x, lambda y: y) for k, v in data.items() if "parts" in v}
     json.dump(outl, open(os.path.join(OUT, "outlines.json"), "w"))
     print("ok", len(outl))
+    # Regular / Bold cùng cấu trúc + đơn giản hoá đồng thời; Medium / SemiBold = nội suy (designer 05/11: "Simplify lại để dễ
+    # làm variables") — xem compat_masters.py
+    import compat_masters; compat_masters.main()
