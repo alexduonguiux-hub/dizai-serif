@@ -68,6 +68,14 @@ def ering4(x0, x1, y0, y1, wl, wr, wb, wt):
     o = ellipse(((x0 + x1)/2, (y0 + y1)/2), (x1 - x0)/2, (y1 - y0)/2)
     ix0, ix1, iy0, iy1 = x0 + wl, x1 - wr, y0 + wb, y1 - wt
     return D(o, ellipse(((ix0 + ix1)/2, (iy0 + iy1)/2), (ix1 - ix0)/2, (iy1 - iy0)/2))
+def contours_of(p):
+    cs = []; cur = None
+    for v, ps in p.segments:
+        if v == 'moveTo': cur = pathops.Path(); cur.moveTo(*ps[0])
+        elif v == 'lineTo': cur.lineTo(*ps[0])
+        elif v == 'curveTo': cur.cubicTo(*ps[0], *ps[1], *ps[2])
+        elif v == 'closePath': cur.close(); cs.append(cur)
+    return cs
 def norm_x(p): b = bounds(p); return move(p, -b[0], 0)
 def scale(p, s, o=(0, 0)): return xform(p, lambda x, y: (o[0] + (x - o[0])*s, o[1] + (y - o[1])*s))
 
@@ -244,7 +252,9 @@ def build_w(S, L, w):
     G['¢'] = U(c0, rect(xcn - 0.55*H, -100, xcn + 0.55*H, XH + 110))
     # µ : u thường, thân trái kéo xuống descender (cắt bằng)
     u0 = ref_outline(L[f'u-{w}']); s0_, s1_ = runs_y(u0, 300)[0]            # mép thân trái đo đúng (lỗi bậc: "Check lỗi")
-    G['µ'] = U(u0, rect(s0_, DESC, s1_, 120))
+    # thân trái µ THẲNG từ descender lên 300 (designer 05/11: "Lỗi glyph" — thân u phình ra ở chân, đoạn kéo xuống lệch bậc):
+    # bỏ phần u bên trái mép thân dưới 300, thêm thân thẳng s0 … s1
+    G['µ'] = q2c(U(D(u0, rect(-500, -500, s0_, 300)), rect(s0_, DESC, s1_, 300)))
     G.update(group3(S, L, w, M, P, G))
     return G
 
@@ -311,7 +321,8 @@ def group3(S, L, w, M, P, G1):
     G['Þ'] = U(stem, move(bowl, 0, -150))
     p_ = lw('p'); b_ = lw('b'); bb = bounds(b_); pbx = bounds(p_)
     bs0, bs1 = runs_y(b_, 600)[0]; ps0, ps1 = runs_y(p_, -100)[0]      # chỉ thân b phía trên x-height, canh theo mép thân p
-    G['þ'] = U(p_, move(I(b_, rect(-100, 380, bs1 + 0.3, 800)), ps0 - bs0, 0))
+    # bỏ loe đỉnh-trái của thân p (ở x-height) — thân b nối tiếp lên nên loe này thành mấu thừa (designer 05/11: ảnh þ)
+    G['þ'] = q2c(U(D(p_, rect(-500, 300, ps0, 2000)), move(I(b_, rect(-100, 300, bs1 + 0.3, 800)), ps0 - bs0, 0)))
     # ð: o + cổ cong (nét bút) từ vai phải lên ascender, cắt chéo bằng thanh nhỏ
     nb = (t['N']*0.9, t['m']*1.1)
     ow = obx[2] - obx[0]
@@ -321,9 +332,14 @@ def group3(S, L, w, M, P, G1):
     ys_ = [obx[1] + k*(obx[3] - obx[1])/80 for k in range(1, 80)]
     yr = max(ys_, key=lambda y: runs_y(o_, y)[-1][1]); xr = runs_y(o_, yr)[-1][1]; wl = runs_y(o_, yr)[-1][1] - runs_y(o_, yr)[-1][0]
     cxn = obx[0] + 0.50*ow; Rx, Ry = xr - cxn, 712 - yr
-    neck = I(ering((cxn, yr), (Rx, Ry), (Rx - wl, Ry - 0.5*H)), rect(cxn - 35, yr, 2000, 2000))
-    eth = U(o_, neck); nx_ = cxn + 0.62*Rx
-    G['ð'] = U(eth, poly([(nx_ - 110, 575), (nx_ + 85, 615), (nx_ + 85, 615 + 0.85*H), (nx_ - 110, 575 + 0.85*H)]))
+    # đồng bộ độ dày (designer 05/11: "kiểm tra đồng bộ độ dày"): ngọn cổ = nét mảnh H; lòng o giữ nguyên (trừ lòng o khỏi cổ)
+    # → chỗ cổ nhập vòng dày đúng thành o (trước: 137 / Bold 165 so với thành o 101 / 124; ngọn 22 / 36 so với H 40 / 53)
+    hl = 40.4 if w == 'Regular' else 40.4 + 12.7                           # nét mảnh chữ thường (ARCH_TOP)
+    neck = I(ering((cxn, yr), (Rx, Ry), (Rx - 0.75*wl, Ry - hl)), rect(cxn - 35, yr, 2000, 2000))
+    oc = [c for c in contours_of(o_)]; outer_o = max(oc, key=lambda c: (bounds(c)[2] - bounds(c)[0])*(bounds(c)[3] - bounds(c)[1]))
+    counter_o = D(pathops.op(outer_o, outer_o, pathops.PathOp.UNION), o_)
+    eth = U(o_, D(neck, counter_o)); nx_ = cxn + 0.62*Rx
+    G['ð'] = U(eth, poly([(nx_ - 110, 575), (nx_ + 85, 615), (nx_ + 85, 615 + hl), (nx_ - 110, 575 + hl)]))
     # ß: thân l thường (đỉnh vòm sang phải) + nét bút: vòm trên → eo → bụng dưới về chân
     l_ = lw('l'); lb = bounds(l_); lsr = I(l_, rect(-100, 299.9, 2000, 300.1)); lx = sorted(set(round(q[0], 1) for _, ps in lsr.segments for q in ps))
     # ß — VẼ LẠI bằng module (như B): thân l (cả chân loe) tới 560 + VÒNG TRÊN kín + VÒNG DƯỚI mở dưới-trái; vòng dựng theo

@@ -246,6 +246,39 @@ def norm(p, cx=None):
 # Bold = tâm nét Regular phóng đều 1.2 (giữ tỉ lệ vòng/đuôi), bút 0.70 × bút dấu Bold.
 HOOK_B = (1.2, 0.70); HOOK_END = -20; HOOK_TAIL = (0, 4); HOOK_R = 58; HOOK_C = 106
 Q_NARROW = (20, 200, 45)   # ? hẹp ngang 45 u: Regular 420 → 375, Bold 436 → 391
+HOOK_S = {'Regular': 0.38, 'Bold': 0.52}
+def _q2c(p):
+    """quadratic (sau boolean / stroke) → cubic; nhiều điểm điều khiển: điểm on-curve ngầm ở giữa"""
+    out = pathops.Path(); cur = None
+    for v, ps in p.segments:
+        if v == 'moveTo': out.moveTo(*ps[0]); cur = ps[0]
+        elif v == 'lineTo': out.lineTo(*ps[0]); cur = ps[0]
+        elif v == 'curveTo': out.cubicTo(*ps[0], *ps[1], *ps[2]); cur = ps[2]
+        elif v == 'qCurveTo':
+            ctrl, end = list(ps[:-1]), ps[-1]
+            for i, c in enumerate(ctrl):
+                e = ((c[0] + ctrl[i + 1][0])/2, (c[1] + ctrl[i + 1][1])/2) if i + 1 < len(ctrl) else end
+                out.cubicTo(cur[0] + 2/3*(c[0] - cur[0]), cur[1] + 2/3*(c[1] - cur[1]), e[0] + 2/3*(c[0] - e[0]), e[1] + 2/3*(c[1] - e[1]), *e); cur = e
+        elif v == 'closePath': out.close()
+    return out
+HOOK_T = {'Regular': 54.0, 'Bold': 79.0}
+HOOK_VEC = {'Regular': 1.54, 'Bold': 1.75}       # thành phải vector 35 px → Regular 54 u; Bold 61 u + bù nét tới 79
+def hook_from_q(w):
+    """dấu hỏi = VECTOR CỦA DESIGNER (Figma 2130:1183, hook_vec.json — designer 05/11 "Link vector dấu hỏi"): lật y, thu phóng
+    HOOK_VEC; Bold bù nét (góc vuông) cho thành phải = HOOK_T Bold. Móc dưới (U+0327, Ç ç) = dấu này lật dọc."""
+    J = json.load(open(os.path.join(HERE, 'hook_vec.json'))); k = HOOK_VEC[w]
+    hk = xform(ref_outline([J['d']]), lambda x, y: (x*k, (J['h'] - y)*k))
+    yb = bounds(hk); ym = yb[1] + 0.53*(yb[3] - yb[1]); runs = []
+    for v, ps in I(hk, rect(-100, ym - 0.05, 2000, ym + 0.05)).segments:
+        if v == 'moveTo': cur = [ps[0][0]]
+        elif ps: cur += [p_[0] for p_ in ps]
+        if v == 'closePath': runs.append((min(cur), max(cur)))
+    r0 = max(runs, key=lambda r: r[1]); d = max(0.0, (HOOK_T[w] - (r0[1] - r0[0]))/2)
+    if d > 0.5:
+        st = pathops.Path(); st.addPath(hk); st.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
+        st.convertConicsToQuads(); hk = _q2c(I(_q2c(U(hk, st)), rect(-500, yb[1], 3000, 3000)))
+    return norm(hk)
+
 def marks(w):
     t = T[w]; nib = (t['Nm'], t['mm']); sx = t['sx']; S = lambda x, y: (x*sx, y)
     M = {}
@@ -290,6 +323,10 @@ def marks(w):
     hk = [tuple((q[0]*k, q[1]*k) for q in sg) for sg in hk]
     M['hook'] = norm(xform(stroke(hk, (nib[0]*(0.8 if sx == 1 else HOOK_B[1]), nib[1]), taper=lambda u: 1.1 - 0.25*u),
                            lambda x, y: (x*sx, y)))
+    # hỏi VẼ LẠI (designer 05/11: "Vẽ lại dấu hỏi và các móc"): luật S11 "hỏi = móc ? thu nhỏ" — lấy ĐÚNG phần móc của dấu ?
+    # (đầu số 2 của designer + cổ, bỏ chấm), thu HOOK_S, bù nét để nét dày bằng nét dấu cũ (Regular 54, Bold 79) — cùng hình,
+    # cùng độ cong với ? và 2, không còn nét bút tự dựng
+    M['hook'] = hook_from_q(w)
     # nặng: cùng họ chấm với dấu chấm (tròn), nhỏ hơn
     M['dotbelow'] = norm(ellipse((0, 0), t['mdot']/2, t['mdot']/2))
     # sừng ơ ư (một tấm chung): gốc (0,0) bám vào mép phải chữ; nét đi ra phải rồi vút lên, dày dần.
@@ -554,7 +591,7 @@ def punct(S, w):
     return G
 
 def to_d(p):
-    out = []
+    out = []; p = _q2c(p)
     for v, ps in p.segments:
         k = {'moveTo': 'M', 'lineTo': 'L', 'curveTo': 'C', 'closePath': 'Z'}.get(v)
         if k is None: raise ValueError(v)

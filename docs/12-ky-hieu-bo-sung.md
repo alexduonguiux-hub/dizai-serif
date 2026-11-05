@@ -117,3 +117,20 @@ Thứ tự bắt buộc: build xong hẳn → `qa_outline.py` → `qa_kern.py` �
 - Kết quả hiện tại: chỉ còn hai góc cắt đã biết (c, e Bold). Va chạm 0, cặp sát 0.
 - **þ:** p + đúng phần thân b phía trên x-height, canh theo mép thân p.
 - **µ:** u + thân trái kéo xuống descender, đo đúng hai mép thân.
+
+## Dấu hỏi = vector của designer (05/11: "Vẽ lại dấu hỏi và các móc" → "Link vector dấu hỏi", Figma 2130:1185)
+- Nguồn: `tools/construct/ref/hook_vec.json` (Figma node 2130:1183, bản cập nhật có đầu trái cắt ngang). `vn_punct.hook_from_q(w)`: lật y, thu phóng.
+  - Regular × 1.54: thành phải 35 px → 54 u, bằng nét dấu. Cao 176.
+  - Bold × 1.75 + bù nét góc vuông: thành phải 79. Cao 208.
+- Dùng cho mọi chữ có dấu hỏi (hoa, thường, chồng mũ / trăng / sừng) và dấu tổ hợp U+0309.
+- Móc dưới (U+0327, Ç ç) = dấu hỏi này lật dọc × 0.62, cổ đặt ở điểm thấp nhất của đáy chữ.
+- Các bản nét bút tự dựng và bản thu từ dấu ? trước đó đã bỏ.
+- Chồng dấu cao nhất: Ẳ Regular 1020, Bold 1072 (usWin khi xuất font phải bao).
+
+## Sửa thêm (05/11)
+- µ: thân trái thẳng từ descender lên 300 (bỏ phần u phình ra ở chân), hết bậc.
+- þ: bỏ loe đỉnh-trái của thân p (ở x-height), vì thân b nối tiếp lên nên loe này thành mấu thừa.
+- ð, đồng bộ độ dày ("kiểm tra đồng bộ độ dày"):
+  - Ngọn cổ = nét mảnh chữ thường (40.4 / Bold 53.1); thanh gạch dày bằng nét mảnh đó.
+  - Giữ nguyên lòng o (trừ lòng o khỏi cổ). Cổ dày 0.75 thành o ở chân.
+  - Điểm dày nhất 129 / Bold 155, gần chỗ bụng gặp thân của d b q (122 / 146). Trước đó là 137 / 166.
