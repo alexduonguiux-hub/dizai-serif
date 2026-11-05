@@ -231,12 +231,22 @@ def bold(ch):
         reg_bowl = _path(SHAPES['e_bowl'], bowl_m); xr = reg_bowl.bounds[2]
         qr = V.I(reg_bowl, V.rect(xr - 0.6, -5000, xr - 0.4, 5000)); y_face_reg = qr.bounds[3]   # mép trên mặt cắt Regular
         target = y_face_reg + B_BAR
-        lo, hi = 0.0, 80.0
+        # giữ mép TRÁI lòng bụng (khớp mép lòng mắt e ở đầu trái thanh — designer 05/11: "chỗ này e bold hơi kỳ"), chỉ giãn
+        # lòng về bên phải (hệ số k quanh mép trái) tới khi mặt cắt đuôi = Regular + B_BAR
+        cnt0 = _ell_path(*e2)
+        # mép lòng bụng ngay dưới thanh trùng mép lòng mắt ngay trên thanh (không bậc ở đầu trái thanh)
+        def xin(p, y):
+            q = V.I(p, V.rect(-5000, y - 0.3, 5000, y + 0.3)); return q.bounds[0] if list(q.segments) else None
+        cnt_a = _ell_path(*e1); xa = xin(cnt_a, cy + hb/2 + 1); xb = xin(cnt0, cy - hb/2 - 1)
+        if xa is not None and xb is not None: cnt0 = V.move(cnt0, xa - xb, 0)
+        xl = cnt0.bounds[0]
+        def cnt(k): return V.xform(cnt0, lambda x, y: (xl + (x - xl)*k, y))
+        lo, hi = 1.0, 1.6
         for _ in range(30):
-            mid = (lo + hi)/2; yc = cross(_ell_path(*e2, shift=(mid, 0)))
-            if yc is None or yc < target: hi = mid
-            else: lo = mid
-        bowl = V.D(bo_st, _ell_path(*e2, shift=(lo, 0)))
+            mid = (lo + hi)/2; yc = cross(cnt(mid))
+            if yc is None or yc > target: lo = mid
+            else: hi = mid
+        bowl = V.D(bo_st, cnt(hi))
         # đầu phải thanh lấp thẳng đứng tới mép ngoài phần thò dưới mặt nối vòm–bụng
         fill = V.rect(bx1 - 40, cy - hb/2, bx1, by0)
         return V.U(arch, bowl, barB, fill)

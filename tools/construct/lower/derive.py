@@ -82,11 +82,23 @@ def arch(w):
 def arch_stem(w):
     return (93*S, 129*S) if w == 'Regular' else (99*S, 143*S)
 
+# vai n m h u (designer 05/11: "phần m, n, u, h không đẹp là do phần cong khuyết này bị phẳng"): vai a có mép ngoài bắt đầu
+# cao (đầu cắt 12.75 → 57.25 px) nên chỗ vai mọc khỏi thân phẳng, không có khuyết. Dựng như tai r của designer (2127:982):
+# đầu vai lùi vào trong thân N_OFF px, mép ngoài vai mọc từ đáy đầu vai theo đường cong của tai r (C 10.9 24.1 / 38.3 0,
+# thu theo bề rộng vai) → khuyết cong rõ ở chỗ vai gặp đỉnh thân.
+N_OFF = {'Regular': 12.0, 'Bold': 16.0}
+D_N_ARCH = ("M60.5 0 C129 8.09688e-05 129 59.75 129 59.75 L129 154.127 C129 161.088 130.817 167.929 134.271 173.973 L137 178.75 "
+            "L93 178.75 L93 58.25 C93 -19.7501 14.5005 24.2497 0 57.249 C9.35 36.5 33 0 60.5 0 Z")
+D_N_ARCH_B = ("M63.5 0 C146.996 6.64214e-05 143 59.7435 143 59.75 L143 154.127 C143 161.088 144.817 167.929 148.271 173.973 L151 178.75 "
+              "L99 178.75 L99 58.25 C98.9999 -9.75002 8.00126 38.2489 0 62.249 C9.8 39.5 34.6 0 63.5 0 Z")
+def n_arch(w):
+    return L._path(D_N_ARCH if w == 'Regular' else D_N_ARCH_B, (1, 0, 0, 0, 1, 188.25048828125))
+
 def n_like(w, asc=False, arches=1):
-    v = W[w]['V']; s0, s1 = arch_stem(w); A = arch(w)
+    v = W[w]['V']; s0, s1 = arch_stem(w); A = n_arch(w); o = N_OFF[w]*S
     parts = [vstem(0, v, 0, ASC if asc else XH, 'tlblbr' + ('tr' if asc else ''))]
     for i in range(arches):
-        dx = i*s0
+        dx = o + i*(s0 + o)
         parts += [V.move(A, dx, 0), vstem(dx + s0, dx + s1, 0, 300, 'bl')]
     return V.U(*parts)
 
