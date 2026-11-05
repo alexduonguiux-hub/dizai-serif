@@ -117,7 +117,11 @@ def n_arch(w):
 # Mỗi nửa trên là một cung ellipse liền (độ cong biến thiên đều); trục nhấn nghiêng tự sinh vì tâm lòng lệch trái tâm ngoài.
 ARCH_CY = 340.8
 ARCH_NOTCH = {'Regular': 448.4, 'Bold': 458.9}
-ARCH_CROTCH = {'Regular': 420.8, 'Bold': 418.2}
+# Nách: chỗ nối vai–thân dày bằng chỗ nối bụng–thân của b d p q (đo đứng sát mép thân: Regular 67.1, Bold 77.4).
+# Trước đó (nách 420.8 / 418.2) chỗ nối chỉ 27.5 / 40.6, ≈ 40 % các chữ khác (designer 05/11: "chỗ nối m, n, u có bị bất
+# đồng bộ độ dày với các glyph khác không?").
+ARCH_JOIN = {'Regular': 67.1, 'Bold': 77.4}
+ARCH_CROTCH = {w: ARCH_NOTCH[w] - ARCH_JOIN[w] for w in ARCH_NOTCH}
 ARCH_TOP = {'Regular': 40.4, 'Bold': 40.4 + 12.7}
 
 def _ell_through(xr, top, cy, px, py):

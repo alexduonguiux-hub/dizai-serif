@@ -112,7 +112,7 @@ Gồm 13 chữ f h i j k l m n s u v w x y z, Regular và Bold (o, c, r, t đã 
 - **Vai n m h u dựng bằng hai ellipse** (designer 05/11: "độ cong của các nét này không smooth", "đường cong không tự nhiên", "nên thử áp dụng cách dựng bằng 2 ellipse như các chữ tròn khác"). Mỗi nửa trên là một cung ellipse liền, độ cong biến thiên đều. Thay cho vai a ghép hai đoạn, vốn có độ cong nhảy ở đỉnh và tay nắm suy biến ở chỗ vai chuyển sang thân phải.
   - Hai ellipse cùng tâm cao 340.8 (chỗ thân phải bắt đầu thẳng).
   - Ellipse ngoài: mép phải = mép ngoài thân phải, đỉnh = đường vượt 503.4. Đi qua khuyết trên mép phải thân trái (Regular 448.4, Bold 458.9).
-  - Ellipse trong (lòng): mép phải = mép trong thân phải, đỉnh thấp hơn đường vượt 40.4 (Bold 53.1). Đi qua nách (Regular 420.8, Bold 418.2).
+  - Ellipse trong (lòng): mép phải = mép trong thân phải, đỉnh thấp hơn đường vượt 40.4 (Bold 53.1). Đi qua nách, đặt sao cho chỗ nối vai–thân (đo đứng sát mép thân) dày bằng chỗ nối bụng–thân của b d p q: Regular 67.1, Bold 77.4, nên nách ở 381.3 / 381.5. Trước đó nách 420.8 / 418.2, chỗ nối chỉ 27.5 / 40.6, khoảng 40 % các chữ khác (designer 05/11: "chỗ nối m, n, u có bị bất đồng bộ độ dày với các glyph khác không?").
   - Tâm lòng lệch trái tâm ngoài, nên trục nhấn tự nghiêng: mảnh ở vai trái, dày dần sang thân phải.
   - m: ellipse ngoài vai sau kéo sang trái, đè lên vai trước. Hai cung ngoài cắt nhau thành nách nhọn trên thân giữa.
   - Chân thân phải có loe hai bên.
