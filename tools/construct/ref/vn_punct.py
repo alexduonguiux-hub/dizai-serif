@@ -454,7 +454,7 @@ def compose(S, M, ch_base, mod, tone, w):
         elif above: above.append(place_above(above[-1], m, cx))
         else: above.append(move(m, cx, MARK_Y))
     if tone == 'dotbelow':
-        d = M['dotbelow']; db = bounds(d); parts.append(move(d, cx, min(-OV, bounds(base)[1]) - GAP_ML - (db[3] - db[1]) - 2))   # dưới đáy thật (U −14.2)
+        d = M['dotbelow']; db = bounds(d); parts.append(move(d, cx, -OV - GAP_ML - (db[3] - db[1]) - 2))   # một đường chấm chung (đỉnh −49) — designer 06/11 "kiểm tra lại các dấu nặng khác": Ụ Ự theo đáy tràn U −14.2 thấp hơn hàng 3 u
     return U(*parts, *above)
 
 def dstroke(S, w):
