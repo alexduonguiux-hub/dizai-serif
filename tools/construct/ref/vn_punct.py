@@ -523,8 +523,11 @@ def punct(S, w):
         u = min(1, max(0, (qx1 - x)/(qx1 - qx0))); return (x + qd*u*u*(3 - 2*u), y)
     G['?'] = U(xform(U(top2, qs), qw), dot((sx, r - 3), d))
     # nháy thẳng ' "
-    qt = lambda xc: wedge(xc, 711, 455, 0.86*V, 0.34*V, 0.25, flat=True)
-    G["'"] = qt(0.43*V); G['"'] = U(qt(0.43*V), qt(0.43*V + 0.86*V + 0.75*V))
+    # (designer 06/11 "thử" làm nháy thẳng gần dáng nháy cong): đầu rộng bằng đầu giọt nháy cong (= chấm câu), cao bằng nháy
+    # cong, thon nhanh như giọt (lõm 0.45), chân cắt ngang 0.30 V; " cùng nhịp với ” (khe 0.6 V). Bản cũ: đầu 0.86 V, cao 256 cố định
+    cmq = comma_shape(t, w); cbq = bounds(cmq); hq = cbq[3] - cbq[1]; dq = cbq[2] - cbq[0]
+    qt = lambda x0: wedge(x0 + dq/2, 711, 711 - hq, dq, 0.30*V, 0.45, flat=True)
+    G["'"] = qt(0); G['"'] = U(qt(0), qt(dq + 0.6*V))
     # nháy cong ’ ‘ ” “ = dấu phẩy nâng lên (đỉnh chấm ở 711)
     cm = comma_shape(t, w); cb = bounds(cm); rq = move(cm, -cb[0], 711 - cb[3] + 0.0)
     rb = bounds(rq); lq = xform(rq, lambda x, y: (rb[0] + rb[2] - x, rb[1] + rb[3] - y))   # ‘ = ’ xoay 180°
