@@ -28,6 +28,8 @@ BIG = 3000
 # designer 06/11 "thử giữ nguyên bản các glyph rồi làm italic thử" + "trừ các chữ hoa như nãy đã duyệt": chữ thường giữ glyph Roman
 # (chỉ nghiêng khi xuất); chữ hoa hẹp 0.94 (I2.12). Phần I2 chữ thường (đuôi ra, f, v w y, nét vào, chân gọn) giữ trong code, bật bằng LOWER_I2
 LOWER_I2 = False
+# designer 06/11 "bạn nên giữ lại glyph gốc cho cả chữ hoa": chữ hoa cũng giữ glyph Roman → Italic = Roman nghiêng 10° (I1)
+CAPS_COND = False
 
 def P(d): return outline([d])
 def runs_at(p, y):
@@ -173,6 +175,7 @@ def rebase(acc_r, base_r, base_i, ch):
     dx = (ax1 - bx1) if ch in 'đĐ' else (ax0 - bx0)                            # vị trí chữ gốc trong chữ có dấu (Đ: thanh chìa trái → canh mép phải)
     horn = '\u031b' in unicodedata.normalize('NFD', ch)
     if horn or ch in 'đĐ' or base_r.bounds[1] < -30: marks = clean(V.D(acc_r, V.move(base_r, dx, 0)), 200)
+    if ch in 'đĐ': marks = V.U(marks, V.move(marks, 3, 0), V.move(marks, -3, 0))   # thanh: nới 3 u mỗi phía → luôn chồng lên thân
     else:                                                        # dấu trên / dưới: theo dải cao độ (không trừ boolean → dấu
         tb = V.move(base_r, dx, 0).bounds                        # không vỡ mảnh có cạnh chung)
         marks = V.U(V.I(acc_r, V.rect(-BIG, tb[3] + 2, BIG, BIG)), V.I(acc_r, V.rect(-BIG, -BIG, BIG, tb[1] - 2)))
@@ -216,7 +219,7 @@ def build(O, w):
         g = feet(c, g, sw)
         if c in ENTRY: g = entry(g, sw)
         G[c] = clean(g)
-    caps = [c for c in chars if SPc.kind(c) == 'caps']               # I2.12 chữ hoa hẹp ngang như chữ thường, dấu giữ nguyên
+    caps = [c for c in chars if SPc.kind(c) == 'caps'] if CAPS_COND else []               # I2.12 chữ hoa hẹp ngang như chữ thường, dấu giữ nguyên
     for c in caps:
         if SPc.base(c) == c: G[c] = cond(P(O[f'{c}-{w}']))
     for c in caps:

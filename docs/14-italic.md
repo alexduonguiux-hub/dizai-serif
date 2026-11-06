@@ -28,3 +28,7 @@ Designer: "làm italic thật I2"; "giữ a hai tầng như roman".
 Ghép cặp 324 / 324 · va chạm 0 · âm tiết Việt 0 cặp lệch > 12 ngoài sàn 26 · kerning nhất quán 4 weight · weight đơn điệu 0 lỗi · QA file font (variable 400–700 + 8 bản tĩnh): advance, kerning mọi cặp, NFD = NFC, hộp bao (bản đứng nghiêng 10°) — 34 / 34 đạt (Roman + Italic).
 
 Ghi chú: Tb / Th italic kern +35 / +40 (khe 100 u, roman 65) — theo tỉ số trắng cặp tham chiếu với n italic hẹp hơn.
+
+## Quyết định 06/11: Italic = Roman nghiêng 10°
+
+Designer: "thử giữ nguyên bản các glyph rồi làm italic thử" → "bạn nên giữ lại glyph gốc cho cả chữ hoa". Italic xuất từ glyph Roman (chữ thường, chữ hoa, số, dấu) **nguyên vẹn**, chỉ nghiêng 10° quanh ½ x-height; spacing / kerning dùng chung Roman. `italic.py` giữ các luật I2 sau cờ `LOWER_I2 = False` (chữ thường: đuôi ra, f, v w y, nét vào, chân gọn) và `CAPS_COND = False` (chữ hoa hẹp 0.94) để thử lại khi cần. QA file font 34 / 34.

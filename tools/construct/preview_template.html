@@ -129,7 +129,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   <section class="vf" aria-labelledby="h-vf" id="vf" hidden>
     <h2 id="h-vf">Font variable</h2>
-    <p class="note">Hai file font thật (<code>fonts/variable/DizaiSerif[wght].ttf</code>, <code>DizaiSerif-Italic[wght].ttf</code>), trục wght 400–700, có kerning và ghép dấu NFD. Italic I2: chữ thường dựng lại (đuôi ra ở chân i l n m h u d, f có đuôi xuống, hẹp ngang 0.94, a giữ hai tầng), nghiêng 10°; chữ hoa, số, dấu câu là roman nghiêng.</p>
+    <p class="note">Hai file font thật (<code>fonts/variable/DizaiSerif[wght].ttf</code>, <code>DizaiSerif-Italic[wght].ttf</code>), trục wght 400–700, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
     <div class="ctrl">
       <label class="chk">wght <input type="range" id="vfw" min="400" max="700" step="1" value="400" aria-label="Độ đậm"> <span id="vfwv">400</span></label>
       <div class="seg" role="group" aria-label="Kiểu"><button id="vfr" aria-pressed="true">Roman</button><button id="vfi" aria-pressed="false">Italic</button></div>
@@ -380,7 +380,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   for (const ital of [false, true]) for (const [n, v] of S) {
     const d = document.createElement("div"), sm = document.createElement("small"), t = document.createElement("span");
     sm.textContent = (ital ? (n === "Regular" ? "Italic" : n + " Italic") : n) + " · " + v;
-    t.textContent = ital ? "Ánh đèn phố Hội — hình như" : "Ánh Đèn Phố Hội — quả ổi"; t.style.fontFamily = ital ? '"Dizai Serif VF Italic", serif' : '"Dizai Serif VF", serif';
+    t.textContent = "Ánh Đèn Phố Hội — quả ổi"; t.style.fontFamily = ital ? '"Dizai Serif VF Italic", serif' : '"Dizai Serif VF", serif';
     t.style.fontVariationSettings = `"wght" ${v}`; d.append(sm, t); steps.append(d);
   }
   apply();
