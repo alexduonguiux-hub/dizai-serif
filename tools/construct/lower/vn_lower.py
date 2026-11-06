@@ -6,7 +6,7 @@
 - Đáy dấu thấp nhất: MARK_YL = x-height 495 + vượt 8.4 + khe 36 + 3 = 542.4 (cách tính như chữ hoa: 700 + 11.3 + 36 + 3).
 - Tâm ngang dấu: tâm hộp mực PHẦN x-height của chữ (y, ư, ơ: bỏ đuôi / sừng).
 - Mũ + sắc/huyền/hỏi: dấu thanh bên phải mũ (place_right); mọi dấu khác chồng lên, khe ≥ 30.
-- i có dấu trên: i không chấm (ị giữ chấm). Nặng: dưới đáy thật, khe 36; ỵ: ngang đường chân, bên phải đuôi, khe 36 (designer 06/11).
+- i có dấu trên: i không chấm (ị giữ chấm). Nặng: dưới đáy thật, khe 36; ỵ: cùng đường chấm, bên phải đuôi, khe 36 (designer 06/11).
 - Sừng ơ: bám vai vòng o ở góc 48° (Ơ hoa 38°: vòng thường nhỏ, sừng 38° chỉ nhô 33 u khỏi x-height, ơ đọc thành σ); ư: mép ngoài thân phải ở CÙNG cao độ, sừng thay loe ngoài đỉnh thân phải (như Ư).
 - đ: thanh ngang H cắt qua thân d ở 600 (giữa x-height và đỉnh thân), vươn ra ngoài thân 0.62 V, vào trong 0.9 V (như Đ).
 - ₫: đ + gạch dưới dày H ở −160.
@@ -72,9 +72,9 @@ def compose(S, M, ch, w):
     if tone == 'dotbelow':
         d = M['dotbelow']; db = V.bounds(d)
         if b == 'y':
-            # ỵ (designer 06/11 "dấu nặng của y phải nằm như này"): chấm NGANG ĐƯỜNG CHÂN (đáy như dấu chấm câu, −3), bên PHẢI
-            # đuôi y, cách nét đúng khe dấu GAP_ML — không treo dưới đuôi
-            q = V.move(d, cx, -3 - db[1])
+            # ỵ (designer 06/11 "dấu nặng của y phải nằm như này", "nằm hơi cao hơn các dấu nặng khác"): chấm cùng ĐƯỜNG CHẤM
+            # với mọi dấu nặng (đỉnh −49), bên PHẢI đuôi y, cách nét đúng khe dấu GAP_ML
+            q = V.move(d, cx, -11.3 - V.GAP_ML - (db[3] - db[1]) - 2)    # cùng đường chấm với mọi dấu nặng (designer 06/11)
             while V.gap(base, q) < V.GAP_ML: q = V.move(q, 2, 0)
             while V.gap(base, q) > V.GAP_ML + 2: q = V.move(q, -1, 0)
         else:

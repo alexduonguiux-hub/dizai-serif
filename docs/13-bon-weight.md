@@ -309,3 +309,5 @@ Designer: "sửa luôn lệch ư + i m n ở SemiBold". Ngoại lệ chống va 
 Designer (ảnh "Ty."): "dấu nặng của y phải nằm như này". Trước: chấm treo dưới đỉnh nhọn, dời trái tới khi cách đuôi 36 (lơ lửng dưới đường chân, bên trái đuôi). Nay (`lower/vn_lower.py`): chấm **ngang đường chân** (đáy −3 như dấu chấm câu), **bên phải đuôi y**, cách nét đúng khe dấu GAP_ML. Áp cho cả 4 weight, Roman và Italic. Va chạm 0; âm tiết Việt 0 lệch; QA file font 34 / 34.
 
 Kiểm tra mọi dấu nặng (designer 06/11 "kiểm tra lại các dấu nặng khác"): chấm bằng dấu chấm câu ở mọi chữ (100 Regular / 138 Bold); canh tâm chữ gốc (Ẹ theo tâm thị giác 0.44 của E, ụ giữa hai thân); khe chữ thường 38–49. Ụ Ự từng đặt theo đáy tràn U (−14.2) → chấm thấp hơn hàng 3 u; nay mọi chấm trên MỘT đường (đỉnh −49, tính từ đáy chuẩn −11.3); ỵ theo luật riêng (ngang đường chân, bên phải đuôi).
+
+Designer 06/11 "dấu nặng chữ ỵ nằm hơi cao hơn các dấu nặng khác": chấm ỵ hạ về CÙNG đường chấm (đỉnh −49) với mọi dấu nặng, vẫn bên phải đuôi y, cách nét khe GAP_ML.
