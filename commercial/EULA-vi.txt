@@ -1,0 +1,96 @@
+ANNAM SERIF — THỎA THUẬN CẤP PHÉP NGƯỜI DÙNG CUỐI (EULA)
+Phiên bản 1.0 · 6 tháng 11 năm 2026
+Bên cấp phép: Đìzai Studio ("chúng tôi")
+
+BẢN NHÁP — nên nhờ luật sư rà soát trước khi bán theo thỏa thuận này.
+
+Khi tải về, cài đặt hoặc sử dụng phần mềm font AnNam Serif, bạn đồng ý với thỏa thuận
+này. Nếu không đồng ý, vui lòng không sử dụng.
+
+1. ĐỊNH NGHĨA
+  "Phần mềm Font"  các file font AnNam Serif ở mọi định dạng (OTF, TTF, TTF variable,
+                   WOFF2) và các bản cập nhật chúng tôi cung cấp.
+  "Bên được cấp phép", "bạn"  cá nhân hoặc công ty ghi trên đơn hàng. Nếu mua cho
+                   khách hàng, hãy ghi tên khách hàng; giấy phép khi đó thuộc về khách.
+  "Gói giấy phép"  loại giấy phép ghi trên đơn hàng: Web, App / Game hoặc
+                   Logo / Thương hiệu, cùng quy mô (biến thể) của gói.
+  "Máy trạm"       một máy tính có cài Phần mềm Font.
+
+2. CẤP PHÉP
+  Chúng tôi cấp cho bạn quyền sử dụng vĩnh viễn, trên toàn thế giới, không độc quyền,
+  không chuyển nhượng Phần mềm Font cho mục đích của Gói giấy phép, trong giới hạn của gói.
+  Mọi Gói giấy phép đều kèm quyền cài đặt trên tối đa 2 Máy trạm của Bên được cấp phép
+  để tạo ra sản phẩm mà gói cho phép (ví dụ thiết kế website, hình ảnh game, logo).
+  Ảnh tĩnh và file PDF làm bằng Phần mềm Font cho sản phẩm đó được phát hành tự do.
+
+3. CÁC GÓI GIẤY PHÉP
+ 3.1 Web
+  - Bạn được tự lưu trữ file WOFF2 (hoặc định dạng web khác) và dùng qua @font-face trên
+    các website do Bên được cấp phép sở hữu hoặc quản lý.
+  - Tổng lượt xem trang mỗi tháng của các website đó không vượt giới hạn của biến thể
+    (50.000 / 250.000 / 1.000.000). Vượt giới hạn thì cần nâng cấp.
+  - Được cắt bớt ký tự (subset) để tối ưu tốc độ.
+  - Không bao gồm: công cụ web/phần mềm cho người truy cập tự tạo thiết kế hoặc tài liệu
+    bằng font (trình chỉnh sửa, in theo yêu cầu, tạo mẫu) — cần giấy phép App / Game;
+    email marketing và quảng cáo hiển thị trên website bên thứ ba cần thỏa thuận mở rộng.
+ 3.2 App / Game
+  - Bạn được nhúng Phần mềm Font vào một (1) ứng dụng hoặc một tựa game, trên mọi nền tảng,
+    gồm bản cập nhật, bản demo và tài liệu quảng bá của chính tựa đó.
+  - Phần mềm Font phải được nhúng sao cho người dùng cuối không dễ trích xuất thành font
+    cài đặt được (ví dụ biên dịch vào gói tài nguyên).
+  - Người dùng cuối được xem và gõ chữ bằng font trong ứng dụng, nhưng ứng dụng không được
+    cho phép xuất chính file font hoặc dùng font trong công cụ bán ra để làm thiết kế khác.
+  - Biến thể Indie: Bên được cấp phép có tổng doanh thu và vốn huy động trong 12 tháng
+    gần nhất dưới 100.000 USD. Biến thể Studio: không giới hạn doanh thu.
+ 3.3 Logo / Thương hiệu
+  - Bạn được dùng hình chữ trong một (1) logo, chữ thương hiệu (wordmark) hoặc bộ nhận diện,
+    kể cả khi chỉnh sửa hình chữ, trên mọi chất liệu, mọi số lượng, không giới hạn thời gian.
+  - Bạn được đăng ký nhãn hiệu cho logo đó. Bạn không có quyền gì đối với Phần mềm Font
+    hay hình chữ nguyên bản chưa chỉnh sửa.
+  - Biến thể Doanh nghiệp nhỏ: dưới 25 nhân sự. Biến thể Doanh nghiệp lớn: không giới hạn.
+  - Không bao gồm chữ hiển thị trực tiếp (live text) trên website hoặc trong ứng dụng
+    (cần giấy phép Web hoặc App / Game).
+
+4. HẠN CHẾ
+  Bạn không được:
+  a) bán, cho thuê, cho mượn, chia sẻ, tải lên nơi công cộng hoặc phân phối Phần mềm Font
+     dưới mọi hình thức, riêng lẻ hay kèm sản phẩm khác, trừ trường hợp mục 3 cho phép;
+  b) sửa đổi, chuyển đổi hoặc tạo phần mềm font phái sinh từ Phần mềm Font, trừ việc
+     subset cho Web và chuyển đổi tối thiểu cần để nhúng theo App / Game; hình chữ trong
+     logo được chỉnh sửa như tác phẩm đồ hoạ (mục 3.3);
+  c) xoá hoặc thay đổi thông tin bản quyền, nhãn hiệu, giấy phép trong file;
+  d) dùng Phần mềm Font hoặc đường viền glyph để huấn luyện hoặc tạo kiểu chữ khác,
+     kể cả bằng học máy;
+  e) cho người khác truy cập Phần mềm Font, trừ nhân viên và cộng tác viên của Bên được
+     cấp phép đang làm sản phẩm được cấp phép.
+
+5. QUYỀN SỞ HỮU
+  Phần mềm Font, thiết kế của nó và tên "AnNam Serif" thuộc về Đìzai Studio.
+  Bạn nhận quyền sử dụng, không nhận quyền sở hữu.
+
+6. NÂNG CẤP VÀ CHUYỂN NHƯỢNG
+  Bạn có thể nâng lên biến thể lớn hơn hoặc gói khác bằng cách trả phần chênh lệch.
+  Giấy phép chỉ được chuyển nhượng khi có đồng ý bằng văn bản của chúng tôi, và phải
+  chuyển kèm mọi bản sao Phần mềm Font.
+
+7. KHÔNG BẢO ĐẢM
+  Phần mềm Font được cung cấp "nguyên trạng". Chúng tôi không bảo đảm phần mềm không có
+  lỗi hoặc phù hợp với mục đích cụ thể. Nếu file bị lỗi, chúng tôi sẽ cung cấp bản sửa
+  khi có thể.
+
+8. GIỚI HẠN TRÁCH NHIỆM
+  Tổng trách nhiệm của chúng tôi theo thỏa thuận này không vượt quá số tiền bạn đã trả
+  cho giấy phép. Chúng tôi không chịu trách nhiệm cho thiệt hại gián tiếp hoặc hệ quả.
+
+9. CHẤM DỨT
+  Giấy phép tự động chấm dứt nếu bạn vi phạm. Khi chấm dứt, bạn phải xoá mọi bản sao
+  Phần mềm Font. Sản phẩm đã phát hành đúng thỏa thuận trước khi chấm dứt được tiếp tục
+  sử dụng.
+
+10. LUẬT ÁP DỤNG
+  Thỏa thuận này theo pháp luật Việt Nam. Khi bản tiếng Việt và tiếng Anh khác nhau,
+  bản tiếng Anh áp dụng cho khách hàng quốc tế, bản tiếng Việt áp dụng cho khách hàng
+  tại Việt Nam.
+
+Câu hỏi hoặc giấy phép lớn hơn: liên hệ Đìzai Studio.
+© 2026 Đìzai Studio

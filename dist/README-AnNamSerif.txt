@@ -40,4 +40,9 @@ WEB (CSS) — use the woff2 files
   @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
   @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; }
 
+LICENSE
+  AnNam Serif is commercial software. Your rights depend on the license on your order
+  (Web, App / Game or Logo / Brand) — read EULA-en.txt (English) or EULA-vi.txt (Tiếng Việt).
+  Every license includes installing the fonts on up to 2 computers to create the licensed work.
+
 © 2026 Đìzai Studio

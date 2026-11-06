@@ -1,0 +1,99 @@
+ANNAM SERIF — END USER LICENSE AGREEMENT (EULA)
+Version 1.0 · 6 November 2026
+Licensor: Đìzai Studio ("we", "us")
+
+DRAFT — have this agreement reviewed by a lawyer before you sell under it.
+
+By downloading, installing or using the AnNam Serif font software you agree to this
+agreement. If you do not agree, do not use the font software.
+
+1. DEFINITIONS
+  "Font Software"  the AnNam Serif font files in any format (OTF, TTF, variable TTF,
+                   WOFF2) and any updates we provide.
+  "Licensee", "you" the person or the company named on the order. If you buy for a
+                   client, put the client's name on the order; the license then
+                   belongs to the client.
+  "License Tier"   the type of license shown on your order: Web, App / Game or
+                   Logo / Brand, and its size (variant).
+  "Workstation"    one computer on which the Font Software is installed.
+
+2. GRANT
+  We grant you a perpetual, worldwide, non-exclusive, non-transferable license to use
+  the Font Software for the purpose of your License Tier, within its limits.
+  Every License Tier includes installation on up to 2 Workstations used by the
+  Licensee to create the work the tier covers (for example the website design, the
+  game art or the logo). Static images and PDF files made with the Font Software
+  for that work may be distributed freely.
+
+3. LICENSE TIERS
+ 3.1 Web
+  - You may self-host the WOFF2 (or other web) files and link them with @font-face on
+    websites owned or controlled by the Licensee.
+  - The total of monthly page views across those websites must not exceed the limit of
+    your variant (50,000 / 250,000 / 1,000,000). Exceeding it requires an upgrade.
+  - You may subset the files (remove characters) for performance.
+  - Not covered: web or software tools in which visitors create designs or documents
+    with the font (editors, print-on-demand, template builders) — these need an
+    App / Game license; e-mail templates and ads served on third-party sites need a
+    written extension.
+ 3.2 App / Game
+  - You may embed the Font Software in one (1) application or game title, on all
+    platforms, including its updates, demos and its own marketing material.
+  - The Font Software must be embedded so that end users cannot easily extract it as
+    an installable font (for example compiled into the asset bundle).
+  - End users may see and type text in the font inside the title, but the title must not
+    let users export the font itself or use it in a tool sold to make other designs.
+  - Indie variant: Licensee whose total revenue and funding in the last 12 months is
+    under USD 100,000. Studio variant: no revenue limit.
+ 3.3 Logo / Brand
+  - You may use the letterforms in one (1) logo, wordmark or brand identity, including
+    modified letterforms, in any medium and any quantity, for an unlimited time.
+  - You may register the resulting logo as a trademark. You do not acquire any right
+    in the Font Software or in the unmodified letterforms themselves.
+  - Small Business variant: Licensee with fewer than 25 employees.
+    Enterprise variant: no limit.
+  - Live text on websites or in apps is not covered (needs a Web or App / Game license).
+
+4. RESTRICTIONS
+  You may not:
+  a) sell, rent, lend, share, upload to a public place or otherwise distribute the Font
+     Software, alone or in a bundle, except as allowed in section 3;
+  b) modify, adapt, translate, convert or create derivative font software from the Font
+     Software, except subsetting for Web and conversion strictly needed for embedding
+     under App / Game; logo letterforms may be altered as artwork (3.3);
+  c) remove or change the copyright, trademark or license information in the files;
+  d) use the Font Software or its glyph outlines to train or build other typefaces,
+     including by machine learning;
+  e) give access to the Font Software to anyone other than the Licensee's employees and
+     contractors working on the licensed work.
+
+5. OWNERSHIP
+  The Font Software, its design and the name "AnNam Serif" belong to Đìzai Studio.
+  You receive a license, not ownership.
+
+6. UPGRADES AND TRANSFER
+  You may upgrade to a larger variant or another tier by paying the difference. The
+  license may be transferred only with our written consent, and only together with all
+  copies of the Font Software.
+
+7. NO WARRANTY
+  The Font Software is provided "as is". We do not warrant that it is error free or fit
+  for a particular purpose. If a file is defective we will provide a corrected version
+  where possible.
+
+8. LIMITATION OF LIABILITY
+  Our total liability under this agreement is limited to the price you paid for the
+  license. We are not liable for indirect, incidental or consequential damages.
+
+9. TERMINATION
+  This license ends automatically if you breach it. On termination you must delete
+  every copy of the Font Software. Work published before termination in compliance
+  with this agreement may remain in use.
+
+10. GOVERNING LAW
+  This agreement is governed by the laws of Vietnam. If the Vietnamese and English
+  versions differ, the English version prevails for international customers and the
+  Vietnamese version prevails for customers in Vietnam.
+
+Questions or larger licenses: contact Đìzai Studio.
+© 2026 Đìzai Studio

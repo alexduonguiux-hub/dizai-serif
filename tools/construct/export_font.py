@@ -17,6 +17,7 @@ Designer 05/11: "làm bản variable luôn nhé, thêm cả Italic".
 import json, math, os, re, sys, unicodedata, subprocess, shutil
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import ufoLib2
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'release')); import license_meta as LM
 from fontTools.agl import UV2AGL
 from fontTools.designspaceLib import DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor
 import spacing as SPc
@@ -336,6 +337,7 @@ def compile_fonts():
             vend = t['OS/2'].achVendID.strip() or 'NONE'
             uid = f"{VERSION[0]}.{VERSION[1]:03d};{vend};{t['name'].getDebugName(6)}" + ('-VF' if 'fvar' in t else '')
             t['name'].setName(uid, 3, 3, 1, 0x409)
+            LM.apply(t)                                               # name ID 13/14: giấy phép thương mại (tools/release/license_meta.py)
             if 'glyf' in t and 'gvar' not in t:                       # bỏ điểm trùng liên tiếp (làm tròn sau cu2qu → đoạn độ dài 0)
                 from fontTools.ttLib.tables._g_l_y_f import GlyphCoordinates
                 for gn in t.getGlyphOrder():
