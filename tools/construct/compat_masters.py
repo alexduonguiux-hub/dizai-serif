@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.join(HERE, 'ref'))
 from compat import compat, lerp_segs, to_d
 from interp import contours, tocubic
 from weights import WEIGHTS, TW
-OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
+OUT = os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct')   # DIZAI_OUT: nhánh Italic (out/construct_italic)
 
 def bez(s, t):
     if s[0] == 'L': a, b = s[1], s[2]; return (a[0] + (b[0] - a[0])*t, a[1] + (b[1] - a[1])*t)

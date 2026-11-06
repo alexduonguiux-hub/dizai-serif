@@ -6,8 +6,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys
 from weights import WEIGHTS
 from make_ref import outline
 import vn_punct as V
-O = json.load(open(os.path.join(HERE, '..', '..', 'out', 'construct', 'outlines.json')))
-SP = json.load(open(os.path.join(HERE, '..', '..', 'out', 'construct', 'spacing.json')))
+O = json.load(open(os.path.join(os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct'), 'outlines.json')))
+SP = json.load(open(os.path.join(os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct'), 'spacing.json')))
 def area(p):
     tot = 0; cur = []; pt = None
     for v, ps in p.segments:

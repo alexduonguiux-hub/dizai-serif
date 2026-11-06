@@ -22,7 +22,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.jo
 from make_ref import outline
 import vn_punct as V
 
-OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
+OUT = os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct')   # DIZAI_OUT: nhánh Italic (out/construct_italic)
 STEP = 5.0; Y0, Y1 = -260.0, 1100.0
 YS = np.arange(Y0, Y1 + 0.1, STEP)
 DEPTH = 40.0

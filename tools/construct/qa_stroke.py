@@ -19,7 +19,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys
 import spacing as SPc
 from make_ref import outline
 import vn_punct as V
-OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
+OUT = os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct')   # DIZAI_OUT: nhánh Italic (out/construct_italic)
 SC = 0.5
 
 def polys(o):

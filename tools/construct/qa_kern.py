@@ -17,7 +17,7 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, 'ref'))
 import spacing as SPc
 from make_ref import outline
-OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
+OUT = os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct')   # DIZAI_OUT: nhánh Italic (out/construct_italic)
 O = json.load(open(os.path.join(OUT, 'outlines.json'))); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
 KN = json.load(open(os.path.join(OUT, 'kerning.json')))
 YS = SPc.YS; MIN_GAP = SPc.MIN_GAP
