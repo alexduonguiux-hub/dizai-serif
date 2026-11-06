@@ -41,7 +41,7 @@ This trial contains Regular, Bold and Italic with the Basic Latin character set 
 testing and layout mockups that are not published. See EULA-Trial.txt.
 
 The full family (8 styles + variable fonts, 134 Vietnamese letters, woff2)
-is available under a Web, App / Game or Logo / Brand license.
+is available under a Desktop, Web, App / Game or Logo / Brand license.
 
 © 2026 Đìzai Studio
 """

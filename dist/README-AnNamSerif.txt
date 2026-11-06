@@ -42,7 +42,8 @@ WEB (CSS) — use the woff2 files
 
 LICENSE
   AnNam Serif is commercial software. Your rights depend on the license on your order
-  (Web, App / Game or Logo / Brand) — read EULA-en.txt (English) or EULA-vi.txt (Tiếng Việt).
-  Every license includes installing the fonts on up to 2 computers to create the licensed work.
+  (Desktop, Web, App / Game or Logo / Brand) — read EULA-en.txt (English) or EULA-vi.txt (Tiếng Việt).
+  Desktop: install on the number of computers on your order. Web, App / Game and Logo / Brand
+  include installing on up to 2 computers only to create the licensed work.
 
 © 2026 Đìzai Studio

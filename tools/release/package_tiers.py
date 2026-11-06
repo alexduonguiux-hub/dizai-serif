@@ -1,5 +1,6 @@
 """Đóng gói file tải về theo gói giấy phép (mỗi gói = 1 file đính kèm cho mọi biến thể trên Lemon Squeezy).
 
+  Desktop     OTF + TTF tĩnh + TTF variable (cài máy: in ấn, tài liệu, hình ảnh, video)
   Web         woff2 (variable + tĩnh) + OTF để thiết kế trên 2 máy
   App / Game  TTF tĩnh + TTF variable + OTF
   Logo        OTF + TTF tĩnh + TTF variable (cài máy để thiết kế logo)
@@ -10,12 +11,14 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.pat
 FONTS = os.path.join(ROOT, 'fonts'); OUT = os.path.join(ROOT, 'dist', 'commercial'); C = os.path.join(ROOT, 'commercial')
 V = '0.900'
 TIERS = {
+    'Desktop':  ['otf', 'ttf', 'variable'],
     'Web':      ['woff2/variable', 'woff2/ttf', 'otf'],
     'AppGame':  ['ttf', 'variable', 'otf'],
     'LogoBrand': ['otf', 'ttf', 'variable'],
-    'Complete': ['variable', 'otf', 'ttf', 'woff2/variable', 'woff2/ttf'],   # gói trọn bộ (mua cả 3 giấy phép)
+    'Complete': ['variable', 'otf', 'ttf', 'woff2/variable', 'woff2/ttf'],   # gói trọn bộ (mua cả 4 giấy phép)
 }
 NOTE = {
+    'Desktop': 'DESKTOP LICENSE — install otf/ (or ttf/, not both; variable/ for apps that support it) on the number of computers on your order.',
     'Web': 'WEB LICENSE — self-host the files in woff2/ (see CSS in README). The otf/ fonts are for designing the site on up to 2 computers.',
     'AppGame': 'APP / GAME LICENSE — embed the ttf/ or variable/ fonts in one app or game title. Do not ship them as loose installable files.',
     'LogoBrand': 'LOGO / BRAND LICENSE — install otf/ (or ttf/, not both) on up to 2 computers to create one logo or brand identity.',

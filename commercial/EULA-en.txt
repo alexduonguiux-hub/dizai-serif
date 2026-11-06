@@ -14,16 +14,18 @@ agreement. If you do not agree, do not use the font software.
                    client, put the client's name on the order; the license then
                    belongs to the client.
   "License Tier"   the type of license shown on your order: Web, App / Game or
-                   Logo / Brand, and its size (variant).
+                   Logo / Brand or Desktop, and its size (variant).
   "Workstation"    one computer on which the Font Software is installed.
 
 2. GRANT
   We grant you a perpetual, worldwide, non-exclusive, non-transferable license to use
   the Font Software for the purpose of your License Tier, within its limits.
-  Every License Tier includes installation on up to 2 Workstations used by the
-  Licensee to create the work the tier covers (for example the website design, the
-  game art or the logo). Static images and PDF files made with the Font Software
-  for that work may be distributed freely.
+  The Web, App / Game and Logo / Brand tiers each include installation on up to
+  2 Workstations, used only to create the work that tier covers (for example the
+  website design, the game art or the logo). Any other use on a computer (print,
+  documents, images, video, social media) needs a Desktop license (3.4).
+  Static images and PDF files made with the Font Software for licensed work may be
+  distributed freely.
 
 3. LICENSE TIERS
  3.1 Web
@@ -53,6 +55,16 @@ agreement. If you do not agree, do not use the font software.
   - Small Business variant: Licensee with fewer than 25 employees.
     Enterprise variant: no limit.
   - Live text on websites or in apps is not covered (needs a Web or App / Game license).
+ 3.4 Desktop
+  - You may install the Font Software on the number of Workstations of your variant
+    (1–2 / 3–5 / 6–10) owned or controlled by the Licensee. Larger numbers: contact us.
+  - You may use it to create print and digital work in any quantity: printed matter,
+    packaging, signage, documents, presentations, images, social media posts, video
+    and motion graphics, including work for clients and products for sale.
+  - You may embed the Font Software in PDF files and documents for viewing and printing.
+  - Not covered: a logo, wordmark or brand identity (needs Logo / Brand), live text on
+    websites (Web) or in apps and games (App / Game), and products whose main value is
+    the font itself, such as editable templates sold to others.
 
 4. RESTRICTIONS
   You may not:

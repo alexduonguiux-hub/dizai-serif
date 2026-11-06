@@ -13,15 +13,17 @@ này. Nếu không đồng ý, vui lòng không sử dụng.
   "Bên được cấp phép", "bạn"  cá nhân hoặc công ty ghi trên đơn hàng. Nếu mua cho
                    khách hàng, hãy ghi tên khách hàng; giấy phép khi đó thuộc về khách.
   "Gói giấy phép"  loại giấy phép ghi trên đơn hàng: Web, App / Game hoặc
-                   Logo / Thương hiệu, cùng quy mô (biến thể) của gói.
+                   Logo / Thương hiệu hoặc Desktop, cùng quy mô (biến thể) của gói.
   "Máy trạm"       một máy tính có cài Phần mềm Font.
 
 2. CẤP PHÉP
   Chúng tôi cấp cho bạn quyền sử dụng vĩnh viễn, trên toàn thế giới, không độc quyền,
   không chuyển nhượng Phần mềm Font cho mục đích của Gói giấy phép, trong giới hạn của gói.
-  Mọi Gói giấy phép đều kèm quyền cài đặt trên tối đa 2 Máy trạm của Bên được cấp phép
-  để tạo ra sản phẩm mà gói cho phép (ví dụ thiết kế website, hình ảnh game, logo).
-  Ảnh tĩnh và file PDF làm bằng Phần mềm Font cho sản phẩm đó được phát hành tự do.
+  Các gói Web, App / Game và Logo / Thương hiệu kèm quyền cài trên tối đa 2 Máy trạm,
+  chỉ để tạo ra sản phẩm mà gói đó cho phép (ví dụ thiết kế website, hình ảnh game, logo).
+  Mọi mục đích khác trên máy tính (in ấn, tài liệu, hình ảnh, video, mạng xã hội) cần
+  giấy phép Desktop (mục 3.4).
+  Ảnh tĩnh và file PDF làm bằng Phần mềm Font cho sản phẩm được cấp phép được phát hành tự do.
 
 3. CÁC GÓI GIẤY PHÉP
  3.1 Web
@@ -50,6 +52,16 @@ này. Nếu không đồng ý, vui lòng không sử dụng.
   - Biến thể Doanh nghiệp nhỏ: dưới 25 nhân sự. Biến thể Doanh nghiệp lớn: không giới hạn.
   - Không bao gồm chữ hiển thị trực tiếp (live text) trên website hoặc trong ứng dụng
     (cần giấy phép Web hoặc App / Game).
+ 3.4 Desktop
+  - Bạn được cài Phần mềm Font trên số Máy trạm theo biến thể (1–2 / 3–5 / 6–10) do Bên
+    được cấp phép sở hữu hoặc quản lý. Số máy lớn hơn: liên hệ chúng tôi.
+  - Được dùng để làm sản phẩm in và kỹ thuật số với số lượng không giới hạn: ấn phẩm in,
+    bao bì, biển hiệu, tài liệu, trình chiếu, hình ảnh, bài đăng mạng xã hội, video và
+    đồ hoạ chuyển động, kể cả làm cho khách hàng và sản phẩm để bán.
+  - Được nhúng Phần mềm Font vào file PDF và tài liệu để xem và in.
+  - Không bao gồm: logo, chữ thương hiệu hoặc bộ nhận diện (cần Logo / Thương hiệu), chữ
+    hiển thị trực tiếp trên website (Web) hoặc trong ứng dụng, game (App / Game), và sản
+    phẩm mà giá trị chính là chính font, như mẫu thiết kế chỉnh sửa được bán cho người khác.
 
 4. HẠN CHẾ
   Bạn không được:

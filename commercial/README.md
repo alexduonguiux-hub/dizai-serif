@@ -4,13 +4,16 @@ Trạng thái: bản nháp v1 (06/11/2026). Các con số giá là **đề xuấ
 
 ## 1. Gói giấy phép và biến thể (variant)
 
-Ba gói designer đã chọn: **Web · App / Game · Logo / Thương hiệu**. Không có gói Desktop riêng.
-Mỗi gói vì thế kèm quyền **cài trên 2 máy** để làm ra đúng sản phẩm của gói (EULA mục 2).
-Không có điều khoản này, người mua giấy phép Logo sẽ không được cài font để vẽ logo.
-Nếu sau này muốn bán Desktop riêng (in ấn, ấn phẩm, mạng xã hội), thêm gói thứ tư và bỏ câu "2 Máy trạm" khỏi mục 2.
+Bốn gói: **Desktop · Web · App / Game · Logo / Thương hiệu**.
+- **Desktop** (EULA 3.4): cài theo số máy; dùng cho in ấn, bao bì, tài liệu, hình ảnh, mạng xã hội, video, nhúng PDF. Không gồm logo, website, app.
+- Web, App / Game và Logo vẫn kèm quyền **cài trên 2 máy**, nhưng chỉ để làm ra đúng sản phẩm của gói đó (EULA mục 2). Nhờ vậy người chỉ mua Logo không phải mua thêm Desktop để vẽ logo.
+- Muốn bắt buộc khách mua Desktop kèm theo: bỏ câu "2 Máy trạm" ở mục 2 của EULA.
 
 | Gói | Biến thể | Giới hạn | USD | VND (tham khảo) |
 |---|---|---|---|---|
+| Desktop | 1–2 máy | | 45 | 1.090.000 |
+| Desktop | 3–5 máy | | 90 | 2.190.000 |
+| Desktop | 6–10 máy | (hơn 10 máy: liên hệ) | 160 | 3.890.000 |
 | Web | Small | ≤ 50.000 lượt xem trang / tháng | 40 | 990.000 |
 | Web | Medium | ≤ 250.000 | 90 | 2.290.000 |
 | Web | Large | ≤ 1.000.000 | 180 | 4.590.000 |
@@ -35,14 +38,15 @@ Giá đặt theo mặt bằng font indie một họ 8 kiểu có variable. Giá 
 ## 3. Cài sản phẩm trên Lemon Squeezy (checklist)
 
 1. **Store**: tên Đìzai Studio, tiền USD, payout ngân hàng Việt Nam. Thêm logo, email hỗ trợ, link EULA.
-2. Tạo **3 product** (hoặc 1 product nhiều variant):
+2. Tạo **4 product** (hoặc 1 product nhiều variant):
 
    | Product | File đính kèm (dist/commercial/) | Variant |
    |---|---|---|
+   | AnNam Serif — Desktop License | AnNamSerif-Desktop-v0.900.zip | 1–2 / 3–5 / 6–10 máy |
    | AnNam Serif — Web License | AnNamSerif-Web-v0.900.zip | Small / Medium / Large |
    | AnNam Serif — App / Game License | AnNamSerif-AppGame-v0.900.zip | Indie / Studio |
    | AnNam Serif — Logo / Brand License | AnNamSerif-LogoBrand-v0.900.zip | Small Business / Enterprise |
-   | (tuỳ chọn) AnNam Serif — Complete | AnNamSerif-Complete-v0.900.zip | gộp 3 gói, giảm ~20 % |
+   | (tuỳ chọn) AnNam Serif — Complete | AnNamSerif-Complete-v0.900.zip | gộp 4 gói (biến thể nhỏ nhất), giảm ~20 % |
 
    Nếu file chỉ gắn được ở cấp product, mọi variant cùng nhận một zip. Gói zip đã làm như vậy.
 3. Mô tả product: dán phần "Giới hạn" của biến thể và link EULA (EN/VI).
@@ -102,7 +106,7 @@ Mọi file trong `fonts/` có **name ID 13** (mô tả giấy phép thương m�
 **Trang nên có**
 - Specimen: chữ lớn, thanh trượt wght/slnt, ô gõ thử.
 - Bảng glyph.
-- Giấy phép: so sánh 3 gói + FAQ.
+- Giấy phép: so sánh 4 gói + FAQ.
 - Bảng giá với nút mua Lemon Squeezy.
 - Tải bản Trial.
 - EULA EN/VI.
@@ -110,6 +114,8 @@ Mọi file trong `fonts/` có **name ID 13** (mô tả giấy phép thương m�
 
 **FAQ gợi ý**
 - "Tôi thiết kế logo cho khách thì mua gói nào?" → Logo / Thương hiệu, đứng tên khách.
+- "Làm poster, bao bì, bài đăng mạng xã hội?" → Desktop.
+- "Agency 8 người cùng dùng?" → Desktop 6–10 máy.
 - "Website và app cùng dùng?" → mua cả Web và App / Game, hoặc gói Complete.
 - "Vượt lượt xem?" → nâng cấp, trả phần chênh lệch.
 

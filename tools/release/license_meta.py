@@ -7,7 +7,7 @@ import os, sys
 
 LICENSE_URL = ''          # ví dụ 'https://annamserif.com/license' — để trống thì không ghi name ID 14
 LICENSE_DESC = ('This font software is commercial. Use requires a license from Đìzai Studio '
-                '(Web, App / Game or Logo / Brand). See the EULA included with the font.')
+                '(Desktop, Web, App / Game or Logo / Brand). See the EULA included with the font.')
 TRIAL_DESC = ('Trial version for personal, non-commercial testing only. '
               'Any commercial use requires a license from Đìzai Studio.')
 
