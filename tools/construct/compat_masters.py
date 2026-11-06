@@ -20,7 +20,7 @@ from interp import contours, tocubic
 from weights import WEIGHTS, TW
 from fair import fair
 # S17 độ cong liền G2 (font/fair.py) — designer 06/11 "Các đường cong của chữ s và S. Cảm giác không smooth lắm"
-FAIR = set('SsŠš$§')
+FAIR = set()   # S17 TẮT (designer 06/11 "bụng không cong tròn tự nhiên" → designer tự vẽ lại S Bold, ref/figma_S_bold.py); bật lại: set('SsŠš$§')
 OUT = os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct')   # DIZAI_OUT: nhánh Italic (out/construct_italic)
 
 def bez(s, t):

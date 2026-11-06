@@ -14,6 +14,8 @@ from scipy.optimize import least_squares
 SMOOTH = 6.0          # nút có gãy < 6° coi là nút trơn
 TOL = 3.0             # u: thang phần dư lệch hình (lấy mẫu theo tham số)
 W2 = 20000.0          # trọng số G2 (Δκ 0.001 ↔ 20 phần dư): tỉ lệ bán kính hai bên nút ≤ 1.15
+DEG = 1.0             # u: tay nắm ngắn hơn coi như suy biến (góc đầu nét)
+AX = math.sin(math.radians(2.5))   # tiếp tuyến lệch trục < 2.5° → điểm cực
 SLIDE, MAXSLIDE = 12.0, 8.0    # u: thang / giới hạn trượt nút dọc tiếp tuyến
 
 
@@ -48,25 +50,40 @@ def fair(segs):
         la, lb = math.dist(a[3], a[4]), math.dist(b[1], b[2])
         u = _unit(_sub(a[4], a[3])); v = _unit(_sub(b[2], b[1])); d = _unit((u[0] + v[0], u[1] + v[1]))
         a[3] = (a[4][0] - la*d[0], a[4][1] - la*d[1]); b[2] = (b[1][0] + lb*d[0], b[1][1] + lb*d[1])
-    # tay nắm độ dài 0 (góc đầu nét: cubic suy biến) giữ nguyên
-    C = [i for i in range(n) if S[i][0] == 'C' and math.dist(S[i][1], S[i][2]) > 1e-6 and math.dist(S[i][3], S[i][4]) > 1e-6]
-    dirs = {i: (_unit(_sub(S[i][2], S[i][1])), _unit(_sub(S[i][3], S[i][4]))) for i in C}
-    L0 = np.array([[math.dist(S[i][1], S[i][2]), math.dist(S[i][4], S[i][3])] for i in C])
+    # Góc tư bụng (đoạn cong nối HAI điểm cực, tiếp tuyến hai đầu ngang / dọc) gần đúng cung elip, là phần "tròn tự nhiên" của
+    # bụng → GIỮ NGUYÊN (designer 06/11: "bây giờ bụng nó lại không cong tròn tự nhiên" — bản đầu chỉnh cả góc tư, bụng phình
+    # vuông). Chỉ đoạn chuyển (bụng → sống, bụng → tay đầu nét) đổi theo để khớp độ cong của góc tư; điểm cực đứng yên.
+    ext = lambda v: v is not None and (abs(v[0]) < AX or abs(v[1]) < AX)
+    def is_ext(i):                                         # nút cuối đoạn i
+        s_ = S[i]
+        return s_[0] == 'C' and math.dist(s_[3], s_[4]) > DEG and ext(_unit(_sub(s_[4], s_[3])))
+    E = {i for i in range(n) if is_ext(i)}                 # nút (cuối đoạn i) là điểm cực
+    quad = {i for i in range(n) if S[i][0] == 'C' and (i - 1) % n in E and i in E}
+    # biến: từng tay nắm (đoạn, đầu) khác 0 của đoạn không phải góc tư
+    # tay nắm độ dài 0 (cubic suy biến ở góc đầu nét): cho mọc dọc hướng tiếp tuyến hiện có (về phía tay nắm kia) → góc đầu nét giữ
+    H = [(i, e) for i in range(n) if S[i][0] == 'C' and i not in quad for e in (0, 1)]
+    def hdir(i, e):
+        P0, P1, P2, P3 = S[i][1:]
+        if e == 0: return _unit(_sub(P1, P0)) if math.dist(P0, P1) > DEG else _unit(_sub(P2, P0))
+        return _unit(_sub(P2, P3)) if math.dist(P2, P3) > DEG else _unit(_sub(P1, P3))
+    dirs = {(i, e): hdir(i, e) for i, e in H}
+    L0 = np.array([max(1.0, math.dist(S[i][1], S[i][2]) if e == 0 else math.dist(S[i][4], S[i][3])) for i, e in H])
+    LMAX = np.array([0.6*math.dist(S[i][1], S[i][4]) for i, e in H])
     old = {i: [_bez(S[i], t/8) for t in range(1, 8)] for i in range(n) if S[i][0] == 'C'}
-    ix = {i: k for k, i in enumerate(C)}
-    # nút trơn được TRƯỢT dọc tiếp tuyến của nó (giữ cực trị: nút ở cực trái / đỉnh trượt dọc / ngang, toạ độ cực không đổi)
-    tang = {i: _unit(_sub(S[(i + 1) % n][2], S[(i + 1) % n][1])) for i in J}
-    nC = 2*len(C)
+    Js = [i for i in J if i not in E]                      # nút trượt được: chỉ nút KHÔNG phải điểm cực
+    tang = {i: _unit(_sub(S[(i + 1) % n][2], S[(i + 1) % n][1])) for i in Js}
+    nH = len(H)
 
     def build(x):
-        L = np.exp(x[:nC]).reshape(-1, 2); T = [list(s) for s in S]
-        for k, i in enumerate(J):                            # trượt nút: dời cả hai tay nắm kề theo
-            t = tang[i]; dx, dy = x[nC + k]*t[0], x[nC + k]*t[1]; j = (i + 1) % n
+        L = np.exp(x[:nH]); T = [list(s) for s in S]
+        for k, i in enumerate(Js):                           # trượt nút: dời cả hai tay nắm kề theo
+            t = tang[i]; dx, dy = x[nH + k]*t[0], x[nH + k]*t[1]; j = (i + 1) % n
             for q, idx in ((T[i], 4), (T[i], 3), (T[j], 1), (T[j], 2)):
                 q[idx] = (q[idx][0] + dx, q[idx][1] + dy)
-        for i in C:
-            (u0, u1), (a, b) = dirs[i], L[ix[i]]
-            T[i][2] = (T[i][1][0] + a*u0[0], T[i][1][1] + a*u0[1]); T[i][3] = (T[i][4][0] + b*u1[0], T[i][4][1] + b*u1[1])
+        for k, (i, e) in enumerate(H):
+            u = dirs[(i, e)]
+            if e == 0: T[i][2] = (T[i][1][0] + L[k]*u[0], T[i][1][1] + L[k]*u[1])
+            else: T[i][3] = (T[i][4][0] + L[k]*u[0], T[i][4][1] + L[k]*u[1])
         return T
 
     def res(x):
@@ -76,12 +93,13 @@ def fair(segs):
         for i in old:
             for t, q in zip(range(1, 8), old[i]):
                 p = _bez(T[i], t/8); r += [(p[0] - q[0])/TOL, (p[1] - q[1])/TOL]
-        r += list(x[nC:]/SLIDE)
+        r += list(x[nH:]/SLIDE)
         return np.array(r)
 
-    x0 = np.concatenate([np.log(L0.ravel()), np.zeros(len(J))])
-    lo = np.concatenate([np.log(0.3*L0.ravel()), -MAXSLIDE*np.ones(len(J))])
-    hi = np.concatenate([np.log(2.2*L0.ravel()), MAXSLIDE*np.ones(len(J))])
+    if not H: return S
+    x0 = np.concatenate([np.log(L0), np.zeros(len(Js))])
+    lo = np.concatenate([np.log(np.minimum(0.3*L0, 0.5)), -MAXSLIDE*np.ones(len(Js))])
+    hi = np.concatenate([np.log(np.maximum(2.2*L0, LMAX)), MAXSLIDE*np.ones(len(Js))])
     sol = least_squares(res, x0, bounds=(lo, hi), method='trf', xtol=1e-12, ftol=1e-12, max_nfev=6000)
     return build(sol.x)
 
