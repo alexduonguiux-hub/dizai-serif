@@ -61,6 +61,89 @@ def with_tail(g, T, bowl=False):
     stem_fill = V.rect(x0, yc - 2, x1, yc + 2)                  # phủ mối nối (không cạnh trùng khít)
     return clean(V.U(body, h, stem_fill))
 
+def stem_runs(g, y, sw, tol=22):
+    """các đoạn mực ở cao độ y có bề rộng ≈ thân (thân đứng, không phải bụng / nét chéo)"""
+    return [r for r in runs_at(g, y) if abs((r[1] - r[0]) - sw) <= tol]
+
+def entry(g, sw):
+    """I2.8 nét vào: đầu thân ở x-height bỏ loe phải (chỉ khi loe đứng riêng — không phải vai / bụng nối từ thân), giữ loe trái
+    làm cờ nét vào"""
+    for x0, x1 in stem_runs(g, XH - 120, sw):
+        box = V.rect(x1 + 0.5, XH - 75, x1 + 48, XH + 6); piece = V.I(g, box)
+        if list(piece.segments) and piece.bounds[2] < x1 + 42: g = V.D(g, box)
+    return g
+
+def cut_foot(g, x0, x1, ybot):
+    """I2.9 chân gọn: chân thân (đáy ở ybot) bỏ loe hai bên, cắt thẳng"""
+    sw = x1 - x0; yf = ybot + 150
+    for y in range(int(ybot + 150), int(ybot), -2):
+        rr = [r for r in runs_at(g, y) if r[1] > x0 - 1 and r[0] < x1 + 1]
+        if not rr or (rr[0][1] - rr[0][0]) > sw + 1.0: break
+        yf = y
+    g = V.D(g, V.rect(x0 - 50, ybot - 30, x1 + 50, yf))
+    return V.U(g, V.rect(x0, ybot, x1, yf + 1))
+
+FOOT = set('nmhrk')                                  # chân thân ở đường chân (trừ chân đã có đuôi ra)
+FOOT_DESC = set('pq')                                # chân thân dưới đường chân
+ENTRY = set('ijmnpru') | {'ı', 'ȷ'}
+
+def feet(c, g, sw):
+    if c in FOOT:
+        rs = stem_runs(g, 120, sw)
+        if c == 'k': rs = rs[:1]
+        if c in TAIL: rs = rs[:-1]
+        for x0, x1 in rs: g = cut_foot(g, x0, x1, 0.0)
+    if c in FOOT_DESC:
+        yb = g.bounds[1]
+        for x0, x1 in stem_runs(g, yb + 140, sw)[:1]: g = cut_foot(g, x0, x1, yb)
+    return g
+
+def _q2c(p):
+    import symbols as Sy
+    return Sy.q2c(p)
+def _dil(p, r):
+    s_ = pathops.Path(); s_.addPath(p); s_.stroke(2*r, pathops.LineCap.ROUND_CAP, pathops.LineJoin.ROUND_JOIN, 4)
+    s_.convertConicsToQuads(); return V.U(p, _q2c(s_))
+def _ero(p, r):
+    s_ = pathops.Path(); s_.addPath(p); s_.stroke(2*r, pathops.LineCap.ROUND_CAP, pathops.LineJoin.ROUND_JOIN, 4)
+    s_.convertConicsToQuads(); return V.D(p, _q2c(s_))
+
+def round_bottom(g, sw, pairs=1, yr=XH*0.45):
+    """I2.10 v w đáy tròn: dưới yr (0.45 x-height) hai nét cong về đáy (tiếp tuyến ngang ở đáy) — mép ngoài đáy ở −8 (vượt đường
+    chân như o), mép trong đáy ở −8 + 0.85 thân; mỗi mép là hai cubic: từ mép nét ở yr (tiếp tuyến theo mép) → điểm đáy"""
+    R1 = runs_at(g, yr); st = 30.0; R2 = runs_at(g, yr + st)
+    while len(R2) != len(R1) and st > 6: st /= 2; R2 = runs_at(g, yr + st)
+    top = V.I(g, V.rect(-BIG, yr - 2, BIG, BIG)); parts = [top]
+    def dirn(xa, xb):
+        dx, dy = xa - xb, -st; L = math.hypot(dx, dy); return (dx/L, dy/L)
+    def half(P0, d0, B, right):                              # P0 (mép, yr) → B (đáy, tiếp tuyến ngang)
+        h1 = 0.55*(P0[1] - B[1])/abs(d0[1]); h2 = 0.55*abs(B[0] - P0[0])
+        c1 = (P0[0] + d0[0]*h1, P0[1] + d0[1]*h1); c2 = (B[0] + (h2 if right else -h2), B[1])
+        return c1, c2
+    for k in range(pairs):
+        (oL, iL), (iR, oR) = R1[2*k], R1[2*k + 1]
+        (oL2, iL2), (iR2, oR2) = R2[2*k], R2[2*k + 1]
+        dOL, dOR, dIL, dIR = dirn(oL, oL2), dirn(oR, oR2), dirn(iL, iL2), dirn(iR, iR2)
+        Bo = ((oL + oR)/2, -8.0); Bi = ((iL + iR)/2, -8.0 + 0.85*sw)
+        u = pathops.Path(); u.moveTo(oL, yr)
+        c1, c2 = half((oL, yr), dOL, Bo, False); u.cubicTo(*c1, *c2, *Bo)
+        c1, c2 = half((oR, yr), dOR, Bo, True); u.cubicTo(*c2, *c1, oR, yr)
+        u.lineTo(oR, yr + 4); u.lineTo(iR, yr + 4); u.lineTo(iR, yr)
+        c1, c2 = half((iR, yr), dIR, Bi, True); u.cubicTo(*c1, *c2, *Bi)
+        c1, c2 = half((iL, yr), dIL, Bi, False); u.cubicTo(*c2, *c1, iL, yr)
+        u.lineTo(iL, yr + 4); u.lineTo(oL, yr + 4); u.close()
+        parts.append(pathops.op(u, u, pathops.PathOp.UNION, fix_winding=True))
+    return clean(V.U(*parts))
+
+def y_hook(y_, j, yc=-40.0):
+    """I2.11 y đuôi cong: phần dưới yc của nét mảnh y thay bằng móc j, nghiêng theo nét mảnh và giãn theo bề ngang nét"""
+    (a0, a1), (b0, b1) = runs_at(y_, yc)[0], runs_at(y_, yc - 100)[0]
+    sl = ((a0 + a1)/2 - (b0 + b1)/2)/100.0                     # dx / dy của nét mảnh
+    j0, j1 = runs_at(j, yc)[0]; k = (a1 - a0)/(j1 - j0)
+    jb = V.I(j, V.rect(-BIG, -BIG, BIG, yc + 10))
+    jb = V.xform(jb, lambda x, y: (a0 + (x - j0)*k + (y - yc)*sl, y))
+    return clean(V.U(V.D(y_, V.rect(-BIG, -BIG, BIG, yc)), jb))
+
 def single_a(d, T):
     """a một tầng: thân d cắt ngang ở x-height (phần bên phải mép trái thân, trên XH), chân phải = đuôi ra"""
     s0, s1 = runs_at(d, 300)[-1]
@@ -85,14 +168,15 @@ def rebase(acc_r, base_r, base_i, ch):
     """chữ có dấu: dấu (= chữ Roman − chữ gốc Roman) dời theo chữ gốc italic"""
     bx0, bx1 = band_x(base_r); ax0, _ = band_x(acc_r); dx = ax0 - bx0           # vị trí chữ gốc trong chữ có dấu
     horn = '\u031b' in unicodedata.normalize('NFD', ch)
-    if horn or ch in 'đ' or base_r.bounds[1] < -30: marks = clean(V.D(acc_r, V.move(base_r, dx, 0)), 200)
+    if horn or ch in 'đĐ' or base_r.bounds[1] < -30: marks = clean(V.D(acc_r, V.move(base_r, dx, 0)), 200)
     else:                                                        # dấu trên / dưới: theo dải cao độ (không trừ boolean → dấu
         tb = V.move(base_r, dx, 0).bounds                        # không vỡ mảnh có cạnh chung)
         marks = V.U(V.I(acc_r, V.rect(-BIG, tb[3] + 2, BIG, BIG)), V.I(acc_r, V.rect(-BIG, -BIG, BIG, tb[1] - 2)))
     if '̛' in unicodedata.normalize('NFD', ch):              # sừng: theo mép phải ở 0.8 x-height
-        y = XH*0.8; sh = edge_at(base_i, y) - edge_at(base_r, y) - 3      # lấn vào thân 3 u (không hở, không cạnh trùng)
-    elif ch in 'đ':                                              # thanh đ: theo mép trái thân (ở 600)
-        sh = edge_at(base_i, 600, False) - edge_at(base_r, 600, False)
+        y = 0.8*base_r.bounds[3]; sh = edge_at(base_i, y) - edge_at(base_r, y) - 3      # lấn vào thân 3 u (không hở, không cạnh trùng)
+    elif ch in 'đĐ':                                             # thanh đ Đ: theo mép trái thân
+        yy = 600 if ch == 'đ' else 560
+        sh = edge_at(base_i, yy, False) - edge_at(base_r, yy, False)
     else:                                                        # dấu trên / dưới: theo tâm chữ gốc
         ix0, ix1 = band_x(base_i); sh = (ix0 + ix1)/2 - (bx0 + bx1)/2
     return clean(V.U(V.move(base_i, dx, 0), V.move(marks, sh, 0)))
@@ -117,11 +201,24 @@ def build(O, w):
     G = {}
     T = tail_module(cond(P(O[f't-{w}'])))
     base_set = [c for c in low if SPc.base(c) == c or c in 'ıȷ']
+    sw = runs_at(cond(P(O[f'n-{w}'])), 250)[0]; sw = sw[1] - sw[0]
+    jj = cond(P(O[f'j-{w}']))
     for c in base_set:
         g = cond(P(O[f'{c}-{w}']))
-        if c == 'f': g = italic_f(g, cond(P(O[f'j-{w}'])))
+        if c == 'f': g = italic_f(g, jj)
         elif c in TAIL: g = with_tail(g, T, bowl=(c in 'ud'))
-        G[c] = g
+        if c in 'vw': g = round_bottom(g, sw, 2 if c == 'w' else 1)
+        if c == 'y': g = y_hook(g, jj)
+        g = feet(c, g, sw)
+        if c in ENTRY: g = entry(g, sw)
+        G[c] = clean(g)
+    caps = [c for c in chars if SPc.kind(c) == 'caps']               # I2.12 chữ hoa hẹp ngang như chữ thường, dấu giữ nguyên
+    for c in caps:
+        if SPc.base(c) == c: G[c] = cond(P(O[f'{c}-{w}']))
+    for c in caps:
+        if c in G: continue
+        b = SPc.base(c)
+        G[c] = rebase(cond(P(O[f'{c}-{w}'])), cond(P(O[f'{b}-{w}'])), G[b], c) if b in G else cond(P(O[f'{c}-{w}']))
     for c in low:
         if c in G: continue
         b = SPc.base(c)
