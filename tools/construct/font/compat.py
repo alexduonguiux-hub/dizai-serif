@@ -6,6 +6,19 @@ import math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
 from interp import contours, area, reverse, align, tocubic
 
+def _sarea(g, n=8):
+    """diện tích có dấu theo đường cong LẤY MẪU (area() của interp chỉ dùng điểm neo: contour 2 đoạn cong — chấm i italic sau đơn
+    giản hoá — có diện tích 0 → bị coi là ngược chiều, master Bold bị đảo, Medium / SemiBold chấm co lại)"""
+    P = []
+    for s in g:
+        if s[0] == 'L': P.append(s[1])
+        else:
+            a, b, c, d = s[1:]
+            for k in range(n):
+                t = k/n; u = 1 - t
+                P.append((u**3*a[0] + 3*u*u*t*b[0] + 3*u*t*t*c[0] + t**3*d[0], u**3*a[1] + 3*u*u*t*b[1] + 3*u*t*t*c[1] + t**3*d[1]))
+    return sum(p[0]*q[1] - q[0]*p[1] for p, q in zip(P, P[1:] + P[:1]))/2
+
 def _bbox(cs):
     xs = [q[0] for g in cs for s in g for q in s[1:]]; ys = [q[1] for g in cs for s in g for q in s[1:]]
     return min(xs), min(ys), max(xs), max(ys)
@@ -27,7 +40,7 @@ def compat(dR, dB):
         c = sig(g, nr)
         k = min((k for k in range(len(cb)) if k not in used), key=lambda k: math.dist(c, sig(cb[k], nb)))
         used.add(k); h = cb[k]
-        if (area(g) > 0) != (area(h) > 0): h = reverse(h)
+        if (_sarea(g) > 0) != (_sarea(h) > 0): h = reverse(h)
         R, B = align(g, h, nr, nb)
         Ro, Bo = [], []
         for s, u in zip(R, B):

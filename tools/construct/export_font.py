@@ -27,8 +27,15 @@ VERSION = (0, 900)
 ITALIC_ANGLE = 10.0
 WGHT = {'Regular': 400, 'Medium': 500, 'SemiBold': 600, 'Bold': 700}
 
-O = json.load(open(os.path.join(OUT, 'outlines.json'))); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
-KN = json.load(open(os.path.join(OUT, 'kerning.json')))
+OUTI = os.path.join(ROOT, 'out', 'construct_italic')            # Italic I2 (italic.py): thiết kế italic đứng, nghiêng khi xuất
+def use(style):
+    """nạp outline / spacing / kerning của Roman hoặc Italic (I2 nếu có out/construct_italic, không thì Roman nghiêng — I1)"""
+    global O, SP, KN
+    d = OUTI if style == 'Italic' and os.path.exists(os.path.join(OUTI, 'kerning.json')) else OUT
+    O = json.load(open(os.path.join(d, 'outlines.json'))); SP = json.load(open(os.path.join(d, 'spacing.json')))
+    KN = json.load(open(os.path.join(d, 'kerning.json')))
+    return d
+use('Roman')
 CHARS = sorted(SP['Regular'], key=ord)
 
 def gname(c):
@@ -205,6 +212,13 @@ def main():
     groups, ks = kerning_data()
     print('kerning: nhóm', len(groups), '· cặp R / B', len(ks['Regular']), len(ks['Bold']))
     for ang, tag in ((0, ''), (ITALIC_ANGLE, '-Italic')):
+        print('nguồn', tag or '-Roman', use('Italic' if tag else 'Roman'))
+        FL = {}
+        for c in CHARS:
+            if f'{c}-Regular' in O:
+                fl = flips(parse(O[f'{c}-Regular']))
+                if fl: FL[c] = fl
+        groups, ks = kerning_data()
         ds = DesignSpaceDocument()
         ax = AxisDescriptor(); ax.name = 'Weight'; ax.tag = 'wght'; ax.minimum, ax.default, ax.maximum = 400, 400, 700
         ds.addAxis(ax)

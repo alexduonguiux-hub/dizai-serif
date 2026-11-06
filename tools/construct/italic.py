@@ -7,8 +7,8 @@ Dựng thiết kế italic ĐỨNG (chưa nghiêng) từ outline Roman của hai
 (export_font.py) quanh ½ x-height — mọi glyph nghiêng như nhau nên khe giữa hai chữ giữ nguyên, spacing / kerning tính trên
 bản đứng là đúng cho bản nghiêng. Luật (docs/14-italic.md):
   I2.2  chữ thường hẹp ngang CONDENSE = 0.94 (nét đứng nhẹ theo — italic gọn và nhẹ hơn roman một bậc)
-  I2.3  đuôi ra: chân phải của i ı l n m h u d và a mới = móc chân của t (cùng module, cùng bề dày thân)
-  I2.4  a một tầng: d cắt thân ở x-height (bụng d giữ nguyên), chân phải là đuôi ra
+  I2.3  đuôi ra: chân phải của i ı l n m h u d = móc chân của t (cùng module, cùng bề dày thân)
+  I2.4  a GIỮ HAI TẦNG như Roman (designer 06/11: "giữ a hai tầng như roman") — chỉ hẹp ngang + nghiêng; single_a() giữ lại để đối chiếu
   I2.5  f có đuôi xuống: phần trên của f + thân và móc dưới của j (cùng module móc j)
   I2.6  chữ có dấu: chữ gốc italic + dấu của Roman (giữ nguyên hình), dời theo tâm chữ gốc; sừng ư ơ và thanh đ dời theo mép thân
   I2.7  chữ hoa, số, dấu câu, ký hiệu: giữ hình Roman (chỉ nghiêng)
@@ -23,7 +23,7 @@ import spacing as SPc
 OUT = os.path.join(HERE, '..', '..', 'out', 'construct'); OUTI = os.path.join(HERE, '..', '..', 'out', 'construct_italic')
 XH = 495.0
 CONDENSE = 0.94
-TAIL = set('ilnmhud') | {'ı', 'a'}
+TAIL = set('ilnmhud') | {'ı'}                 # a giữ hai tầng như Roman (designer 06/11), không đuôi
 BIG = 3000
 
 def P(d): return outline([d])
@@ -119,13 +119,14 @@ def build(O, w):
     base_set = [c for c in low if SPc.base(c) == c or c in 'ıȷ']
     for c in base_set:
         g = cond(P(O[f'{c}-{w}']))
-        if c == 'a': g = single_a(cond(P(O[f'd-{w}'])), T)
-        elif c == 'f': g = italic_f(g, cond(P(O[f'j-{w}'])))
+        if c == 'f': g = italic_f(g, cond(P(O[f'j-{w}'])))
         elif c in TAIL: g = with_tail(g, T, bowl=(c in 'ud'))
         G[c] = g
     for c in low:
         if c in G: continue
         b = SPc.base(c)
+        if b == 'i' and unicodedata.normalize('NFD', c)[1:2] not in ('\u0323',):   # dấu trên của i: chữ gốc là ı (không chấm)
+            b = 'ı'
         if b not in G: G[c] = cond(P(O[f'{c}-{w}'])); continue
         G[c] = rebase(cond(P(O[f'{c}-{w}'])), cond(P(O[f'{b}-{w}'])), G[b], c)
     out = {}

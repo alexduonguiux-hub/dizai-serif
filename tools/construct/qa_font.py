@@ -15,7 +15,6 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 import spacing as SPc
 import export_font as E
 ROOT = os.path.join(HERE, '..', '..'); F = os.path.join(ROOT, 'fonts')
-SP, KN, O = E.SP, E.KN, E.O
 WG = E.WGHT
 
 def face(path, wght=None):
@@ -69,7 +68,9 @@ def outlines(vf, w, ang, tag, rep):
 
 def main():
     rep = {}
+    global SP, KN, O
     for ital, sfx in ((0, ''), (E.ITALIC_ANGLE, '-Italic')):
+        E.use('Italic' if sfx else 'Roman'); SP, KN, O = E.SP, E.KN, E.O
         vf = os.path.join(F, 'variable', f'{E.PS}{sfx}[wght].ttf'); print('==', os.path.basename(vf))
         for w in WG:
             check(face(vf, WG[w]), w, f'VF{sfx} wght {WG[w]}', rep)
