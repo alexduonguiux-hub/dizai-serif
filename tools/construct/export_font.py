@@ -23,7 +23,7 @@ import spacing as SPc
 ROOT = os.path.join(HERE, '..', '..'); OUT = os.path.join(ROOT, 'out', 'construct'); FONTS = os.path.join(ROOT, 'fonts')
 BUILD = os.path.join(OUT, 'ufo')
 FAMILY, PS = 'AnNam Serif', 'AnNamSerif'   # designer 06/11: AnNam → thêm chữ phân biệt với BT Annam Neue (BeauType)
-VENDOR = 'DZAI'                                # Dizai Studio — nên đăng ký với Microsoft (mstwsite@microsoft.com)
+VENDOR = 'DZAI'                                # Đìzai Studio (4 ký tự theo chuẩn OpenType — 'DIZAI' 5 ký tự không dùng được) — nên đăng ký với Microsoft (mstwsite@microsoft.com)
 #          # designer 06/11 "Đổi tên Font thành AnNam" (trước: Dizai Serif / DizaiSerif)
 VERSION = (0, 900)
 ITALIC_ANGLE = 10.0
@@ -137,7 +137,8 @@ def master(w, ang, FL, groups, kern):
     i.italicAngle = -ang if ang else 0
     i.openTypeOS2WeightClass = WGHT[w]
     i.openTypeOS2VendorID = VENDOR
-    i.copyright = 'Copyright 2026 Dizai Studio'; i.openTypeNameDesigner = 'Dizai Studio'
+    i.copyright = 'Copyright 2026 Đìzai Studio'; i.openTypeNameDesigner = 'Đìzai Studio'   # designer 06/11: tên studio có dấu
+    i.openTypeNameManufacturer = 'Đìzai Studio'
     i.postscriptUnderlinePosition = -120; i.postscriptUnderlineThickness = 40
     i.openTypeOS2Selection = [7]                                     # USE_TYPO_METRICS
     f.lib['public.glyphOrder'] = ['.notdef'] + [gname(c) for c in CHARS]

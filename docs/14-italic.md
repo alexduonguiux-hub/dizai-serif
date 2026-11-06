@@ -71,3 +71,5 @@ Designer: "Đổi tên Font thành AnNam". Tên họ (name ID 1 / 16) "AnNam", t
 - **Tên trên thị trường:** đã có họ thương mại **BT Annam Neue** (BeauType, Duong Nguyen — chữ Việt, cảm hứng bút dẹt và mái Hoàng thành Huế, có Roman + Italic; theo KREATIV phát triển từ một font "Annam" gốc). Tên "AnNam" dễ nhầm — chờ designer quyết định giữ hay đổi.
 
 Quyết định designer: **thêm chữ phân biệt** → tên phát hành **AnNam Serif** (PostScript `AnNamSerif-*`, file gộp `AnNamSerifSlnt-*`), **vendor ID DZAI** (nên đăng ký với Microsoft: mstwsite@microsoft.com). Gói: `dist/AnNamSerif-v0.900.zip` (variable, OTF, TTF, woff2, README).
+
+Designer 06/11: studio "Đìzai Studio" (có dấu) trong bản quyền / designer / nhà sản xuất của font và README; README gói viết tiếng Anh. Vendor ID giữ DZAI — "DIZAI" 5 ký tự không hợp lệ (achVendID đúng 4 ký tự).

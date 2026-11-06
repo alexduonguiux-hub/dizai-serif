@@ -1,35 +1,43 @@
-AnNam Serif — Version 0.900 (06/11/2026)
-Thiết kế: Dizai Studio · Vendor ID: DZAI
+AnNam Serif — Version 0.900 (6 November 2026)
+Design: Đìzai Studio · Vendor ID: DZAI
 
-Bộ chữ glyphic loe nét, tương phản theo bút dẹt, đủ tiếng Việt (134 chữ có dấu, ghép dấu NFD).
-4 độ đậm: Regular 400 · Medium 500 · SemiBold 600 · Bold 700, mỗi độ đậm có Roman và Italic (nghiêng 10°).
+A glyphic, flared serif with broad-nib contrast and full Vietnamese support
+(all 134 precomposed Vietnamese letters; decomposed input — base letter + combining marks — is composed automatically).
+4 weights: Regular 400 · Medium 500 · SemiBold 600 · Bold 700, each in Roman and Italic (10° slant).
 
-THƯ MỤC
+CONTENTS
   variable/
-    AnNamSerif[wght].ttf           Roman, trục độ đậm wght 400–700
-    AnNamSerif-Italic[wght].ttf    Italic, trục độ đậm wght 400–700
-    AnNamSerif[slnt,wght].ttf      Gộp Roman + Italic: wght 400–700 + nghiêng slnt 0 … −10°
-  otf/   8 bản tĩnh OpenType (CFF): AnNamSerif-Regular … AnNamSerif-BoldItalic
-  ttf/   8 bản tĩnh TrueType:       AnNamSerif-Regular … AnNamSerif-BoldItalic
-  woff2/ bản web (nén Brotli, nhẹ hơn TTF ~4 lần)
+    AnNamSerif[wght].ttf            Roman, weight axis wght 400–700
+    AnNamSerif-Italic[wght].ttf     Italic, weight axis wght 400–700
+    AnNamSerif[slnt,wght].ttf       Roman + Italic in one file: wght 400–700 + slant slnt 0 to −10°
+  otf/    8 static OpenType (CFF) fonts: AnNamSerif-Regular … AnNamSerif-BoldItalic
+  ttf/    8 static TrueType fonts:       AnNamSerif-Regular … AnNamSerif-BoldItalic
+  woff2/  web fonts (Brotli-compressed, about 4× smaller than TTF)
     variable/  AnNamSerif[wght].woff2 · AnNamSerif-Italic[wght].woff2 · AnNamSerif[slnt,wght].woff2
-    ttf/       8 bản tĩnh AnNamSerif-Regular.woff2 … AnNamSerif-BoldItalic.woff2
+    ttf/       8 static fonts AnNamSerif-Regular.woff2 … AnNamSerif-BoldItalic.woff2
 
-NÊN CÀI BẢN NÀO
-  • Thiết kế in ấn, Adobe, Figma, Office: cài 8 file otf/ (hoặc ttf/). Không cài cùng lúc otf/ và ttf/ trên một máy.
-  • Web và ứng dụng hỗ trợ variable: dùng variable/. Chỉ chọn MỘT cách: hoặc cặp AnNamSerif[wght] + AnNamSerif-Italic[wght],
-    hoặc file gộp AnNamSerif[slnt,wght] — cài cả hai thì menu font Windows hiện trùng "AnNam Serif Regular". Cần nút in nghiêng (I) hoạt động trong Word / Office thì cài
-    cả AnNamSerif[wght].ttf và AnNamSerif-Italic[wght].ttf; file gộp [slnt,wght] dành cho web / Figma / ứng dụng hỗ trợ trục nghiêng.
+WHICH FILES TO INSTALL
+  • Print and desktop design (Adobe, Figma, Microsoft Office): install the 8 fonts in otf/ (or ttf/).
+    Do not install otf/ and ttf/ on the same computer — they share names and will conflict.
+  • Apps that support variable fonts: use variable/. Choose ONE option:
+      – the pair AnNamSerif[wght].ttf + AnNamSerif-Italic[wght].ttf (needed for the Italic button in Word / Office), or
+      – the single file AnNamSerif[slnt,wght].ttf (web, Figma and apps that support a slant axis).
+    Installing both options shows "AnNam Serif Regular" twice in the Windows font menu.
 
-Web (CSS) — dùng woff2:
-  /* variable: 2 file cho mọi độ đậm 400–700, nút in nghiêng hoạt động đúng */
-  @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif[wght].woff2") format("woff2"); font-weight: 400 700; font-style: normal; font-display: swap; }
-  @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif-Italic[wght].woff2") format("woff2"); font-weight: 400 700; font-style: italic; font-display: swap; }
-  body { font-family: "AnNam Serif", serif; }   /* font-weight: 400 … 700 tuỳ ý, ví dụ 450 */
+WEB (CSS) — use the woff2 files
+  /* Variable pair: any weight from 400 to 700, real italic */
+  @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif[wght].woff2") format("woff2");
+               font-weight: 400 700; font-style: normal; font-display: swap; }
+  @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif-Italic[wght].woff2") format("woff2");
+               font-weight: 400 700; font-style: italic; font-display: swap; }
+  body { font-family: "AnNam Serif", serif; }   /* any font-weight from 400 to 700, e.g. 450 */
 
-  /* hoặc một file gộp: nghiêng tuỳ ý 0 … −10° */
-  @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif[slnt,wght].woff2") format("woff2"); font-weight: 400 700; font-style: oblique 0deg 10deg; }
+  /* Or the single combined file: any slant from 0 to 10° */
+  @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif[slnt,wght].woff2") format("woff2");
+               font-weight: 400 700; font-style: oblique 0deg 10deg; }
 
-  /* hoặc bản tĩnh (trình duyệt cũ): mỗi kiểu một @font-face, ví dụ */
+  /* Or static fonts (older browsers): one @font-face per style, for example */
   @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif-Regular.woff2") format("woff2"); font-weight: 400; font-style: normal; }
   @font-face { font-family: "AnNam Serif"; src: url("AnNamSerif-BoldItalic.woff2") format("woff2"); font-weight: 700; font-style: italic; }
+
+© 2026 Đìzai Studio
