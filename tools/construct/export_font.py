@@ -112,10 +112,12 @@ def draw(glyph, cs, dx, ang):
     pen = glyph.getPen()
     T = (lambda p: skew((p[0] + dx, p[1]), ang)) if ang else (lambda p: (p[0] + dx, p[1]))
     for c in cs:
-        pen.moveTo(T(c[0][1]))
+        pen.moveTo(T(c[0][1])); cur = c[0][1]
         for s in c[1:]:
+            if all(math.dist(q, cur) < 0.01 for q in s[1:]): continue      # đoạn suy biến (độ dài 0) — fontbakery 06/11, '2' Bold
             if s[0] == 'L': pen.lineTo(T(s[1]))
             else: pen.curveTo(T(s[1]), T(s[2]), T(s[3]))
+            cur = s[-1]
         pen.closePath()
 
 def master(w, ang, FL, groups, kern):
@@ -239,6 +241,17 @@ def main():
         dsp = os.path.join(BUILD, f'{PS}{tag}.designspace'); ds.write(dsp)
         print('designspace', dsp)
 
+def stat_static(path, italic):
+    """STAT bản tĩnh: mỗi trục đúng MỘT giá trị (weight của chính file, ital 0 / 1)"""
+    from fontTools.ttLib import TTFont
+    from fontTools.otlLib.builder import buildStatTable
+    f = TTFont(path); wc = f['OS/2'].usWeightClass; n = {v: k for k, v in WGHT.items()}.get(wc, 'Regular')
+    wv = [dict(value=wc, name=n, flags=0x2 if wc == 400 else 0)]
+    if wc == 400: wv[0]['linkedValue'] = 700
+    iv = [dict(value=1, name='Italic')] if italic else [dict(value=0, name='Roman', flags=0x2, linkedValue=1)]
+    buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='ital', name='Italic', values=iv)])
+    f.save(path)
+
 def stat(path, italic):
     """STAT: trục wght (Regular elidable, liên kết Bold) + trục ital (Roman elidable liên kết Italic) để app ghép Roman / Italic"""
     from fontTools.ttLib import TTFont
@@ -264,7 +277,38 @@ def compile_fonts():
     from fontTools.ttLib import TTFont
     for fmt in ('otf', 'ttf'):                                         # tên file = tên PostScript (DizaiSerif-SemiBoldItalic.otf)
         for f_ in os.listdir(os.path.join(FONTS, fmt)):
-            p = os.path.join(FONTS, fmt, f_); ps = TTFont(p)['name'].getDebugName(6); os.replace(p, os.path.join(FONTS, fmt, f'{ps}.{fmt}'))
+            p = os.path.join(FONTS, fmt, f_); ps = TTFont(p)['name'].getDebugName(6); q = os.path.join(FONTS, fmt, f'{ps}.{fmt}')
+            os.replace(p, q); stat_static(q, 'Italic' in ps)                    # STAT cho cả bản tĩnh (ghép Roman ↔ Italic)
+    # chuẩn hoá file (fontbakery 06/11): TTF có 'prep' bật smart dropout control (nét mảnh không mất khi chữ rất nhỏ);
+    # bỏ bảng tên Mac (platform 1) — chỉ giữ Windows
+    from fontTools.ttLib.tables import ttProgram
+    for dp, _, fs in os.walk(FONTS):
+        for f_ in fs:
+            p = os.path.join(dp, f_); t = TTFont(p)
+            t['name'].names = [n for n in t['name'].names if n.platformID != 1]
+            if 'glyf' in t and 'gvar' not in t:                       # bỏ điểm trùng liên tiếp (làm tròn sau cu2qu → đoạn độ dài 0)
+                from fontTools.ttLib.tables._g_l_y_f import GlyphCoordinates
+                for gn in t.getGlyphOrder():
+                    g = t['glyf'][gn]
+                    if g.numberOfContours <= 0: continue
+                    co, fl, ends = list(g.coordinates), list(g.flags), g.endPtsOfContours
+                    nco, nfl, nends, st = [], [], [], 0
+                    for e in ends:
+                        pts = list(range(st, e + 1)); keep = []
+                        for i in pts:
+                            if keep and co[i] == co[keep[-1]]: continue
+                            keep.append(i)
+                        if len(keep) > 1 and co[keep[-1]] == co[keep[0]]: keep.pop()
+                        nco += [co[i] for i in keep]; nfl += [fl[i] for i in keep]; nends.append(len(nco) - 1); st = e + 1
+                    if len(nco) != len(co):
+                        g.coordinates = GlyphCoordinates(nco); g.flags = bytearray(nfl); g.endPtsOfContours = nends
+            if 'glyf' in t:
+                prog = ttProgram.Program(); prog.fromAssembly(['PUSHW[ ]', '511', 'SCANCTRL[ ]', 'PUSHB[ ]', '4', 'SCANTYPE[ ]'])
+                if 'prep' not in t:
+                    from fontTools.ttLib import newTable
+                    t['prep'] = newTable('prep')
+                t['prep'].program = prog
+            t.save(p)
     for dp, _, fs in os.walk(FONTS):
         for f_ in sorted(fs): print('  ', os.path.relpath(os.path.join(dp, f_), ROOT), os.path.getsize(os.path.join(dp, f_))//1024, 'KB')
 

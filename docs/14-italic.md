@@ -32,3 +32,22 @@ Ghi chú: Tb / Th italic kern +35 / +40 (khe 100 u, roman 65) — theo tỉ số
 ## Quyết định 06/11: Italic = Roman nghiêng 10°
 
 Designer: "thử giữ nguyên bản các glyph rồi làm italic thử" → "bạn nên giữ lại glyph gốc cho cả chữ hoa". Italic xuất từ glyph Roman (chữ thường, chữ hoa, số, dấu) **nguyên vẹn**, chỉ nghiêng 10° quanh ½ x-height; spacing / kerning dùng chung Roman. `italic.py` giữ các luật I2 sau cờ `LOWER_I2 = False` (chữ thường: đuôi ra, f, v w y, nét vào, chân gọn) và `CAPS_COND = False` (chữ hoa hẹp 0.94) để thử lại khi cần. QA file font 34 / 34.
+
+## Kiểm tra toàn bộ glyph Italic (06/11)
+
+Designer: "kiểm tra lại toàn bộ glyph italic có lỗi không". Ba lớp:
+
+1. **QA trên file font** (`qa_font.py`, HarfBuzz): variable 400–700 + 16 bản tĩnh — advance, kerning mọi cặp, NFD = NFC, hộp bao glyph = outline nghiêng 10°: 34 / 34 đạt.
+2. **fontbakery check-universal** (variable, TTF, OTF):
+   - Lỗi thật đã sửa:
+     - **{ }**: hai nửa elip ở mũi chỉ chạm nhau MỘT điểm → 2 contour, mũi thắt. Nay có khối nối 2 × 0.16 thân, rộng 0.3 thân → liền khối, mũi cắt đứng (Roman và Italic).
+     - **'2' Bold TTF**: đoạn cong ngắn bị làm tròn về cùng một điểm sau cu2qu → bỏ điểm trùng liên tiếp khi hậu xử lý TTF; khi vẽ UFO bỏ đoạn độ dài 0.
+     - File: TTF thêm `prep` smart dropout; bỏ bảng tên Mac; STAT (wght + ital) cho cả bản tĩnh, mỗi trục một giá trị.
+   - Còn lại là chủ ý / không áp dụng:
+     - ß 2 contour (bụng trên có lòng kín);
+     - U+00AD có glyph (gạch mềm hiển thị khi ngắt dòng);
+     - dấu toán khác bề ngang (+ = ≠ ¬ chưa đồng bề ngang — có thể làm khi cần);
+     - interpolation_issues 8 & ® § (gãy nhỏ trong nội suy — kiểm bằng mắt ở Medium / SemiBold không thấy);
+     - thiếu avar (không bắt buộc);
+     - namecheck (cần mạng).
+3. **Soát bằng mắt** toàn bộ 324 glyph Italic Regular / Bold.

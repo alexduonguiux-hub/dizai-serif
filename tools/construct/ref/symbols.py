@@ -185,7 +185,10 @@ def build_w(S, L, w):
         tip = I(ering4(2*x0 - sr, sr, ym, 2*cyt - ym, w_, w_, 0.16*w_, 0.16*w_), rect(x0, ym, sr + 1, cyt))
         top = q2c(U(stem, hook, tip))
         bot = xform(top, lambda x, y: (x, 2*ym - y))
-        return q2c(U(top, bot))
+        # mũi: hai nửa elip tiếp tuyến ngang ở trục → chỉ chạm nhau MỘT điểm (2 contour, mũi thắt — kiểm tra italic 06/11);
+        # khối nối cao 2 × 0.16 thân, rộng 0.3 thân → mũi là một nhát cắt đứng liền khối
+        joint = rect(x0, ym - 0.16*w_, x0 + 0.3*w_, ym + 0.16*w_)
+        return q2c(U(top, bot, joint))
     br = brace(); G['{'] = norm_x(br)
     b = bounds(G['{']); G['}'] = xform(G['{'], lambda x, y: (b[2] - x, y))
     # | : thanh đứng 0.58 V, −150 … 860 (như ngoặc)
