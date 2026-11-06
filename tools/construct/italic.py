@@ -25,6 +25,9 @@ XH = 495.0
 CONDENSE = 0.94
 TAIL = set('ilnmhud') | {'ı'}                 # a giữ hai tầng như Roman (designer 06/11), không đuôi
 BIG = 3000
+# designer 06/11 "thử giữ nguyên bản các glyph rồi làm italic thử" + "trừ các chữ hoa như nãy đã duyệt": chữ thường giữ glyph Roman
+# (chỉ nghiêng khi xuất); chữ hoa hẹp 0.94 (I2.12). Phần I2 chữ thường (đuôi ra, f, v w y, nét vào, chân gọn) giữ trong code, bật bằng LOWER_I2
+LOWER_I2 = False
 
 def P(d): return outline([d])
 def runs_at(p, y):
@@ -203,7 +206,7 @@ def build(O, w):
     base_set = [c for c in low if SPc.base(c) == c or c in 'ıȷ']
     sw = runs_at(cond(P(O[f'n-{w}'])), 250)[0]; sw = sw[1] - sw[0]
     jj = cond(P(O[f'j-{w}']))
-    for c in base_set:
+    for c in (base_set if LOWER_I2 else []):
         g = cond(P(O[f'{c}-{w}']))
         if c == 'f': g = italic_f(g, jj)
         elif c in TAIL: g = with_tail(g, T, bowl=(c in 'ud'))
@@ -219,7 +222,7 @@ def build(O, w):
         if c in G: continue
         b = SPc.base(c)
         G[c] = rebase(cond(P(O[f'{c}-{w}'])), cond(P(O[f'{b}-{w}'])), G[b], c) if b in G else cond(P(O[f'{c}-{w}']))
-    for c in low:
+    for c in (low if LOWER_I2 else []):
         if c in G: continue
         b = SPc.base(c)
         if b == 'i' and unicodedata.normalize('NFD', c)[1:2] not in ('\u0323',):   # dấu trên của i: chữ gốc là ı (không chấm)
