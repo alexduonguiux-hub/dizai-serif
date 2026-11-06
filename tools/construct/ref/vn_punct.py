@@ -374,7 +374,11 @@ def marks(w):
     # ngã: sóng; đoạn đi lên mảnh, đoạn đi xuống dày; hai đầu thon
     # tâm nét là một chu kỳ sin: y = 32 sin(2π(x+130)/260), đỉnh ở −65, đáy ở +65 (độ cong đỉnh R ≈ 53 > nửa nét)
     A_, kx = _B(w, 32, 28), _B(w, 1.0, 1.14)   # Bold: sóng giãn ngang 1.14, biên độ 28 → bán kính đỉnh ≈ 75 > nửa nét
-    f = lambda x: (x*kx, A_*math.sin(2*math.pi*(x + 130)/260)); df = lambda x: (kx, A_*2*math.pi/260*math.cos(2*math.pi*(x + 130)/260))
+    # cân độ nghiêng (designer 06/11 "dấu ngã chưa cân bằng độ nghiêng, hơi nghiêng qua phải quá"): nét xuống ở giữa dày theo bút
+    # dẹt → trọng tâm nửa trái cao hơn nửa phải 23–26 u, cả dấu đổ sang phải. Đường tâm nâng dần sang phải y += s·x với s = ½ mức
+    # cân trọng tâm hoàn toàn (cân hoàn toàn trông nghiêng ngược — mắt đã tự bù một phần): Regular 0.118, Bold 0.108
+    sk = _B(w, 0.118, 0.108)
+    f = lambda x: (x*kx, A_*math.sin(2*math.pi*(x + 130)/260) + sk*x); df = lambda x: (kx, A_*2*math.pi/260*math.cos(2*math.pi*(x + 130)/260) + sk)
     tl = hermite([(f(x), df(x)) for x in (-130, -65, 0, 65, 130)])
     M['tilde'] = norm(stroke(tl, nib, taper=lambda u: 0.8 + 0.2*math.sin(math.pi*u)))
     # hỏi: móc ? thu nhỏ; vòng là cung tròn HOOK_R (độ cong đều), rồi đuôi cong về giữa; bút 0.8 bút dấu (xem HOOK_*)

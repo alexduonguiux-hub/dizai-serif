@@ -311,3 +311,7 @@ Designer (ảnh "Ty."): "dấu nặng của y phải nằm như này". Trước:
 Kiểm tra mọi dấu nặng (designer 06/11 "kiểm tra lại các dấu nặng khác"): chấm bằng dấu chấm câu ở mọi chữ (100 Regular / 138 Bold); canh tâm chữ gốc (Ẹ theo tâm thị giác 0.44 của E, ụ giữa hai thân); khe chữ thường 38–49. Ụ Ự từng đặt theo đáy tràn U (−14.2) → chấm thấp hơn hàng 3 u; nay mọi chấm trên MỘT đường (đỉnh −49, tính từ đáy chuẩn −11.3); ỵ theo luật riêng (ngang đường chân, bên phải đuôi).
 
 Designer 06/11 "dấu nặng chữ ỵ nằm hơi cao hơn các dấu nặng khác": chấm ỵ hạ về CÙNG đường chấm (đỉnh −49) với mọi dấu nặng, vẫn bên phải đuôi y, cách nét khe GAP_ML.
+
+## Dấu ngã cân độ nghiêng (06/11)
+
+Designer: "dấu ngã chưa cân bằng độ nghiêng hơi nghiêng qua phải quá". Đo: bút dẹt làm nét xuống ở giữa dày nhất → trọng tâm nửa trái cao hơn nửa phải 26 (Regular) / 23 (Bold) u, cả dấu đổ sang phải. Sửa (`ref/vn_punct.py`): đường tâm sóng nâng dần sang phải y += s·x, s = ½ mức cân trọng tâm hoàn toàn (0.118 / 0.108; hai đầu chênh ≈ 30 u) — so ba mức hiện tại / ½ / cân hoàn toàn: cân hoàn toàn trông nghiêng ngược. Áp cho mọi chữ có dấu ngã (hoa, thường, ñ, dấu tổ hợp); ~ toán học giữ nguyên. Khe ngã–mũ 33 (≥ 30). Va chạm 0; Tĩ Bold lệch 41 u so với Ti (tay T phủ dấu).
