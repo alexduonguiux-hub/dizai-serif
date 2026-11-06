@@ -347,10 +347,16 @@ def compile_fonts():
                     nco, nfl, nends, st = [], [], [], 0
                     for e in ends:
                         pts = list(range(st, e + 1)); keep = []
+                        # hai điểm trùng: GIỮ điểm on-curve (bit 0 của flag). Bản cũ giữ điểm đầu → ở góc đuôi cắt S (cubic tay nắm 0
+                        # → off-curve trùng góc) điểm góc bị bỏ, góc bo tròn trong TTF / woff2 tĩnh (designer 06/11 "đuôi cắt chữ S lỗi")
                         for i in pts:
-                            if keep and co[i] == co[keep[-1]]: continue
+                            if keep and co[i] == co[keep[-1]]:
+                                if fl[i] & 1: keep[-1] = i
+                                continue
                             keep.append(i)
-                        if len(keep) > 1 and co[keep[-1]] == co[keep[0]]: keep.pop()
+                        if len(keep) > 1 and co[keep[-1]] == co[keep[0]]:
+                            if fl[keep[-1]] & 1 and not fl[keep[0]] & 1: keep[0] = keep[-1]
+                            keep.pop()
                         nco += [co[i] for i in keep]; nfl += [fl[i] for i in keep]; nends.append(len(nco) - 1); st = e + 1
                     if len(nco) != len(co):
                         g.coordinates = GlyphCoordinates(nco); g.flags = bytearray(nfl); g.endPtsOfContours = nends
