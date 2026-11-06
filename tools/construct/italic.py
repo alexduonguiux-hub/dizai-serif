@@ -169,7 +169,8 @@ def edge_at(p, y, right=True):
 
 def rebase(acc_r, base_r, base_i, ch):
     """chữ có dấu: dấu (= chữ Roman − chữ gốc Roman) dời theo chữ gốc italic"""
-    bx0, bx1 = band_x(base_r); ax0, _ = band_x(acc_r); dx = ax0 - bx0           # vị trí chữ gốc trong chữ có dấu
+    bx0, bx1 = band_x(base_r); ax0, ax1 = band_x(acc_r)
+    dx = (ax1 - bx1) if ch in 'đĐ' else (ax0 - bx0)                            # vị trí chữ gốc trong chữ có dấu (Đ: thanh chìa trái → canh mép phải)
     horn = '\u031b' in unicodedata.normalize('NFD', ch)
     if horn or ch in 'đĐ' or base_r.bounds[1] < -30: marks = clean(V.D(acc_r, V.move(base_r, dx, 0)), 200)
     else:                                                        # dấu trên / dưới: theo dải cao độ (không trừ boolean → dấu
