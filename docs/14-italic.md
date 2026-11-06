@@ -51,3 +51,11 @@ Designer: "kiểm tra lại toàn bộ glyph italic có lỗi không". Ba lớp:
      - thiếu avar (không bắt buộc);
      - namecheck (cần mạng).
 3. **Soát bằng mắt** toàn bộ 324 glyph Italic Regular / Bold.
+
+## File variable gộp Roman + Italic (06/11)
+
+Designer: "italic không kết hợp trong variable luôn được hả". Thêm `fonts/variable/DizaiSerif[slnt,wght].ttf`: trục **wght** 400–700 + **slnt** 0 … −10°, 4 master (Regular / Bold × đứng / nghiêng — cùng cấu trúc vì Italic = Roman nghiêng 10°), 8 instance (Regular … Bold Italic), STAT wght + slnt. Nghiêng liên tục 0 … 10°. Giữ hai file `DizaiSerif[wght].ttf` + `DizaiSerif-Italic[wght].ttf` cho ứng dụng chỉ nhận nút in nghiêng qua file Italic riêng (Word, Office).
+
+Kiểm: so file gộp với hai file riêng ở 8 vị trí (4 weight × đứng / nghiêng), 2608 lần — hộp bao đường cong lệch tối đa 0.51 u (khác nhau do đổi sang đường cong bậc hai qua 4 master), diện tích < 0.5 %, advance / kerning trùng. fontbakery: 0 lỗi glyph; 1 FAIL STAT_strings (quy ước Google Fonts: nhãn trục slnt không dùng chữ "Italic").
+
+Preview mục "Font variable" dùng file gộp: thanh trượt wght + nghiêng (slnt), nút Roman / Italic.

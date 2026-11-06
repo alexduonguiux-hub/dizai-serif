@@ -112,3 +112,4 @@ Ghi vào `docs/` kèm version và ngày.
 - **Dấu nặng:** mọi chấm cùng đỉnh −49 (ỵ bên phải đuôi), cùng kích thước dấu chấm câu.
 - **Kerning:** sau mỗi thay đổi glyph chạy `qa_kern.py` cả 4 weight: va chạm 0, âm tiết Việt 0 lệch ngoài sàn, kern nhất quán 4 weight.
 - **Render to** từng glyph đã đổi ở cả 4 weight (Medium / SemiBold là nội suy — lỗi cấu trúc chỉ lộ ở đây) + chữ chạy Roman và Italic trước khi gửi.
+- **File gộp [slnt,wght]:** so với hai file riêng ở 8 vị trí bằng instancer + BoundsPen (đường cong thật, không dùng hộp bao điểm điều khiển): lệch ≤ 1.5 u, diện tích ≤ 0.5 %, advance trùng.

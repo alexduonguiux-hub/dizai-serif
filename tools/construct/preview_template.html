@@ -129,10 +129,11 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   <section class="vf" aria-labelledby="h-vf" id="vf" hidden>
     <h2 id="h-vf">Font variable</h2>
-    <p class="note">Hai file font thật (<code>fonts/variable/DizaiSerif[wght].ttf</code>, <code>DizaiSerif-Italic[wght].ttf</code>), trục wght 400–700, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
+    <p class="note">File font thật: gộp <code>fonts/variable/DizaiSerif[slnt,wght].ttf</code> (trục wght 400–700 + slnt 0 … −10°) và hai file riêng <code>DizaiSerif[wght].ttf</code>, <code>DizaiSerif-Italic[wght].ttf</code>, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
     <div class="ctrl">
       <label class="chk">wght <input type="range" id="vfw" min="400" max="700" step="1" value="400" aria-label="Độ đậm"> <span id="vfwv">400</span></label>
       <div class="seg" role="group" aria-label="Kiểu"><button id="vfr" aria-pressed="true">Roman</button><button id="vfi" aria-pressed="false">Italic</button></div>
+      <label class="chk">nghiêng (slnt) <input type="range" id="vfn" min="-10" max="0" step="0.5" value="0" aria-label="Độ nghiêng"> <span id="vfnv">0°</span></label>
       <label class="chk">cỡ <input type="range" id="vfs" min="16" max="120" value="48" aria-label="Cỡ chữ"> <span id="vfsv">48 px</span></label>
     </div>
     <div class="out" id="vfout" contenteditable="true" spellcheck="false">Hồ Gươm lúc bình minh — ĐẤT NƯỚC TÔI ĐẸP LẮM! Thăm làng gốm Bát Tràng, ứng xử &amp; lễ phép (2026).</div>
@@ -374,9 +375,12 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   sec.hidden = false;
   const $ = (id) => document.getElementById(id);
   const out = $("vfout"), w = $("vfw"), wv = $("vfwv"), sz = $("vfs"), szv = $("vfsv"), br = $("vfr"), bi = $("vfi"), steps = $("vfsteps");
-  const apply = () => { out.style.fontVariationSettings = `"wght" ${w.value}`; wv.textContent = w.value; out.style.fontSize = sz.value + "px"; szv.textContent = sz.value + " px"; };
-  w.addEventListener("input", apply); sz.addEventListener("input", apply);
-  const it = (on) => { out.classList.toggle("it", on); br.setAttribute("aria-pressed", String(!on)); bi.setAttribute("aria-pressed", String(on)); };
+  const sl = $("vfn"), slv = $("vfnv");
+  const apply = () => { out.style.fontFamily = '"Dizai Serif VF Combined", serif'; out.style.fontVariationSettings = `"wght" ${w.value}, "slnt" ${sl.value}`;
+    wv.textContent = w.value; slv.textContent = sl.value + "°"; out.style.fontSize = sz.value + "px"; szv.textContent = sz.value + " px";
+    br.setAttribute("aria-pressed", String(+sl.value === 0)); bi.setAttribute("aria-pressed", String(+sl.value === -10)); };
+  w.addEventListener("input", apply); sz.addEventListener("input", apply); sl.addEventListener("input", apply);
+  const it = (on) => { sl.value = on ? -10 : 0; apply(); };
   br.addEventListener("click", () => it(false)); bi.addEventListener("click", () => it(true));
   const S = [["Regular", 400], ["Medium", 500], ["SemiBold", 600], ["Bold", 700]];
   for (const ital of [false, true]) for (const [n, v] of S) {

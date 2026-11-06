@@ -263,6 +263,36 @@ def stat(path, italic):
     buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='ital', name='Italic', values=iv)])
     f.save(path)
 
+def combined(VF):
+    ds = DesignSpaceDocument()
+    for name, tag, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('Slant', 'slnt', -ITALIC_ANGLE, 0, 0)):
+        ax = AxisDescriptor(); ax.name, ax.tag, ax.minimum, ax.default, ax.maximum = name, tag, lo, df, hi; ds.addAxis(ax)
+    for w in ('Regular', 'Bold'):
+        for it in (False, True):
+            s_ = SourceDescriptor(); s_.path = os.path.join(BUILD, f'{PS}{"-Italic" if it else ""}-{w}.ufo')
+            s_.location = {'Weight': WGHT[w], 'Slant': -ITALIC_ANGLE if it else 0}; s_.familyName = FAMILY
+            s_.styleName = (('Italic' if w == 'Regular' else f'{w} Italic') if it else w); ds.addSource(s_)
+    for it in (False, True):
+        for w in WGHT:
+            ins = InstanceDescriptor(); ins.familyName = FAMILY
+            ins.styleName = (('Italic' if w == 'Regular' else f'{w} Italic') if it else w)
+            ins.location = {'Weight': WGHT[w], 'Slant': -ITALIC_ANGLE if it else 0}
+            ins.postScriptFontName = f'{PS}-' + ((('Italic' if w == 'Regular' else w + 'Italic')) if it else w)
+            ds.addInstance(ins)
+    dsp = os.path.join(BUILD, f'{PS}-Combined.designspace'); ds.write(dsp)
+    before = set(os.listdir(VF))
+    subprocess.run(['fontmake', '-m', dsp, '-o', 'variable', '--output-dir', VF, '--flatten-components'], check=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    new = [f_ for f_ in os.listdir(VF) if f_ not in before][0]
+    dst = os.path.join(VF, f'{PS}[slnt,wght].ttf'); os.replace(os.path.join(VF, new), dst)
+    from fontTools.ttLib import TTFont
+    from fontTools.otlLib.builder import buildStatTable
+    f = TTFont(dst)
+    wv = [dict(value=v, name=n) for n, v in WGHT.items()]; wv[0].update(flags=0x2, linkedValue=700)
+    sv = [dict(value=0, name='Upright', flags=0x2), dict(value=-ITALIC_ANGLE, name='Italic')]
+    buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='slnt', name='Slant', values=sv)])
+    f.save(dst)
+
 def compile_fonts():
     VF = os.path.join(FONTS, 'variable')
     for d in ('variable', 'otf', 'ttf'): shutil.rmtree(os.path.join(FONTS, d), ignore_errors=True)
@@ -274,6 +304,9 @@ def compile_fonts():
         for fmt in ('otf', 'ttf'):
             subprocess.run(['fontmake', '-m', dsp, '-i', '-o', fmt, '--output-dir', os.path.join(FONTS, fmt), '--flatten-components'],
                            check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    # file gộp Roman + Italic (designer 06/11 "italic không kết hợp trong variable luôn được hả"): trục wght 400–700 + slnt 0 … −10°
+    # — Italic = Roman nghiêng 10° nên nghiêng là một trục liên tục, 4 master (R / B × đứng / nghiêng) cùng cấu trúc
+    combined(VF)
     from fontTools.ttLib import TTFont
     for fmt in ('otf', 'ttf'):                                         # tên file = tên PostScript (DizaiSerif-SemiBoldItalic.otf)
         for f_ in os.listdir(os.path.join(FONTS, fmt)):

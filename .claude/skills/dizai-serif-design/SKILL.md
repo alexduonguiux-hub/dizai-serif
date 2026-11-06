@@ -180,6 +180,7 @@ mọi weight → QA → ghi vào đây (kèm ngày, lời designer, số đo).
 - Tách dấu khỏi chữ gốc theo dải cao độ; Đ / đ canh chữ gốc theo MÉP PHẢI (thanh chìa trái).
 
 ### 4.5 Italic (06/11)
+- File variable: `DizaiSerif[wght].ttf`, `DizaiSerif-Italic[wght].ttf` và file gộp `DizaiSerif[slnt,wght].ttf` (wght 400–700 + slnt 0 … −10°, 4 master).
 - **Italic = glyph Roman nghiêng 10°** quanh ½ x-height (quyết định designer). Spacing / kerning dùng chung Roman.
 - Luật I2 (đuôi ra, f đuôi xuống, v w đáy tròn, y đuôi cong, nét vào, chân gọn, chữ hoa hẹp 0.94) nằm trong `tools/construct/italic.py` sau cờ `LOWER_I2`, `CAPS_COND` = False — chỉ bật khi designer duyệt lại. Chi tiết `docs/14-italic.md`.
 
