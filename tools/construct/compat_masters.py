@@ -9,7 +9,8 @@
    · đoạn siêu ngắn (< 1.2 u ở cả hai),
    · hai đoạn cong nối trơn (lệch tiếp tuyến < 6°) mà một cubic (giữ hai đầu + hướng tiếp tuyến hai đầu) khớp, sai số < 0.8 u.
    Góc có chủ ý (gãy ≥ 6° ở một trong hai master) giữ nguyên.
-3. S17 (font/fair.py): S s Š š $ § làm độ cong liền G2 ở mọi nút trơn, giữ điểm neo, cấu trúc.
+3. S18 neo tương ứng (reanchor): nút cực trị ở master này ↔ nút xiên ở master kia → dời nút về cực trị trên chính đường cong.
+   S17 (font/fair.py, đang tắt): S s Š š $ § làm độ cong liền G2 ở mọi nút trơn, giữ điểm neo, cấu trúc.
 4. Medium / SemiBold = nội suy đúng hai master (TW 1/3, 2/3) → bản tĩnh trùng khít bản variable.
 """
 import json, math, os, sys
@@ -20,7 +21,7 @@ from interp import contours, tocubic
 from weights import WEIGHTS, TW
 from fair import fair
 # S17 độ cong liền G2 (font/fair.py) — designer 06/11 "Các đường cong của chữ s và S. Cảm giác không smooth lắm"
-FAIR = set()   # S17 TẮT (designer 06/11 "bụng không cong tròn tự nhiên" → designer tự vẽ lại S Bold, ref/figma_S_bold.py); bật lại: set('SsŠš$§')
+FAIR = set()   # S17 TẮT (designer 06/11 "bụng không cong tròn tự nhiên" → designer tự vẽ lại S Regular + Bold, ref/figma_S.py); bật lại: set('SsŠš$§')
 OUT = os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct')   # DIZAI_OUT: nhánh Italic (out/construct_italic)
 
 def bez(s, t):
@@ -107,6 +108,99 @@ def simplify_pair(R, B, tol=TOL):
             changed = True; break
     return R, B
 
+ITP = float(os.environ.get("DIZAI_ITP", "2.0"))      # độ: gãy cho phép ở bản nội suy (S 1.3° giữ nguyên vector designer)
+AXT = math.sin(math.radians(2.0))                    # tiếp tuyến lệch trục < 2° → nút ở cực trị
+RTOL = 2.5                                           # u: sai số khớp lại khi dời nút (≈ 0.35 % cao chữ)
+
+def _split(s, t):
+    a, b, c, d = s[1:]
+    l = lambda p, q: (p[0] + (q[0] - p[0])*t, p[1] + (q[1] - p[1])*t)
+    ab, bc, cd = l(a, b), l(b, c), l(c, d); abc, bcd = l(ab, bc), l(bc, cd); m = l(abc, bcd)
+    return ['C', a, ab, abc, m], ['C', m, bcd, cd, d]
+
+def _roots(s, ax):
+    """t ∈ (0, 1) nơi đạo hàm theo trục ax (0 = x, 1 = y) bằng 0"""
+    p = [q[ax] for q in s[1:]]
+    a = -p[0] + 3*p[1] - 3*p[2] + p[3]; b = 2*(p[0] - 2*p[1] + p[2]); c = p[1] - p[0]
+    if abs(a) < 1e-9: r = [-c/b] if abs(b) > 1e-9 else []
+    else:
+        D = b*b - 4*a*c
+        r = [] if D < 0 else [(-b + sg*math.sqrt(D))/(2*a) for sg in (1, -1)]
+    return [t for t in r if 0.02 < t < 0.98]
+
+def _ext_axis(X, i):
+    v = tan_out(X[i])
+    if v is None: return None
+    return 0 if abs(v[0]) < AXT else 1 if abs(v[1]) < AXT else None   # tiếp tuyến dọc → cực x; ngang → cực y
+
+def _mid_kink(R, B, i, j):
+    M = lerp_segs([R[i], R[j]], [B[i], B[j]], 0.5); return angle(tan_out(M[0]), tan_in(M[1]))
+
+def _ratio(R, B, i, j):
+    """nút xiên ở cả hai master: đặt tỉ lệ tay nắm vào / ra của hai master bằng nhau (trung bình nhân), giữ tổng độ dài và hướng
+    → lerp hai cặp vectơ cùng tỉ lệ luôn thẳng hàng. Chỉ nhận khi đường cong mỗi master lệch < RTOL."""
+    L = []
+    for X in (R, B):
+        p = X[i][4]; la, lb = math.dist(X[i][3], p), math.dist(X[j][2], p)
+        if la < 1 or lb < 1: return False
+        L.append((la, lb))
+    r = math.sqrt((L[0][0]/L[0][1])*(L[1][0]/L[1][1])); new = []
+    for X, (la, lb) in zip((R, B), L):
+        p = X[i][4]; tot = la + lb; lb2 = tot/(1 + r); la2 = tot - lb2
+        u = tan_out(X[i]); v = tan_in(X[j]); d = unit((u[0] + v[0], u[1] + v[1]))
+        ni = X[i][:3] + [(p[0] - la2*d[0], p[1] - la2*d[1]), p]; nj = [X[j][0], p, (p[0] + lb2*d[0], p[1] + lb2*d[1])] + X[j][3:]
+        Q = [bez(ni, k/60) for k in range(61)] + [bez(nj, k/60) for k in range(61)]
+        err = max(min(math.dist(bez(sg, k/20), q) for q in Q) for sg in (X[i], X[j]) for k in range(21))
+        if err > RTOL: return False
+        new.append((ni, nj))
+    (R[i], R[j]), (B[i], B[j]) = new
+    return True
+
+def reanchor(R, B):
+    """S18 Neo tương ứng cho nội suy (designer 06/11 "bụng s medium và semi bold lỗi"). Hai master ghép cặp điểm neo theo thứ tự;
+    khi một master neo ở CỰC TRỊ (tiếp tuyến ngang / dọc) mà master kia neo ở chỗ xiên (s: Regular neo cực phải bụng dưới,
+    Bold — S Bold mới của designer — neo xiên), bản nội suy nội suy giữa hai hướng tiếp tuyến khác nhau → gãy (s SemiBold 13°).
+    Sửa: dời nút của master kia về cực trị cùng trục trên CHÍNH đường cong của nó (cắt de Casteljau phần chứa cực trị, khớp lại
+    phần còn lại bằng fit(), sai số < TOL) → hình hai master không đổi, chỉ đổi vị trí điểm; mọi bản nội suy liền tiếp tuyến."""
+    n = len(R); fixed = []
+    for i in range(n):
+        j = (i + 1) % n
+        if R[i][0] == B[i][0] == R[j][0] == B[j][0] == 'L':
+            # hai đoạn thẳng: một master thẳng hàng (điểm giữa chỉ là điểm chia), master kia có góc (vd. góc đầu nét dưới s Regular
+            # có bậc ngang 5 u) → đặt điểm chia theo đúng tỉ lệ độ dài của master có góc, tránh mép thẳng bị bẻ ở Medium / SemiBold
+            def col(X): a, b, c = X[i][1], X[i][2], X[j][2]; return angle(unit((b[0]-a[0], b[1]-a[1])), unit((c[0]-b[0], c[1]-b[1])))
+            cr, cb = col(R), col(B)
+            if min(cr, cb) < 0.5 and max(cr, cb) > 30:
+                X, Y = (R, B) if cr < 0.5 else (B, R)
+                l1, l2 = math.dist(Y[i][1], Y[i][2]), math.dist(Y[j][1], Y[j][2]); f = l1/(l1 + l2)
+                a, c = X[i][1], X[j][2]; m = (a[0] + (c[0] - a[0])*f, a[1] + (c[1] - a[1])*f)
+                X[i] = ['L', a, m]; X[j] = ['L', m, c]; fixed.append(i)
+            continue
+        if not (R[i][0] == B[i][0] == R[j][0] == B[j][0] == 'C'): continue
+        if angle(tan_out(R[i]), tan_in(R[j])) >= 6 or angle(tan_out(B[i]), tan_in(B[j])) >= 6: continue
+        if _mid_kink(R, B, i, j) <= ITP: continue
+        ar, ab = _ext_axis(R, i), _ext_axis(B, i)
+        if (ar is None) == (ab is None):                       # cả hai cùng xiên: cân tỉ lệ tay nắm vào / ra (nếu master lệch < RTOL)
+            if _ratio(R, B, i, j): fixed.append(i)
+            continue
+        X, ax = (B, ar) if ar is not None else (R, ab)
+        best = None
+        for k, seg in ((i, X[i]), (j, X[j])):
+            for t in _roots(seg, ax):
+                L = seglen(_split(seg, t)[1]) if k == i else seglen(_split(seg, t)[0])
+                if best is None or L < best[0]: best = (L, k, t)
+        if best is None: continue
+        _, k, t = best
+        if k == j:
+            a_, b_ = _split(X[j], t); ni, err = fit(X[i], a_); nj = b_
+        else:
+            a_, b_ = _split(X[i], t); nj, err = fit(b_, X[j]); ni = a_
+        if ni is None or err > RTOL: continue
+        oi, oj = X[i], X[j]; X[i], X[j] = ni, nj
+        if _mid_kink(R, B, i, j) > ITP + 0.5: X[i], X[j] = oi, oj; continue
+        fixed.append(i)
+    return R, B, len(fixed)
+
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
     chars = sorted({k.rsplit('-', 1)[0] for k in O})
@@ -128,6 +222,8 @@ def main():
         for Rr, Bb in C:
             Rr, Bb = simplify_pair([list(s) for s in Rr], [list(s) for s in Bb])
             if c in FAIR: Rr, Bb = fair(Rr), fair(Bb)          # cùng cấu trúc → Medium / SemiBold vẫn nội suy được
+            Rr, Bb, k_ = reanchor(Rr, Bb)
+            if k_: stat.setdefault('S18', []).append(f'{c}×{k_}')
             out.append((Rr, Bb))
         after = sum(len(a) for a, _ in out)
         stat['đoạn trước'] += before; stat['đoạn sau'] += after; stat['ghép được'] += 1
@@ -135,6 +231,7 @@ def main():
             O[f'{c}-{w}'] = to_d([lerp_segs(a, b, TW[w]) for a, b in out])
     json.dump(O, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('compat:', {k: (v if not isinstance(v, list) else len(v)) for k, v in stat.items()}, 'không ghép:', stat['không ghép'][:30])
+    print('S18 nội suy liền tiếp tuyến:', ' '.join(stat.get('S18', [])))
 
 if __name__ == '__main__':
     main()

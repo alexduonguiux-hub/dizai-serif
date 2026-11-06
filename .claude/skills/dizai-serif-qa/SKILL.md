@@ -117,3 +117,4 @@ Ghi vào `docs/` kèm version và ngày.
 - **File gộp [slnt,wght]:** so với hai file riêng ở 8 vị trí bằng instancer + BoundsPen (đường cong thật, không dùng hộp bao điểm điều khiển): lệch ≤ 1.5 u, diện tích ≤ 0.5 %, advance trùng.
 - **Độc đáo hình glyph** (`qa_similarity.py`, `docs/15-kiem-tra-doc-dao.md`): IoU TB với từng font tham chiếu phải trong vùng font độc lập (≤ 0.70); glyph ≥ 0.90 chỉ chấp nhận ở chữ cấu trúc đơn (I, l, i).
 - **Đường cong bụng:** độ cong G2 chỉ để chẩn đoán, không phải tiêu chí đạt (designer 06/11 chọn bụng tròn tự nhiên hơn G2). Vector designer gửi phải khớp font (lệch ≤ 0.1 u); đo lại độ dày sống S s sau khi thay vector và báo thay đổi so với bảng nét.
+- **Gãy khi nội suy (S18):** mọi nút trơn ở Medium / SemiBold gãy ≤ 2°. Bảng `S18 …` in cuối `build.py` liệt kê glyph đã chỉnh. Còn & @ Š chờ vẽ lại điểm neo. Render to s, ơ, ư, k ở Medium / SemiBold, nhìn mép bụng không phồng.
