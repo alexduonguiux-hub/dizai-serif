@@ -116,3 +116,4 @@ Ghi vào `docs/` kèm version và ngày.
 - **Render to** từng glyph đã đổi ở cả 4 weight (Medium / SemiBold là nội suy — lỗi cấu trúc chỉ lộ ở đây) + chữ chạy Roman và Italic trước khi gửi.
 - **File gộp [slnt,wght]:** so với hai file riêng ở 8 vị trí bằng instancer + BoundsPen (đường cong thật, không dùng hộp bao điểm điều khiển): lệch ≤ 1.5 u, diện tích ≤ 0.5 %, advance trùng.
 - **Độc đáo hình glyph** (`qa_similarity.py`, `docs/15-kiem-tra-doc-dao.md`): IoU TB với từng font tham chiếu phải trong vùng font độc lập (≤ 0.70); glyph ≥ 0.90 chỉ chấp nhận ở chữ cấu trúc đơn (I, l, i).
+- **Độ cong liền (S17):** đo bán kính cong hai bên mỗi nút trơn của S s Š š $ § ở cả 4 weight (OTF): tỉ lệ ≤ 1.6, gãy ≤ 3° (chỉ còn làm tròn toạ độ). Vẽ lược độ cong (curvature comb) trước / sau, tự nhìn: không có bậc ở chỗ nối. Glyph khác có tỉ lệ > 3 thì báo designer, không tự sửa.

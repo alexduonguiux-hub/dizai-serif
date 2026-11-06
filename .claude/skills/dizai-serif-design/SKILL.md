@@ -119,6 +119,7 @@ Concept và số đo nằm ở `docs/01-nghien-cuu-va-concept.md` và
   - Phủ đủ 134 chữ Việt và dấu tổ hợp.
   - **v0.4 (04/11):** bộ `.case` cho 67 chữ hoa đã dựng bằng nét bút dẹt S15 (φ 20°, bút dấu N 78 / m 26, Bold 108 / 44). Số đo, vị trí và QA khe ở `docs/09-dau-tieng-viet-va-dau-cau.md`; code ở `tools/construct/ref/vn_punct.py`.
 - **S15 Nét bút dẹt cho dấu và dấu câu cong.** w(θ) = √((N·sin(θ − 20°))² + m²). Bút chữ: Regular N 105 / m 26, Bold 146 / 46 (đứng = V, ngang ≈ H). Độ dày làm mượt theo chiều dài nét; phía lòng không lùi quá 0.8 bán kính cong. Dấu câu và ký hiệu: bảng ở docs/09.
+- **S17 Độ cong liền G2** (designer 06/11 "đường cong s và S không smooth"): nút trơn không chỉ liền tiếp tuyến mà độ cong hai bên phải bằng nhau (tỉ lệ bán kính ≤ 1.15). `font/fair.py` trong `compat_masters.py`: giữ điểm neo, hướng tiếp tuyến, cấu trúc; chỉnh độ dài tay nắm + trượt nút dọc tiếp tuyến ≤ 8 u. Áp cho S s Š š $ §; glyph khác chỉ khi designer duyệt (docs/16).
 - **S12 Số.** Giữ nét ngang dày (Hf 32 px) như bản vẽ gốc. Màu chữ cân bằng theo mật độ mực trung bình, không ép từng nét bằng chữ. Lining cao bằng cap. 1 có cờ, cùng góc ở mọi weight. 3 và 5 chung bụng
   dưới. 6 và 9 chung bụng (xoay 180°). 8 có vòng trên nhỏ hơn. 4 có thanh ~0.25 cap.
   Có tnum.

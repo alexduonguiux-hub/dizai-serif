@@ -9,7 +9,8 @@
    · đoạn siêu ngắn (< 1.2 u ở cả hai),
    · hai đoạn cong nối trơn (lệch tiếp tuyến < 6°) mà một cubic (giữ hai đầu + hướng tiếp tuyến hai đầu) khớp, sai số < 0.8 u.
    Góc có chủ ý (gãy ≥ 6° ở một trong hai master) giữ nguyên.
-3. Medium / SemiBold = nội suy đúng hai master (TW 1/3, 2/3) → bản tĩnh trùng khít bản variable.
+3. S17 (font/fair.py): S s Š š $ § làm độ cong liền G2 ở mọi nút trơn, giữ điểm neo, cấu trúc.
+4. Medium / SemiBold = nội suy đúng hai master (TW 1/3, 2/3) → bản tĩnh trùng khít bản variable.
 """
 import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, 'font'))
@@ -17,6 +18,9 @@ sys.path.insert(0, os.path.join(HERE, 'ref'))
 from compat import compat, lerp_segs, to_d
 from interp import contours, tocubic
 from weights import WEIGHTS, TW
+from fair import fair
+# S17 độ cong liền G2 (font/fair.py) — designer 06/11 "Các đường cong của chữ s và S. Cảm giác không smooth lắm"
+FAIR = set('SsŠš$§')
 OUT = os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct')   # DIZAI_OUT: nhánh Italic (out/construct_italic)
 
 def bez(s, t):
@@ -122,7 +126,9 @@ def main():
         before = sum(len(g) for g in contours([pre[kr]]))
         out = []
         for Rr, Bb in C:
-            Rr, Bb = simplify_pair([list(s) for s in Rr], [list(s) for s in Bb]); out.append((Rr, Bb))
+            Rr, Bb = simplify_pair([list(s) for s in Rr], [list(s) for s in Bb])
+            if c in FAIR: Rr, Bb = fair(Rr), fair(Bb)          # cùng cấu trúc → Medium / SemiBold vẫn nội suy được
+            out.append((Rr, Bb))
         after = sum(len(a) for a, _ in out)
         stat['đoạn trước'] += before; stat['đoạn sau'] += after; stat['ghép được'] += 1
         for w in WEIGHTS:
