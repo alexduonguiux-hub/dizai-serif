@@ -101,3 +101,14 @@ Số hiệu luật (S1…) lấy từ `dizai-serif-design`.
 3. Đã đổi (luật, số cũ → số mới).
 4. Còn mở (chờ designer).
 Ghi vào `docs/` kèm version và ngày.
+
+## 4. Check bổ sung v0.6–v0.7 (05–06/11)
+- **Ghép cặp master:** `compat_masters.py` phải báo ghép được 324 / 324 (Roman và `DIZAI_OUT=out/construct_italic`). Không ghép → bước xuất font hỏng — KHÔNG commit font khi chưa qua bước này.
+- **Số contour hai master bằng nhau** cho mọi glyph; chiều contour giống nhau (chấm i, ä từng ngược chiều → Medium chấm co).
+- **QA trên file font** `qa_font.py` (HarfBuzz): variable 400 / 500 / 600 / 700 + 16 bản tĩnh — advance, kerning mọi cặp, NFD = NFC, hộp bao = outline (Italic: nghiêng 10°) → phải 34 / 34.
+- **fontbakery check-universal** riêng từng nhóm (variable / ttf / otf): 0 FAIL. Cảnh báo chủ ý: ß 2 contour, U+00AD có glyph, dấu toán khác bề ngang, interpolation gãy nhỏ (8 & ® §), thiếu avar, namecheck.
+- **qa_stroke:** dấu giọt / nháy (, ; ‘ ’ ‚ “ ” „ ' " ′ ″) đo "nét chính" bằng đường kính hình tròn nội tiếp lớn nhất (trục giữa của giọt không ổn định).
+- **Nét chéo chữ thường:** nét mảnh v w x y k / thân n = nét mảnh / thân V hoa (±5 %).
+- **Dấu nặng:** mọi chấm cùng đỉnh −49 (ỵ bên phải đuôi), cùng kích thước dấu chấm câu.
+- **Kerning:** sau mỗi thay đổi glyph chạy `qa_kern.py` cả 4 weight: va chạm 0, âm tiết Việt 0 lệch ngoài sàn, kern nhất quán 4 weight.
+- **Render to** từng glyph đã đổi ở cả 4 weight (Medium / SemiBold là nội suy — lỗi cấu trúc chỉ lộ ở đây) + chữ chạy Roman và Italic trước khi gửi.

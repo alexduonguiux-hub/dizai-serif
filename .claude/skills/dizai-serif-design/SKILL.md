@@ -143,3 +143,42 @@ một hàng dựng hình → toàn bộ charset → QA (`dizai-serif-qa`) → ke
 
 Mỗi góp ý mới của designer: đặt tên luật bị vi phạm → sửa trong code dựng → build lại
 mọi weight → QA → ghi vào đây (kèm ngày, lời designer, số đo).
+
+## 4. Luật bổ sung v0.6–v0.7 (05–06/11) — ghi từ góp ý designer
+
+### 4.0 Nguyên tắc làm việc (bài học)
+- **Bản vẽ designer là chuẩn.** Không tự đổi HÌNH glyph khi chưa được duyệt từng điểm (a một tầng ở Italic bị trả lại: "sao đổi glyph chữ a"). Thay đổi lớn → hỏi trước (liệt kê lựa chọn), làm sau.
+- "Giữ nguyên bản các glyph" nghĩa là giữ cả chữ hoa ("bạn nên giữ lại glyph gốc cho cả chữ hoa").
+- Khi designer nói "hẹp" là nói **kích thước** (bề ngang), không phải lòng chữ.
+- Sửa bằng luật trong code dựng, build lại mọi weight, QA, rồi mới gửi preview. Mỗi lần gửi: commit + push + publish artifact (cùng URL).
+
+### 4.1 Kerning (spacing.py)
+- **Trắng cặp theo font tham chiếu** (ref_kern.py, phương pháp DINHTUONG60s): k = tỉ số trung vị (R + B của Liberation / DejaVu / Caladea / FreeSerif) × W(nn | HH) − W0; |k| ≤ 0.4 advance hẹp; Ư Ơ dùng cặp gốc.
+- **Tròn × chéo:** D O (+ dấu) đứng trước A V W Y T, và A V W Y T đứng trước O C G Q → khe mực nhỏ nhất ≤ 1.0 × khe HH (ROUND_A, WEDGE_X).
+- **Chống va** sàn 26 (sừng 14), làm tròn **1 u** (bội 5 làm R / B thừa → SemiBold nội suy thưa, "ư + i m n").
+- **Variable:** chỉ có master Regular / Bold → Medium / SemiBold = ĐÚNG nội suy (dx, advance, class kern, ngoại lệ); ngoại lệ nào nội suy chặt hơn mức chống va thật thì nới cả R / B.
+
+### 4.2 Bề ngang và độ dày
+- **Thu hẹp chữ hoa X V Y:** nghiêng từng nét quanh điểm gốc (narrow_caps.shear_narrow, FRAC 0.08) — giữ loe, nhát cắt ngang, độ dày. Không thu hẹp bằng làm đậm / co cả glyph (làm méo loe).
+- **S10b** nét chéo mảnh v w x y k = thân chữ thường × (nét mảnh / thân) của V hoa cùng weight (44.5 / 63.6), dời song song hai mép.
+- **S10c** bề ngang mực v x w (y theo v) = 1.10 × bản trước 06/11; Bold ≥ Regular + ½ phần thân tăng × số nét dày (đơn điệu).
+
+### 4.3 Ký hiệu
+- **≤ ≥** dựng chevron cỡ 0.84 bằng ĐÚNG bút của < > (không thu nhỏ cả nét). **≈ ~** cạnh mỏng bút ≥ 0.75 H.
+- **Nháy thẳng ' " ′ ″**: chân CẮT NGANG; dáng theo nháy cong — đầu = đầu giọt (chấm câu), cao = nháy cong, thon nhanh (lõm 0.45), chân 0.30 V. " và “ ” là hai ký tự Unicode khác nhau, font phải có cả hai.
+- **™**: T M của master **Bold** thu 0.42; weight đậm hơn chỉ dày THEO PHƯƠNG NGANG + thanh T dày theo H — bằng **dời điểm** (không boolean) để hai master cùng cấu trúc; đáy V của M kéo nhọn lại (`sharpen` chỉ cho M).
+- **{ }** mũi giữa có khối nối 2 × 0.16 thân, rộng 0.3 thân (hai nửa elip từng chỉ chạm một điểm).
+- **Dấu nặng:** MỘT đường chấm chung (đỉnh −49, tính từ đáy chuẩn −11.3, không theo đáy tràn riêng); **ỵ** cùng đường chấm, bên PHẢI đuôi y, khe GAP_ML.
+
+### 4.4 Outline / variable
+- Hai master Regular / Bold phải cùng cấu trúc (compat_masters.py): phép làm khác topology giữa hai master (boolean, Minkowski) → dùng phép **dời điểm** thay thế.
+- Chiều contour theo độ lồng; so chiều bằng diện tích đường cong lấy mẫu (contour 2 đoạn cong có diện tích neo = 0).
+- `tidy`: chỉ bỏ "gai" khi phần bỏ đi < 30 u² (mũi nhọn thật như chóp mỏ T phải giữ).
+- Tách dấu khỏi chữ gốc theo dải cao độ; Đ / đ canh chữ gốc theo MÉP PHẢI (thanh chìa trái).
+
+### 4.5 Italic (06/11)
+- **Italic = glyph Roman nghiêng 10°** quanh ½ x-height (quyết định designer). Spacing / kerning dùng chung Roman.
+- Luật I2 (đuôi ra, f đuôi xuống, v w đáy tròn, y đuôi cong, nét vào, chân gọn, chữ hoa hẹp 0.94) nằm trong `tools/construct/italic.py` sau cờ `LOWER_I2`, `CAPS_COND` = False — chỉ bật khi designer duyệt lại. Chi tiết `docs/14-italic.md`.
+
+### 4.6 Pipeline
+`ref/narrow_caps.py` (khi đổi chữ hoa) → `ref/interp.py` → `ref/vn_punct.py` → `lower/lower.py` → `ref/make_ref.py` → `lower/derive.py` → `lower/vn_lower.py` → `ref/symbols.py` → `ref/make_ref.py` → `node export.js > out/construct/parts.json` → `build.py` (gồm compat_masters) → `spacing.py` → QA (`dizai-serif-qa`) → `italic.py` (+ chép outlines / spacing / kerning sang `out/construct_italic`) → `export_font.py` → `qa_font.py` → `preview_html.py` → commit, push, publish.
