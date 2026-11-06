@@ -182,12 +182,15 @@ def build_w(S, L, w):
         cyh = 715.0; ryh = 860 - cyh
         hook = I(ering4(sl, 2*xt - sl, 2*cyh - 860, 860, w_, w_, 0.55*w_, 0.55*w_), rect(sl - 1, cyh, xt, 900))
         cyt = 470.0; ryt = cyt - ym
-        tip = I(ering4(2*x0 - sr, sr, ym, 2*cyt - ym, w_, w_, 0.16*w_, 0.16*w_), rect(x0, ym, sr + 1, cyt))
+        # mũi (designer 06/11 "làm dày mũi { }"): đầu mũi dày 0.66 H (≥ nét mảnh chuẩn 0.6 H mọi weight; trước 0.16 thân —
+        # Medium trở lên mảnh hơn chuẩn)
+        tt = max(0.16*w_, 0.66*H)
+        tip = I(ering4(2*x0 - sr, sr, ym, 2*cyt - ym, w_, w_, tt, tt), rect(x0, ym, sr + 1, cyt))
         top = q2c(U(stem, hook, tip))
         bot = xform(top, lambda x, y: (x, 2*ym - y))
         # mũi: hai nửa elip tiếp tuyến ngang ở trục → chỉ chạm nhau MỘT điểm (2 contour, mũi thắt — kiểm tra italic 06/11);
         # khối nối cao 2 × 0.16 thân, rộng 0.3 thân → mũi là một nhát cắt đứng liền khối
-        joint = rect(x0, ym - 0.16*w_, x0 + 0.3*w_, ym + 0.16*w_)
+        joint = rect(x0, ym - tt, x0 + 0.3*w_, ym + tt)
         return q2c(U(top, bot, joint))
     br = brace(); G['{'] = norm_x(br)
     b = bounds(G['{']); G['}'] = xform(G['{'], lambda x, y: (b[2] - x, y))
@@ -491,22 +494,23 @@ def group3(S, L, w, M, P, G1):
     # vòng trên: mép trái trùng mép trái thân, thành trái = thân → thân đi thẳng lên rồi uốn liền vào vòng (không vai vuông)
     cyu = (425 + 712)/2
     stem = I(l_, rect(-100, -100, 2000, cyu))
-    up = I(ering4(s0l, s1l + 255, 425, 712, vth, 0.84*vth, 0.42*H, 0.5*H), rect(s0l - 1, 400, 2000, 2000))
+    tw_ = 0.66*H                                             # chỗ thắt (thành đáy vòng trên = đỉnh vòng dưới): 0.66 H ≥ nét mảnh chuẩn
+    up = I(ering4(s0l, s1l + 255, 425, 712, vth, 0.84*vth, tw_, 0.62*H), rect(s0l - 1, 400, 2000, 2000))   # đỉnh 0.5 → 0.62 H (≥ nét mảnh chuẩn)
     # vòng dưới: đỉnh trùng thành đáy của vòng trên (chung chỗ thắt), chỉ giữ nửa phải phía trên tâm → đầu cắt nằm gọn trong thành
     # đáy vòng trên (designer 05/11: "Regular lỗi" — đầu cắt lộ ra trong lòng); đầu dưới-trái cắt ở chỗ vòng đủ dày
     # tâm ngang vòng dưới = tâm vòng trên: đỉnh vòng dưới (ngoài / trong) trùng đúng thành đáy vòng trên, cùng tiếp tuyến ngang
     # → chỗ thắt liền, không bậc
-    cxu = (s0l + s1l + 255)/2; xr_ = s1l + 280; y1l = 425 + 0.42*H; cyl = (y1l - 11)/2
+    cxu = (s0l + s1l + 255)/2; xr_ = s1l + 280; y1l = 425 + tw_; cyl = (y1l - 11)/2
     # lòng vòng dưới lệch trái (thành trái 0.35, phải 0.92 thân) → đỉnh lòng ở cxi, không phải cxu. Cắt / nối eo tại cxi để
     # mép đáy eo chạy ngang rồi vào đúng tiếp tuyến ngang ở đỉnh lòng (designer 05/11: "vẫn dư nét dưới bụng" — cắt ở cxu để lại bậc)
     cxi = cxu - 0.285*vth
     # đầu cắt dưới-trái cách mép loe chân thân một khe cố định theo Regular (designer 05/11: "glyph dưới bị dính" — Bold chỉ còn 8)
     xcut = runs_y(l_, 1)[0][1] + 50
-    lo = I(ering4(2*cxu - xr_, xr_, -11, y1l, 0.35*vth, 0.92*vth, 0.5*H, 0.42*H),
+    lo = I(ering4(2*cxu - xr_, xr_, -11, y1l, 0.35*vth, 0.92*vth, 0.5*H, tw_),
            U(rect(cxi, cyl, 2000, 2000), rect(xcut, -400, 2000, cyl + 1)))
     # chỗ thắt (designer 05/11: "còn dư lỗi glyph" — cung đáy vòng trên mỏng dần chạm thân thành mũi nhọn): đoạn từ thân tới đáy
     # vòng là thanh ngang đúng bề dày thành đáy (0.42 H), tiếp tuyến ngang ở đáy vòng → liền; góc gặp thân vuông
-    waist = rect(s1l - 1, 425, cxi + 1, 425 + 0.42*H)
+    waist = rect(s1l - 1, 425, cxi + 1, 425 + tw_)   # designer 06/11 "làm dày chỗ thắt ß": 0.42 H → 0.66 H
     G['ß'] = q2c(U(stem, up, lo, waist))
     # toán / phút giây
     YC_ = 330.0; mh = 0.55*Vv; ms = 500

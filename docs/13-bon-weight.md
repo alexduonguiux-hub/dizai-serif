@@ -319,3 +319,10 @@ Designer: "dấu ngã chưa cân bằng độ nghiêng hơi nghiêng qua phải 
 ## Dấu toán cùng bề ngang (06/11)
 
 Designer: "làm dấu toán cùng bề ngang luôn" (fontbakery math_signs_width). + − = ≠ × ÷ ± < > ≤ ≥ ¬ ≈ cùng advance = advance của + (dấu có mực rộng nhất 500 u): 547 / 550.67 / 554.33 / 558 (R / M / SB / B), mực canh giữa ô (`spacing.py`, MATH_TAB) → cột phép tính thẳng hàng. ~ là ký tự văn bản, giữ bề ngang riêng. Va chạm 0; QA file font 34 / 34; fontbakery math_signs_width PASS.
+
+## Mũi { } và chỗ thắt ß dày theo nét mảnh chuẩn (06/11)
+
+Designer: "làm dày mũi { } và chỗ thắt ß luôn". Ngưỡng nét mảnh chuẩn 0.6 H mọi weight; dựng ở 0.66 H:
+- **{ }**: đầu mũi (¼ vòng elip) và khối nối dày max(0.16 thân, 0.66 H) — trước 0.16 thân, Medium trở lên mảnh hơn chuẩn (23–30 u).
+- **ß**: chỗ thắt (thành đáy vòng trên = thành đỉnh vòng dưới = thanh nối thân) 0.42 H → 0.66 H; thành đỉnh vòng trên 0.5 → 0.62 H (Regular 22 u từng dưới ngưỡng).
+qa_stroke { } ß: 0 cờ ở 4 weight; va chạm 0; QA file font 34 / 34.

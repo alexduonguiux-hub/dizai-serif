@@ -167,7 +167,8 @@ mọi weight → QA → ghi vào đây (kèm ngày, lời designer, số đo).
 - **≤ ≥** dựng chevron cỡ 0.84 bằng ĐÚNG bút của < > (không thu nhỏ cả nét). **≈ ~** cạnh mỏng bút ≥ 0.75 H.
 - **Nháy thẳng ' " ′ ″**: chân CẮT NGANG; dáng theo nháy cong — đầu = đầu giọt (chấm câu), cao = nháy cong, thon nhanh (lõm 0.45), chân 0.30 V. " và “ ” là hai ký tự Unicode khác nhau, font phải có cả hai.
 - **™**: T M của master **Bold** thu 0.42; weight đậm hơn chỉ dày THEO PHƯƠNG NGANG + thanh T dày theo H — bằng **dời điểm** (không boolean) để hai master cùng cấu trúc; đáy V của M kéo nhọn lại (`sharpen` chỉ cho M).
-- **{ }** mũi giữa có khối nối 2 × 0.16 thân, rộng 0.3 thân (hai nửa elip từng chỉ chạm một điểm).
+- **{ }** mũi giữa có khối nối (hai nửa elip từng chỉ chạm một điểm); đầu mũi + khối nối dày max(0.16 thân, 0.66 H).
+- **ß** chỗ thắt 0.66 H, thành đỉnh vòng trên 0.62 H. Mọi nét mảnh của ký hiệu ≥ 0.6 H (ngưỡng qa_stroke).
 - **Dấu toán** + − = ≠ × ÷ ± < > ≤ ≥ ¬ ≈ cùng advance = advance của + (mực canh giữa ô); ~ giữ riêng.
 - **Dấu ngã** cân độ nghiêng: đường tâm sóng nâng sang phải y += s·x, s = ½ mức cân trọng tâm hai nửa (0.118 R / 0.108 B) — bút dẹt làm nét xuống giữa dày, dấu đổ phải.
 - **Dấu nặng:** MỘT đường chấm chung (đỉnh −49, tính từ đáy chuẩn −11.3, không theo đáy tràn riêng); **ỵ** cùng đường chấm, bên PHẢI đuôi y, khe GAP_ML.
