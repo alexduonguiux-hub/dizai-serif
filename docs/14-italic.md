@@ -59,3 +59,7 @@ Designer: "italic không kết hợp trong variable luôn được hả". Thêm 
 Kiểm: so file gộp với hai file riêng ở 8 vị trí (4 weight × đứng / nghiêng), 2608 lần — hộp bao đường cong lệch tối đa 0.51 u (khác nhau do đổi sang đường cong bậc hai qua 4 master), diện tích < 0.5 %, advance / kerning trùng. fontbakery: 0 lỗi glyph; 1 FAIL STAT_strings (quy ước Google Fonts: nhãn trục slnt không dùng chữ "Italic").
 
 Preview mục "Font variable" dùng file gộp: thanh trượt wght + nghiêng (slnt), nút Roman / Italic.
+
+## Đổi tên bộ chữ: AnNam (06/11)
+
+Designer: "Đổi tên Font thành AnNam". Tên họ (name ID 1 / 16) "AnNam", tên PostScript `AnNam-Regular` … `AnNam-BoldItalic`, file `AnNam[wght].ttf`, `AnNam-Italic[wght].ttf`, `AnNam[slnt,wght].ttf`, `fonts/otf|ttf/AnNam-*.{otf,ttf}`. Bản quyền / designer giữ "Dizai Studio". Preview: tiêu đề và mast "AnNam". Tên dự án, repo, thư mục, skill giữ "dizai-serif".

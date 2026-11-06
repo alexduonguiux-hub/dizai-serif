@@ -1,4 +1,4 @@
-<title>Duyệt glyph Đìzai Serif</title>
+<title>Duyệt glyph AnNam</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -92,8 +92,8 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 /*FONTS*/
 .vf .ctrl { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; margin: 8px 0 12px; }
 .vf .ctrl input[type="range"] { width: 220px; max-width: 100%; }
-.vf .out { font-family: "Dizai Serif VF", serif; font-size: 48px; line-height: 1.2; outline: none; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 12px 14px; overflow-wrap: anywhere; }
-.vf .out.it { font-family: "Dizai Serif VF Italic", serif; }
+.vf .out { font-family: "AnNam VF", serif; font-size: 48px; line-height: 1.2; outline: none; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 12px 14px; overflow-wrap: anywhere; }
+.vf .out.it { font-family: "AnNam VF Italic", serif; }
 .vf .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; margin-top: 12px; }
 .vf .steps div { background: var(--panel); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 30px; line-height: 1.25; overflow-wrap: anywhere; }
 .vf .steps small { display: block; font: 12px var(--ui); color: var(--muted); margin-bottom: 2px; }
@@ -102,8 +102,8 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
 <div class="wrap">
   <header>
-    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.7 · Regular → Bold · Italic → Bold Italic · variable wght 400–700</span></div>
-    <p class="lede">Toàn bộ glyph hiện có của hai weight để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật (chưa có bản vẽ tay); còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả hai weight, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
+    <div class="mast"><svg id="mast" aria-label="AnNam"></svg><span class="ver">v0.7 · Regular → Bold · Italic → Bold Italic · variable wght 400–700</span></div>
+    <p class="lede">Toàn bộ glyph của AnNam — 4 weight Roman và 4 weight Italic — để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật; còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả 4 weight cùng kiểu, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
   </header>
   <div class="summary" id="summary"></div>
 
@@ -129,7 +129,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   <section class="vf" aria-labelledby="h-vf" id="vf" hidden>
     <h2 id="h-vf">Font variable</h2>
-    <p class="note">File font thật: gộp <code>fonts/variable/DizaiSerif[slnt,wght].ttf</code> (trục wght 400–700 + slnt 0 … −10°) và hai file riêng <code>DizaiSerif[wght].ttf</code>, <code>DizaiSerif-Italic[wght].ttf</code>, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
+    <p class="note">File font thật: gộp <code>fonts/variable/AnNam[slnt,wght].ttf</code> (trục wght 400–700 + slnt 0 … −10°) và hai file riêng <code>AnNam[wght].ttf</code>, <code>AnNam-Italic[wght].ttf</code>, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
     <div class="ctrl">
       <label class="chk">wght <input type="range" id="vfw" min="400" max="700" step="1" value="400" aria-label="Độ đậm"> <span id="vfwv">400</span></label>
       <div class="seg" role="group" aria-label="Kiểu"><button id="vfr" aria-pressed="true">Roman</button><button id="vfi" aria-pressed="false">Italic</button></div>
@@ -361,7 +361,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   // tên bộ chữ trên đầu trang, xếp bằng chính glyph Bold
   (function () {
     const m = document.getElementById('mast'); let x = 0; const ps = [];
-    for (const ch of 'ĐÌZAI SERIF') { if (ch === ' ') { x += SPACE; continue; } const g = byC.Bold[ch]; if (!g) continue; ps.push(`<path class="ink" transform="translate(${x + (g.dx ?? SB)} 0)" d="${g.p}"/>`); x += g.a; }
+    for (const ch of 'AnNam') { if (ch === ' ') { x += SPACE; continue; } const g = byC.Bold[ch]; if (!g) continue; ps.push(`<path class="ink" transform="translate(${x + (g.dx ?? SB)} 0)" d="${g.p}"/>`); x += g.a; }
     m.setAttribute('viewBox', `0 -1080 ${x} 1120`); m.innerHTML = `<g transform="scale(1,-1)">${ps.join('')}</g>`;
   })();
 
@@ -371,12 +371,12 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 </script>
 <script>
 (function () {
-  const sec = document.getElementById("vf"); if (!sec || !document.querySelector("style").textContent.includes("Dizai Serif VF")) return;
+  const sec = document.getElementById("vf"); if (!sec || !document.querySelector("style").textContent.includes("AnNam VF")) return;
   sec.hidden = false;
   const $ = (id) => document.getElementById(id);
   const out = $("vfout"), w = $("vfw"), wv = $("vfwv"), sz = $("vfs"), szv = $("vfsv"), br = $("vfr"), bi = $("vfi"), steps = $("vfsteps");
   const sl = $("vfn"), slv = $("vfnv");
-  const apply = () => { out.style.fontFamily = '"Dizai Serif VF Combined", serif'; out.style.fontVariationSettings = `"wght" ${w.value}, "slnt" ${sl.value}`;
+  const apply = () => { out.style.fontFamily = '"AnNam VF Combined", serif'; out.style.fontVariationSettings = `"wght" ${w.value}, "slnt" ${sl.value}`;
     wv.textContent = w.value; slv.textContent = sl.value + "°"; out.style.fontSize = sz.value + "px"; szv.textContent = sz.value + " px";
     br.setAttribute("aria-pressed", String(+sl.value === 0)); bi.setAttribute("aria-pressed", String(+sl.value === -10)); };
   w.addEventListener("input", apply); sz.addEventListener("input", apply); sl.addEventListener("input", apply);
@@ -386,7 +386,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   for (const ital of [false, true]) for (const [n, v] of S) {
     const d = document.createElement("div"), sm = document.createElement("small"), t = document.createElement("span");
     sm.textContent = (ital ? (n === "Regular" ? "Italic" : n + " Italic") : n) + " · " + v;
-    t.textContent = "Ánh Đèn Phố Hội — quả ổi"; t.style.fontFamily = ital ? '"Dizai Serif VF Italic", serif' : '"Dizai Serif VF", serif';
+    t.textContent = "Ánh Đèn Phố Hội — quả ổi"; t.style.fontFamily = ital ? '"AnNam VF Italic", serif' : '"AnNam VF", serif';
     t.style.fontVariationSettings = `"wght" ${v}`; d.append(sm, t); steps.append(d);
   }
   apply();

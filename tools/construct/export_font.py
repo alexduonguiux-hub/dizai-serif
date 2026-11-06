@@ -22,7 +22,7 @@ from fontTools.designspaceLib import DesignSpaceDocument, AxisDescriptor, Source
 import spacing as SPc
 ROOT = os.path.join(HERE, '..', '..'); OUT = os.path.join(ROOT, 'out', 'construct'); FONTS = os.path.join(ROOT, 'fonts')
 BUILD = os.path.join(OUT, 'ufo')
-FAMILY, PS = 'Dizai Serif', 'DizaiSerif'
+FAMILY, PS = 'AnNam', 'AnNam'          # designer 06/11 "Đổi tên Font thành AnNam" (trước: Dizai Serif / DizaiSerif)
 VERSION = (0, 900)
 ITALIC_ANGLE = 10.0
 WGHT = {'Regular': 400, 'Medium': 500, 'SemiBold': 600, 'Bold': 700}

@@ -1,4 +1,6 @@
-# Dizai Serif
+# AnNam (dự án Dizai Serif)
+
+Tên phát hành của bộ chữ: **AnNam** (designer 06/11). File font: `fonts/variable/AnNam[wght].ttf`, `AnNam-Italic[wght].ttf`, `AnNam[slnt,wght].ttf`; bản tĩnh `fonts/otf/`, `fonts/ttf/` (AnNam-Regular … AnNam-BoldItalic).
 
 Chữ glyphic loe nét, tương phản theo bút dẹt, tỉ lệ La Mã cổ điển. Hiện có bản
 Regular (hoa A–Z, số 0–9) và Bold (A–T). Chưa có chữ thường và dấu tiếng Việt.

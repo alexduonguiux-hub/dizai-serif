@@ -3,6 +3,8 @@ name: dizai-serif-design
 description: Rule book và nguyên tắc dựng chữ của Dizai Serif (chữ glyphic loe nét, logic bút dẹt, tương phản cao). Dùng trước khi vẽ, sửa hoặc review bất kỳ glyph, weight, dấu, spacing nào của Dizai Serif. Dùng kèm dizai-serif-qa.
 ---
 
+> Tên phát hành: **AnNam** (designer 06/11 "Đổi tên Font thành AnNam"); tên dự án / thư mục / skill giữ "dizai-serif". Tên họ, tên PostScript và tên file font: `AnNam` (export_font.py FAMILY, PS).
+
 # Dizai Serif — luật dựng chữ
 
 Skill này lấy phương pháp của bộ Định Tường (`typeface-construction`,
