@@ -295,7 +295,7 @@ def combined(VF):
 
 def compile_fonts():
     VF = os.path.join(FONTS, 'variable')
-    for d in ('variable', 'otf', 'ttf'): shutil.rmtree(os.path.join(FONTS, d), ignore_errors=True)
+    for d in ('variable', 'otf', 'ttf', 'woff2'): shutil.rmtree(os.path.join(FONTS, d), ignore_errors=True)
     for tag in ('', '-Italic'):
         dsp = os.path.join(BUILD, f'{PS}{tag}.designspace')
         subprocess.run(['fontmake', '-m', dsp, '-o', 'variable', '--output-dir', VF, '--flatten-components'], check=True,
@@ -342,6 +342,12 @@ def compile_fonts():
                     t['prep'] = newTable('prep')
                 t['prep'].program = prog
             t.save(p)
+    # woff2 cho web (designer 06/11 "làm thêm file woff2 cho web luôn"): nén Brotli từ variable/*.ttf và ttf/*.ttf
+    W2 = os.path.join(FONTS, 'woff2'); shutil.rmtree(W2, ignore_errors=True)
+    for sub in ('variable', 'ttf'):
+        os.makedirs(os.path.join(W2, sub), exist_ok=True)
+        for f_ in sorted(os.listdir(os.path.join(FONTS, sub))):
+            t = TTFont(os.path.join(FONTS, sub, f_)); t.flavor = 'woff2'; t.save(os.path.join(W2, sub, f_.rsplit('.', 1)[0] + '.woff2'))
     for dp, _, fs in os.walk(FONTS):
         for f_ in sorted(fs): print('  ', os.path.relpath(os.path.join(dp, f_), ROOT), os.path.getsize(os.path.join(dp, f_))//1024, 'KB')
 
