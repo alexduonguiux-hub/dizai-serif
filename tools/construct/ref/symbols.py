@@ -127,7 +127,9 @@ def wave(w, k):
     t = T[w]; A_, kx = V._B(w, 32, 28)*k, V._B(w, 1.0, 1.14)*k
     f = lambda x: (x*kx, A_*math.sin(2*math.pi*(x + 130)/260)); df = lambda x: (kx, A_*2*math.pi/260*math.cos(2*math.pi*(x + 130)/260))
     tl_ = V.hermite([(f(x), df(x)) for x in (-130, -65, 0, 65, 130)]); kn = 0.60*t['V']/(0.87*t['Nm'])
-    return V.norm(V.stroke(tl_, (t['Nm']*kn, t['mm']*kn), taper=lambda u: 0.8 + 0.2*math.sin(math.pi*u)))
+    # cạnh mỏng bút ≥ 0.75 nét ngang H của weight (designer 05/11 "sửa luôn các lỗi ≈ ≤ ≥"): bút cũ mm × k cho đoạn dốc giữa sóng
+    # chỉ 23 u (< nét mảnh chuẩn 0.6 H), Bold 34 (< 41)
+    return V.norm(V.stroke(tl_, (t['Nm']*kn, max(t['mm']*kn, 0.75*t['H'])), taper=lambda u: 0.8 + 0.2*math.sin(math.pi*u)))
 
 def pen_w(theta, nib):
     """độ dày bút dẹt theo hướng nét theta (như vn_punct.stroke): sqrt((N·sin(θ − PHI))² + m²)"""
@@ -510,10 +512,14 @@ def group3(S, L, w, M, P, G1):
         dx = hh*lean; return poly([(xc - dx - sw/2, yc - hh), (xc - dx + sw/2, yc - hh), (xc + dx + sw/2, yc + hh), (xc + dx - sw/2, yc + hh)])
     G['≠'] = U(eq, slash(cxq, YC_, 230))
     lt, gt = G1['<'], G1['>']
-    def le(ch_):
-        b = bounds(ch_); sc_ = 0.84; c_ = scale(ch_, sc_, ((b[0] + b[2])/2, YC_)); c_ = move(c_, 0, 85)
+    def le(ch_, left):
+        # chevron nhỏ 0.84 nhưng CÙNG BÚT với < > (designer 05/11 "sửa luôn các lỗi ≈ ≤ ≥": bản thu nhỏ cả nét → nhánh mảnh 23 u,
+        # đầu 60 so với < 66): dựng lại chevron cỡ 0.84 bằng bút của <, đặt đúng chỗ bản thu nhỏ cũ
+        b = bounds(ch_); sc_ = 0.84; c_ = scale(ch_, sc_, ((b[0] + b[2])/2, YC_)); c_ = move(c_, 0, 85); ob = bounds(c_)
+        nc = chevron((0, 0), 200*sc_, 400*sc_, (t['N']*0.72, t['m']), left); nb = bounds(nc)
+        c_ = move(nc, (ob[0] + ob[2])/2 - (nb[0] + nb[2])/2, (ob[1] + ob[3])/2 - (nb[1] + nb[3])/2)
         cb = bounds(c_); return U(c_, rect(cb[0], YC_ - 230, cb[2], YC_ - 230 + mh))
-    G['≤'] = le(lt); G['≥'] = le(gt)
+    G['≤'] = le(lt, True); G['≥'] = le(gt, False)
     tl = wave(w, 1.7*0.78); tb_ = bounds(tl); tl = move(tl, 0, YC_ - (tb_[1] + tb_[3])/2)   # ≈: sóng nhỏ hơn, cùng nét ~
     G['≈'] = U(move(tl, 0, 92), move(tl, 0, -92))
     G['¬'] = U(rect(0, YC_ - mh/2, ms, YC_ + mh/2), rect(ms - 0.62*Vv, YC_ - 200, ms, YC_ + mh/2))

@@ -71,6 +71,7 @@ def measure(d):
         i = int(np.argmin(np.abs(2*dist[keep]/SC - v))); y, x = pts[i] if len(pts) else (0, 0)
         return round(x/SC + org[0]), round(y/SC + org[1])
     T, Tx, t = float(np.percentile(w, 97)), float(w.max()), float(np.percentile(w, 3))
+    if DROP_NOW[0]: T = Tx = float(2*ndimage.distance_transform_edt(m).max()/SC)   # dấu giọt / nháy: đường kính đầu
     return dict(T=round(T, 1), Tx=round(Tx, 1), t=round(t, 1), Tx_at=at(Tx), t_at=at(t))
 
 # nhóm ký hiệu cùng luật nét: mỗi ký tự trong ±10 % trung vị nhóm (cùng weight)
@@ -80,6 +81,10 @@ FAM = {
     'ký hiệu chữ': "&$¥¢£€@",
     'nháy thẳng':  "'\"′″",
 }
+# dấu hình giọt / nháy: trục giữa của giọt không ổn định (phân vị 97 nhảy 45 → 139 → 64 giữa các weight dù đầu giọt tăng đều
+# 118 → 162) → "nét chính" = đường kính hình tròn nội tiếp lớn nhất (đầu giọt)
+DROP = set(",;‘’‚“”„'\"′″")
+DROP_NOW = [False]
 SKIP_THIN = set(".:…·•,;‘’‚“”„") | set(SPc.COMB)   # chấm / giọt: trục giữa của hình tròn không đo được nét mảnh
 
 def main():
@@ -89,7 +94,9 @@ def main():
     only = sys.argv[2] if len(sys.argv) > 2 else None
     chars = sorted({k.rsplit('-', 1)[0] for k in O})
     if only: chars = [c for c in chars if c in only]
-    M = {w: {c: measure(O[f'{c}-{w}']) for c in set(chars) | set('Hn0')} for w in ws}
+    def meas(c, w):
+        DROP_NOW[0] = c in DROP; r = measure(O[f'{c}-{w}']); DROP_NOW[0] = False; return r
+    M = {w: {c: meas(c, w) for c in set(chars) | set('Hn0')} for w in ws}
     rep = {}
     for w in ws:
         R = M[w]; ref = {'caps': R['H'], 'lower': R['n'], 'fig': R['0']}

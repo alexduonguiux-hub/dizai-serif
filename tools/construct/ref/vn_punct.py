@@ -479,12 +479,14 @@ def comma_shape(t, w):
     tl = stroke(tail, (1, 1), wabs=lambda u: wt)
     tl = I(tl, halfplane(-1.0*d))                                     # cắt thêm (designer 04/11: "cắt thêm xíu nữa cho đỡ nhọn")
     return U(dot(c, d), tl)
-def wedge(xc, ytop, ybot, wt, wb, conc=0.18):
-    """nét thon (chấm than, nháy): đỉnh cắt ngang rộng wt, chân rộng wb, hai cạnh lõm nhẹ như loe"""
+def wedge(xc, ytop, ybot, wt, wb, conc=0.18, flat=False):
+    """nét thon (chấm than, nháy): đỉnh cắt ngang rộng wt, chân rộng wb, hai cạnh lõm nhẹ như loe;
+    flat: chân CẮT NGANG (nháy thẳng — designer 06/11 "các nét đáy bị bo tròn, lẽ ra là phải cắt ngang")"""
     a, b = (xc - wt/2, ytop), (xc - wb/2, ybot); c, d = (xc + wb/2, ybot), (xc + wt/2, ytop)
     k = conc*(wt - wb)/2
+    foot = ('L', c) if flat else ('C', (b[0], b[1] - wb*0.5), (c[0], c[1] - wb*0.5), c)   # chân tròn tiếp tuyến hai cạnh (G1)
     return P([('M', a), ('C', (a[0] + k, a[1] - (a[1]-b[1])*0.35), (b[0], b[1] + (a[1]-b[1])*0.3), b),
-              ('C', (b[0], b[1] - wb*0.5), (c[0], c[1] - wb*0.5), c),          # chân tròn tiếp tuyến hai cạnh (G1, không gãy)
+              foot,
               ('C', (c[0], c[1] + (d[1]-c[1])*0.3), (d[0] - k, d[1] - (d[1]-c[1])*0.35), d), ('Z',)])
 
 def punct(S, w):
@@ -521,7 +523,7 @@ def punct(S, w):
         u = min(1, max(0, (qx1 - x)/(qx1 - qx0))); return (x + qd*u*u*(3 - 2*u), y)
     G['?'] = U(xform(U(top2, qs), qw), dot((sx, r - 3), d))
     # nháy thẳng ' "
-    qt = lambda xc: wedge(xc, 711, 455, 0.86*V, 0.34*V, 0.25)
+    qt = lambda xc: wedge(xc, 711, 455, 0.86*V, 0.34*V, 0.25, flat=True)
     G["'"] = qt(0.43*V); G['"'] = U(qt(0.43*V), qt(0.43*V + 0.86*V + 0.75*V))
     # nháy cong ’ ‘ ” “ = dấu phẩy nâng lên (đỉnh chấm ở 711)
     cm = comma_shape(t, w); cb = bounds(cm); rq = move(cm, -cb[0], 711 - cb[3] + 0.0)

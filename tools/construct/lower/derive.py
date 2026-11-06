@@ -396,8 +396,31 @@ def _thick_of(p, y1=XH*0.78, y2=XH*0.70, i=0):
     (a1, b1), (a2, b2) = runs_at(p, y1)[i], runs_at(p, y2)[i]
     th = math.atan2(y1 - y2, ((a1 + b1) - (a2 + b2))/2); return (b1 - a1)*abs(math.sin(th))
 
+THIN_ON = [True]
+def _off(f):
+    """chạy f với S10b tắt (bản trước khi làm dày nét mảnh) — làm chuẩn khoảng trắng lòng"""
+    THIN_ON[0] = False
+    try: return f()
+    finally: THIN_ON[0] = True
+def counter(p, y=XH*0.75, i=0):
+    """khoảng trắng lòng: khe giữa run i và run i+1 ở cao độ y"""
+    r = runs_at(p, y); return r[i + 1][0] - r[i][1]
+def _solve(f, g0, a, b):
+    """secant: tìm sx để counter(f(sx)) = g0"""
+    ea, eb = counter(f(a)), counter(f(b))
+    for _ in range(5):
+        if abs(eb - ea) < 1e-6 or abs(eb - g0) < 0.05: break
+        c = b + (g0 - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, counter(f(c))
+    return b
+
 def shrink_caps(ch, w, top=XH, sx=None, delta=None):
     """chữ hoa thu về x-height; v x: nét \\ dày bằng thân (thicken); Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
+    if sx is None and ch in ('v', 'x') and THIN_ON[0]:
+        # S10b làm dày nét mảnh: GIỮ KHOẢNG TRẮNG LÒNG của bản trước S10b (designer 05/11 "các chữ y, x, w, v thường giờ thì lại
+        # hẹp quá" — giữ bề ngang mực làm cả chữ co lại) → chữ rộng thêm đúng phần nét mảnh dày lên
+        g0 = counter(_off(lambda: shrink_caps(ch, w, top)))
+        sx = _solve(lambda k: shrink_caps(ch, w, top, k), g0, CAP_SX[ch], CAP_SX[ch]*1.05)
+        return shrink_caps(ch, w, top, sx, delta)
     if w == 'Regular' and sx is None and ch in W_TGT and ch != 'w':
         def wd(k): p = shrink_caps(ch, w, top, k); return p.bounds[2] - p.bounds[0]
         a, b = CAP_SX[ch], CAP_SX[ch]*1.05; ea, eb = wd(a), wd(b)
@@ -419,7 +442,7 @@ def shrink_caps(ch, w, top=XH, sx=None, delta=None):
             t0 = m(_embolden(p, d)); t1 = m(_embolden(thicken(p, 40.0, fs=fs), d))
             delta = 40.0*(W[w]['V'] - t0)/(t1 - t0)
         p = thicken(p, delta, fs=(ch == 'z'))
-        if ch in ('v', 'x'):                                 # S10b: nét mảnh / theo tỉ lệ mảnh / thân của V hoa
+        if ch in ('v', 'x') and THIN_ON[0]:                  # S10b: nét mảnh / theo tỉ lệ mảnh / thân của V hoa
             mt = lambda q: _thick_of(q, XH*0.80, XH*0.70, -1)
             u0 = mt(_embolden(p, d)); u1 = mt(_embolden(thicken(p, 30.0, fs=True), d))
             dl = 30.0*(thin_target(w) - u0)/(u1 - u0) if abs(u1 - u0) > 1e-3 else (thin_target(w) - u0)*1.25
@@ -440,6 +463,12 @@ def thin_target(w):
 
 W_SX = 0.47   # v dùng cho w: hẹp hơn v (0.55) → hai chữ v ghép lại rộng ≈ 1.45 v
 def w_from_v(w, sx=None):
+    if sx is None and THIN_ON[0]:                            # S10b: giữ khoảng trắng lòng trái của w như bản trước S10b
+        g0 = counter(_off(lambda: w_from_v(w)))
+        return w_from_v(w, _solve(lambda k: w_from_v(w, k), g0, W_SX, W_SX*1.05))
+    return _w_from_v(w, sx)
+
+def _w_from_v(w, sx=None):
     """w (designer 05/11: "cân nhắc làm lại chữ w thường khác" — bản W hoa thu nhỏ có nét giữa bắt chéo, cụm mực đặc ở giữa):
     hai MODULE v ghép lại. v dựng như v (shrink_caps, nét \\ dày = thân) nhưng hẹp hơn (W_SX). Hai nét ngoài giữ loe của v;
     hai nét trong bỏ loe, kéo thẳng theo mép nét lên quá x-height; đỉnh giữa cắt phẳng ở x-height, rộng đúng đáy nhọn v.
