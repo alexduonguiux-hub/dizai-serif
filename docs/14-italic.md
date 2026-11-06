@@ -63,3 +63,9 @@ Preview mục "Font variable" dùng file gộp: thanh trượt wght + nghiêng (
 ## Đổi tên bộ chữ: AnNam (06/11)
 
 Designer: "Đổi tên Font thành AnNam". Tên họ (name ID 1 / 16) "AnNam", tên PostScript `AnNam-Regular` … `AnNam-BoldItalic`, file `AnNam[wght].ttf`, `AnNam-Italic[wght].ttf`, `AnNam[slnt,wght].ttf`, `fonts/otf|ttf/AnNam-*.{otf,ttf}`. Bản quyền / designer giữ "Dizai Studio". Preview: tiêu đề và mast "AnNam". Tên dự án, repo, thư mục, skill giữ "dizai-serif".
+
+## Kiểm tính unique (06/11)
+
+- **Trong gói:** mã định danh (name ID 3) dạng `0.900;<vendor>;<PostScript>` (+ `-VF` cho variable), tên PostScript, tên đầy đủ, (họ, kiểu), (weight, italic) — không trùng trong từng định dạng. Đã sửa: file gộp `AnNam[slnt,wght].ttf` từng trùng tên PostScript / mã định danh `AnNam-Regular` với `AnNam[wght].ttf` → nay tiền tố `AnNamSlnt` (name ID 25).
+- **Vendor ID** (OS/2 achVendID) chưa có — đang ghi `NONE` trong mã định danh; cần chọn mã 4 ký tự và (nên) đăng ký với Microsoft.
+- **Tên trên thị trường:** đã có họ thương mại **BT Annam Neue** (BeauType, Duong Nguyen — chữ Việt, cảm hứng bút dẹt và mái Hoàng thành Huế, có Roman + Italic; theo KREATIV phát triển từ một font "Annam" gốc). Tên "AnNam" dễ nhầm — chờ designer quyết định giữ hay đổi.

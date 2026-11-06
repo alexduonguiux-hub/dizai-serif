@@ -291,6 +291,15 @@ def combined(VF):
     wv = [dict(value=v, name=n) for n, v in WGHT.items()]; wv[0].update(flags=0x2, linkedValue=700)
     sv = [dict(value=0, name='Upright', flags=0x2), dict(value=-ITALIC_ANGLE, name='Italic')]
     buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='slnt', name='Slant', values=sv)])
+    # tên PostScript riêng cho file gộp (kiểm tính unique 06/11: trùng 'AnNam-Regular' với AnNam[wght].ttf → macOS coi là một font)
+    nm = f['name']
+    for rec in list(nm.names):
+        if rec.nameID == 6: rec.string = rec.toUnicode().replace(PS + '-', PS + 'Slnt-')
+    nm.setName(PS + 'Slnt', 25, 3, 1, 0x409)
+    for inst in f['fvar'].instances:
+        if inst.postscriptNameID != 0xFFFF:
+            r = nm.getName(inst.postscriptNameID, 3, 1, 0x409)
+            if r: nm.setName(r.toUnicode().replace(PS + '-', PS + 'Slnt-'), inst.postscriptNameID, 3, 1, 0x409)
     f.save(dst)
 
 def compile_fonts():
@@ -319,6 +328,10 @@ def compile_fonts():
         for f_ in fs:
             p = os.path.join(dp, f_); t = TTFont(p)
             t['name'].names = [n for n in t['name'].names if n.platformID != 1]
+            # mã định danh (name ID 3) riêng từng file: phiên bản; vendor; tên PostScript (+ '-VF' cho file variable)
+            vend = t['OS/2'].achVendID.strip() or 'NONE'
+            uid = f"{VERSION[0]}.{VERSION[1]:03d};{vend};{t['name'].getDebugName(6)}" + ('-VF' if 'fvar' in t else '')
+            t['name'].setName(uid, 3, 3, 1, 0x409)
             if 'glyf' in t and 'gvar' not in t:                       # bỏ điểm trùng liên tiếp (làm tròn sau cu2qu → đoạn độ dài 0)
                 from fontTools.ttLib.tables._g_l_y_f import GlyphCoordinates
                 for gn in t.getGlyphOrder():
