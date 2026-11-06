@@ -315,3 +315,7 @@ Designer 06/11 "dấu nặng chữ ỵ nằm hơi cao hơn các dấu nặng kh�
 ## Dấu ngã cân độ nghiêng (06/11)
 
 Designer: "dấu ngã chưa cân bằng độ nghiêng hơi nghiêng qua phải quá". Đo: bút dẹt làm nét xuống ở giữa dày nhất → trọng tâm nửa trái cao hơn nửa phải 26 (Regular) / 23 (Bold) u, cả dấu đổ sang phải. Sửa (`ref/vn_punct.py`): đường tâm sóng nâng dần sang phải y += s·x, s = ½ mức cân trọng tâm hoàn toàn (0.118 / 0.108; hai đầu chênh ≈ 30 u) — so ba mức hiện tại / ½ / cân hoàn toàn: cân hoàn toàn trông nghiêng ngược. Áp cho mọi chữ có dấu ngã (hoa, thường, ñ, dấu tổ hợp); ~ toán học giữ nguyên. Khe ngã–mũ 33 (≥ 30). Va chạm 0; Tĩ Bold lệch 41 u so với Ti (tay T phủ dấu).
+
+## Dấu toán cùng bề ngang (06/11)
+
+Designer: "làm dấu toán cùng bề ngang luôn" (fontbakery math_signs_width). + − = ≠ × ÷ ± < > ≤ ≥ ¬ ≈ cùng advance = advance của + (dấu có mực rộng nhất 500 u): 547 / 550.67 / 554.33 / 558 (R / M / SB / B), mực canh giữa ô (`spacing.py`, MATH_TAB) → cột phép tính thẳng hàng. ~ là ký tự văn bản, giữ bề ngang riêng. Va chạm 0; QA file font 34 / 34; fontbakery math_signs_width PASS.

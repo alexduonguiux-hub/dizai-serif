@@ -64,6 +64,7 @@ SPACE = lerp_w({'Regular': 230, 'Bold': 245})                                   
 NOKERN = set('*<>\\^_`|~•·©®™°±÷−‰§¶†‡£¥¢µ') | set(MATH)
 CAPS = list('ABCDEFGHIJKLMNOPQRSTUVWXYZ'); LOWER = list('abcdefghijklmnopqrstuvwxyz'); FIG = list('0123456789')
 
+MATH_TAB = '+−=≠×÷±<>≤≥¬≈'                           # dấu toán cùng bề ngang (= advance của +)
 ROUND_R, ROUND_L, ROUND_A = 'DO', 'OCGQ', 1.0      # cặp tròn × chéo: khe mực nhỏ nhất ≤ 1.0 × khe HH
 WEDGE_X = 'AVWYT'                                  # chữ chéo / tay vươn tạo nêm trắng
 
@@ -164,6 +165,14 @@ def main():
                     need = round(ls - x0) - dxa                            # dịch thêm để lề trái thanh = lề quang học
                     if need > 0: dxa += need; adv += need
                 sp[ch] = (dxa, adv)
+        # dấu toán CÙNG BỀ NGANG (designer 06/11 "làm dấu toán cùng bề ngang luôn"; fontbakery math_signs_width): advance = advance
+        # của + (dấu có mực rộng nhất, 500 u), mực canh giữa ô → cột phép tính thẳng hàng. ~ là ký tự văn bản: giữ bề ngang riêng
+        if '+' in sp:
+            adv_m = sp['+'][1]
+            for ch in MATH_TAB:
+                if ch in sp and ch in P:
+                    x0_, _, x1_, _ = P[ch].bounds
+                    sp[ch] = (round((adv_m - (x1_ - x0_))/2 - x0_), adv_m)
         # dấu tổ hợp: bề ngang 0, đặt về TRƯỚC (đè lên chữ đứng trước): tâm dấu ở giữa ô n trước đó; sừng U+031B bám mép phải
         # mực của chữ trước (= − lề phải n). Vị trí chính xác theo từng chữ sẽ làm bằng anchor GPOS mark khi xuất font.
         n_dx, n_adv = sp['n']; n_rsb = n_adv - n_dx - round(P['n'].bounds[2])
