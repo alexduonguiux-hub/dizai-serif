@@ -59,6 +59,25 @@ for w in ("Regular", "Medium", "SemiBold", "Bold"):
         if sp: e["a"], e["dx"] = sp["adv"], sp["dx"]
         e["rc"], e["lc"] = _rc(e["c"]), _base(e["c"])
     data["weights"][w] = L
+# Italic (designer 06/11 "bản italic chưa có trên preview"): outline nhánh Italic (out/construct_italic — hiện = glyph Roman),
+# nghiêng 10° quanh ½ x-height như export_font; kerning / spacing dùng chung Roman
+import math
+_T = math.tan(math.radians(10)); _YC = 495.0/2
+_OI = os.path.join(ROOT, "out", "construct_italic", "outlines.json")
+outl_i = json.load(open(_OI)) if os.path.exists(_OI) else outl
+def _skew(d):
+    nums = list(re.finditer(r"-?\d+(?:\.\d+)?", d)); out = []; last = 0
+    for i in range(0, len(nums) - 1, 2):
+        mx, my = nums[i], nums[i + 1]; x, y = float(mx.group()), float(my.group())
+        out.append(d[last:mx.start()]); out.append(f"{x + (y - _YC)*_T:.1f}"); out.append(d[mx.end():my.start()]); out.append(my.group()); last = my.end()
+    out.append(d[last:]); return "".join(out)
+for w in ("Regular", "Medium", "SemiBold", "Bold"):
+    wi = "Italic" if w == "Regular" else f"{w} Italic"; L = []
+    for e in data["weights"][w]:
+        k = f"{e['c']}-{w}"; d = short(outl_i.get(k, outl[k])); p = _skew(d)
+        xs = [float(v) for v in re.findall(r"-?\d+\.?\d*", p)[0::2]]
+        L.append(dict(e, p=p, gd=[], bx=[round(min(xs)), round(max(xs))] if xs else [0, 0]))
+    data["weights"][wi] = L; data["kern"][wi] = data["kern"][w]
 js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 html = open(os.path.join(HERE, "preview_template.html")).read().replace("/*DATA*/{}", js)

@@ -102,7 +102,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
 <div class="wrap">
   <header>
-    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.6 · variable wght 400–700 · Roman + Italic</span></div>
+    <div class="mast"><svg id="mast" aria-label="Đìzai Serif"></svg><span class="ver">v0.7 · Regular → Bold · Italic → Bold Italic · variable wght 400–700</span></div>
     <p class="lede">Toàn bộ glyph hiện có của hai weight để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật (chưa có bản vẽ tay); còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả hai weight, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
   </header>
   <div class="summary" id="summary"></div>
@@ -160,7 +160,9 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 <script>
 (function () {
   const D = JSON.parse(document.getElementById('data').textContent);
-  const W = ['Regular', 'Medium', 'SemiBold', 'Bold'];
+  const W = Object.keys(D.weights);                                   // Regular … Bold, Italic … Bold Italic
+  const isIt = w => / ?Italic$/.test(w) || w === 'Italic';
+  const WS = () => W.filter(w => isIt(w) === isIt(weight));            // ngăn xem lớn / chữ mẫu: 4 weight cùng kiểu
   const G = { CAP: 700, OV: 11.3, MARK: 750, DOT: -47.3, TOP: 1110, BOT: -260 };
   const SB = 40, SPACE = 230;
   const GRP = { caps: 'Chữ hoa', lower: 'Chữ thường', fig: 'Số', vn: 'Chữ Việt hoa', vnl: 'Chữ Việt thường', punct: 'Dấu câu', sym: 'Ký hiệu bổ sung' };
@@ -239,12 +241,12 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     const el = document.getElementById('drawer');
     if (!sel) { el.innerHTML = '<p class="note">Bấm một glyph để xem lớn ở cả hai weight.</p>'; return; }
     const g = byC[weight][sel], f = flags[key(weight, sel)] || {};
-    const advs = W.map(w => { const x = byC[w][sel]; return x ? `${w[0]} mực ${x.W} · adv ${x.a}` : ''; }).join(' · ');
-    const srcs = W.map(w => { const x = byC[w][sel]; return x ? `${w}: ${x.s === 'rule' ? 'dựng theo luật (TẠM)' : (x.s === 'interp' ? 'nội suy từ bản vẽ' : 'bản vẽ designer')}` : ''; }).join(' · ');
+    const advs = WS().map(w => { const x = byC[w][sel]; return x ? `${w[0]} mực ${x.W} · adv ${x.a}` : ''; }).join(' · ');
+    const srcs = WS().map(w => { const x = byC[w][sel]; return x ? `${w}: ${x.s === 'rule' ? 'dựng theo luật (TẠM)' : (x.s === 'interp' ? 'nội suy từ bản vẽ' : 'bản vẽ designer')}` : ''; }).join(' · ');
     el.innerHTML = `<div class="head"><span class="big">${esc(g.c)}</span><span class="meta">${hex(g.u)} · ${GRP[g.g]} · ${advs}</span></div>
       <div class="meta">${srcs}</div>
       <div class="row"><label class="chk"><input type="checkbox" id="inkchk" ${showInk ? 'checked' : ''}> Tô mực (bỏ để xem guide trên nền mờ)</label></div>
-      <div class="duo">${W.map(w => `<figure>${bigSVG(byC[w][sel], w)}<figcaption>${w} · cam: compa loe, thanh · xanh: elip dựng, đường chéo kéo dài</figcaption></figure>`).join('')}</div>
+      <div class="duo">${WS().map(w => `<figure>${bigSVG(byC[w][sel], w)}<figcaption>${w} · cam: compa loe, thanh · xanh: elip dựng, đường chéo kéo dài</figcaption></figure>`).join('')}</div>
       <div class="review"><span class="note">${weight}:</span>
         <button id="b-ok" class="${f.s === 'ok' ? 'on-ok' : ''}">Đạt</button><button id="b-fix" class="${f.s === 'fix' ? 'on-fix' : ''}">Cần sửa</button><button id="b-clear">Bỏ đánh dấu</button>
         <input id="b-note" placeholder="Ghi chú cho ${esc(sel)} (${weight})" value="${esc(f.note || '')}" aria-label="Ghi chú"></div>`;
@@ -326,7 +328,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     const t = document.getElementById('txt').value.normalize('NFC'), sz = +document.getElementById('tsize').value;
     document.getElementById('tsizev').textContent = sz + ' px';
     const words = t.split(/(\s+)/);
-    document.getElementById('lines').innerHTML = W.map(w => {
+    document.getElementById('lines').innerHTML = WS().map(w => {
       const html = words.map(s => /^\s+$/.test(s) ? (s.includes('\n') ? '<span style="flex-basis:100%;height:0"></span>' : `<span style="width:${(SPACE * sz / 1000).toFixed(1)}px"></span>`) : (s ? wordSVG(s, w, sz) : '')).join('');
       return `<div class="line"><div class="w">${w} · ${sz} px</div><div class="set" aria-label="${esc(t)}">${html}</div></div>`;
     }).join('');
@@ -339,7 +341,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     }));
   }
   document.getElementById('wsel').innerHTML = W.map(w => `<button aria-pressed="${w === weight}" data-w="${w}">${w}</button>`).join('');
-  seg('wsel', b => { weight = b.dataset.w; renderGrid(); renderDrawer(); });
+  seg('wsel', b => { weight = b.dataset.w; renderGrid(); renderDrawer(); renderLines(); });
   seg('gsel', b => { grp = b.dataset.g; renderGrid(); });
   seg('ssel', b => { srcSel = b.dataset.s; renderGrid(); });
   document.getElementById('gdgrid').addEventListener('change', e => { gridGuides = e.target.checked; renderGrid(); });
