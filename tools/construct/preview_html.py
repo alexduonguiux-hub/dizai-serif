@@ -84,8 +84,8 @@ html = open(os.path.join(HERE, "preview_template.html")).read().replace("/*DATA*
 # font variable thật (export_font.py) nhúng woff2 base64 → mục "Font variable" của trang
 import base64, io
 FF = []
-for fam, fn in (("AnNam VF", "AnNam[wght].ttf"), ("AnNam VF Italic", "AnNam-Italic[wght].ttf"),
-                ("AnNam VF Combined", "AnNam[slnt,wght].ttf")):
+for fam, fn in (("AnNam VF", "AnNamSerif[wght].ttf"), ("AnNam VF Italic", "AnNamSerif-Italic[wght].ttf"),
+                ("AnNam VF Combined", "AnNamSerif[slnt,wght].ttf")):
     fp = os.path.join(ROOT, "fonts", "variable", fn)
     if not os.path.exists(fp): continue
     from fontTools.ttLib import TTFont

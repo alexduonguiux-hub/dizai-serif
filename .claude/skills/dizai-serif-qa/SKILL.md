@@ -3,7 +3,7 @@ name: dizai-serif-qa
 description: Checklist QA/QC của Dizai Serif (chữ glyphic loe nét, tương phản theo bút dẹt). Chạy sau mọi thay đổi glyph, luật, dấu, spacing, kerning hoặc build, trước khi gửi cho designer. Dùng kèm dizai-serif-design.
 ---
 
-> Tên phát hành: **AnNam** (designer 06/11 "Đổi tên Font thành AnNam"); tên dự án / thư mục / skill giữ "dizai-serif". Tên họ, tên PostScript và tên file font: `AnNam` (export_font.py FAMILY, PS).
+> Tên phát hành: **AnNam Serif** (designer 06/11: "AnNam", thêm "Serif" để phân biệt với BT Annam Neue của BeauType); PostScript / file `AnNamSerif`; vendor ID `DZAI` (nên đăng ký Microsoft). Tên dự án / thư mục / skill giữ "dizai-serif". Mỗi lần phát hành: kiểm unique — name ID 3 `version;DZAI;PostScript(-VF)`, PostScript không trùng trong từng định dạng, file gộp tiền tố `AnNamSerifSlnt`.
 
 # Dizai Serif — QA/QC
 

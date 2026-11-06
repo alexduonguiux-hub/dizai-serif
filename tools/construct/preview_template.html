@@ -1,4 +1,4 @@
-<title>Duyệt glyph AnNam</title>
+<title>Duyệt glyph AnNam Serif</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
@@ -102,8 +102,8 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
 <div class="wrap">
   <header>
-    <div class="mast"><svg id="mast" aria-label="AnNam"></svg><span class="ver">v0.7 · Regular → Bold · Italic → Bold Italic · variable wght 400–700</span></div>
-    <p class="lede">Toàn bộ glyph của AnNam — 4 weight Roman và 4 weight Italic — để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật; còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả 4 weight cùng kiểu, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
+    <div class="mast"><svg id="mast" aria-label="AnNam Serif"></svg><span class="ver">v0.7 · Regular → Bold · Italic → Bold Italic · variable wght 400–700</span></div>
+    <p class="lede">Toàn bộ glyph của AnNam Serif — 4 weight Roman và 4 weight Italic — để duyệt. Chấm đỏ đánh dấu glyph dựng theo luật; còn lại là bản vẽ của designer. Bấm một glyph để xem lớn ở cả 4 weight cùng kiểu, kèm đường kẻ, bề ngang và guide dựng hình, rồi đánh dấu Đạt hoặc Cần sửa.</p>
   </header>
   <div class="summary" id="summary"></div>
 
@@ -129,7 +129,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   <section class="vf" aria-labelledby="h-vf" id="vf" hidden>
     <h2 id="h-vf">Font variable</h2>
-    <p class="note">File font thật: gộp <code>fonts/variable/AnNam[slnt,wght].ttf</code> (trục wght 400–700 + slnt 0 … −10°) và hai file riêng <code>AnNam[wght].ttf</code>, <code>AnNam-Italic[wght].ttf</code>, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
+    <p class="note">File font thật: gộp <code>fonts/variable/AnNamSerif[slnt,wght].ttf</code> (trục wght 400–700 + slnt 0 … −10°) và hai file riêng <code>AnNamSerif[wght].ttf</code>, <code>AnNamSerif-Italic[wght].ttf</code>, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
     <div class="ctrl">
       <label class="chk">wght <input type="range" id="vfw" min="400" max="700" step="1" value="400" aria-label="Độ đậm"> <span id="vfwv">400</span></label>
       <div class="seg" role="group" aria-label="Kiểu"><button id="vfr" aria-pressed="true">Roman</button><button id="vfi" aria-pressed="false">Italic</button></div>
@@ -361,7 +361,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   // tên bộ chữ trên đầu trang, xếp bằng chính glyph Bold
   (function () {
     const m = document.getElementById('mast'); let x = 0; const ps = [];
-    for (const ch of 'AnNam') { if (ch === ' ') { x += SPACE; continue; } const g = byC.Bold[ch]; if (!g) continue; ps.push(`<path class="ink" transform="translate(${x + (g.dx ?? SB)} 0)" d="${g.p}"/>`); x += g.a; }
+    for (const ch of 'AnNam Serif') { if (ch === ' ') { x += SPACE; continue; } const g = byC.Bold[ch]; if (!g) continue; ps.push(`<path class="ink" transform="translate(${x + (g.dx ?? SB)} 0)" d="${g.p}"/>`); x += g.a; }
     m.setAttribute('viewBox', `0 -1080 ${x} 1120`); m.innerHTML = `<g transform="scale(1,-1)">${ps.join('')}</g>`;
   })();
 
