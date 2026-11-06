@@ -289,3 +289,13 @@ Nét dày đã bằng thân (S10). Nét mảnh mỏng: v w x y k là chữ hoa t
 **S10b**: nét chéo mảnh của chữ thường = thân chữ thường × (nét mảnh / thân) của V hoa cùng weight → 44.5 Regular, 63.6 Bold (`derive.thin_target`). Làm như S10: hai mép nét / dời song song ra ngoài (`thicken(fs=True)`), loe tịnh tiến theo mép, đỉnh tính lại bằng giao điểm; áp cho v x (w, y dựng từ v tự theo) và tay k. Sau: nét mảnh 45 / 51 / 57 / 63 (R / M / SB / B) ở cả năm chữ; bề ngang v x w giữ đích cũ.
 
 **™**: thanh ngang T dày theo nét ngang H của weight (Regular 0.42 × H_B = 28.6 → Bold 48.6): mặt dưới thanh + mỏ hạ xuống bằng dời điểm, mặt trên ở cap.
+
+## ≈ ≤ ≥ · nháy thẳng · bề ngang v x y w (06/11)
+
+Designer: "Sửa luôn các lỗi ≈ ≤ ≥ và dấu nháy", "Các nét đáy bị bo tròn, lẽ ra là phải cắt ngang", "các chữ y, x, w, v thường giờ thì lại hẹp quá", "hẹp ý tôi là hẹp kích thước", "tăng thêm cỡ 10% bề ngang kích thước".
+
+- **≤ ≥**: trước là < > thu nhỏ 0.84 cả nét → nhánh mảnh 23 u, đầu 60 (< là 27 / 66). Nay dựng lại chevron cỡ 0.84 bằng **đúng bút của <** (cùng độ dày nét), đặt đúng chỗ cũ; thanh dưới giữ 0.55 V.
+- **≈ ~**: cạnh mỏng bút dẹt của sóng = max(mm × k, 0.75 H của weight) → đoạn dốc giữa sóng không mảnh hơn nét ngang chung (Regular 23 → 30 u, Bold 34 → 51).
+- **Nháy thẳng ' " ′ ″**: chân **cắt ngang** (`wedge(flat=True)`), không bo tròn; ′ ″ dựng từ ' nên tự theo. Dấu ! giữ chân tròn.
+- **Nháy cong / dấu phẩy**: không lỗi hình — đầu giọt tăng đều 118 → 132 → 147 → 162 qua 4 weight. Cờ QA cũ do trục giữa của hình giọt không ổn định; `qa_stroke.py` nay đo dấu giọt / nháy bằng đường kính hình tròn nội tiếp lớn nhất (đầu giọt).
+- **Bề ngang v x y w** (S10c): bề ngang mực = **1.10 × bản trước 06/11** (Regular v 411 → 452 · x 423 → 465 · w 596 → 656; Bold v 422 → 465 · x 434 → 478 · w 619 → 681), y theo v; nét dày = thân (S10), nét mảnh theo S10b. Bold vẫn ≥ Regular + ½ phần thân tăng × số nét dày (đơn điệu). Đối chiếu font serif tham chiếu (v / n): Regular 0.985 — Dizai nay 1.02.

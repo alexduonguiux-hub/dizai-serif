@@ -413,6 +413,32 @@ def _solve(f, g0, a, b):
         c = b + (g0 - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, counter(f(c))
     return b
 
+# S10c (designer 06/11 "bản regular đã hẹp sẵn rồi"): bề ngang mực v x w so với n theo TRUNG VỊ font serif tham chiếu
+# (ref_kern.REFS: Liberation, DejaVu, Caladea, FreeSerif — cùng bộ dùng cho kerning). Dizai Regular trước: v/n 0.94, x 0.96,
+# w 1.38 (tham chiếu 0.985 / 0.971 / 1.46). Bề ngang = max(tham chiếu × n, bản giữ khoảng trắng lòng) → Bold không hẹp lại.
+WIDEN = 1.10
+VN_REF = {'Regular': {'v': 0.9855, 'x': 0.971, 'w': 1.4605}, 'Bold': {'v': 0.944, 'x': 0.9125, 'w': 1.358}}
+def _n_ink(w):
+    ref = json.load(open(os.path.join(HERE, '..', 'ref_glyphs.json')))
+    xs = [p[0] for c in ref[f'n-{w}']['cmds'] if c[0] != 'Z' for p in c[1:]]
+    return max(xs) - min(xs)
+def _widen(f, ch, w, sx):
+    from weights import TW as _TW
+    ink = lambda k: (lambda q: q.bounds[2] - q.bounds[0])(f(k))
+    # designer 06/11 "hẹp ý tôi là hẹp kích thước", "tăng thêm cỡ 10% bề ngang": bề ngang mực = WIDEN × bản trước hôm nay
+    # (Regular v 411 · x 423 · w 596; Bold theo luật cũ R + ½ B_STEM) — tham chiếu VN_REF giữ để đối chiếu (Regular +7 / +2 / +9 %)
+    old_ = _off(lambda: shrink_caps(ch, w) if ch != 'w' else w_from_v(w))
+    tgt = WIDEN*(old_.bounds[2] - old_.bounds[0])
+    if w != 'Regular':                                       # đơn điệu: đậm hơn ≥ Regular + ½ phần thân tăng × số nét dày
+        R = shrink_caps(ch, 'Regular') if ch != 'w' else w_from_v('Regular')
+        tgt = max(tgt, R.bounds[2] - R.bounds[0] + (W[w]['V'] - W['Regular']['V'])/2*(2 if ch == 'w' else 1))
+    if ink(sx) >= tgt - 0.5: return sx
+    a, b = sx, sx*1.06; ea, eb = ink(a), ink(b)
+    for _ in range(5):
+        if abs(eb - ea) < 1e-6 or abs(eb - tgt) < 0.3: break
+        c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, ink(c)
+    return b
+
 def shrink_caps(ch, w, top=XH, sx=None, delta=None):
     """chữ hoa thu về x-height; v x: nét \\ dày bằng thân (thicken); Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
     if sx is None and ch in ('v', 'x') and THIN_ON[0]:
@@ -420,6 +446,7 @@ def shrink_caps(ch, w, top=XH, sx=None, delta=None):
         # hẹp quá" — giữ bề ngang mực làm cả chữ co lại) → chữ rộng thêm đúng phần nét mảnh dày lên
         g0 = counter(_off(lambda: shrink_caps(ch, w, top)))
         sx = _solve(lambda k: shrink_caps(ch, w, top, k), g0, CAP_SX[ch], CAP_SX[ch]*1.05)
+        sx = _widen(lambda k: shrink_caps(ch, w, top, k), ch, w, sx)
         return shrink_caps(ch, w, top, sx, delta)
     if w == 'Regular' and sx is None and ch in W_TGT and ch != 'w':
         def wd(k): p = shrink_caps(ch, w, top, k); return p.bounds[2] - p.bounds[0]
@@ -465,7 +492,8 @@ W_SX = 0.47   # v dùng cho w: hẹp hơn v (0.55) → hai chữ v ghép lại r
 def w_from_v(w, sx=None):
     if sx is None and THIN_ON[0]:                            # S10b: giữ khoảng trắng lòng trái của w như bản trước S10b
         g0 = counter(_off(lambda: w_from_v(w)))
-        return w_from_v(w, _solve(lambda k: w_from_v(w, k), g0, W_SX, W_SX*1.05))
+        sx = _solve(lambda k: w_from_v(w, k), g0, W_SX, W_SX*1.05)
+        return w_from_v(w, _widen(lambda k: w_from_v(w, k), 'w', w, sx))
     return _w_from_v(w, sx)
 
 def _w_from_v(w, sx=None):
