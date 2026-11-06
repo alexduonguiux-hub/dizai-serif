@@ -155,3 +155,15 @@ Thứ tự bắt buộc: build xong hẳn → `qa_outline.py` → `qa_kern.py` �
 - **Kết quả:** tầm với 0.52 cap (Regular) → 0.49 (Bold); đầu móc hạ tới 0.80 cap.
   - qa_outline nhận góc đầu móc = module C, đầu phải đáy = module E (BASE '£': 'CE').
   - qa_stroke không cờ. Ảnh: `docs/img/pound-hook.png`.
+
+## © ® — chữ bên trong đúng module (designer 06/11: "chữ c trong copyright cũng lỗi module")
+
+- **Lỗi:** C / R thu 0.44 rồi làm đậm ĐỀU mọi phía (0.10 V). Nét mảnh dày như nét đứng, mất tương phản bút dẹt; mặt cắt đầu nét phình thành khối vuông.
+- **Sửa** (như ™): lấy chữ của master BOLD thu 0.44, rồi `hdilate` nới theo pháp tuyến. Dời điểm, không boolean, nên giữ số điểm.
+  - Ngang: nét đứng = 0.64 V như cũ.
+  - Dọc nhẹ: nét mảnh ≥ 0.85 H của weight (qa_stroke: mảnh 33 < 35 / 41).
+  - Mặt cắt đứng chỉ trượt ngang, giữ đứng. Góc nối cạnh mặt cắt lấy theo mặt cắt.
+- **Nách R trong ®:** thân dày sang phải, chân dày sang trái nên mặt nách 18 u bị lật thành gai 172° ở Bold.
+  - Sửa: mặt nách đặt lại nằm ngang trên hai cạnh, dài theo hình chiếu, tối thiểu 6 u. Kết quả R 18 → M 13 → SB 7 → B 6 u.
+  - qa_outline: ® hết gai; ® hết lệch cấu trúc Regular ↔ Bold.
+- Ảnh: `docs/img/copyright-inner.png`.
