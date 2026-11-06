@@ -80,3 +80,16 @@ Hệ quả:
 - Ghép contour (U không hợp) phải chuẩn hoá chiều theo độ lồng (`vn_punct.orient`). S18b dùng lại cặp chữ gốc thì đảo theo chiều contour của chữ. Nếu không, QA diện tích Ấ Ơ À báo không đơn điệu.
 - Nét thẳng chia hai đoạn ở hai master với tỉ lệ khác nhau → cùng tỉ lệ (điểm trượt trên đường).
 - **Còn lại** (khác thiết kế giữa hai master, chờ designer): & nách bụng – chân (Regular khấc sắc, Bold bo tròn), 5, M, N, g, x, ®, s (bậc 5 u ở góc đầu nét dưới Regular).
+
+## Đ mất phần thanh trong lòng (designer 06/11: "Chữ Đ bị mất nét trong" — "nét này có 1 bên")
+
+- **Lỗi do S18b:** hàm so khớp hình chỉ kiểm tra một chiều (mọi điểm lòng D nằm trên lòng Đ). Lòng Đ = lòng D + khuyết do thanh ngang ăn vào, nhưng vẫn bị coi là "trùng" và bị thay bằng lòng D, nên thanh chỉ còn bên ngoài thân.
+- **Sửa:** `_same` so HAI CHIỀU (Hausdorff, < 1.5 u). Đ / Ð có lại thanh vào trong lòng 0.9 V như luật.
+- **Kiểm tra:** so ảnh mọi glyph với bản trước S18b. Chỉ các chữ cố ý đổi khác nhiều (£, nhóm S); không chữ nào mất chi tiết.
+
+## & — hai master cùng cấu trúc (designer 06/11 duyệt đề xuất)
+
+- Các "khấc" 3–5 u ở nách bụng – chân thật ra là **bậc thừa** của phép hợp: mép tay gặp mép bụng lệch 3 u.
+  - Regular có 3 bậc, Bold có 2, nên ghép cặp lệch.
+- **Sửa** (`compat_masters.dejog`): bỏ đoạn bậc < 6 u nằm giữa hai góc ~vuông khi hướng vào / ra lệch < 50°; nối hai mép ở trung điểm (dời ≤ 3 u).
+- **Kết quả:** & hết lệch cấu trúc. Đổi kèm g, Œ (bậc cùng loại, ≤ 3 u). Lệch cấu trúc toàn font 17 → 13.

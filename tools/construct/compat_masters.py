@@ -237,15 +237,44 @@ def _bbox(segs):
     xs = [p[0] for p in P]; ys = [p[1] for p in P]; return min(xs), min(ys), max(xs), max(ys), P
 
 def _same(A, B, dx, dy):
-    """hai contour trùng hình sau tịnh tiến (sai < 1.5 u)"""
-    PA = _bbox(A)[4]; PB = [(p[0] + dx, p[1] + dy) for p in _bbox(B)[4]]
-    Q = [bez(sg, k/40) if sg[0] == 'C' else (sg[1][0] + (sg[2][0] - sg[1][0])*k/40, sg[1][1] + (sg[2][1] - sg[1][1])*k/40)
-         for sg in A for k in range(41)]
-    return max(min(math.dist(p, q) for q in Q) for p in PB) < 1.5
+    """hai contour trùng hình sau tịnh tiến (sai < 1.5 u) — so HAI CHIỀU (Hausdorff): so một chiều thì lòng Đ (lòng D + khuyết
+    thanh ngang) bị coi là trùng lòng D và bị thay → mất phần thanh trong lòng (designer 06/11 "chữ Đ bị mất nét trong")"""
+    def dense(S_, ox=0.0, oy=0.0):
+        return [((bez(sg, k/40) if sg[0] == 'C' else (sg[1][0] + (sg[2][0] - sg[1][0])*k/40, sg[1][1] + (sg[2][1] - sg[1][1])*k/40))[0] + ox,
+                 (bez(sg, k/40) if sg[0] == 'C' else (sg[1][0] + (sg[2][0] - sg[1][0])*k/40, sg[1][1] + (sg[2][1] - sg[1][1])*k/40))[1] + oy)
+                for sg in S_ for k in range(41)]
+    PA, PB = dense(A), dense(B, dx, dy)
+    import numpy as np
+    from scipy.spatial import cKDTree
+    a, b = np.array(PA), np.array(PB)
+    return max(cKDTree(a).query(b)[0].max(), cKDTree(b).query(a)[0].max()) < 1.5
 
 def _shift(segs, dx, dy): return [[sg[0]] + [(p[0] + dx, p[1] + dy) for p in sg[1:]] for sg in segs]
 
 STUB = 5.0
+JOG = 6.0
+def dejog(S):
+    """BẬC THỪA (< JOG u giữa hai góc ~vuông, hướng vào / ra lệch < 50° — mép bị "bậc" chứ không phải góc thật): sinh ra khi nét
+    ghép vào bụng bằng phép hợp (& : mép tay gặp mép bụng lệch 3 u) hoặc ở góc đầu nét (s Regular bậc ngang 5 u). Bỏ đoạn bậc,
+    nối hai mép tại trung điểm (dời ≤ ½ bậc). Designer 06/11 duyệt đề xuất & — hai master cùng cấu trúc, khớp rõ, không bậc"""
+    changed = True
+    while changed and len(S) > 3:
+        changed = False; n = len(S)
+        for i in range(n):
+            h, j = (i - 1) % n, (i + 1) % n
+            if seglen(S[i]) >= JOG: continue
+            a1, a2 = angle(tan_out(S[h]), tan_in(S[i])), angle(tan_out(S[i]), tan_in(S[j]))
+            if a1 < 45 or a2 < 45 or angle(tan_out(S[h]), tan_in(S[j])) >= 50: continue
+            p0, p1 = S[i][1], S[i][-1]; m = ((p0[0] + p1[0])/2, (p0[1] + p1[1])/2)
+            d0 = (m[0] - p0[0], m[1] - p0[1]); d1 = (m[0] - p1[0], m[1] - p1[1])
+            H_ = list(S[h]); H_[-1] = m
+            if H_[0] == 'C': H_[-2] = (H_[-2][0] + d0[0], H_[-2][1] + d0[1])
+            J_ = list(S[j]); J_[1] = m
+            if J_[0] == 'C': J_[2] = (J_[2][0] + d1[0], J_[2][1] + d1[1])
+            S[h], S[j] = H_, J_; del S[i]
+            changed = True; break
+    return S
+
 def drop_stub(S):
     """đoạn cong tí hon (< STUB u) ngay sau một GÓC, nối trơn với đoạn sau → gộp vào đoạn sau (fit, sai số < TOL). Vd ß Regular có
     đoạn 4 u ở mũi đuôi mà Bold không có → ghép cặp lệch một bậc, SemiBold gãy 37° (06/11)"""
@@ -279,7 +308,7 @@ def main():
         stat['glyph'] += 1
         # đơn giản hoá TỪNG master trước (bỏ điểm thừa của boolean / làm đậm), rồi mới ghép cặp
         for k_ in (kr, kb):
-            cs = [drop_stub(simplify_pair([list(x) for x in g], [list(x) for x in g])[0]) for g in contours([O[k_]])]
+            cs = [dejog(drop_stub(simplify_pair([list(x) for x in g], [list(x) for x in g])[0])) for g in contours([O[k_]])]
             O[k_] = to_d(cs)
         try: C = compat(O[kr], O[kb])
         except Exception as e: stat['không ghép'].append(c); continue
