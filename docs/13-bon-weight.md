@@ -303,3 +303,7 @@ Designer: "Sửa luôn các lỗi ≈ ≤ ≥ và dấu nháy", "Các nét đáy
 ## ư + i m n ở SemiBold (06/11)
 
 Designer: "sửa luôn lệch ư + i m n ở SemiBold". Ngoại lệ chống va làm tròn lên bội 5 → Regular / Bold thừa 3–4 u so với sàn sừng 14 (khe 18.2 / 17.4); SemiBold nội suy từ hai giá trị thừa → khe 19.7, trắng cặp ưn lệch un 17 u. Nay mức chống va làm tròn **1 u** (`spacing.py`): khe sừng ưn 14.2 / 15.6 / 16.4 / 14.4 (R / M / SB / B). Âm tiết tiếng Việt: 0 cặp lệch > 12 ngoài sàn 26 ở cả 4 weight (Vĩ Regular cũng hết); va chạm 0; QA file font 34 / 34.
+
+## Dấu nặng ỵ (06/11)
+
+Designer (ảnh "Ty."): "dấu nặng của y phải nằm như này". Trước: chấm treo dưới đỉnh nhọn, dời trái tới khi cách đuôi 36 (lơ lửng dưới đường chân, bên trái đuôi). Nay (`lower/vn_lower.py`): chấm **ngang đường chân** (đáy −3 như dấu chấm câu), **bên phải đuôi y**, cách nét đúng khe dấu GAP_ML. Áp cho cả 4 weight, Roman và Italic. Va chạm 0; âm tiết Việt 0 lệch; QA file font 34 / 34.
