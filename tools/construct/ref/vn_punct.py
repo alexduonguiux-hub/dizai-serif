@@ -73,9 +73,27 @@ def P(cmds):
         elif c[0] == 'C': p.cubicTo(*c[1], *c[2], *c[3])
         else: p.close()
     return p
+def orient(p):
+    """chiều contour theo độ lồng (như kết quả phép hợp): contour ngoài cùng ngược kim đồng hồ, lòng (lồng lẻ) thuận — dùng khi
+    ghép contour không qua phép hợp (U với hình rời nhau)"""
+    cs = list(p.contours); out = pathops.Path()
+    for i, c in enumerate(cs):
+        pt = c.firstPoints[0] if hasattr(c, 'firstPoints') and c.firstPoints else c.points[0]
+        depth = sum(1 for j, d in enumerate(cs) if j != i and abs(d.area) > abs(c.area) and d.contains(pt))
+        want_cw = depth % 2 == 1
+        q = pathops.Path(c)
+        if q.clockwise != want_cw: q.reverse()
+        out.addPath(q)
+    return out
 def U(*ps):
+    # S18b (06/11): hai hình RỜI nhau (hộp bao cách > 1 u, vd. S và dấu móc của Š) → ghép contour, KHÔNG chạy phép hợp: phép hợp
+    # chia lại / xấp xỉ lại đường cong chữ gốc (Š Bold lệch S Bold 3.5 u, thừa một điểm neo) → chữ có dấu nội suy khác chữ gốc
     ps = [p for p in ps if p is not None]; a = ps[0]
-    for b in ps[1:]: a = pathops.op(a, b, OP.UNION)
+    for b in ps[1:]:
+        ba, bb = a.bounds, b.bounds
+        if ba and bb and (bb[0] > ba[2] + 1 or bb[2] < ba[0] - 1 or bb[1] > ba[3] + 1 or bb[3] < ba[1] - 1):
+            c = pathops.Path(); c.addPath(a); c.addPath(b); a = orient(c)
+        else: a = pathops.op(a, b, OP.UNION)
     return a
 def D(a, b): return pathops.op(a, b, OP.DIFFERENCE)
 def I(a, b): return pathops.op(a, b, OP.INTERSECTION)

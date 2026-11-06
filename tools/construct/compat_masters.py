@@ -16,7 +16,8 @@
 import json, math, os, sys
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, 'font'))
 sys.path.insert(0, os.path.join(HERE, 'ref'))
-from compat import compat, lerp_segs, to_d
+from compat import compat, lerp_segs, to_d, _sarea
+from interp import reverse
 from interp import contours, tocubic
 from weights import WEIGHTS, TW
 from fair import fair
@@ -110,7 +111,7 @@ def simplify_pair(R, B, tol=TOL):
 
 ITP = float(os.environ.get("DIZAI_ITP", "2.0"))      # độ: gãy cho phép ở bản nội suy (S 1.3° giữ nguyên vector designer)
 AXT = math.sin(math.radians(2.0))                    # tiếp tuyến lệch trục < 2° → nút ở cực trị
-RTOL = 2.5                                           # u: sai số khớp lại khi dời nút (≈ 0.35 % cao chữ)
+RTOL = 3.6                                           # u: sai số khớp lại khi dời nút (≈ 0.5 % cao chữ; s Regular cần 3.58)
 
 def _split(s, t):
     a, b, c, d = s[1:]
@@ -156,6 +157,26 @@ def _ratio(R, B, i, j):
     (R[i], R[j]), (B[i], B[j]) = new
     return True
 
+def _ext_at(X, i, j, ax):
+    return any(_roots(X[k], ax) for k in (i, j))
+
+def _to_ext(X, i, j, ax):
+    """dời nút giữa đoạn i và j của master X về cực trị trục ax gần nhất trên chính đường cong (sai số khớp ≤ RTOL)"""
+    best = None
+    for k, seg in ((i, X[i]), (j, X[j])):
+        for t in _roots(seg, ax):
+            L = seglen(_split(seg, t)[1]) if k == i else seglen(_split(seg, t)[0])
+            if best is None or L < best[0]: best = (L, k, t)
+    if best is None: return False
+    _, k, t = best
+    if k == j:
+        a_, b_ = _split(X[j], t); ni, err = fit(X[i], a_); nj = b_
+    else:
+        a_, b_ = _split(X[i], t); nj, err = fit(b_, X[j]); ni = a_
+    if ni is None or err > RTOL: return False
+    X[i], X[j] = ni, nj
+    return True
+
 def reanchor(R, B):
     """S18 Neo tương ứng cho nội suy (designer 06/11 "bụng s medium và semi bold lỗi"). Hai master ghép cặp điểm neo theo thứ tự;
     khi một master neo ở CỰC TRỊ (tiếp tuyến ngang / dọc) mà master kia neo ở chỗ xiên (s: Regular neo cực phải bụng dưới,
@@ -170,6 +191,17 @@ def reanchor(R, B):
             # có bậc ngang 5 u) → đặt điểm chia theo đúng tỉ lệ độ dài của master có góc, tránh mép thẳng bị bẻ ở Medium / SemiBold
             def col(X): a, b, c = X[i][1], X[i][2], X[j][2]; return angle(unit((b[0]-a[0], b[1]-a[1])), unit((c[0]-b[0], c[1]-b[1])))
             cr, cb = col(R), col(B)
+            if cr < 0.5 and cb < 0.5:
+                # cả hai thẳng hàng (nét thẳng chia hai đoạn) nhưng tỉ lệ chia khác nhau → điểm chia nội suy lệch khỏi đường thẳng,
+                # nét chéo A V W K v w y gãy 2–4° ở Medium / SemiBold. Đặt cùng tỉ lệ (trung bình) — điểm trượt trên chính đường
+                fr = [math.dist(X[i][1], X[i][2])/max(1e-9, math.dist(X[i][1], X[j][2])) for X in (R, B)]
+                if abs(fr[0] - fr[1]) > 0.01:
+                    f = sum(fr)/2
+                    for X in (R, B):
+                        a, c = X[i][1], X[j][2]; m = (a[0] + (c[0] - a[0])*f, a[1] + (c[1] - a[1])*f)
+                        X[i] = ['L', a, m]; X[j] = ['L', m, c]
+                    fixed.append(i)
+                continue
             if min(cr, cb) < 0.5 and max(cr, cb) > 30:
                 X, Y = (R, B) if cr < 0.5 else (B, R)
                 l1, l2 = math.dist(Y[i][1], Y[i][2]), math.dist(Y[j][1], Y[j][2]); f = l1/(l1 + l2)
@@ -180,29 +212,64 @@ def reanchor(R, B):
         if angle(tan_out(R[i]), tan_in(R[j])) >= 6 or angle(tan_out(B[i]), tan_in(B[j])) >= 6: continue
         if _mid_kink(R, B, i, j) <= ITP: continue
         ar, ab = _ext_axis(R, i), _ext_axis(B, i)
-        if (ar is None) == (ab is None):                       # cả hai cùng xiên: cân tỉ lệ tay nắm vào / ra (nếu master lệch < RTOL)
-            if _ratio(R, B, i, j): fixed.append(i)
+        if ar is not None and ab is not None: continue
+        if ar is None and ab is None:
+            # cả hai xiên: nếu cung (đoạn i ∪ j) của CẢ HAI master cùng chứa một cực trị (cùng trục) → dời cả hai nút về cực trị đó;
+            # không thì cân tỉ lệ tay nắm (nếu master lệch < RTOL)
+            done = False
+            for ax in (0, 1):
+                if _ext_at(R, i, j, ax) and _ext_at(B, i, j, ax):
+                    keep = [list(R[i]), list(R[j]), list(B[i]), list(B[j])]
+                    if _to_ext(R, i, j, ax) and _to_ext(B, i, j, ax) and _mid_kink(R, B, i, j) <= ITP + 0.5:
+                        done = True; break
+                    R[i], R[j], B[i], B[j] = keep
+            if done or _ratio(R, B, i, j): fixed.append(i)
             continue
         X, ax = (B, ar) if ar is not None else (R, ab)
-        best = None
-        for k, seg in ((i, X[i]), (j, X[j])):
-            for t in _roots(seg, ax):
-                L = seglen(_split(seg, t)[1]) if k == i else seglen(_split(seg, t)[0])
-                if best is None or L < best[0]: best = (L, k, t)
-        if best is None: continue
-        _, k, t = best
-        if k == j:
-            a_, b_ = _split(X[j], t); ni, err = fit(X[i], a_); nj = b_
-        else:
-            a_, b_ = _split(X[i], t); nj, err = fit(b_, X[j]); ni = a_
-        if ni is None or err > RTOL: continue
-        oi, oj = X[i], X[j]; X[i], X[j] = ni, nj
+        oi, oj = X[i], X[j]
+        if not _to_ext(X, i, j, ax): continue
         if _mid_kink(R, B, i, j) > ITP + 0.5: X[i], X[j] = oi, oj; continue
         fixed.append(i)
     return R, B, len(fixed)
 
+def _bbox(segs):
+    P = [bez(sg, k/8) if sg[0] == 'C' else sg[1] for sg in segs for k in range(9)]
+    xs = [p[0] for p in P]; ys = [p[1] for p in P]; return min(xs), min(ys), max(xs), max(ys), P
+
+def _same(A, B, dx, dy):
+    """hai contour trùng hình sau tịnh tiến (sai < 1.5 u)"""
+    PA = _bbox(A)[4]; PB = [(p[0] + dx, p[1] + dy) for p in _bbox(B)[4]]
+    Q = [bez(sg, k/40) if sg[0] == 'C' else (sg[1][0] + (sg[2][0] - sg[1][0])*k/40, sg[1][1] + (sg[2][1] - sg[1][1])*k/40)
+         for sg in A for k in range(41)]
+    return max(min(math.dist(p, q) for q in Q) for p in PB) < 1.5
+
+def _shift(segs, dx, dy): return [[sg[0]] + [(p[0] + dx, p[1] + dy) for p in sg[1:]] for sg in segs]
+
+STUB = 5.0
+def drop_stub(S):
+    """đoạn cong tí hon (< STUB u) ngay sau một GÓC, nối trơn với đoạn sau → gộp vào đoạn sau (fit, sai số < TOL). Vd ß Regular có
+    đoạn 4 u ở mũi đuôi mà Bold không có → ghép cặp lệch một bậc, SemiBold gãy 37° (06/11)"""
+    changed = True
+    while changed and len(S) > 3:
+        changed = False; n = len(S)
+        for i in range(n):
+            h, j = (i - 1) % n, (i + 1) % n
+            if S[i][0] != 'C' or S[j][0] != 'C' or seglen(S[i]) >= STUB: continue
+            if angle(tan_out(S[h]), tan_in(S[i])) < 15 or angle(tan_out(S[i]), tan_in(S[j])) >= 6: continue
+            m, err = fit(S[i], S[j])
+            if m is None or err > TOL:
+                # đoạn tí hon gần thẳng, cùng hướng với tay nắm đầu của đoạn sau → kéo điểm đầu đoạn sau về đầu đoạn tí hon
+                a, b = S[i][1], S[i][4]; q = S[j][2]
+                u = unit((b[0] - a[0], b[1] - a[1])); v = unit((q[0] - b[0], q[1] - b[1]))
+                if not u or not v or angle(u, v) > 3: continue
+                m = ['C', a] + S[j][2:]
+            S[i] = m; del S[j]
+            changed = True; break
+    return S
+
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
+    REG = []           # S18b: cặp contour (R, B) đã ghép của chữ gốc — chữ có dấu dùng lại đúng cặp đó (Š ← S, …)
     chars = sorted({k.rsplit('-', 1)[0] for k in O})
     stat = {'glyph': 0, 'ghép được': 0, 'không ghép': [], 'đoạn trước': 0, 'đoạn sau': 0}
     pre = dict(O)
@@ -212,7 +279,7 @@ def main():
         stat['glyph'] += 1
         # đơn giản hoá TỪNG master trước (bỏ điểm thừa của boolean / làm đậm), rồi mới ghép cặp
         for k_ in (kr, kb):
-            cs = [simplify_pair([list(x) for x in g], [list(x) for x in g])[0] for g in contours([O[k_]])]
+            cs = [drop_stub(simplify_pair([list(x) for x in g], [list(x) for x in g])[0]) for g in contours([O[k_]])]
             O[k_] = to_d(cs)
         try: C = compat(O[kr], O[kb])
         except Exception as e: stat['không ghép'].append(c); continue
@@ -222,8 +289,26 @@ def main():
         for Rr, Bb in C:
             Rr, Bb = simplify_pair([list(s) for s in Rr], [list(s) for s in Bb])
             if c in FAIR: Rr, Bb = fair(Rr), fair(Bb)          # cùng cấu trúc → Medium / SemiBold vẫn nội suy được
-            Rr, Bb, k_ = reanchor(Rr, Bb)
-            if k_: stat.setdefault('S18', []).append(f'{c}×{k_}')
+            # S18b: contour trùng hình (sau tịnh tiến) với contour của chữ gốc đã ghép → dùng lại cặp của chữ gốc; phép hợp
+            # chữ + dấu (Š = S ∪ móc) chia lại điểm neo khác nhau ở hai master → nội suy gãy dù chữ gốc liền (Š SemiBold 8°)
+            br, bb_ = _bbox(Rr), _bbox(Bb); hit = None
+            for (R0, B0, r0, b0) in REG:
+                if abs((br[2] - br[0]) - (r0[2] - r0[0])) < 1.5 and abs((br[3] - br[1]) - (r0[3] - r0[1])) < 1.5 and \
+                   abs((bb_[2] - bb_[0]) - (b0[2] - b0[0])) < 1.5 and abs((bb_[3] - bb_[1]) - (b0[3] - b0[1])) < 1.5:
+                    dR = (br[0] - r0[0], br[1] - r0[1]); dB = (bb_[0] - b0[0], bb_[1] - b0[1])
+                    if _same(Rr, R0, *dR) and _same(Bb, B0, *dB):
+                        hit = (_shift(R0, *dR), _shift(B0, *dB))
+                        if (_sarea(hit[0]) > 0) != (_sarea(Rr) > 0): hit = (reverse(hit[0]), reverse(hit[1]))   # giữ chiều contour của chữ
+                        break
+            if hit and (len(hit[0]) != len(Rr) or hit[0] != Rr):
+                Rr, Bb = hit; stat.setdefault('S18b', []).append(c)
+            else:
+                k_ = 0
+                for _ in range(4):                             # dời một nút có thể làm nút kề gãy thêm → lặp tới khi ổn định
+                    Rr, Bb, kk = reanchor(Rr, Bb); k_ += kk
+                    if not kk: break
+                if k_: stat.setdefault('S18', []).append(f'{c}×{k_}')
+                if c.isalpha() and len(c) == 1 and ord(c) < 0x80: REG.append((Rr, Bb, br, bb_))
             out.append((Rr, Bb))
         after = sum(len(a) for a, _ in out)
         stat['đoạn trước'] += before; stat['đoạn sau'] += after; stat['ghép được'] += 1
@@ -232,6 +317,7 @@ def main():
     json.dump(O, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('compat:', {k: (v if not isinstance(v, list) else len(v)) for k, v in stat.items()}, 'không ghép:', stat['không ghép'][:30])
     print('S18 nội suy liền tiếp tuyến:', ' '.join(stat.get('S18', [])))
+    print('S18b ghép theo chữ gốc:', ''.join(sorted(set(stat.get('S18b', [])))))
 
 if __name__ == '__main__':
     main()

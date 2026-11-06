@@ -143,3 +143,15 @@ Thứ tự bắt buộc: build xong hẳn → `qa_outline.py` → `qa_kern.py` �
 ## Đơn giản hoá điểm (designer 05/11: "simplify các điểm")
 - Dấu hỏi Bold (và móc dưới Bold) trước đây được làm dày bằng stroke + boolean, sinh hàng chục đoạn nhỏ.
 - Nay dùng `vn_punct.offset_path`: dời song song từng đoạn của chính vector (Tiller–Hanson: dời đa giác điều khiển, giao các cạnh kề; góc nối bằng giao hai tiếp tuyến). Kết quả 9 đoạn, đúng số đoạn của vector designer.
+
+## £ — móc trên dài và cong (designer 06/11: "chỉnh móc trên của dấu bảng Anh cho dài và cong như các Font khác")
+
+- **Đo 8 font serif** (Lora, Spectral, EB Garamond, Crimson Pro, Marcellus, Prata, Forum, Rufina): đầu móc cách mép trái thân ≈ 0.45–0.55 cap, hạ xuống ≈ 0.75–0.85 cap.
+  Móc cũ chỉ vươn 0.36 cap và hạ 0.10 cap.
+- **Dựng mới** (`ref/symbols.py`): móc = nửa vòng elip rx 220, ry 240.
+  - Thành trái = thân. Đỉnh 0.55 V. Thành phải 0.62 thân.
+  - Cắt ĐỨNG như đầu nét trên của C: mặt cắt gặp lòng ở điểm tiếp tuyến lòng nghiêng 24° so với phương đứng, đúng góc đầu nét C (537,521). Cắt sát xích đạo lòng thì thành mũi kim.
+  - Thân lên tới đúng tâm elip để nối tiếp tuyến. Thân dừng ở 547 như cũ thì có bậc ở mép trái.
+- **Kết quả:** tầm với 0.52 cap (Regular) → 0.49 (Bold); đầu móc hạ tới 0.80 cap.
+  - qa_outline nhận góc đầu móc = module C, đầu phải đáy = module E (BASE '£': 'CE').
+  - qa_stroke không cờ. Ảnh: `docs/img/pound-hook.png`.

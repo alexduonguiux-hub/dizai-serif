@@ -54,13 +54,27 @@ def tan_in(s):  # hướng tiếp tuyến tại điểm đầu đoạn
         a = s[1]; b = next((q for q in s[2:] if math.dist(q, a) > 1e-6), s[4])
     L = math.hypot(b[0] - a[0], b[1] - a[1]) or 1; return ((b[0] - a[0])/L, (b[1] - a[1])/L)
 
+CORNER = float(os.environ.get('DIZAI_CORNER', '0.12'))
+
+def tan_out_seg(s):  # hướng tiếp tuyến tại điểm cuối đoạn
+    if s[0] == 'L': a, b = s[1], s[2]
+    else:
+        b = s[4]; a = next((q for q in (s[3], s[2], s[1]) if math.dist(q, b) > 1e-6), s[1])
+    L = math.hypot(b[0] - a[0], b[1] - a[1]) or 1; return ((b[0] - a[0])/L, (b[1] - a[1])/L)
+
 def align(gr, gb, nr, nb):
     """căn hai chuỗi đoạn (cùng chiều). nr / nb: hàm chuẩn hoá toạ độ. Trả về hai danh sách đoạn cùng độ dài."""
     best = None
     A = [s[1] for s in gr]; B = [s[1] for s in gb]; TA = [tan_in(s) for s in gr]; TB = [tan_in(s) for s in gb]
+    # S18c (06/11): góc ghép với góc — neo là GÓC (gãy ≥ 15°) ở master này mà trơn ở master kia thì phạt CORNER (cùng thang
+    # khoảng cách chuẩn hoá). Trước đây chỉ so vị trí + tiếp tuyến: góc chân thân a trong @ Regular (điểm 1) ghép với điểm trơn
+    # trên thân của Bold (góc Bold ở điểm 2) → Medium / SemiBold gãy 55° (designer 06/11 "&, @ … còn gãy khi nội suy")
+    def corner(g, i):
+        a = tan_out_seg(g[i - 1]); b = tan_in(g[i]); return (a[0]*b[0] + a[1]*b[1]) < math.cos(math.radians(15))
+    CA = [corner(gr, i) for i in range(len(gr))]; CB = [corner(gb, j) for j in range(len(gb))]
     def cost(i, j):
         pa, pb = nr(A[i]), nb(B[j]); dt = 1 - (TA[i][0]*TB[j][0] + TA[i][1]*TB[j][1])
-        return math.dist(pa, pb) + 0.15*dt
+        return math.dist(pa, pb) + 0.15*dt + (CORNER if CA[i] != CB[j] else 0)
     GAP = 0.08
     n, m = len(gr), len(gb)
     for sh in range(m):

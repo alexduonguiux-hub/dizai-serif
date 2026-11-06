@@ -12,7 +12,7 @@ Quy đổi toạ độ Figma (y xuống) → đơn vị font: giải từ bốn 
 (410.9, 689.6) (410.9, 533.5), Regular (11.3, 27.4) (11.3, 146.7) (354.3, 689.6) (354.3, 570.3); hai khung cùng một phép:
 x = 2.8341·X − 0.04, y = 711.34 − 2.8341·Y (sai < 0.1 u).
 """
-import json, os, re
+import json, math, os, re
 HERE = os.path.dirname(os.path.abspath(__file__))
 FIGMA_B = ("M 46.5 55.130859375 C 46.5 88.5 88.1943244934082 100.38976097106934 113.5 115 C 144.6701488494873 132.99609375 159 152 "
          "159 187.869140625 C 159 223.73828125 126 256 81.5 256 C 46.000099182128906 256 7 241.3291015625 7 241.3291015625 L 7 "
@@ -43,9 +43,104 @@ def convert(d):
     return re.sub(r' ?([MLCZ]) ?', r'\1', ' '.join(out))
 
 
+# S19 bù đậm S Bold (designer 06/11: "sống S Bold mỏng: đo lại cân bằng weight với các ký tự cùng weight") — đo qa_stroke:
+# T(S Bold) = 0.96 × nét đứng chuẩn, nhóm hoa cong C G O D B R = 1.04–1.06 (Regular: S 1.04, cân). Vector designer giữ DÁNG;
+# làm đậm đều bằng offset song song Tiller–Hanson (dời từng cạnh đa giác điều khiển ra ngoài δ, giao lại — không thêm điểm neo
+# → Medium / SemiBold vẫn nội suy); mặt cắt đầu nét giữ nguyên đường, góc = giao đường cong đã dời với mặt cắt; rồi co dọc về
+# đúng cao cũ (−14.2 … 711.3); bề ngang tăng 2δ (bụng dày ra hai phía).
+DELTA_B = float(os.environ.get('S19_DELTA', '6'))   # δ = 6 u → T(S Bold) = 146.7 = 1.048 × chuẩn (C G O D: 1.04–1.06)
+
+
+def _segs(d):
+    toks = re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', d); i = 0; segs = []; cur = None
+    while i < len(toks):
+        c = toks[i]; i += 1
+        n = {'M': 1, 'L': 1, 'C': 3, 'Z': 0}[c]; pts = [(float(toks[i + 2*j]), float(toks[i + 2*j + 1])) for j in range(n)]; i += 2*n
+        if c == 'M': cur = pts[0]; start = cur
+        elif c == 'L': segs.append(['L', cur, pts[0]]); cur = pts[0]
+        elif c == 'C': segs.append(['C', cur] + pts); cur = pts[2]
+    if cur != start: segs.append(['L', cur, start])
+    return segs
+
+
+def _unit(v):
+    L = math.hypot(*v); return (v[0]/L, v[1]/L) if L > 1e-9 else None
+
+
+def _isect(p, u, q, v):
+    """giao của đường p + s·u và q + t·v (None nếu gần song song)"""
+    den = u[0]*v[1] - u[1]*v[0]
+    if abs(den) < 1e-6: return None
+    s_ = ((q[0] - p[0])*v[1] - (q[1] - p[1])*v[0])/den
+    return (p[0] + s_*u[0], p[1] + s_*u[1])
+
+
+def offset(d, delta):
+    """dời đường viền kín ra ngoài delta (Tiller–Hanson cho cubic, giao tiếp tuyến ở góc)"""
+    S_ = _segs(d); n = len(S_)
+    area = sum((s[1][0]*s[-1][1] - s[-1][0]*s[1][1]) for s in S_)/2
+    nrm = lambda u: (u[1], -u[0]) if area > 0 else (-u[1], u[0])   # CCW (diện tích dương): pháp tuyến ngoài = bên phải hướng đi
+    def ctrl(s):                                      # các cạnh đa giác điều khiển khác 0
+        P = s[1:]; E = []
+        for a_, b_ in zip(P, P[1:]):
+            u = _unit((b_[0] - a_[0], b_[1] - a_[1]))
+            if u: E.append((a_, u))
+        return P, E
+    def off_line(p, u): nv = nrm(u); return (p[0] + delta*nv[0], p[1] + delta*nv[1]), u
+    out = []
+    for s in S_:
+        P, E = ctrl(s); L = [off_line(p, u) for p, u in E]
+        if s[0] == 'L':                               # mặt cắt đầu nét: GIỮ nguyên đường (chỉ đường cong được làm đậm)
+            out.append(['L', P[0], P[1]]); continue
+        if len(L) == 1:
+            q0 = L[0][0]; q1 = (q0[0] + P[-1][0] - P[0][0], q0[1] + P[-1][1] - P[0][1])
+            out.append(['L' if s[0] == 'L' else 'C', q0, q1] if s[0] == 'L' else ['C', q0, q0, q1, q1]); continue
+        # điểm điều khiển trong: giao các cạnh dời liên tiếp; tay nắm 0 giữ trùng điểm đầu / cuối
+        a0 = L[0][0]; a3 = (P[3][0] + delta*nrm(E[-1][1])[0], P[3][1] + delta*nrm(E[-1][1])[1])
+        z0 = math.dist(P[0], P[1]) < 1e-6; z3 = math.dist(P[2], P[3]) < 1e-6
+        if len(L) == 3:
+            c1 = _isect(*L[0], *L[1]) or (P[1][0] + delta*nrm(E[0][1])[0], P[1][1] + delta*nrm(E[0][1])[1])
+            c2 = _isect(*L[1], *L[2]) or (P[2][0] + delta*nrm(E[2][1])[0], P[2][1] + delta*nrm(E[2][1])[1])
+        else:                                         # một tay nắm bằng 0: hai cạnh
+            m = _isect(*L[0], *L[1]) or a0
+            c1, c2 = (a0, m) if z0 else (m, a3)
+        out.append(['C', a0, c1, c2, a3])
+    # nút: giao tiếp tuyến dời của hai đoạn kề (góc) — nút trơn hai giá trị trùng nhau
+    for i in range(n):
+        j = (i + 1) % n; A, B_ = out[i], out[j]
+        ua = _unit((A[-1][0] - A[-2][0], A[-1][1] - A[-2][1])) or _unit((A[-1][0] - A[1][0], A[-1][1] - A[1][1]))
+        ub = _unit((B_[2][0] - B_[1][0], B_[2][1] - B_[1][1])) or _unit((B_[-1][0] - B_[1][0], B_[-1][1] - B_[1][1]))
+        if ua and ub and abs(ua[0]*ub[1] - ua[1]*ub[0]) > 0.02:
+            x = _isect(A[-1], ua, B_[1], ub)
+            if x:
+                shift_a = (x[0] - A[-1][0], x[1] - A[-1][1]); shift_b = (x[0] - B_[1][0], x[1] - B_[1][1])
+                if A[0] == 'C' and math.dist(A[-2], A[-1]) < 1e-6: A[-2] = x
+                if B_[0] == 'C' and math.dist(B_[1], B_[2]) < 1e-6: B_[2] = x
+                A[-1] = x; B_[1] = x
+        else:
+            mpt = ((A[-1][0] + B_[1][0])/2, (A[-1][1] + B_[1][1])/2); A[-1] = mpt; B_[1] = mpt
+    return out
+
+
+def to_d(segs):
+    o = ['M%.1f %.1f' % segs[0][1]]
+    for s in segs: o.append('L%.1f %.1f' % s[2] if s[0] == 'L' else 'C%.1f %.1f %.1f %.1f %.1f %.1f' % (*s[2], *s[3], *s[4]))
+    return ''.join(o) + 'Z'
+
+
+def embolden(d, delta):
+    if delta <= 0: return d
+    segs = offset(d, delta)
+    def bb(S_): xs = [p[0] for s in S_ for p in s[1:]]; ys = [p[1] for s in S_ for p in s[1:]]; return min(xs), min(ys), max(xs), max(ys)
+    x0, y0, x1, y1 = bb(_segs(d)); X0_, Y0_, X1_, Y1_ = bb(segs)
+    sy = (y1 - y0)/(Y1_ - Y0_); sx = 1.0     # cao giữ nguyên; ngang KHÔNG co (co ngang làm đầu cắt lệch so với bụng) → rộng thêm 2δ
+    f = lambda p: (x0 + (p[0] - X0_)*sx, y0 + (p[1] - Y0_)*sy)
+    return to_d([[s[0]] + [f(p) for p in s[1:]] for s in segs])
+
+
 if __name__ == '__main__':
-    for f, k, src in (('designer_B.json', 'S-Bold', FIGMA_B), ('designer_A.json', 'S-Regular', FIGMA_R)):
+    for f, k, src, dl in (('designer_B.json', 'S-Bold', FIGMA_B, DELTA_B), ('designer_A.json', 'S-Regular', FIGMA_R, 0)):
         p = os.path.join(HERE, f); J = json.load(open(p))
-        old = J[k][0]; J[k] = [convert(src)]
+        old = J[k][0]; J[k] = [embolden(convert(src), dl)]
         json.dump(J, open(p, 'w'), separators=(',', ':'))
         print(k, 'cũ :', old[:110]); print(k, 'mới:', J[k][0][:110])

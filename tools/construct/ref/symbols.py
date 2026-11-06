@@ -359,12 +359,24 @@ def build_w(S, L, w):
     #   thanh đáy = nét mảnh H, đầu phải = module đầu tay dưới E (mép đứng 93 rồi cong lõm vào, tay nắm 0.69);
     #   thanh giữa= nét mảnh H ở 300, đầu phải cắt xiên như thanh giữa E (dài thêm 0.17 H ở mép dưới)
     sw = 0.9*Vv; hb = H; sx0 = 196.0; sx1 = sx0 + sw
-    ytop = 712.0; xcut = sx0 + 0.86*(1.0*560 - sx0)*0.62 + 60
-    hook = I(ering4(sx0, 560.0, 380.0, ytop, sw, 0.5*sw, 0.4*sw, 0.55*Vv), U(rect(sx0 - 1, 546.0, xcut, 900), rect(sx0 - 1, 380, sx1, 547)))
+    # móc trên DÀI + CONG như £ các font serif (designer 06/11: "chỉnh móc trên của dấu bảng Anh cho dài và cong như các Font
+    # khác" — đo 8 font: đầu móc cách mép trái thân ≈ 0.45–0.55 cap, hạ xuống ≈ 0.75 cap). Dựng như đầu nét trên của C: nửa vòng
+    # elip (thành trái = thân, đỉnh 0.55 V, phải PW × thân), cắt ĐỨNG; mặt cắt kéo từ mép ngoài xuống mép trong
+    PRX, PRY, PW = float(os.environ.get('P_RX', 220)), float(os.environ.get('P_RY', 240)), float(os.environ.get('P_PW', 0.62))
+    ytop = 712.0; hx1 = sx0 + 2*PRX; hy0 = ytop - 2*PRY
+    # mặt cắt đứng đặt sao cho mép dưới chạm elip TRONG ở y = 521 (= mép dưới mặt cắt đầu nét trên của C) — mặt cắt luôn đi từ mép
+    # ngoài xuống mép trong ở mọi weight (đặt theo tỉ lệ rx: Bold vượt mép phải elip trong → chân ngang 15 u ở đầu móc)
+    ix0, ix1, iy0, iy1 = sx0 + sw, hx1 - PW*sw, hy0 + 0.4*sw, ytop - 0.55*Vv
+    icx, icy, irx, iry = (ix0 + ix1)/2, (iy0 + iy1)/2, (ix1 - ix0)/2, (iy1 - iy0)/2
+    # chỗ mặt cắt gặp lòng: tiếp tuyến lòng nghiêng PHI so với phương đứng = đúng góc ở đầu nét trên của C (537,521 → tay nắm
+    # 496,612: 24°) — cắt sát xích đạo lòng (tiếp tuyến gần đứng) thành mũi kim (qa_outline 06/11)
+    PHI = math.atan2(41, 91); tt = math.atan(math.tan(PHI)*iry/irx)
+    xcut = icx + irx*math.cos(tt); YT = icy + iry*math.sin(tt); hcy = min(YT - 20, icy)
+    hook = I(ering4(sx0, hx1, hy0, ytop, sw, PW*sw, 0.4*sw, 0.55*Vv), U(rect(sx0 - 1, hcy, xcut, 900), rect(sx0 - 1, 380, sx1, hcy + 1)))
     yb = 170.0                                                     # chân thân bắt đầu cong ở cao này
     rxq = 150.0; cxq = sx1 - rxq
     foot = I(D(ellipse((cxq, yb), rxq, yb), ellipse((cxq, yb), rxq - sw, yb - hb)), rect(cxq, -1, sx1 + 1, yb + 1))   # ¼ vòng: phải = thân, đáy = mảnh
-    stem = rect(sx0, yb, sx1, 547.0)
+    stem = rect(sx0, yb, sx1, ytop - PRY)                            # thân lên tới đúng tâm elip móc (cực trái) → nối tiếp tuyến, không bậc
     xe = sx1 + 300.0; eh = 93.0
     # đầu phải = đúng hai cubic của đầu tay dưới E (Figma 6:924: …L99 233 C109.3 233 119.3 229 126.7 222 C129 219.8 130.7 216.9 132 214
     # L132 247), quy về đơn vị font (k = 700/247), đáy tay dày = nét mảnh của weight
