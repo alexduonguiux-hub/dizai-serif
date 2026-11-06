@@ -287,7 +287,7 @@ def main():
                 gm = np.nanmin(g)
                 if short > -40: NEED[w][f'{a}|{b_}'] = k + short             # mức kern chặt nhất còn đủ sàn (cho bước variable)
                 if short > 0:
-                    need = math.ceil(short/5)*5; k2 = k + need
+                    need = math.ceil(short); k2 = k + need                     # làm tròn 1 u (designer 06/11 "sửa lệch ư + i m n ở SemiBold": bội 5 làm R / B thừa 3–4 u, SemiBold nội suy thưa)
                     EXC[f'{a}|{b_}'] = k2; worst.append((round(gm, 1), a + b_, k, k2))
         kerning[w] = {'class': KC, 'exc': EXC}
         nexc = len(EXC); top = sorted(KC.items(), key=lambda kv: kv[1])[:12]

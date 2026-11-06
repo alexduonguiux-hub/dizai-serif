@@ -299,3 +299,7 @@ Designer: "Sửa luôn các lỗi ≈ ≤ ≥ và dấu nháy", "Các nét đáy
 - **Nháy thẳng ' " ′ ″**: chân **cắt ngang** (`wedge(flat=True)`), không bo tròn; ′ ″ dựng từ ' nên tự theo. Dấu ! giữ chân tròn.
 - **Nháy cong / dấu phẩy**: không lỗi hình — đầu giọt tăng đều 118 → 132 → 147 → 162 qua 4 weight. Cờ QA cũ do trục giữa của hình giọt không ổn định; `qa_stroke.py` nay đo dấu giọt / nháy bằng đường kính hình tròn nội tiếp lớn nhất (đầu giọt).
 - **Bề ngang v x y w** (S10c): bề ngang mực = **1.10 × bản trước 06/11** (Regular v 411 → 452 · x 423 → 465 · w 596 → 656; Bold v 422 → 465 · x 434 → 478 · w 619 → 681), y theo v; nét dày = thân (S10), nét mảnh theo S10b. Bold vẫn ≥ Regular + ½ phần thân tăng × số nét dày (đơn điệu). Đối chiếu font serif tham chiếu (v / n): Regular 0.985 — Dizai nay 1.02.
+
+## ư + i m n ở SemiBold (06/11)
+
+Designer: "sửa luôn lệch ư + i m n ở SemiBold". Ngoại lệ chống va làm tròn lên bội 5 → Regular / Bold thừa 3–4 u so với sàn sừng 14 (khe 18.2 / 17.4); SemiBold nội suy từ hai giá trị thừa → khe 19.7, trắng cặp ưn lệch un 17 u. Nay mức chống va làm tròn **1 u** (`spacing.py`): khe sừng ưn 14.2 / 15.6 / 16.4 / 14.4 (R / M / SB / B). Âm tiết tiếng Việt: 0 cặp lệch > 12 ngoài sàn 26 ở cả 4 weight (Vĩ Regular cũng hết); va chạm 0; QA file font 34 / 34.
