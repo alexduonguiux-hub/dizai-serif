@@ -32,10 +32,11 @@ def embolden(p, d):
     s = pathops.Path(); s.addPath(p); s.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 4)
     s.convertConicsToQuads(); return q2c(U(p, q2c(s)))
 
-def hdilate(p, d, dy=0.0):
+def hdilate(p, d, dy=0.0, dist=None):
     """làm đậm BẤT ĐẲNG HƯỚNG (Tiller–Hanson): nét đứng dày thêm 2d, nét ngang thêm 2·dy; mép thẳng giữ hướng, góc là giao các
-    cạnh đã dời; không boolean → giữ số điểm"""
-    if d <= 0 and dy <= 0: return p
+    cạnh đã dời; không boolean → giữ số điểm.
+    dist(điểm, hướng cạnh, pháp tuyến ra ngoài) → khoảng dời có dấu của cạnh (S26 bù quang học Italic); khi đó d = |dời| lớn nhất"""
+    if dist is None and d <= 0 and dy <= 0: return p
     cs = []
     for v, ps in p.segments:
         if v == 'moveTo': cs.append({'start': ps[0], 'segs': []}); cur = ps[0]
@@ -68,7 +69,9 @@ def hdilate(p, d, dy=0.0):
         # cạnh đã dời → mép ngang vẫn ngang, mép đứng vẫn đứng, góc giữ sắc, số điểm không đổi
         def nrm(u_): return (u_[1], -u_[0]) if area > 0 else (-u_[1], u_[0])
         def offl(p_, u_):
-            nv_ = nrm(u_); k_ = math.sqrt((d*nv_[0])**2 + (dy*nv_[1])**2); return ((p_[0] + k_*nv_[0], p_[1] + k_*nv_[1]), u_)
+            nv_ = nrm(u_)
+            k_ = dist(p_, u_, nv_) if dist else math.sqrt((d*nv_[0])**2 + (dy*nv_[1])**2)
+            return ((p_[0] + k_*nv_[0], p_[1] + k_*nv_[1]), u_)
         def isect(L1, L2):
             (p_, u_), (q_, v_) = L1, L2; den = u_[0]*v_[1] - u_[1]*v_[0]
             if abs(den) < 0.02: return None                      # gần song song (lệch < ~1°): không giao ổn định

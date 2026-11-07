@@ -110,6 +110,8 @@ Ghi vào `docs/` kèm version và ngày.
 - **QA trên file font** `qa_font.py` (HarfBuzz): variable 400 / 500 / 600 / 700 + 16 bản tĩnh — advance, kerning mọi cặp, NFD = NFC, hộp bao = outline (Italic: nghiêng 10°) → phải 34 / 34.
 - **fontbakery check-universal** riêng từng nhóm (variable / ttf / otf): 0 FAIL. Cảnh báo chủ ý: ß 2 contour, U+00AD có glyph, dấu toán khác bề ngang, interpolation gãy nhỏ (8 & ® §), thiếu avar, namecheck.
 - **qa_stroke số:** số 4 so với 1 (`STEMFIG`, thân thẳng), không so với 0 (nét tròn) — S23. Ký tự dựng từ số (? ¿ hỏi ← 2, & ← 8) dùng bản GỐC trong `ref/designer_Q.json`: cân lại số không kéo theo ký hiệu đã duyệt.
+- **Italic (S26):** đo Italic so với Roman cùng weight bằng độ dày vuông góc (không chỉ diện tích mực — phép nghiêng giữ mực nhưng đổi màu theo hướng nét). Chuẩn: nét chính ±3 %. Bù quang học ở `ital_comp.py`.
+- **Module loe (S27):** đoạn loe nhập mép chéo phải liền tiếp tuyến VÀ cong đều (vẽ lược độ cong so với loe V); kiểm cả nút cong ↔ thẳng, không chỉ cong ↔ cong. Nách chéo là MỘT điểm (không mặt phẳng ngắn).
 - **Pipeline:** chạy các bước bằng `&&`, không bằng vòng `for … > /dev/null` (S21–S22 `lower/derive.py` lỗi ở x mà không ai thấy).
 - **qa_stroke:** dấu giọt / nháy (, ; ‘ ’ ‚ “ ” „ ' " ′ ″) đo "nét chính" bằng đường kính hình tròn nội tiếp lớn nhất (trục giữa của giọt không ổn định).
 - **Nét chéo chữ thường:** nét mảnh v w x y k / thân n = nét mảnh / thân V hoa (±5 %).

@@ -369,7 +369,9 @@ def _segdev(a, b):
     A = [bez(a, t/24) for t in range(25)]; Bp = [bez(b, t/48) for t in range(49)]
     Ap = [bez(a, t/48) for t in range(49)]; Bq = [bez(b, t/24) for t in range(25)]
     return max(max(min(math.dist(p, q) for q in Bp) for p in A), max(min(math.dist(p, q) for q in Ap) for p in Bq))
-KINK_CH = {'@': 0.0}    # @: lòng elip của a bên trong bị mép thân CẮT DỌC — góc cắt cố ý (designer 07/11 "bụng @ nên cắt ngang như này"), không làm liền
+KINK_CH = {'@': 0.0, 'X': 30.0, 'x': 30.0, 'R': 30.0}   # X x R: đoạn loe nhập mép chéo gãy 15–25° (designer 07/11 "X và x hơi gãy") → liền như loe K A V
+MAXDEV_CH = {'X': 12.0, 'x': 12.0, 'R': 12.0}
+#    # @: lòng elip của a bên trong bị mép thân CẮT DỌC — góc cắt cố ý (designer 07/11 "bụng @ nên cắt ngang như này"), không làm liền
 def _straight(sg):
     if sg[0] != 'C': return False
     a, d = sg[1], sg[4]; L = math.dist(a, d)
@@ -436,7 +438,7 @@ def _sync_ratio(R, B, i, j):
     tryit(gm)
     if cands: R[i], R[j], B[i], B[j] = min(cands, key=lambda c: c[0])[1]
     else: R[i], R[j], B[i], B[j] = k0
-def smooth_pair(R, B, kink=KINK):
+def smooth_pair(R, B, kink=KINK, maxdev=None):
     R, B = [list(x) for x in R], [list(x) for x in B]; nk = 0
     i = 0
     while i < len(R) and len(R) > 2:
@@ -454,11 +456,73 @@ def smooth_pair(R, B, kink=KINK):
                 dv = max(_segdev(keep[0], R[i]), _segdev(keep[1], R[j]), _segdev(keep[2], B[i]), _segdev(keep[3], B[j]))
                 if best is None or dv < best[0] - 0.05: best = (dv, [list(R[i]), list(R[j]), list(B[i]), list(B[j])])
             dev = best[0]; R[i], R[j], B[i], B[j] = best[1]
-            if dev > MAXDEV:                                           # dời đường cong > MAXDEV u: giữ bản vẽ, báo lại
+            if dev > (maxdev or MAXDEV):                                           # dời đường cong > MAXDEV u: giữ bản vẽ, báo lại
                 R[i], R[j], B[i], B[j] = keep; LEFT.append((round(max(tR, tB), 1), round(dev, 1)))
             elif keep != [R[i], R[j], B[i], B[j]]: nk += 1
         i += 1
     return R, B, nk
+
+# S27 (designer 07/11 "đường cong phải smooth"): đoạn loe X x R — liền tiếp tuyến chưa đủ, độ cong dồn ngay sau chỗ nhập mép chéo
+# (lược độ cong: đỉnh nhọn) trong khi module loe V K A cong ĐỀU. Giữ hai đầu mút + hướng tiếp tuyến hai đầu, chọn độ dài hai
+# tay nắm cho độ cong đều nhất (min độ lệch chuẩn / trung bình của κ, không đổi dấu)
+FLARE_FAIR = set('XxR')
+def _kappa(sg, n=24):
+    P0, P1, P2, P3 = sg[1:]; ks = []
+    for i in range(n + 1):
+        t = i/n; u = 1 - t
+        d1 = [3*u*u*(P1[j] - P0[j]) + 6*u*t*(P2[j] - P1[j]) + 3*t*t*(P3[j] - P2[j]) for j in (0, 1)]
+        d2 = [6*u*(P2[j] - 2*P1[j] + P0[j]) + 6*t*(P3[j] - 2*P2[j] + P1[j]) for j in (0, 1)]
+        sp = math.hypot(*d1)
+        if sp < 1e-9: return None
+        ks.append((d1[0]*d2[1] - d1[1]*d2[0])/sp**3)
+    return ks
+def _fair_flare(S):
+    """đoạn loe nhập mép chéo: TRƯỢT điểm nhập dọc mép (mép giữ hướng; ±40 u) + chọn hai tay nắm → độ cong đều nhất (cung đều
+    như module loe V K A). Đầu chân (góc với đường chân / đỉnh) giữ nguyên"""
+    n = len(S); nf = 0
+    lin = lambda x: x[0] == 'L' and math.dist(x[1], x[2]) > 40
+    def score(cand):
+        ks = _kappa(cand)
+        if not ks or min(ks)*max(ks) < 0: return None
+        m = sum(abs(k) for k in ks)/len(ks); return math.sqrt(sum((abs(k) - m)**2 for k in ks)/len(ks))/m
+    for i, sg in enumerate(S):
+        if sg[0] != 'C': continue
+        h, j = S[i - 1], S[(i + 1) % n]
+        at0 = lin(h) and angle(tan_out(h), tan_in(sg)) < 1.0; at3 = lin(j) and angle(tan_out(sg), tan_in(j)) < 1.0
+        if not (at0 or at3) or (at0 and at3): continue
+        P0, P3 = sg[1], sg[4]
+        foot = P3 if at0 else P0                                   # chỉ ĐOẠN LOE: đầu kia trên đường chân / x-height / cap, ngắn
+        if min(abs(foot[1] - y) for y in (0.0, 495.0, 700.0)) > 1.0 or math.dist(P0, P3) > 110: continue
+        u0 = unit((sg[2][0] - P0[0], sg[2][1] - P0[1])); u3 = unit((sg[3][0] - P3[0], sg[3][1] - P3[1]))
+        if not u0 or not u3: continue
+        best = None
+        for st in range(-40, 41, 2):
+            if at0: Q0, Q3 = (P0[0] - u0[0]*st, P0[1] - u0[1]*st), P3      # trượt dọc mép (u0 = hướng mép đi vào đoạn cong)
+            else: Q0, Q3 = P0, (P3[0] - u3[0]*st, P3[1] - u3[1]*st)
+            c = math.dist(Q0, Q3)
+            if c < 15: continue
+            for ia in range(2, 31, 2):
+                for ib in range(2, 31, 2):
+                    a, b = ia/40*c*1.33, ib/40*c*1.33
+                    cand = ['C', Q0, (Q0[0] + u0[0]*a, Q0[1] + u0[1]*a), (Q3[0] + u3[0]*b, Q3[1] + u3[1]*b), Q3]
+                    sc = score(cand)
+                    if sc is not None and (best is None or sc < best[0] - 1e-4 or (abs(sc - best[0]) < 1e-4 and abs(st) < abs(best[2]))): best = (sc, cand, st)
+        if best:
+            # tinh chỉnh tay nắm quanh nghiệm
+            sc0, cand, st = best; Q0, Q3 = cand[1], cand[4]; c = math.dist(Q0, Q3)
+            a0, b0 = math.dist(Q0, cand[2]), math.dist(Q3, cand[3])
+            for da in range(-8, 9):
+                for db in range(-8, 9):
+                    a, b = a0 + da*c/120, b0 + db*c/120
+                    if a <= 0 or b <= 0: continue
+                    cd = ['C', Q0, (Q0[0] + u0[0]*a, Q0[1] + u0[1]*a), (Q3[0] + u3[0]*b, Q3[1] + u3[1]*b), Q3]
+                    sc = score(cd)
+                    if sc is not None and sc < best[0]: best = (sc, cd, st)
+            S[i] = best[1]
+            if at0: H = list(h); H[2] = best[1][1]; S[i - 1] = H
+            else: J = list(j); J[1] = best[1][4]; S[(i + 1) % n] = J
+            nf += 1
+    return nf
 
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
@@ -506,7 +570,10 @@ def main():
                     if not kk: break
                 if k_: stat.setdefault('S18', []).append(f'{c}×{k_}')
                 if c.isalpha() and len(c) == 1 and ord(c) < 0x80: REG.append((R_pre, B_pre, br, bb_, Rr, Bb))
-            n0 = len(LEFT); Rr, Bb, k_ = smooth_pair(Rr, Bb, KINK_CH.get(c, KINK))
+            n0 = len(LEFT); Rr, Bb, k_ = smooth_pair(Rr, Bb, KINK_CH.get(c, KINK), MAXDEV_CH.get(c))
+            if c in FLARE_FAIR:
+                nf = _fair_flare(Rr) + _fair_flare(Bb)
+                if nf: stat.setdefault('S27', []).append(f'{c}×{nf}'); Rr, Bb, _ = smooth_pair(Rr, Bb, KINK_CH.get(c, KINK), MAXDEV_CH.get(c))
             if len(LEFT) > n0: stat.setdefault('S25 giữ', []).append(f'{c}{LEFT[n0:]}')
             if k_: stat.setdefault('S25', []).append(f'{c}×{k_}')
             if abs(_sarea(Rr)) < 5 and abs(_sarea(Bb)) < 5: stat.setdefault('S25 bỏ contour rỗng', []).append(c); continue
@@ -519,6 +586,7 @@ def main():
     print('compat:', {k: (v if not isinstance(v, list) else len(v)) for k, v in stat.items()}, 'không ghép:', stat['không ghép'][:30])
     print('S18 nội suy liền tiếp tuyến:', ' '.join(stat.get('S18', [])))
     print('S20 đồng bộ cấu trúc:', ' '.join(stat.get('S20', [])))
+    print('S27 loe cong đều:', ' '.join(stat.get('S27', [])))
     print('S25 nút gãy nhỏ → liền:', ' '.join(stat.get('S25', [])), '· giữ (dời > %.1f u):' % MAXDEV, ' '.join(stat.get('S25 giữ', [])), '· bỏ contour rỗng:', ''.join(stat.get('S25 bỏ contour rỗng', [])))
     print('S18b ghép theo chữ gốc:', ''.join(sorted(set(stat.get('S18b', [])))))
 

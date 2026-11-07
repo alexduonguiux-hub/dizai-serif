@@ -123,6 +123,8 @@ def draw(glyph, cs, dx, ang):
             cur = s[-1]
         pen.closePath()
 
+import ital_comp as IC
+_STEM = {}
 def master(w, ang, FL, groups, kern):
     f = ufoLib2.Font()
     style = w + (' Italic' if ang else '') if w != 'Regular' or not ang else 'Italic'
@@ -155,7 +157,11 @@ def master(w, ang, FL, groups, kern):
         g.unicodes = [ord(c)] + ([0x00A0] if c == ' ' else [])
         k = f'{c}-{w}'
         if k in O:
-            cs = parse(O[k])
+            d_ = O[k]
+            if ang:                                                # S26: bù quang học trước khi nghiêng (ital_comp.py)
+                if w not in _STEM: _STEM[w] = IC.stem_of(O[f'H-{w}'])
+                d_ = IC.compensate(d_, ang, _STEM[w])
+            cs = parse(d_)
             for j in FL.get(c, []): cs[j] = reverse(cs[j])
             draw(g, cs, SP[w][c]['dx'], ang)
     f.lib['public.glyphOrder'] = [n for n in f.lib['public.glyphOrder'] if n in f]

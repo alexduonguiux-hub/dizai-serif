@@ -201,3 +201,25 @@ Từ S21 (cân nét chéo chữ hoa Bold), `lower/derive.py` dừng ở x nên c
 
 - Kết quả: qa_stroke 0 cờ (chéo weight 0), qa_outline 0 (bản dựng + outline xuất font), nút trơn gãy M / SB 0, lệch cấu trúc 0, qa_font 0, qa_weight 0, kerning va chạm 0.
 - Dời hình học do làm liền: phần lớn ≤ 1.5 u; lớn nhất ~3.4 u (S, Y, g, ~).
+
+## S26 Italic: bù quang học trước khi nghiêng (designer 07/11 duyệt đề xuất)
+
+Italic = Roman nghiêng 10° (trượt ngang) giữ lượng mực nhưng đổi độ dày VUÔNG GÓC theo hướng nét: hướng u dày × 1/|S·u|
+(thân đứng × 0.985, "\" 45° × 1.09, "/" × 0.92). Đo trước S26: o O s S x X nét chính +7…+9 %, nét mảnh vòng −8 %, n H −3 % → chữ
+tròn / chéo đậm hơn chữ thân đứng ~11 %, màu chữ lốm đốm.
+
+- `tools/construct/ital_comp.py` (gọi trong `export_font.master` khi nghiêng): mỗi cạnh đa giác điều khiển dời song song
+  (Tiller–Hanson, `symbols.hdilate(dist=…)`) k = t·(|S·u| − 1)/2; t = độ dày tại chỗ (bắn tia vào trong tới mép đối diện, chặn
+  ≤ 1.15 × thân H cùng weight). Không đổi số điểm → variable tương thích; Roman không đổi.
+- Sau S26 (Italic so với Roman, 4 weight): nét chính n H o O v e A V x X s S a trong ±3 %; trung vị / phân vị 10–20 độ dày ±3 %.
+- Ảnh: `docs/img/s26-italic-bu-quang-hoc.png`.
+
+## S27 X x R: nách chéo + đoạn loe cong đều (designer 07/11 "vẫn lỗi glyph ở bụng chỗ nối chéo x", "đường cong phải smooth")
+
+- Nách X Bold: S21 dời mép chéo → nách thành mặt phẳng 5.2 / 4.8 u; S20 ép x (cả Regular) theo → bậc ở nách. `fix_struct_bold.py`:
+  nách = giao hai mép chéo. Quét mọi glyph: không còn mặt nách ngắn (trừ mặt cắt cố ý: cờ 1, đỉnh w, nách tối thiểu ®).
+- Đoạn loe X x R nhập mép chéo gãy 15–25° (K A V liền). `compat_masters`: KINK_CH X x R = 30°; rồi S27 `_fair_flare`: trượt điểm
+  nhập dọc mép chéo (±40 u, mép giữ hướng) + chọn hai tay nắm cho độ cong ĐỀU (lược độ cong như module loe V) — chỉ đoạn loe
+  (đầu kia trên đường chân / x-height / cap, dây cung < 110 u); bụng, đuôi R giữ nguyên.
+- QA: nút cong ↔ thẳng gãy (mới thêm vào kiểm): X x R 0; lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0.
+- Ảnh: `docs/img/s27-loe-X-x-R.png`.
