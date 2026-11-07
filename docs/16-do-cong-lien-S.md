@@ -170,4 +170,17 @@ Hệ quả:
 - ? ¿, dấu hỏi dựng từ số 2 GỐC, & dựng từ số 8 GỐC (`ref/designer_Q.json`) — giữ hình đã duyệt.
 - Kết quả: so từng glyph với bản trước, chỉ `two`, `eight` đổi (4 weight). Lệch cấu trúc 0; qa_outline 2, 8 sạch; qa_font 0 lệch, qa_weight 0, kerning va chạm 0; qa_stroke chỉ còn cờ báo nhầm của a.
 - Ảnh: `docs/img/s23-so-2-8.png`.
-- Ghi chú: từ S21, `lower/derive.py` dừng ở x (bộ giải khoảng trắng lòng x Bold không còn lòng ở 0.75 x-height sau khi X Bold đổi) → chữ thường giữ bản `lower_derived.json` đã duyệt (S20). Cần sửa bộ giải trước khi đổi chữ thường lần sau.
+- Ghi chú: từ S21, `lower/derive.py` dừng ở x → chữ thường chưa theo chữ hoa S21 — sửa ở S24.
+
+## S24 Chữ thường k v w x y theo chữ hoa S21 (designer 07/11: "sửa luôn x thường theo X Bold mới")
+
+Từ S21 (cân nét chéo chữ hoa Bold), `lower/derive.py` dừng ở x nên chữ thường dựng từ chữ hoa (k v w x y ý ỳ ỷ ỹ ỵ) vẫn là bản trước S21. Hai lỗi trong bộ dựng:
+
+| Lỗi | Nguyên nhân | Sửa (`lower/derive.py`) |
+|---|---|---|
+| x Bold: lòng bít, chương trình dừng | S10b làm dày nét mảnh theo bước → khoảng trắng lòng không đơn điệu quanh sx 0.565; secant nhảy về 0.46 | `_solve` / `_widen`: secant có chặn khoảng; lệch → chia đôi trong khoảng kẹp; bỏ outline hỏng |
+| x Medium: outline văng xuống −400 | sau S21, mép `\` của X Medium (nội suy) chia thành mảnh gần thẳng hàng lệch ~1 u → `thicken` lấy giao mép mới với mảnh gần song song | `thicken`: không lấy giao khi hai đoạn lệch hướng < 8° (mảnh cùng mép → tịnh tiến) |
+
+- Kết quả (Medium / SemiBold / Bold): nét `\` = thân, `/` theo tỉ lệ mảnh của V hoa — như trước (±0.3 u); lòng v y lớn thêm 1–4 u, x SemiBold −3 u; bề ngang giữ nguyên. Hình đầu nét / loe theo chữ hoa S21, điểm dời tối đa 11 u. x Regular lệch 1 u (ghép cặp nội suy S20).
+- So từng glyph với bản trước: chỉ k v w x y ý ỳ ỷ ỹ ỵ đổi. Lệch cấu trúc 0, qa_font 0 lệch, qa_weight 0, kerning va chạm 0.
+- Ảnh: `docs/img/s24-chu-thuong-kvwxy.png`.

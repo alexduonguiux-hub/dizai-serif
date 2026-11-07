@@ -380,6 +380,9 @@ def thicken(p, delta, ylo=90.0, yhi=400.0, fs=False):
             if kind == 'edge' and ylo <= pt[1] <= yhi:
                 for j, other in ((i - 1, A[i - 1] if i > 0 else A[n - 1]), (i, A[i + 1] if i < n else A[1])):
                     if segs[j % n][0] == 'L' and tag(other)[0] != k and math.hypot(other[0] - pt[0], other[1] - pt[1]) > 40:
+                        l = E[k][0]; ang = abs(math.degrees(math.atan2(other[1] - pt[1], other[0] - pt[0])
+                                                      - math.atan2(l[1][1] - l[0][1], l[1][0] - l[0][0]))) % 180
+                        if min(ang, 180 - ang) < 8: continue        # S24: mảnh mép gần thẳng hàng (lệch ~1 u, X Medium sau S21)
                         return inter(k, other, pt)
             return (pt[0] + SH[k], pt[1])
         NA = [newA(i) for i in range(n + 1)]; NA[n] = NA[0]; cmds = [('M', NA[0])]
@@ -405,13 +408,26 @@ def _off(f):
 def counter(p, y=XH*0.75, i=0):
     """khoảng trắng lòng: khe giữa run i và run i+1 ở cao độ y"""
     r = runs_at(p, y); return r[i + 1][0] - r[i][1]
+def _cnt(p):
+    """counter, lòng bít (một run) → 0"""
+    r = runs_at(p, XH*0.75); return r[1][0] - r[0][1] if len(r) > 1 else 0.0
 def _solve(f, g0, a, b):
-    """secant: tìm sx để counter(f(sx)) = g0"""
-    ea, eb = counter(f(a)), counter(f(b))
+    """secant: tìm sx để counter(f(sx)) = g0. S24: secant đi lệch (counter không đơn điệu quanh a vì S10b làm dày nét mảnh
+    theo bước — x Bold sau S21 nhảy về 0.46, lòng bít) → chia đôi trong khoảng kẹp tìm bằng bước × 1.04 từ a"""
+    a0 = a; ea, eb = _cnt(f(a)), _cnt(f(b))
     for _ in range(5):
         if abs(eb - ea) < 1e-6 or abs(eb - g0) < 0.05: break
-        c = b + (g0 - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, counter(f(c))
-    return b
+        c = b + (g0 - eb)*(b - a)/(eb - ea)
+        if not 0.8*a0 < c < 2*a0: break
+        a, ea, b, eb = b, eb, c, _cnt(f(c))
+    if abs(eb - g0) < 0.5 and 0.8*a0 < b < 2*a0: return b
+    lo = a0; hi = a0
+    while _cnt(f(hi)) < g0 and hi < 2*a0: lo, hi = hi, hi*1.04
+    for _ in range(18):
+        m = (lo + hi)/2
+        if _cnt(f(m)) < g0: lo = m
+        else: hi = m
+    return hi
 
 # S10c (designer 06/11 "bản regular đã hẹp sẵn rồi"): bề ngang mực v x w so với n theo TRUNG VỊ font serif tham chiếu
 # (ref_kern.REFS: Liberation, DejaVu, Caladea, FreeSerif — cùng bộ dùng cho kerning). Dizai Regular trước: v/n 0.94, x 0.96,
@@ -433,11 +449,21 @@ def _widen(f, ch, w, sx):
         R = shrink_caps(ch, 'Regular') if ch != 'w' else w_from_v('Regular')
         tgt = max(tgt, R.bounds[2] - R.bounds[0] + (W[w]['V'] - W['Regular']['V'])/2*(2 if ch == 'w' else 1))
     if ink(sx) >= tgt - 0.5: return sx
-    a, b = sx, sx*1.06; ea, eb = ink(a), ink(b)
+    a0 = sx; a, b = sx, sx*1.06; ea, eb = ink(a), ink(b)
     for _ in range(5):
         if abs(eb - ea) < 1e-6 or abs(eb - tgt) < 0.3: break
-        c = b + (tgt - eb)*(b - a)/(eb - ea); a, ea, b, eb = b, eb, c, ink(c)
-    return b
+        c = b + (tgt - eb)*(b - a)/(eb - ea)
+        if not a0 <= c < 1.6*a0: break
+        a, ea, b, eb = b, eb, c, ink(c)
+    ok = lambda k: f(k).bounds[1] > -5                       # S24: outline hỏng (thicken lật) → bỏ
+    if abs(eb - tgt) < 0.5 and a0 <= b < 1.6*a0 and ok(b): return b
+    lo, hi = a0, a0                                          # S24: secant đi lệch (x Medium sau S21) → chia đôi
+    while (ink(hi) < tgt or not ok(hi)) and hi < 1.6*a0: lo, hi = hi, hi*1.03
+    for _ in range(16):
+        m = (lo + hi)/2
+        if ink(m) < tgt or not ok(m): lo = m
+        else: hi = m
+    return hi
 
 def shrink_caps(ch, w, top=XH, sx=None, delta=None):
     """chữ hoa thu về x-height; v x: nét \\ dày bằng thân (thicken); Bold: giải sx để bề ngang = Regular + ½ B_STEM"""
