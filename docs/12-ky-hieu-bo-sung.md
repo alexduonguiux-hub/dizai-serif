@@ -167,3 +167,12 @@ Thứ tự bắt buộc: build xong hẳn → `qa_outline.py` → `qa_kern.py` �
   - Sửa: mặt nách đặt lại nằm ngang trên hai cạnh, dài theo hình chiếu, tối thiểu 6 u. Kết quả R 18 → M 13 → SB 7 → B 6 u.
   - qa_outline: ® hết gai; ® hết lệch cấu trúc Regular ↔ Bold.
 - Ảnh: `docs/img/copyright-inner.png`.
+
+### Sửa tiếp (designer 07/11: "© ® R bị lỗi", "lòng trong R của ® không dày lên khi bold")
+
+- `hdilate` viết lại theo **Tiller–Hanson bất đẳng hướng**: dời song song từng cạnh đa giác điều khiển một khoảng √((d·nx)² + (dy·ny)²); góc = giao các cạnh đã dời.
+  - Bản dời điểm theo trung bình pháp tuyến làm góc chỉ đi nửa đường: mép trên R nghiêng, loe méo.
+  - Góc quá nhọn (đầu cắt C 24°): lấy điểm trên mặt cắt thẳng, giữ mặt cắt đứng.
+- **Chiều "ra khỏi mực"** lấy theo contour ngoài cùng cho MỌI contour. Lấy theo chiều riêng từng contour thì lòng chữ (contour ngược chiều) bị dời về phía mực: lòng R nở ra nên thân và bụng không dày lên.
+  - Sau sửa: thân / thành bụng R 65/69 → 73/78 → 81/87 → 89/96 u (Regular → Bold).
+- Nét mảnh: © ≥ 0.85 H (lớn hơn thì hai đầu cắt C chạm nhau, khép miệng C); ® ≥ 0.92 H.

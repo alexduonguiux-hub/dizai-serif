@@ -191,3 +191,4 @@ mọi weight → QA → ghi vào đây (kèm ngày, lời designer, số đo).
 
 ### 4.6 Pipeline
 `ref/narrow_caps.py` (khi đổi chữ hoa) → `ref/interp.py` → `ref/vn_punct.py` → `lower/lower.py` → `ref/make_ref.py` → `lower/derive.py` → `lower/vn_lower.py` → `ref/symbols.py` → `ref/make_ref.py` → `node export.js > out/construct/parts.json` → `build.py` (gồm compat_masters) → `spacing.py` → QA (`dizai-serif-qa`) → `italic.py` (+ chép outlines / spacing / kerning sang `out/construct_italic`) → `export_font.py` → `qa_font.py` → `preview_html.py` → commit, push, publish.
+- **Làm đậm / offset contour:** dời song song từng cạnh (Tiller–Hanson), góc = giao cạnh đã dời; hướng "ra khỏi mực" lấy theo contour ngoài cùng cho mọi contour (lòng chữ phải CO khi đậm lên). Không dời điểm theo trung bình pháp tuyến (góc lệch, mép ngang bị nghiêng). Chữ thu nhỏ trong ký hiệu (© ® ™): lấy chữ master Bold thu nhỏ rồi làm đậm bất đẳng hướng, không làm đậm đều.

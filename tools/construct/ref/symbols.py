@@ -33,8 +33,8 @@ def embolden(p, d):
     s.convertConicsToQuads(); return q2c(U(p, q2c(s)))
 
 def hdilate(p, d, dy=0.0):
-    """nới NGANG theo pháp tuyến: mỗi điểm dời (d·nx, 0), nx = thành phần ngang của pháp tuyến ngoài tại điểm neo (tay nắm theo
-    neo của nó). Nét đứng dày thêm 2d, nét ngang không đổi, mặt cắt đứng trượt ngang; không boolean → giữ số điểm"""
+    """làm đậm BẤT ĐẲNG HƯỚNG (Tiller–Hanson): nét đứng dày thêm 2d, nét ngang thêm 2·dy; mép thẳng giữ hướng, góc là giao các
+    cạnh đã dời; không boolean → giữ số điểm"""
     if d <= 0 and dy <= 0: return p
     cs = []
     for v, ps in p.segments:
@@ -44,9 +44,13 @@ def hdilate(p, d, dy=0.0):
         elif v == 'closePath':
             if cur != cs[-1]['start']: cs[-1]['segs'].append(['L', cur, cs[-1]['start']])
     out = pathops.Path()
+    # chiều "ra khỏi mực" lấy theo contour NGOÀI CÙNG (diện tích lớn nhất) cho MỌI contour — mực luôn ở cùng một phía của chiều
+    # đi; lấy theo chiều riêng từng contour thì lòng chữ (contour ngược chiều) bị dời ra phía mực → lòng R NỞ thay vì co
+    # (designer 07/11 "lòng trong R của ® không dày lên khi bold")
+    def _ar(S_): return sum(sg[1][0]*sg[-1][1] - sg[-1][0]*sg[1][1] for sg in S_)
+    area = _ar(max((c['segs'] for c in cs), key=lambda S_: abs(_ar(S_))))
     for c in cs:
         S_ = c['segs']; n = len(S_)
-        area = sum(sg[1][0]*sg[-1][1] - sg[-1][0]*sg[1][1] for sg in S_)
         def unit(v):
             L = math.hypot(*v); return (v[0]/L, v[1]/L) if L > 1e-9 else None
         def tin(sg):
@@ -58,32 +62,58 @@ def hdilate(p, d, dy=0.0):
                 u = unit((sg[-1][0] - q[0], sg[-1][1] - q[1]))
                 if u: return u
             return tin(sg)
-        def nx(u): return (u[1] if area > 0 else -u[1])          # thành phần x của pháp tuyến ngoài
-        def ny(u): return (-u[0] if area > 0 else u[0])          # thành phần y
+        # Tiller–Hanson BẤT ĐẲNG HƯỚNG (designer 07/11 "© ® R bị lỗi": bản dời điểm theo trung bình pháp tuyến làm góc chỉ đi nửa
+        # đường → mép trên R nghiêng, loe méo): dời song song TỪNG CẠNH đa giác điều khiển một khoảng = tựa của hình chữ nhật
+        # [±d, ±dy] theo pháp tuyến cạnh, √((d·nx)² + (dy·ny)²) — cạnh đứng dời d, cạnh ngang dời dy; điểm trong / góc = giao các
+        # cạnh đã dời → mép ngang vẫn ngang, mép đứng vẫn đứng, góc giữ sắc, số điểm không đổi
+        def nrm(u_): return (u_[1], -u_[0]) if area > 0 else (-u_[1], u_[0])
+        def offl(p_, u_):
+            nv_ = nrm(u_); k_ = math.sqrt((d*nv_[0])**2 + (dy*nv_[1])**2); return ((p_[0] + k_*nv_[0], p_[1] + k_*nv_[1]), u_)
+        def isect(L1, L2):
+            (p_, u_), (q_, v_) = L1, L2; den = u_[0]*v_[1] - u_[1]*v_[0]
+            if abs(den) < 0.02: return None                      # gần song song (lệch < ~1°): không giao ổn định
+            t_ = ((q_[0] - p_[0])*v_[1] - (q_[1] - p_[1])*v_[0])/den; return (p_[0] + t_*u_[0], p_[1] + t_*u_[1])
+        def mid(a_, b_): return ((a_[0] + b_[0])/2, (a_[1] + b_[1])/2)
         new = []
-        for i, sg in enumerate(S_):
-            a = tin(sg); b = tout(sg)
-            pa = tout(S_[i - 1]); nb = tin(S_[(i + 1) % n])
-            # neo đầu: trung bình pháp tuyến hai đoạn kề (góc: mỗi bên một nửa — giữ góc, mặt cắt đứng vẫn đứng nếu cả hai cạnh kề)
-            ka = (nx(a) + nx(pa))/2 if abs(nx(a) - nx(pa)) > 1e-6 else nx(a)
-            kb = (nx(b) + nx(nb))/2 if abs(nx(b) - nx(nb)) > 1e-6 else nx(b)
-            # mặt cắt đứng (đoạn thẳng đứng): cả hai đầu dời đúng d theo pháp tuyến của nó
-            if sg[0] == 'L' and abs(a[0]) < 1e-3: ka = kb = nx(a)
-            ya = (ny(a) + ny(pa))/2; yb = (ny(b) + ny(nb))/2
-            if sg[0] == 'L' and abs(a[0]) < 1e-3: ya = yb = 0.0          # mặt cắt đứng: chỉ trượt ngang
-            q0 = (sg[1][0] + d*ka, sg[1][1] + dy*ya); q3 = (sg[-1][0] + d*kb, sg[-1][1] + dy*yb)
-            if sg[0] == 'L': new.append(['L', q0, q3])
-            else: new.append(['C', q0, (sg[2][0] + d*ka, sg[2][1] + dy*ya), (sg[3][0] + d*kb, sg[3][1] + dy*yb), q3])
-        # nối: điểm đầu đoạn sau = điểm cuối đoạn trước (lấy trung bình nếu lệch)
+        for sg in S_:
+            P = sg[1:]
+            E = []
+            for k_ in range(len(P) - 1):
+                u_ = unit((P[k_ + 1][0] - P[k_][0], P[k_ + 1][1] - P[k_][1]))
+                if u_: E.append((k_, offl(P[k_], u_)))
+            if not E: new.append([sg[0]] + list(P)); continue
+            if sg[0] == 'L':
+                (p0, u0) = E[0][1]; new.append(['L', p0, (p0[0] + P[1][0] - P[0][0], p0[1] + P[1][1] - P[0][1])]); continue
+            L0 = E[0][1]; Ln = E[-1][1]
+            q0 = L0[0]; q3 = (P[3][0] + Ln[0][0] - P[E[-1][0]][0], P[3][1] + Ln[0][1] - P[E[-1][0]][1])
+            if len(E) == 3:
+                q1 = isect(E[0][1], E[1][1]) or (P[1][0] + q0[0] - P[0][0], P[1][1] + q0[1] - P[0][1])
+                q2 = isect(E[1][1], E[2][1]) or (P[2][0] + q3[0] - P[3][0], P[2][1] + q3[1] - P[3][1])
+            elif len(E) == 2:                                    # một tay nắm bằng 0: giữ trùng điểm neo
+                m_ = isect(E[0][1], E[1][1]) or mid(q0, q3)
+                if math.dist(P[0], P[1]) < 1e-9: q1, q2 = q0, m_
+                else: q1, q2 = m_, q3
+            else: q1, q2 = q0, q3
+            new.append(['C', q0, q1, q2, q3])
+        # nối: góc = giao tiếp tuyến dời của hai đoạn kề; nút trơn (song song) → trung điểm
+        def t_end(sg):
+            for q in (sg[-2], sg[1]) if sg[0] == 'C' else (sg[1],):
+                u_ = unit((sg[-1][0] - q[0], sg[-1][1] - q[1]))
+                if u_: return u_
+        def t_start(sg):
+            for q in (sg[2], sg[-1]) if sg[0] == 'C' else (sg[-1],):
+                u_ = unit((q[0] - sg[1][0], q[1] - sg[1][1]))
+                if u_: return u_
         for i in range(n):
             j = (i + 1) % n; e, s0 = new[i][-1], new[j][1]
-            if e != s0:
-                vert = lambda sg: sg[0] == 'L' and abs(sg[1][0] - sg[2][0]) < 1e-3
-                m = e if vert(new[i]) else s0 if vert(new[j]) else ((e[0] + s0[0])/2, (e[1] + s0[1])/2)   # mặt cắt đứng giữ đứng
-                dE = (m[0] - e[0], m[1] - e[1]); dS = (m[0] - s0[0], m[1] - s0[1])
-                if new[i][0] == 'C': new[i][3] = (new[i][3][0] + dE[0], new[i][3][1] + dE[1])
-                if new[j][0] == 'C': new[j][2] = (new[j][2][0] + dS[0], new[j][2][1] + dS[1])
-                new[i][-1] = m; new[j][1] = m
+            ue, us = t_end(new[i]), t_start(new[j])
+            X = isect((e, ue), (s0, us)) if ue and us else None
+            if X is None or math.dist(X, e) > 4*max(d, dy, 1) or math.dist(X, s0) > 4*max(d, dy, 1):
+                # góc quá nhọn (đầu cắt C: 24°) — giao điểm vọt xa: lấy điểm trên MẶT CẮT thẳng (giữ mặt cắt thẳng, giữ dài)
+                X = e if new[i][0] == 'L' else s0 if new[j][0] == 'L' else mid(e, s0)
+            for sg_, idx, hidx in ((new[i], -1, -2), (new[j], 1, 2)):
+                if sg_[0] == 'C' and math.dist(sg_[hidx], sg_[idx]) < 1e-9: sg_[hidx] = X   # tay nắm 0 giữ trùng neo
+                sg_[idx] = X
         # nách: đoạn thẳng ngắn giữa hai cạnh thẳng bị LẬT sau khi nới (hai cạnh kề cắt nhau — ® Bold: thân dày sang phải, chân
         # dày sang trái → mặt nách 18 u đảo chiều thành gai 172°) → góc nách = giao điểm hai cạnh, mặt nách co về 0
         for i in range(n):
@@ -331,13 +361,13 @@ def build_w(S, L, w):
     # chữ trong (designer 06/11 "chữ c trong copyright cũng lỗi module"): làm đậm ĐỀU mọi phía làm nét mảnh dày như nét đứng
     # và mặt cắt đầu nét phình thành khối → lấy chữ của master BOLD thu 0.44 (như ™), rồi chỉ nới NGANG theo pháp tuyến (hdilate):
     # nét đứng = 0.64 V như cũ, nét ngang giữ tương phản bút dẹt, mặt cắt đứng giữ đứng, cùng số điểm ở mọi weight
-    def inner(ch):
+    def inner(ch, kt=0.85):
         g = scale(V.letter(S, ch, 'Bold'), 0.44)
         dx = max(0.0, (0.64*Vv - 0.44*T['Bold']['V'])/2)
-        dy = max(0.0, (0.85*H - 0.44*T['Bold']['H'])/2)              # nét mảnh ≥ 0.85 H của weight (QA: mảnh 33 < 35 / 41)
+        dy = max(0.0, (kt*H - 0.44*T['Bold']['H'])/2)               # nét mảnh ≥ kt·H của weight (QA: mảnh 33 < 35 / 41); C 0.85 — lớn hơn thì hai đầu cắt chạm nhau
         g = hdilate(g, dx, dy); b = bounds(g)
         return move(g, Rr - (b[0] + b[2])/2, 350 - (b[1] + b[3])/2)
-    G['©'] = U(ring, inner('C')); G['®'] = U(ring, inner('R'))
+    G['©'] = U(ring, inner('C')); G['®'] = U(ring, inner('R', 0.92))
     # ™ (designer 05/11 "kiểm tra lỗi của glyph này"): làm đậm ĐỀU mọi phía (0.09 V) làm nét mảnh dày gấp đôi → chéo mảnh của M
     # nặng gần bằng thân, mép chéo hết song song. Dựng lại: T M của master BOLD thu 0.42 (thân 0.42 × V_B ≈ 0.57 V Regular, giữ
     # nguyên tương phản bút dẹt của Bold), weight đậm hơn thì chỉ làm dày THEO PHƯƠNG NGANG (cộng Minkowski với đoạn ngang):
