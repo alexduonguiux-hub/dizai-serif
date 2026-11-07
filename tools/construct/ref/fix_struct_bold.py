@@ -27,7 +27,7 @@ if __name__ == '__main__':
         d = B[k][0]
         for old, new in reps:
             if new in d: continue                                   # đã áp
-            assert old in d, (k, old)
+            if old not in d: print('  bỏ qua (đã đổi bởi balance_diag):', k); continue
             d = d.replace(old, new)
         B[k] = [d]
         print(k, 'ok')

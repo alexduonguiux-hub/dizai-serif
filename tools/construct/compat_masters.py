@@ -308,7 +308,7 @@ def _same(A, B, dx, dy):
     import numpy as np
     from scipy.spatial import cKDTree
     a, b = np.array(PA), np.array(PB)
-    return max(cKDTree(a).query(b)[0].max(), cKDTree(b).query(a)[0].max()) < 1.5
+    return max(cKDTree(a).query(b)[0].max(), cKDTree(b).query(a)[0].max()) < 3.0   # đơn giản hoá mỗi bên lệch ≤ 1.5 u
 
 def _shift(segs, dx, dy): return [[sg[0]] + [(p[0] + dx, p[1] + dy) for p in sg[1:]] for sg in segs]
 
@@ -382,17 +382,18 @@ def main():
             # S18b: contour trùng hình (sau tịnh tiến) với contour của chữ gốc đã ghép → dùng lại cặp của chữ gốc; phép hợp
             # chữ + dấu (Š = S ∪ móc) chia lại điểm neo khác nhau ở hai master → nội suy gãy dù chữ gốc liền (Š SemiBold 8°)
             br, bb_ = _bbox(Rr), _bbox(Bb); hit = None
-            for (R0, B0, r0, b0) in REG:
+            for (R0, B0, r0, b0, R1, B1) in (REG if ord(c[0]) >= 0x80 else []):        # chỉ chữ có dấu / ngoài ASCII
                 if abs((br[2] - br[0]) - (r0[2] - r0[0])) < 1.5 and abs((br[3] - br[1]) - (r0[3] - r0[1])) < 1.5 and \
                    abs((bb_[2] - bb_[0]) - (b0[2] - b0[0])) < 1.5 and abs((bb_[3] - bb_[1]) - (b0[3] - b0[1])) < 1.5:
                     dR = (br[0] - r0[0], br[1] - r0[1]); dB = (bb_[0] - b0[0], bb_[1] - b0[1])
-                    if _same(Rr, R0, *dR) and _same(Bb, B0, *dB):
-                        hit = (_shift(R0, *dR), _shift(B0, *dB))
+                    if _same(Rr, R0, *dR) and _same(Bb, B0, *dB):           # so với cặp GỐC của chữ gốc (trước khi dời neo)
+                        hit = (_shift(R1, *dR), _shift(B1, *dB))                # dùng lại cặp ĐÃ dời neo
                         if (_sarea(hit[0]) > 0) != (_sarea(Rr) > 0): hit = (reverse(hit[0]), reverse(hit[1]))   # giữ chiều contour của chữ
                         break
             if hit and (len(hit[0]) != len(Rr) or hit[0] != Rr):
                 Rr, Bb = hit; stat.setdefault('S18b', []).append(c)
             else:
+                R_pre, B_pre = [list(x) for x in Rr], [list(x) for x in Bb]
                 k_ = 0
                 if c in SYNC: Rr, Bb, k_ = sync_struct(Rr, Bb)
                 if k_: stat.setdefault('S20', []).append(f'{c}×{k_}')
@@ -401,7 +402,7 @@ def main():
                     Rr, Bb, kk = reanchor(Rr, Bb); k_ += kk
                     if not kk: break
                 if k_: stat.setdefault('S18', []).append(f'{c}×{k_}')
-                if c.isalpha() and len(c) == 1 and ord(c) < 0x80: REG.append((Rr, Bb, br, bb_))
+                if c.isalpha() and len(c) == 1 and ord(c) < 0x80: REG.append((R_pre, B_pre, br, bb_, Rr, Bb))
             out.append((Rr, Bb))
         after = sum(len(a) for a, _ in out)
         stat['đoạn trước'] += before; stat['đoạn sau'] += after; stat['ghép được'] += 1

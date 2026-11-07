@@ -110,3 +110,33 @@ Hệ quả:
   - N Bold: hai đầu cạnh chéo dày hơn ~5 u do cạnh xoay để có khấc V (qa_stroke B/R 1.52).
   - 5 Medium và 3 Medium: nét chính thấp hơn chuẩn ~10% (cờ có từ trước).
 - Ảnh: `docs/img/structure-fixed.png`.
+
+## S21 Cân nét chéo chữ hoa Bold (designer 07/11: "N hơi nặng … kiểm tra lại các độ dày của các chữ bold khác")
+
+**Đo**: mép thẳng song song, khoảng cách vuông góc; chỉ nhận cặp có mực ở giữa.
+- Chữ hoa Regular: nét chéo dày đều 0.97–1.00 × thân (chân R 0.89).
+- Chữ hoa Bold lệch tới ±10%. Thân Bold là 140.
+
+| Nét "\" dày Bold | A | K | M | N | R chân | V | W | X | Y |
+|---|---|---|---|---|---|---|---|---|---|
+| trước | 146 | 146 | 146 | 152 | 141 | 129 | 146 | 137 | 151 |
+| sau (= Regular × 140/102) | 137 | 137 | 135 | 137 | 124 | 138 | 140 | 135 | 142 |
+
+- Nét chéo mảnh chữ hoa Bold trước 65–80, sau 70 (0.5 thân = nét ngang Bold).
+- Chữ thường Bold đã đều (k v w x y z: dày 124–125, mảnh 63–64), không đổi.
+- Thân, nét ngang, chữ tròn đều sẵn.
+
+**Cách làm** (`ref/balance_diag.py`, đi từ bản lưu `designer_B_prediag.json`):
+- Dời song song HAI mép của nét, mỗi mép ½ lượng chênh, giữ trục nét.
+- Mép gồm nhiều đoạn thẳng hàng thì dời cả nhóm. Đoạn thẳng hàng kề và loe nối trơn đi theo mép.
+- Đầu mép trên đường chân / đỉnh trượt ngang. Giao vọt xa thì chỉ tịnh tiến. Lặp 6 lượt cho các nét chung đỉnh.
+- N riêng: hai khấc V (14 u) cố định chân khấc dưới (453.5, −11.3) và trên (102, 711.3). Nét chéo xoay ~1° quanh hai điểm đó để dày 137.
+
+**Ghép cặp chữ có dấu** (S18b), sửa kèm:
+- So khớp với cặp GỐC của chữ gốc (trước khi dời neo), dùng lại cặp ĐÃ dời. Ngưỡng 3 u, vì đơn giản hoá mỗi bên lệch ≤ 1.5 u.
+- Chỉ áp cho chữ ngoài ASCII. Trước đó A Bold dời neo nhiều hơn nên À … Ặ không khớp, nội suy gãy.
+
+**Kết quả:**
+- Lệch cấu trúc 0. qa_font 0 lệch, qa_weight 0, kerning va chạm 0.
+- Đổi: A K M N R V W X Y Bold + chữ có dấu + ¥ Æ ® ™.
+- Ảnh: `docs/img/bold-diagonal-balance.png`.
