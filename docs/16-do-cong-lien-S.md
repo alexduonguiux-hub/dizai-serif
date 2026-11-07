@@ -140,3 +140,19 @@ Hệ quả:
 - Lệch cấu trúc 0. qa_font 0 lệch, qa_weight 0, kerning va chạm 0.
 - Đổi: A K M N R V W X Y Bold + chữ có dấu + ¥ Æ ® ™.
 - Ảnh: `docs/img/bold-diagonal-balance.png`.
+
+## S22 Các chỗ còn lại (designer 07/11: "sửa luôn các chỗ còn lại")
+
+| Chữ | Đo | Sửa |
+|---|---|---|
+| 3, 5 | thành bụng dưới (đo ngang tại cực phải) 95 → 93 u (R → B) — KHÔNG dày lên; 6: 92 → 130 | `ref/fix_fig_bowl.py`: giữ mép ngoài, dời mép lòng thành phải vào (d·min(0, nx)); thành bụng Bold = 130 như 6 |
+| J | nét đáy móc 40 u ở cả 4 weight (U: 40 → 79) | `ref/fix_struct_bold.py`: mép lòng đáy móc + đầu cắt trái nâng 28.3 u → đáy 68 = nét ngang Bold |
+| W | mặt đáy đỉnh nhọn Bold 12.5 < Regular 20 (V 24 → 34) | `balance_diag.fix_flats`: mặt đỉnh Bold ≥ Regular × 140/102 → 27.5 |
+| a | qa_stroke "nét chính −10 %" | **báo nhầm**: thân a = thân n ở mọi weight (102 / 109 / 117 / 124); bụng a tăng × 1.29 như o, d — không sửa |
+
+- Kết quả: chỉ 3, 5, J, W đổi (Medium + Bold). Lệch cấu trúc 0. qa_font 0 lệch, qa_weight 0, kerning va chạm 0.
+- Ảnh: `docs/img/bold-3-5-J-W.png`.
+- Cờ qa_stroke CÓ TỪ BẢN VẼ Regular, chưa sửa (chờ designer):
+  - 2 Regular nét chính 96 so với 0 111 (−13 %);
+  - 8 Regular 97 so với 111 (−12 %);
+  - 4 tỉ lệ Bold / Regular 1.38 (chuẩn số 1.24).

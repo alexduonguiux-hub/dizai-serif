@@ -147,6 +147,27 @@ def move_edge(cs, ci, si, delta, towards):
             break
 
 
+def fix_flats(csR, csB):
+    """mặt đáy đỉnh nhọn (đoạn ngang ngắn < 40 u trên đường chân): Bold ≥ Regular × VB/VR (W Bold 12.5 < Regular 20 —
+    đỉnh nhọn mảnh hơn Regular). Nới đều hai bên quanh tâm; đầu cạnh chéo kề trượt theo đường chân."""
+    def flats(cs):
+        return [(ci, si) for ci, c in enumerate(cs) for si, s in enumerate(c) if s[0] == 'L' and abs(s[1][1] - s[2][1]) < 0.5
+                and min(s[1][1], s[2][1]) < 5 and math.dist(s[1], s[2]) < 40]
+    fr, fb = flats(csR), flats(csB)
+    if len(fr) != len(fb): return []
+    log = []
+    key = lambda cs, k: (cs[k[0]][k[1]][1][0] + cs[k[0]][k[1]][2][0])/2
+    for kr, kb in zip(sorted(fr, key=lambda k: key(csR, k)), sorted(fb, key=lambda k: key(csB, k))):
+        lr = math.dist(*csR[kr[0]][kr[1]][1:]); s = csB[kb[0]][kb[1]]; lb = math.dist(s[1], s[2]); tgt = lr*VB/VR
+        if lb >= tgt - 0.5: continue
+        u = unit((s[2][0] - s[1][0], s[2][1] - s[1][1])); e = (tgt - lb)/2
+        a = (s[1][0] - e*u[0], s[1][1]); b = (s[2][0] + e*u[0], s[2][1])
+        c = csB[kb[0]]; n = len(c); prv, nxt = c[(kb[1] - 1) % n], c[(kb[1] + 1) % n]
+        prv[-1] = a; nxt[1] = b; s[1], s[2] = a, b
+        log.append(f'mặt đỉnh {lb:.1f}→{tgt:.1f}')
+    return log
+
+
 def fix_N(d, tgt):
     """N Bold: chân khấc dưới P1 và chân khấc trên P2 cố định (khấc 14 u như Regular) → nét chéo = hai đường song song qua P1, P2;
     chọn HƯỚNG sao cho khoảng cách = tgt (|P1P2|·sin δ = tgt), cùng phía lệch như hiện tại — nét chéo chỉ xoay ~1°"""
@@ -185,6 +206,7 @@ if __name__ == '__main__':
               for k in x: move_edge(csB, *k, dl, cy)
               for k in y: move_edge(csB, *k, dl, cx)
               log.append(f'{dist:.0f}→{tgt:.0f}')
+        log += fix_flats(parse(A[f'{ch}-Regular'][0]), csB)
         Bout[f'{ch}-Bold'] = [unparse(csB)]
         print(ch, ' '.join(log))
     csR = parse(A['N-Regular'][0]); thickR = max(d for d, *_ in pairs(csR, ink=outline(A['N-Regular'])) if d > 0.7*VR)
