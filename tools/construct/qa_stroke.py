@@ -83,6 +83,8 @@ FAM = {
 }
 # dấu hình giọt / nháy: trục giữa của giọt không ổn định (phân vị 97 nhảy 45 → 139 → 64 giữa các weight dù đầu giọt tăng đều
 # 118 → 162) → "nét chính" = đường kính hình tròn nội tiếp lớn nhất (đầu giọt)
+# số có THÂN THẲNG so với 1 (thân), không với 0 (nét tròn tăng × 1.25 < thân × 1.37) — 07/11: '4 B/R 1.38' là báo nhầm
+STEMFIG = {'4': '1'}
 DROP = set(",;‘’‚“”„'\"′″")
 DROP_NOW = [False]
 SKIP_THIN = set(".:…·•,;‘’‚“”„") | set(SPc.COMB)   # chấm / giọt: trục giữa của hình tròn không đo được nét mảnh
@@ -108,8 +110,9 @@ def main():
             if r is None: continue
             k = SPc.kind(c); iss = []
             if k in ('caps', 'lower', 'fig') and SPc.base(c) == c:
-                dv = r['T']/ref[k]['T'] - 1
-                if abs(dv) > 0.10: iss.append(f'nét chính {r["T"]:.0f} vs {"Hn0"[["caps","lower","fig"].index(k)]} {ref[k]["T"]:.0f} ({dv*100:+.0f}%)')
+                rc = STEMFIG.get(c, "Hn0"[["caps","lower","fig"].index(k)]); rT = R[rc]['T']
+                dv = r['T']/rT - 1
+                if abs(dv) > 0.10: iss.append(f'nét chính {r["T"]:.0f} vs {rc} {rT:.0f} ({dv*100:+.0f}%)')
                 if r['Tx'] > 1.25*ref[k]['T']: iss.append(f'cục mực {r["Tx"]:.0f}@{r["Tx_at"]}')
             for f, cs in FAM.items():
                 if c in cs:
@@ -131,7 +134,8 @@ def main():
             if len(Ts) != len(ws): continue
             if any(b < a - 3 for a, b in zip(Ts, Ts[1:])): print(f'  {c!r:6} không tăng: {Ts}'); nb += 1; continue
             k = SPc.kind(c); fam = next((f for f, cs in FAM.items() if c in cs), None)
-            if k in ('caps', 'lower', 'fig') and SPc.base(c) == c: rr = M['Bold']['Hn0'[['caps','lower','fig'].index(k)]]['T']/M['Regular']['Hn0'[['caps','lower','fig'].index(k)]]['T']
+            if k in ('caps', 'lower', 'fig') and SPc.base(c) == c:
+                rc = STEMFIG.get(c, 'Hn0'[['caps','lower','fig'].index(k)]); rr = M['Bold'][rc]['T']/M['Regular'][rc]['T']
             elif fam: rr = float(np.median([M['Bold'][x]['T']/M['Regular'][x]['T'] for x in FAM[fam] if x in M['Bold'] and M['Bold'][x] and M['Regular'][x]]))
             else: continue
             r_ = Ts[-1]/Ts[0]

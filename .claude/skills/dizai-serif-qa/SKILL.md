@@ -109,6 +109,8 @@ Ghi vào `docs/` kèm version và ngày.
 - **Số contour hai master bằng nhau** cho mọi glyph; chiều contour giống nhau (chấm i, ä từng ngược chiều → Medium chấm co).
 - **QA trên file font** `qa_font.py` (HarfBuzz): variable 400 / 500 / 600 / 700 + 16 bản tĩnh — advance, kerning mọi cặp, NFD = NFC, hộp bao = outline (Italic: nghiêng 10°) → phải 34 / 34.
 - **fontbakery check-universal** riêng từng nhóm (variable / ttf / otf): 0 FAIL. Cảnh báo chủ ý: ß 2 contour, U+00AD có glyph, dấu toán khác bề ngang, interpolation gãy nhỏ (8 & ® §), thiếu avar, namecheck.
+- **qa_stroke số:** số 4 so với 1 (`STEMFIG`, thân thẳng), không so với 0 (nét tròn) — S23. Ký tự dựng từ số (? ¿ hỏi ← 2, & ← 8) dùng bản GỐC trong `ref/designer_Q.json`: cân lại số không kéo theo ký hiệu đã duyệt.
+- **Pipeline:** chạy các bước bằng `&&`, không bằng vòng `for … > /dev/null` (S21–S22 `lower/derive.py` lỗi ở x mà không ai thấy).
 - **qa_stroke:** dấu giọt / nháy (, ; ‘ ’ ‚ “ ” „ ' " ′ ″) đo "nét chính" bằng đường kính hình tròn nội tiếp lớn nhất (trục giữa của giọt không ổn định).
 - **Nét chéo chữ thường:** nét mảnh v w x y k / thân n = nét mảnh / thân V hoa (±5 %).
 - **Dấu nặng:** mọi chấm cùng đỉnh −49 (ỵ bên phải đuôi), cùng kích thước dấu chấm câu.

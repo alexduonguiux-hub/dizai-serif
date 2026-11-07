@@ -156,3 +156,18 @@ Hệ quả:
   - 2 Regular nét chính 96 so với 0 111 (−13 %);
   - 8 Regular 97 so với 111 (−12 %);
   - 4 tỉ lệ Bold / Regular 1.38 (chuẩn số 1.24).
+
+## S23 Cân độ đậm số 2, 8, 4 (designer 07/11: "cân lại 2, 8, 4 luôn")
+
+Đo độ dày lớn nhất từng nét (Regular → Bold): bụng 0 / 3 / 6 = 111 / 107 / 102 → 139 / 143 / 136.
+
+| Số | Trước | Sửa (`ref/fix_fig_weight.py`, từ bản lưu `designer_B_prefig2.json`) | Sau |
+|---|---|---|---|
+| 2 | bụng 97 → 130 (nhẹ ~9 % ở cả hai master) | làm đậm NGANG Tiller–Hanson (`symbols.hdilate`, chỉ nét đứng): Regular +10, Bold +9; chiều cao, đường chân, đỉnh giữ nguyên; góc chân trái tay nắm suy biến như Regular (móc 3 u của bản vẽ Bold sinh gai khi nội suy) | 106 → 138 |
+| 8 | bụng dưới 98 → 132, bụng trên 86 → 106: tỉ lệ trên / dưới Regular 0.88, Bold tụt còn 0.80 | làm đậm ngang Regular +9, Bold +7; Bold: lòng trên (lòng GỐC, thay sau khi làm đậm) thu quanh tâm −20 ngang / −10 dọc | trên / dưới: R 96 / 107, B 122 / 139 (0.90 / 0.88) |
+| 4 | qa_stroke "B/R 1.38" | **báo nhầm**: qa_stroke so 4 với 0 (nét tròn); thân 4 = thân 1 (104 → 143 ≈ 102 → 140) — sửa qa_stroke (`STEMFIG`: 4 so với 1), không sửa hình | — |
+
+- ? ¿, dấu hỏi dựng từ số 2 GỐC, & dựng từ số 8 GỐC (`ref/designer_Q.json`) — giữ hình đã duyệt.
+- Kết quả: so từng glyph với bản trước, chỉ `two`, `eight` đổi (4 weight). Lệch cấu trúc 0; qa_outline 2, 8 sạch; qa_font 0 lệch, qa_weight 0, kerning va chạm 0; qa_stroke chỉ còn cờ báo nhầm của a.
+- Ảnh: `docs/img/s23-so-2-8.png`.
+- Ghi chú: từ S21, `lower/derive.py` dừng ở x (bộ giải khoảng trắng lòng x Bold không còn lòng ở 0.75 x-height sau khi X Bold đổi) → chữ thường giữ bản `lower_derived.json` đã duyệt (S20). Cần sửa bộ giải trước khi đổi chữ thường lần sau.

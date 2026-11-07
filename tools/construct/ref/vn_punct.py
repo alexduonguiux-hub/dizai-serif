@@ -522,7 +522,9 @@ def punct(S, w):
     ex_w = 0.98*V; G['!'] = U(wedge(ex_w/2, 700, 220 + 0.15*d, ex_w, 0.42*V), dot((ex_w/2, r - 3), d))
     # ? (designer 04/11: "điều chỉnh nét của dấu ? cho smooth hơn"): lấy PHẦN ĐẦU SỐ 2 của designer (vòng móc + đầu nét trái,
     # đồng bộ với bộ số), cắt ở y_cut nơi sống 2 bắt đầu đi chéo; nối thân cong liền xuống thẳng đứng; chấm cùng họ dấu chấm.
-    two = letter(S, '2', w); y_cut = 400
+    # ? và dấu hỏi dùng số 2 GỐC (designer_Q.json) — designer 07/11 duyệt cân độ đậm số 2 nhưng ? / hỏi giữ hình đã duyệt
+    _q = os.path.join(HERE, 'designer_Q.json')
+    two = ref_outline(json.load(open(_q))[f'2-{w}']) if os.path.exists(_q) else letter(S, '2', w); y_cut = 400
     def span(y):
         sp = I(two, rect(-50, y - 0.05, 1000, y + 0.05)); xs = sorted(set(round(p_[0], 1) for _, ps in sp.segments for p_ in ps))
         return xs[0], xs[-1]
@@ -608,7 +610,9 @@ def punct(S, w):
     # & (designer 04/11: "ký tự & cũng lỗi"): dựng từ SỐ 8 của designer để đồng bộ nét và vòng:
     #   cắt bỏ góc trên-phải của bụng dưới (từ tâm bụng dưới lên tới eo) → vòng trên mở ở chân phải và chảy thành chân;
     #   chân là nét chéo dày D (như chân K, X), từ eo xuống chân phải, cắt ngang ở baseline, cắt trên ở eo.
-    e8 = letter(S, '8', w); eb = bounds(e8)
+    # & dùng số 8 GỐC (designer_Q.json) — S23 cân độ đậm số 8 không kéo theo & đã duyệt
+    _q8 = os.path.join(HERE, 'designer_Q.json')
+    e8 = ref_outline(json.load(open(_q8))[f'8-{w}']) if os.path.exists(_q8) else letter(S, '8', w); eb = bounds(e8)
     lc = (Bw(261, 275), 210)                 # tâm lòng dưới (đo từ bản vẽ 8)
     waist = Bw(413, 405)
     # & serif cổ điển: chân dày (\\) cắt chéo qua TAY mảnh (/) — bụng dưới bị cắt ở góc −40° (dưới-phải), từ đó một nét
