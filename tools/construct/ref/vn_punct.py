@@ -681,7 +681,7 @@ def punct(S, w):
     # thân "a" đi xuống, vòng chữ U (bán kính ≈ 118) sang phải, nhập vào vòng ngoài ở góc 0° rồi chạy ngược chiều kim đồng hồ tới 300°
     ring_o = arc((cx0, cy), R0, R0, 0, 300)
     stem_c = hermite([((cx0 + 100, 470), (0, -1)), ((cx0 + 100, 300), (0, -1)), ((cx0 + 217, 166), (1, 0)), ((cx0 + R0, cy), (0, 1))])
-    pen_at = stroke(stem_c + ring_o, (t['N']*0.8, t['m']*0.85))
+    pen_at = stroke(stem_c + ring_o, (t['N']*0.88, t['m']*0.9))   # S25 (07/11 'sửa luôn các cờ còn lại'): ngòi 0.8 / 0.85 → nét @ nhẹ hơn o 13 %, đáy vòng dưới nét mảnh chung
     # lòng a trong @ (designer 05/11: "kiểm tra lại vòng khuyết trong của chữ @"): elip lòng xoay vượt qua mép thân, cắt vào
     # đoạn thân đang uốn (dưới 300) → mép lòng gãy, bậc. Lòng giữ trọn một hình, chỉ bóp phẳng theo MÉP TRÁI THẲNG của thân
     # (như lòng a thường); đoạn thân uốn không chạm lòng

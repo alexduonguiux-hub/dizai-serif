@@ -46,7 +46,12 @@ def seglen(sg):
     pts = sg[1:]
     return sum(math.dist(a, b) for a, b in zip(pts, pts[1:])) if sg[0] == 'C' else math.dist(pts[0], pts[1])
 def area(cont):
-    pts = [tuple(cont[0][1])] + [tuple(c[-1]) for c in cont[1:]]
+    pts = [tuple(cont[0][1])]                       # lấy mẫu đường cong (vòng tròn 2 đoạn cong: chỉ 2 điểm neo → diện tích 0)
+    for c in cont[1:]:
+        if c[0] == 'C':
+            p0 = pts[-1]; a, b, q = c[1], c[2], c[3]
+            pts += [tuple((1-t)**3*p0[k] + 3*(1-t)**2*t*a[k] + 3*(1-t)*t*t*b[k] + t**3*q[k] for k in (0, 1)) for t in (0.25, 0.5, 0.75, 1.0)]
+        else: pts.append(tuple(c[-1]))
     return 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(pts, pts[1:] + pts[:1]))
 
 def check(cmds):
@@ -71,7 +76,7 @@ def check(cmds):
 if __name__ == '__main__':
     ref = json.load(open(os.path.join(HERE, 'ref_glyphs.json')))
     import unicodedata
-    allg = '--all' in sys.argv; rep = {}; inherited = 0
+    allg = '--all' in sys.argv; rep = {}; inherited = 0; intent_n = [0]
     BASE = {'$': 'S', '€': 'C', '&': '8', 'Æ': 'AE', 'Œ': 'OE', 'æ': 'ae', 'œ': 'oe', '™': 'TM', '®': 'R', '©': 'C', '¢': 'c',
             # £ (06/11): móc trên = module đầu nét trên C (góc trong 24.5°), đầu phải đáy = module đầu tay dưới E
             'Ð': 'D', 'Ø': 'O', 'ø': 'o', 'Þ': 'P', 'þ': 'pb', 'µ': 'u', '¥': 'Y', '£': 'CE', 'ð': 'o', 'ß': 'l', '§': 'S', '‰': '%'}
@@ -90,11 +95,35 @@ if __name__ == '__main__':
                         min(y[3] for y in bi if y[0] == x[0]) - 2 <= x[3] <= max(y[3] for y in bi if y[0] == x[0]) + 2)]
             else: keep = [x for x in iss if not any(x[0] == y[0] and abs(x[3] - y[3]) <= 2 for y in bi)]
             inherited += len(iss) - len(keep); iss = keep
+        nb = len(iss)                                # S25: cùng quy tắc như outline xuất font — mũi nhọn ≤ 170° và điểm cố ý
+        iss = [x for x in iss if not (x[0] == 'spike' and x[3] <= 170) and (ch, x[0]) not in {('@', 'kink'), ('W', 'colin')}]
+        intent_n[0] += nb - len(iss)
         if iss: rep[k] = iss
-    print('bỏ qua (kế thừa từ bản vẽ designer):', inherited)
+    print('bỏ qua (kế thừa từ bản vẽ designer):', inherited, '· mũi nhọn / điểm cố ý:', intent_n[0])
     from collections import Counter
     tot = Counter(t for v in rep.values() for t, *_ in v)
     print('glyph có lỗi:', len(rep), '·', dict(tot))
     for k, v in sorted(rep.items(), key=lambda kv: -len(kv[1]))[:40]:
         print(f'  {k:12s}', len(v), ' '.join(f'{t}@({p[0]:.0f},{p[1]:.0f})' for t, _, p, _ in v[:6]))
+    # ---- S25: OUTLINE XUẤT FONT (sau ghép cặp / làm liền — cái người dùng thấy) ----
+    # gai: chỉ > 170° (mỏ, đầu nét, nách cố ý của font nằm 150–166°: E C G T Z S B N 3 5 &); ngoại lệ cố ý:
+    #   @ gãy ~22° — lòng elip của a bên trong bị mép thân CẮT DỌC (designer 07/11 "bụng @ nên cắt ngang như này")
+    #   W Regular thẳng hàng — điểm cần cho nội suy (Bold ở đó là góc mặt đỉnh)
+    import re as _re
+    INTENT = {('@', 'kink'), ('W', 'colin')}
+    def _cm(d):
+        toks = _re.findall(r'[MLCZ]|-?[\d.]+', d); i = 0; out = []
+        while i < len(toks):
+            c = toks[i]; i += 1; n = {'M': 1, 'L': 1, 'C': 3, 'Z': 0}[c]
+            out.append([c] + [[float(toks[i + 2*j]), float(toks[i + 2*j + 1])] for j in range(n)]); i += 2*n
+        return out
+    OUTF = os.path.join(HERE, '..', '..', 'out', 'construct', 'outlines.json')
+    if os.path.exists(OUTF):
+        FO = json.load(open(OUTF)); fr = {}
+        for k, d in FO.items():
+            ch = k.rsplit('-', 1)[0]
+            iss = [x for x in check(_cm(d)) if not (x[0] == 'spike' and x[3] <= 170) and (ch, x[0]) not in INTENT]
+            if iss: fr[k] = iss
+        print('outline xuất font — lỗi:', len(fr), dict(Counter(t for v in fr.values() for t, *_ in v)))
+        for k, v in sorted(fr.items())[:40]: print(f'  {k:12s}', ' '.join(f'{t}@({p[0]:.0f},{p[1]:.0f})' for t, _, p, _ in v[:6]))
     if '--json' in sys.argv: json.dump(rep, open(sys.argv[sys.argv.index('--json') + 1], 'w'), ensure_ascii=False, default=list)

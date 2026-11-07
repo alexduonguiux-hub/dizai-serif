@@ -184,3 +184,20 @@ Từ S21 (cân nét chéo chữ hoa Bold), `lower/derive.py` dừng ở x nên c
 - Kết quả (Medium / SemiBold / Bold): nét `\` = thân, `/` theo tỉ lệ mảnh của V hoa — như trước (±0.3 u); lòng v y lớn thêm 1–4 u, x SemiBold −3 u; bề ngang giữ nguyên. Hình đầu nét / loe theo chữ hoa S21, điểm dời tối đa 11 u. x Regular lệch 1 u (ghép cặp nội suy S20).
 - So từng glyph với bản trước: chỉ k v w x y ý ỳ ỷ ỹ ỵ đổi. Lệch cấu trúc 0, qa_font 0 lệch, qa_weight 0, kerning va chạm 0.
 - Ảnh: `docs/img/s24-chu-thuong-kvwxy.png`.
+
+## S25 Các cờ QA còn lại (designer 07/11: "OK duyệt, sửa luôn các cờ còn lại")
+
+| Cờ | Kết luận | Xử lý |
+|---|---|---|
+| qa_stroke "không tăng" (! ¡ Æ ‹ › a â ã ả ấ ầ ậ ắ ằ, dấu tổ hợp) | **báo nhầm**: đo lát cắt / vuông góc đều tăng (thân a = n: 102 / 109 / 117 / 125; ! 90 → 122; ‹ › 59 → 97 & 30 → 49) — phân vị 97 trên trục giữa bỏ gần hết thân ngắn khi loại vùng khớp | qa_stroke: kiểm chéo weight dùng E (phân vị 99 bản đồ khoảng cách); cờ độ dày chỉ tính khi CẢ T và E cùng lệch |
+| $ & ¥ +12 %, € @ −12 %, ≠ −11 % (nhóm) | **báo nhầm**: $ = S, ¥ = Y, € = C (thân 106 → 146), ≠ = thanh của = | ký hiệu so với chữ gốc (`SYMBASE`), æ œ so với o |
+| @ nhẹ hơn o 13 %, đáy vòng mảnh | thật: ngòi bút @ 0.8 N / 0.85 m | ngòi 0.88 N / 0.9 m |
+| * đầu cánh, ¶ thanh trên mảnh | thật (dưới nét mảnh chung) | * đầu trong 0.20 → 0.24 V; ¶ thanh 0.55 → 0.75 H |
+| A Bold chân phải bậc 3.5 u | thật: S21 dời mép chéo +4.6 u, đầu loe không theo | `fix_struct_bold.py`: đoạn loe dịch theo mép (x += 4.6·y/80.7) |
+| nút gãy nhỏ 3–10° (chân loe A, g, &, V, Y, ~ …); nội suy M / SB gãy > 2° ($ S Š s j ȷ ~) | thật | `compat_masters.smooth_pair` (S25): nút gãy < 12° ở cả hai master → xoay tay nắm về một tiếp tuyến (cạnh thẳng giữ hướng; hai cong → trung bình theo độ dài tay; cạnh "thẳng" có thể uốn đầu nếu dời ít hơn); tỉ lệ tay nắm hai master đồng bộ khi bản nội suy gãy (chỉnh MỘT tay, dời ít nhất). Dời hình học > 3.5 u → giữ bản vẽ. Thẳng hàng ở cả hai master → gộp |
+| @ gãy 22° | **cố ý**: lòng elip của a bên trong bị mép thân cắt dọc (designer 07/11 "bụng @ nên cắt ngang như này") | không làm liền (`KINK_CH['@'] = 0`) |
+| Å å ̊ "contour rỗng" | báo nhầm: lỗ vòng là tròn 2 đoạn cong, diện tích tính từ điểm neo = 0 | qa_outline lấy mẫu đường cong |
+| gai 150–166° (mỏ E C G T Z, đầu S 3 5, nách B N &) | cố ý | qa_outline: gai > 170°; thêm phần quét OUTLINE XUẤT FONT |
+
+- Kết quả: qa_stroke 0 cờ (chéo weight 0), qa_outline 0 (bản dựng + outline xuất font), nút trơn gãy M / SB 0, lệch cấu trúc 0, qa_font 0, qa_weight 0, kerning va chạm 0.
+- Dời hình học do làm liền: phần lớn ≤ 1.5 u; lớn nhất ~3.4 u (S, Y, g, ~).

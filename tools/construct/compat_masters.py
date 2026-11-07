@@ -357,6 +357,109 @@ def drop_stub(S):
             changed = True; break
     return S
 
+# S25 (designer 07/11 "sửa luôn các cờ còn lại"): nút gãy NHỎ (< KINK°) giữa đoạn cong / cong–thẳng là lỗi (mọi góc cố ý của
+# font sắc > 25°: mỏ, đầu nét, nách) — chân loe A (S21 dời mép), nút nối g Bold, & Bold, loe V Regular. Quyết định CHUNG cho
+# cặp (R, B): gãy < KINK ở cả hai master → xoay tay nắm hai bên về một tiếp tuyến (cạnh thẳng giữ hướng; hai cong → phân giác),
+# giữ độ dài tay nắm, không dời điểm neo. Hai đoạn thẳng thẳng hàng (< 0.5°) ở cả hai master → gộp. Contour diện tích ~0 → bỏ.
+KINK = 12.0
+MAXDEV = 3.5      # u: nút phải dời đường cong hơn mức này thì giữ bản vẽ (s S của designer — vector Figma đã duyệt)
+LEFT = []
+def _segdev(a, b):
+    """độ dời HÌNH HỌC (Hausdorff) giữa hai đoạn — kéo tay nắm dọc đoạn thẳng không đổi hình"""
+    A = [bez(a, t/24) for t in range(25)]; Bp = [bez(b, t/48) for t in range(49)]
+    Ap = [bez(a, t/48) for t in range(49)]; Bq = [bez(b, t/24) for t in range(25)]
+    return max(max(min(math.dist(p, q) for q in Bp) for p in A), max(min(math.dist(p, q) for q in Ap) for p in Bq))
+KINK_CH = {'@': 0.0}    # @: lòng elip của a bên trong bị mép thân CẮT DỌC — góc cắt cố ý (designer 07/11 "bụng @ nên cắt ngang như này"), không làm liền
+def _straight(sg):
+    if sg[0] != 'C': return False
+    a, d = sg[1], sg[4]; L = math.dist(a, d)
+    if L < 20: return False
+    u = unit((d[0] - a[0], d[1] - a[1]))
+    for h, base in ((sg[2], a), (sg[3], d)):                     # tay nắm lệch dây cung < 3° (hoặc suy biến)
+        v = unit((h[0] - base[0], h[1] - base[1]))
+        if v and min(angle(v, u), angle(v, (-u[0], -u[1]))) > 3: return False
+    return True
+def _rot_handles(S, i, j, both_t, free=False):
+    p = end(S[i]); u, v = tan_out(S[i]), tan_in(S[j])
+    fi = S[i][0] == 'L' or (_straight(S[i]) and not free); fj = S[j][0] == 'L' or (_straight(S[j]) and not free)      # cạnh cố định (thẳng)
+    if fi and fj:                                              # cả hai gần thẳng: giữ cạnh thật / cạnh dài, uốn đoạn cong ngắn
+        if S[i][0] == 'L' and S[j][0] == 'L': return
+        if S[j][0] == 'L' or (S[i][0] == 'C' and seglen(S[i]) < seglen(S[j])): fi = False
+        else: fj = False
+    if not fi and not fj:                                      # hai cong: hướng trung bình theo độ dài tay nắm (tay ngắn xoay theo tay dài)
+        a_, b_ = math.dist(S[i][3], p), math.dist(S[j][2], p)
+        t = unit((u[0]*a_ + v[0]*b_, u[1]*a_ + v[1]*b_)) or unit((u[0] + v[0], u[1] + v[1]))
+    else: t = u if fi else v
+    if t is None: return
+    if S[i][0] == 'C' and not fi:
+        a = list(S[i]); L = math.dist(a[3], p) or math.dist(a[1], p)/3; a[3] = (p[0] - t[0]*L, p[1] - t[1]*L); S[i] = a
+    if S[j][0] == 'C' and not fj:
+        b = list(S[j]); L = math.dist(b[2], p) or math.dist(b[4], p)/3; b[2] = (p[0] + t[0]*L, p[1] + t[1]*L); S[j] = b
+def _hl(S, i, j):
+    """(độ dài tay vào, độ dài tay ra) tại nút cuối S[i]; cạnh thẳng: độ dài cạnh"""
+    p = end(S[i])
+    a = math.dist(S[i][3], p) if S[i][0] == 'C' else math.dist(S[i][1], p)
+    b = math.dist(S[j][2], p) if S[j][0] == 'C' else math.dist(S[j][2], p)
+    return a, b
+def _set_hl(S, i, j, a, b):
+    p = end(S[i])
+    if S[i][0] == 'C':
+        h = S[i][3]; L = math.dist(h, p)
+        if L > 1e-6: x = list(S[i]); x[3] = (p[0] + (h[0] - p[0])*a/L, p[1] + (h[1] - p[1])*a/L); S[i] = x
+    if S[j][0] == 'C':
+        h = S[j][2]; L = math.dist(h, p)
+        if L > 1e-6: x = list(S[j]); x[2] = (p[0] + (h[0] - p[0])*b/L, p[1] + (h[1] - p[1])*b/L); S[j] = x
+def _sync_ratio(R, B, i, j):
+    """nút liền ở cả hai master: nội suy liền khi tỉ lệ (tay vào : tay ra) bằng nhau ở hai master. Chọn cách dời ít nhất trong:
+    chỉnh MỘT tay nắm (vào / ra của R hoặc B) cho đúng tỉ lệ của master kia, hoặc đưa cả hai về trung bình nhân"""
+    aR, bR = _hl(R, i, j); aB, bB = _hl(B, i, j)
+    if min(aR, bR, aB, bB) < 1e-3: return
+    rR, rB = aR/bR, aB/bB
+    if abs(math.log(rR/rB)) < 0.02: return
+    k0 = [list(R[i]), list(R[j]), list(B[i]), list(B[j])]; cands = []
+    def tryit(f):
+        R[i], R[j], B[i], B[j] = [list(x) for x in k0]; f()
+        a2, b2 = _hl(R, i, j); a3, b3 = _hl(B, i, j)
+        if abs(math.log((a2/b2)/(a3/b3))) > 0.03: return
+        dv = max(_segdev(k0[0], R[i]), _segdev(k0[1], R[j]), _segdev(k0[2], B[i]), _segdev(k0[3], B[j]))
+        cands.append((dv, [list(R[i]), list(R[j]), list(B[i]), list(B[j])]))
+    if B[i][0] == 'C': tryit(lambda: _set_hl(B, i, j, rR*bB, bB))
+    if B[j][0] == 'C': tryit(lambda: _set_hl(B, i, j, aB, aB/rR))
+    if R[i][0] == 'C': tryit(lambda: _set_hl(R, i, j, rB*bR, bR))
+    if R[j][0] == 'C': tryit(lambda: _set_hl(R, i, j, aR, aR/rB))
+    r = math.sqrt(rR*rB)
+    def gm():
+        for S, a, b in ((R, aR, bR), (B, aB, bB)):
+            if S[i][0] == 'C' and S[j][0] == 'C': ab = a*b; _set_hl(S, i, j, math.sqrt(ab*r), math.sqrt(ab/r))
+            elif S[i][0] == 'C': _set_hl(S, i, j, r*b, b)
+            elif S[j][0] == 'C': _set_hl(S, i, j, a, a/r)
+    tryit(gm)
+    if cands: R[i], R[j], B[i], B[j] = min(cands, key=lambda c: c[0])[1]
+    else: R[i], R[j], B[i], B[j] = k0
+def smooth_pair(R, B, kink=KINK):
+    R, B = [list(x) for x in R], [list(x) for x in B]; nk = 0
+    i = 0
+    while i < len(R) and len(R) > 2:
+        n = len(R); j = (i + 1) % n
+        tR, tB = angle(tan_out(R[i]), tan_in(R[j])), angle(tan_out(B[i]), tan_in(B[j]))
+        if R[i][0] == R[j][0] == 'L' == B[i][0] == B[j][0] and tR < 0.5 and tB < 0.5 and j != 0:
+            R[i] = ['L', R[i][1], R[j][2]]; B[i] = ['L', B[i][1], B[j][2]]; del R[j]; del B[j]; nk += 1; continue
+        if not (R[i][0] == R[j][0] == 'L') and max(tR, tB) < kink:
+            keep = [list(R[i]), list(R[j]), list(B[i]), list(B[j])]
+            best = None
+            for free in (False, True):                                 # phương án 2: uốn nhẹ đầu đoạn cong "thẳng" thay vì xoay đoạn kia
+                R[i], R[j], B[i], B[j] = [list(x) for x in keep]
+                if max(tR, tB) > 0.3: _rot_handles(R, i, j, None, free); _rot_handles(B, i, j, None, free)
+                if _mid_kink(R, B, i, j) > 1.0: _sync_ratio(R, B, i, j)      # chỉ khi bản nội suy gãy
+                dv = max(_segdev(keep[0], R[i]), _segdev(keep[1], R[j]), _segdev(keep[2], B[i]), _segdev(keep[3], B[j]))
+                if best is None or dv < best[0] - 0.05: best = (dv, [list(R[i]), list(R[j]), list(B[i]), list(B[j])])
+            dev = best[0]; R[i], R[j], B[i], B[j] = best[1]
+            if dev > MAXDEV:                                           # dời đường cong > MAXDEV u: giữ bản vẽ, báo lại
+                R[i], R[j], B[i], B[j] = keep; LEFT.append((round(max(tR, tB), 1), round(dev, 1)))
+            elif keep != [R[i], R[j], B[i], B[j]]: nk += 1
+        i += 1
+    return R, B, nk
+
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
     REG = []           # S18b: cặp contour (R, B) đã ghép của chữ gốc — chữ có dấu dùng lại đúng cặp đó (Š ← S, …)
@@ -403,6 +506,10 @@ def main():
                     if not kk: break
                 if k_: stat.setdefault('S18', []).append(f'{c}×{k_}')
                 if c.isalpha() and len(c) == 1 and ord(c) < 0x80: REG.append((R_pre, B_pre, br, bb_, Rr, Bb))
+            n0 = len(LEFT); Rr, Bb, k_ = smooth_pair(Rr, Bb, KINK_CH.get(c, KINK))
+            if len(LEFT) > n0: stat.setdefault('S25 giữ', []).append(f'{c}{LEFT[n0:]}')
+            if k_: stat.setdefault('S25', []).append(f'{c}×{k_}')
+            if abs(_sarea(Rr)) < 5 and abs(_sarea(Bb)) < 5: stat.setdefault('S25 bỏ contour rỗng', []).append(c); continue
             out.append((Rr, Bb))
         after = sum(len(a) for a, _ in out)
         stat['đoạn trước'] += before; stat['đoạn sau'] += after; stat['ghép được'] += 1
@@ -412,6 +519,7 @@ def main():
     print('compat:', {k: (v if not isinstance(v, list) else len(v)) for k, v in stat.items()}, 'không ghép:', stat['không ghép'][:30])
     print('S18 nội suy liền tiếp tuyến:', ' '.join(stat.get('S18', [])))
     print('S20 đồng bộ cấu trúc:', ' '.join(stat.get('S20', [])))
+    print('S25 nút gãy nhỏ → liền:', ' '.join(stat.get('S25', [])), '· giữ (dời > %.1f u):' % MAXDEV, ' '.join(stat.get('S25 giữ', [])), '· bỏ contour rỗng:', ''.join(stat.get('S25 bỏ contour rỗng', [])))
     print('S18b ghép theo chữ gốc:', ''.join(sorted(set(stat.get('S18b', [])))))
 
 if __name__ == '__main__':

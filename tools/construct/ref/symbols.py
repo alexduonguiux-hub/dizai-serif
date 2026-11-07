@@ -262,7 +262,7 @@ def build_w(S, L, w):
     # ---------- nhóm 1 ----------
     # * : 6 cánh nêm (đầu ngoài rộng, đầu trong hẹp) quanh tâm ở 0.80 cap, bán kính 150
     cx, cy, R = 170, 560, 150
-    spoke = wedge(0, cy + R, cy + 10, 0.58*Vv, 0.20*Vv, 0.25)
+    spoke = wedge(0, cy + R, cy + 10, 0.58*Vv, 0.24*Vv, 0.25)   # S25: đầu trong 0.20 → 0.24 V (≥ nét mảnh chung)
     G['*'] = norm_x(U(*[xform(spoke, lambda x, y, a=math.radians(60*k): (cx + x*math.cos(a) - (y - cy)*math.sin(a),
                                                                        cy + x*math.sin(a) + (y - cy)*math.cos(a))) for k in range(6)]))
     # < > : nét bút trên trục toán, cao 420, rộng 400
@@ -450,7 +450,7 @@ def build_w(S, L, w):
     # ¶ : bụng đặc (nửa elip trái) + hai thân 0.5 V, −150 … 700
     st = 0.5*Vv; bx = 300
     bowl = I(ellipse((bx, 520), bx, 180), rect(0, 0, bx + 1, 800))
-    G['¶'] = U(bowl, rect(bx - 1, -150, bx + st, 700), rect(bx + st + 70, -150, bx + 2*st + 70, 700), rect(bx, 700 - 0.55*H, bx + 2*st + 70, 700))
+    G['¶'] = U(bowl, rect(bx - 1, -150, bx + st, 700), rect(bx + st + 70, -150, bx + 2*st + 70, 700), rect(bx, 700 - 0.75*H, bx + 2*st + 70, 700))   # S25: thanh 0.55 → 0.75 H (≥ nét mảnh chung)
     # † ‡ : thân nêm (rộng ở hai đầu) + thanh ngang nêm
     def dag(ys):
         stem = U(wedge(0, 700, 300, 0.62*Vv, 0.36*Vv, 0.2), xform(wedge(0, 700, 300, 0.62*Vv, 0.36*Vv, 0.2), lambda x, y: (x, 300 - (y - 300) - 50 if y < 9999 else y)))

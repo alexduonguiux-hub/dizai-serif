@@ -71,8 +71,9 @@ def measure(d):
         i = int(np.argmin(np.abs(2*dist[keep]/SC - v))); y, x = pts[i] if len(pts) else (0, 0)
         return round(x/SC + org[0]), round(y/SC + org[1])
     T, Tx, t = float(np.percentile(w, 97)), float(w.max()), float(np.percentile(w, 3))
+    E = float(np.percentile(2*ndimage.distance_transform_edt(m)[m]/SC, 99))   # S25: bản đồ khoảng cách — không phụ thuộc tỉa trục
     if DROP_NOW[0]: T = Tx = float(2*ndimage.distance_transform_edt(m).max()/SC)   # dấu giọt / nháy: đường kính đầu
-    return dict(T=round(T, 1), Tx=round(Tx, 1), t=round(t, 1), Tx_at=at(Tx), t_at=at(t))
+    return dict(T=round(T, 1), E=round(E, 1), Tx=round(Tx, 1), t=round(t, 1), Tx_at=at(Tx), t_at=at(t))
 
 # nhóm ký hiệu cùng luật nét: mỗi ký tự trong ±10 % trung vị nhóm (cùng weight)
 FAM = {
@@ -84,7 +85,13 @@ FAM = {
 # dấu hình giọt / nháy: trục giữa của giọt không ổn định (phân vị 97 nhảy 45 → 139 → 64 giữa các weight dù đầu giọt tăng đều
 # 118 → 162) → "nét chính" = đường kính hình tròn nội tiếp lớn nhất (đầu giọt)
 # số có THÂN THẲNG so với 1 (thân), không với 0 (nét tròn tăng × 1.25 < thân × 1.37) — 07/11: '4 B/R 1.38' là báo nhầm
-STEMFIG = {'4': '1'}
+STEMFIG = {'4': '1', 'æ': 'o', 'œ': 'o'}   # æ œ: không có thân → so với o
+# S25 (07/11): ký hiệu dựng từ chữ → so với CHỮ GỐC (trung vị nhóm trộn S, Y, C… báo nhầm $ & ¥ +12 %, € @ −12 %);
+# một cờ độ dày chỉ tính khi CẢ HAI cách đo (T: trục giữa, E: bản đồ khoảng cách) cùng lệch — T dao động ở chữ thân ngắn (a, !, Æ)
+SYMBASE = {'$': 'S', '¥': 'Y', '€': 'C', '@': 'o', '&': '8', '¢': 'c', '≠': '='}
+def _off2(r, q):
+    a, b = r['T']/q['T'] - 1, r['E']/q['E'] - 1
+    return a if (abs(a) > 0.10 and abs(b) > 0.10 and a*b > 0) else 0.0
 DROP = set(",;‘’‚“”„'\"′″")
 DROP_NOW = [False]
 SKIP_THIN = set(".:…·•,;‘’‚“”„") | set(SPc.COMB)   # chấm / giọt: trục giữa của hình tròn không đo được nét mảnh
@@ -111,13 +118,17 @@ def main():
             k = SPc.kind(c); iss = []
             if k in ('caps', 'lower', 'fig') and SPc.base(c) == c:
                 rc = STEMFIG.get(c, "Hn0"[["caps","lower","fig"].index(k)]); rT = R[rc]['T']
-                dv = r['T']/rT - 1
-                if abs(dv) > 0.10: iss.append(f'nét chính {r["T"]:.0f} vs {rc} {rT:.0f} ({dv*100:+.0f}%)')
+                dv = _off2(r, R[rc])
+                if dv: iss.append(f'nét chính {r["T"]:.0f} vs {rc} {rT:.0f} ({dv*100:+.0f}%)')
                 if r['Tx'] > 1.25*ref[k]['T']: iss.append(f'cục mực {r["Tx"]:.0f}@{r["Tx_at"]}')
             for f, cs in FAM.items():
-                if c in cs:
-                    dv = r['T']/fmed[f] - 1
-                    if abs(dv) > 0.10: iss.append(f'nhóm {f}: {r["T"]:.0f} vs trung vị {fmed[f]:.0f} ({dv*100:+.0f}%)')
+                if c in cs and c in SYMBASE and SYMBASE[c] in R:
+                    q = R[SYMBASE[c]]; dv = _off2(r, q)
+                    if dv: iss.append(f'so chữ gốc {SYMBASE[c]}: {r["T"]:.0f} vs {q["T"]:.0f} ({dv*100:+.0f}%)')
+                elif c in cs:
+                    fE = float(np.median([R[x]['E'] for x in cs if x in R and R[x]]))
+                    dv = _off2(r, {'T': fmed[f], 'E': fE})
+                    if dv: iss.append(f'nhóm {f}: {r["T"]:.0f} vs trung vị {fmed[f]:.0f} ({dv*100:+.0f}%)')
             kk = k if k in hair else 'caps'
             if c not in SKIP_THIN and r['t'] < hair[kk]: iss.append(f'mảnh {r["t"]:.0f}@{r["t_at"]} (< {hair[kk]:.0f})')
             if iss: bad.append((c, iss))
@@ -130,13 +141,13 @@ def main():
         print('===== chéo weight')
         nb = 0
         for c in chars:
-            Ts = [M[w][c]['T'] for w in ws if M[w][c]]
+            Ts = [M[w][c]['E'] for w in ws if M[w][c]]                   # S25: E (bản đồ khoảng cách) — ổn định giữa các weight
             if len(Ts) != len(ws): continue
             if any(b < a - 3 for a, b in zip(Ts, Ts[1:])): print(f'  {c!r:6} không tăng: {Ts}'); nb += 1; continue
             k = SPc.kind(c); fam = next((f for f, cs in FAM.items() if c in cs), None)
             if k in ('caps', 'lower', 'fig') and SPc.base(c) == c:
-                rc = STEMFIG.get(c, 'Hn0'[['caps','lower','fig'].index(k)]); rr = M['Bold'][rc]['T']/M['Regular'][rc]['T']
-            elif fam: rr = float(np.median([M['Bold'][x]['T']/M['Regular'][x]['T'] for x in FAM[fam] if x in M['Bold'] and M['Bold'][x] and M['Regular'][x]]))
+                rc = STEMFIG.get(c, 'Hn0'[['caps','lower','fig'].index(k)]); rr = M['Bold'][rc]['E']/M['Regular'][rc]['E']
+            elif fam: rr = float(np.median([M['Bold'][x]['E']/M['Regular'][x]['E'] for x in FAM[fam] if x in M['Bold'] and M['Bold'][x] and M['Regular'][x]]))
             else: continue
             r_ = Ts[-1]/Ts[0]
             if abs(r_/rr - 1) > 0.10: print(f'  {c!r:6} B/R {r_:.2f} vs chuẩn {rr:.2f}'); nb += 1
