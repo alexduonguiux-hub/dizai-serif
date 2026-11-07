@@ -93,3 +93,20 @@ Hệ quả:
   - Regular có 3 bậc, Bold có 2, nên ghép cặp lệch.
 - **Sửa** (`compat_masters.dejog`): bỏ đoạn bậc < 6 u nằm giữa hai góc ~vuông khi hướng vào / ra lệch < 50°; nối hai mép ở trung điểm (dời ≤ 3 u).
 - **Kết quả:** & hết lệch cấu trúc. Đổi kèm g, Œ (bậc cùng loại, ≤ 3 u). Lệch cấu trúc toàn font 17 → 13.
+
+## S20 Đồng bộ cấu trúc Regular ↔ Bold cho các chữ còn lại (designer 07/11 duyệt đề xuất)
+
+| Chữ | Trước | Sửa | Ở đâu |
+|---|---|---|---|
+| 5 | Regular khấc vát 13.4 × 15.5 u chỗ chân thân gặp vai bụng; Bold phẳng | Bold có cùng khấc: mép phẳng dừng 73.1, vát lên (86.5, 414.7) | `ref/fix_struct_bold.py` |
+| M | Bold loe đỉnh thân trái ngắn (từ 665.6), gãy 18° | Bold dùng module loe chuẩn (630.2 → 7.7 686.5 → 0 700) như Regular | `ref/fix_struct_bold.py` |
+| N, Ñ | Regular khấc V 14 u ở hai đỉnh chéo; Bold bậc 5.8 u | Bold khấc 14 u, chân lệch 5.6 u; cạnh chéo xoay ~0.8° | `ref/fix_struct_bold.py` |
+| g | Bold gai 8 u (quay 149° / 153°) ở cổ nối vòng dưới | bỏ gai, nối trơn; chia đôi đoạn trước để giữ số đoạn | `compat_masters.sync_struct` |
+| s, š | Regular bậc ngang 5 u sau góc đầu nét dưới | góc về cuối cạnh đứng, đoạn cong bắt đầu tại góc | `compat_masters.sync_struct` |
+| x | Regular nách là một đỉnh; Bold mặt nách 7.5 u | Regular có mặt nách cùng hướng, cùng dài, trên hai cạnh | `compat_masters.sync_struct` |
+
+- **Kết quả:** lệch cấu trúc góc ↔ trơn toàn font **0** (trước 27).
+- **Ghi chú:**
+  - N Bold: hai đầu cạnh chéo dày hơn ~5 u do cạnh xoay để có khấc V (qa_stroke B/R 1.52).
+  - 5 Medium và 3 Medium: nét chính thấp hơn chuẩn ~10% (cờ có từ trước).
+- Ảnh: `docs/img/structure-fixed.png`.

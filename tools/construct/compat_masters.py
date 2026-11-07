@@ -177,6 +177,67 @@ def _to_ext(X, i, j, ax):
     X[i], X[j] = ni, nj
     return True
 
+def _ln_isect(p, u, q, v):
+    den = u[0]*v[1] - u[1]*v[0]
+    if abs(den) < 1e-9: return None
+    t = ((q[0] - p[0])*v[1] - (q[1] - p[1])*v[0])/den; return (p[0] + t*u[0], p[1] + t*u[1])
+
+SYNC = set('gsšx')          # S20 chỉ áp cho chữ designer đã duyệt (07/11); N, 5, M sửa ở bản vẽ
+def sync_struct(R, B):
+    """S20 Đồng bộ cấu trúc theo đề xuất designer duyệt 07/11 (g, x, s):
+    · GAI (g Bold): đoạn < 10 u có hai đầu quay > 120° (nét đi tới rồi quay ngược) → bỏ gai: nối hai đoạn kề ở trung điểm;
+    · NÁCH (x): đoạn thẳng ngắn i+1 thẳng hàng với cạnh trước ở master này nhưng là MẶT NÁCH (hai góc) ở master kia → dựng mặt
+      nách cùng hướng, cùng dài, đặt đúng trên hai cạnh (giao tuyến);
+    · BẬC SAU GÓC (s Regular): đoạn ngắn sau một góc, nối trơn vào đoạn sau, mà master kia ở đó là cạnh thẳng hàng tới góc →
+      đưa góc về cuối cạnh trước, đoạn ngắn thành phần nối dài cạnh, đoạn sau bắt đầu tại góc."""
+    n = len(R); fixed = 0
+    def K(X, i): return angle(tan_out(X[i]), tan_in(X[(i + 1) % n]))
+    # gai
+    for X, Y in ((R, B), (B, R)):
+        for i in range(n):
+            h, j = (i - 1) % n, (i + 1) % n
+            if seglen(X[i]) < 10 and K(X, h) > 120 and K(X, i) > 120 and K(Y, h) < 30 and K(Y, i) < 30:
+                a, b = X[i][1], X[i][-1]; m = ((a[0] + b[0])/2, (a[1] + b[1])/2)
+                H_, J_ = list(X[h]), list(X[j]); dE = (m[0] - H_[-1][0], m[1] - H_[-1][1]); dS = (m[0] - J_[1][0], m[1] - J_[1][1])
+                if H_[0] == 'C': H_[-2] = (H_[-2][0] + dE[0], H_[-2][1] + dE[1])
+                if J_[0] == 'C': J_[2] = (J_[2][0] + dS[0], J_[2][1] + dS[1])
+                H_[-1] = m; J_[1] = m
+                # đoạn gai thành đoạn độ dài 0 nằm ở m (giữ số đoạn hai master bằng nhau); tay nắm hai bên thẳng hàng
+                u = unit((J_[2][0] - H_[-2][0], J_[2][1] - H_[-2][1])) if H_[0] == J_[0] == 'C' else None
+                if u:                                                      # tay nắm hai bên thẳng hàng → nút trơn
+                    la, lb = math.dist(H_[-2], m), math.dist(J_[2], m)
+                    H_[-2] = (m[0] - la*u[0], m[1] - la*u[1]); J_[2] = (m[0] + lb*u[0], m[1] + lb*u[1])
+                # giữ số đoạn: đoạn trước chia đôi (de Casteljau) thay chỗ gai → master này có thêm một neo trơn trên đoạn trước
+                if H_[0] == 'C':
+                    a1, a2 = _split(H_, 0.5)
+                    if h < i: X[h], X[i] = a1, a2
+                    else: X[h], X[i] = a1, a2                             # (vòng: h = n−1, i = 0 — hiếm)
+                else:
+                    mm = ((H_[1][0] + m[0])/2, (H_[1][1] + m[1])/2); X[h], X[i] = ['L', H_[1], mm], ['L', mm, m]
+                X[j] = J_
+                fixed += 1
+    # nách và bậc sau góc (ba đoạn thẳng / thẳng + cong)
+    for X, Y in ((R, B), (B, R)):
+        for i in range(n):
+            h, j = (i - 1) % n, (i + 1) % n
+            if X[i][0] != 'L' or Y[i][0] != 'L' or X[h][0] != 'L' or Y[h][0] != 'L': continue
+            if seglen(Y[i]) <= 12 and K(X, h) < 3 and K(Y, h) > 30 and K(Y, i) > 30 and X[j][0] == 'L':      # nách: X thẳng hàng, Y có mặt nách
+                fy = unit((Y[i][2][0] - Y[i][1][0], Y[i][2][1] - Y[i][1][1])); w = seglen(Y[i])
+                u = unit((X[h][2][0] - X[h][1][0], X[h][2][1] - X[h][1][1])); v = unit((X[j][2][0] - X[j][1][0], X[j][2][1] - X[j][1][1]))
+                V0 = X[i][2]                                               # đỉnh nách hiện tại
+                # P trên cạnh trước, Q = P + w·fy trên cạnh sau
+                Pp = _ln_isect((V0[0] - w*fy[0], V0[1] - w*fy[1]), v, X[h][1], u)
+                if Pp is None: continue
+                Q = (Pp[0] + w*fy[0], Pp[1] + w*fy[1])
+                X[h] = ['L', X[h][1], Pp]; X[i] = ['L', Pp, Q]; X[j] = ['L', Q, X[j][2]]; fixed += 1
+            elif seglen(X[i]) <= 12 and K(X, h) > 60 and K(X, i) < 30 and K(Y, h) < 3 and K(Y, i) > 30 and X[j][0] == 'C':   # bậc sau góc
+                Vc = X[i][1]; u = unit((X[h][2][0] - X[h][1][0], X[h][2][1] - X[h][1][1])); w = seglen(X[i])
+                Pp = (Vc[0] - w*u[0], Vc[1] - w*u[1])                      # điểm chia trên cạnh trước
+                d_ = (Vc[0] - X[j][1][0], Vc[1] - X[j][1][1])
+                X[h] = ['L', X[h][1], Pp]; X[i] = ['L', Pp, Vc]
+                X[j] = ['C', Vc, (X[j][2][0] + d_[0], X[j][2][1] + d_[1])] + X[j][3:]; fixed += 1
+    return R, B, fixed
+
 def reanchor(R, B):
     """S18 Neo tương ứng cho nội suy (designer 06/11 "bụng s medium và semi bold lỗi"). Hai master ghép cặp điểm neo theo thứ tự;
     khi một master neo ở CỰC TRỊ (tiếp tuyến ngang / dọc) mà master kia neo ở chỗ xiên (s: Regular neo cực phải bụng dưới,
@@ -333,6 +394,9 @@ def main():
                 Rr, Bb = hit; stat.setdefault('S18b', []).append(c)
             else:
                 k_ = 0
+                if c in SYNC: Rr, Bb, k_ = sync_struct(Rr, Bb)
+                if k_: stat.setdefault('S20', []).append(f'{c}×{k_}')
+                k_ = 0
                 for _ in range(4):                             # dời một nút có thể làm nút kề gãy thêm → lặp tới khi ổn định
                     Rr, Bb, kk = reanchor(Rr, Bb); k_ += kk
                     if not kk: break
@@ -346,6 +410,7 @@ def main():
     json.dump(O, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('compat:', {k: (v if not isinstance(v, list) else len(v)) for k, v in stat.items()}, 'không ghép:', stat['không ghép'][:30])
     print('S18 nội suy liền tiếp tuyến:', ' '.join(stat.get('S18', [])))
+    print('S20 đồng bộ cấu trúc:', ' '.join(stat.get('S20', [])))
     print('S18b ghép theo chữ gốc:', ''.join(sorted(set(stat.get('S18b', [])))))
 
 if __name__ == '__main__':
