@@ -195,6 +195,9 @@ def _snap_smooth(segs):
                 _, P2, Hin, Hout = bb; a[3] = Hin; a[4] = P2; b[1] = P2; b[2] = Hout
     for i in range(n):                                            # điểm cuối đoạn = điểm đầu đoạn sau
         R[(i + 1) % n][1] = R[i][-1]
+    for sg in R:                                                  # đoạn cong co còn ≤ 2 u sau làm tròn (@ Medium Italic: góc cắt
+        if sg[0] == 'C' and math.dist(sg[1], sg[4]) <= 3.0:      # lòng sau bù) → tay về hai đầu: không xoắn; giữ số điểm
+            sg[2], sg[3] = sg[1], sg[4]
     # làm tròn làm độ cong sát 0 ở mũi loe LẬT DẤU (gợn, bán kính > 1000 u): nhích tay nắm KHÔNG nằm ở nút liền ±1–2 u
     def kap(sg, m=24):
         P0, P1, P2, P3 = sg[1:]; ks = []
@@ -235,6 +238,8 @@ def draw(glyph, cs, dx, ang):
             segs.append(['L', T(cur), T(s[1])] if s[0] == 'L' else ['C', T(cur), T(s[1]), T(s[2]), T(s[3])])
             cur = s[-1]
         if not segs: continue
+        if math.dist(segs[-1][-1], segs[0][1]) > 1e-6:                 # cạnh khép NGẦM (closePath) → tường minh: nút đoạn cuối ↔
+            segs.append(['L', segs[-1][-1], segs[0][1]])               # cạnh khép được làm liền như mọi nút (7: gãy 2.2°)
         segs = _snap_smooth(segs)                                  # cả Roman: cùng làm tròn → cùng số điểm (variable)
         pen.moveTo(segs[0][1])
         for sg in segs:

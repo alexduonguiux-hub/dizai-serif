@@ -143,7 +143,10 @@ def compensate(d, ang, stem):
                 if len(lines) != 1: continue                           # cạnh nhập = cạnh thẳng nối LIỀN; đầu kia là góc chân
                 k, e = lines[0]
                 J0 = a0[1] if k == ih else a0[4]; F0 = a0[4] if k == ih else a0[1]
-                if min(abs(F0[1] - y) for y in (0.0, 495.0, 700.0, -202.0)) > 1.5 or math.dist(a0[1], a0[4]) > 110: continue
+                other = S0[ij] if k == ih else S0[ih]                      # cạnh ở đầu CHÂN: ngang (đường chân, x-height, cap,
+                horiz = other[0] == 'L' and abs(other[1][1] - other[2][1]) < 0.5   # descender, mặt cắt đuôi y −136 …)
+                if not horiz and min(abs(F0[1] - y) for y in (0.0, 495.0, 700.0, -202.0)) > 1.5: continue
+                if math.dist(a0[1], a0[4]) > 110: continue
                 Ln = S1[k]; (x1, y1), (x2, y2) = Ln[1], Ln[2]
                 if abs(y2 - y1) < 1e-6: continue
                 vx = x1 + (J0[1] - y1)*(x2 - x1)/(y2 - y1) - J0[0]              # điểm nhập lên mép đã bù, cùng cao độ

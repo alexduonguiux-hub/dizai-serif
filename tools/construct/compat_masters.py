@@ -482,6 +482,8 @@ def smooth_pair(R, B, kink=KINK, maxdev=None):
         tR, tB = angle(tan_out(R[i]), tan_in(R[j])), angle(tan_out(B[i]), tan_in(B[j]))
         if R[i][0] == R[j][0] == 'L' == B[i][0] == B[j][0] and tR < 0.5 and tB < 0.5 and j != 0:
             R[i] = ['L', R[i][1], R[j][2]]; B[i] = ['L', B[i][1], B[j][2]]; del R[j]; del B[j]; nk += 1; continue
+        if kink <= 0 and not (R[i][0] == R[j][0] == 'L') and max(tR, tB) < 0.5 and _mid_kink(R, B, i, j) > 1.0:
+            _sync_ratio(R, B, i, j)                                     # @: nút LIỀN vẫn đồng bộ độ dài tay (không đổi hướng; góc cắt giữ)
         if not (R[i][0] == R[j][0] == 'L') and max(tR, tB) < kink:
             keep = [list(R[i]), list(R[j]), list(B[i]), list(B[j])]
             best = None
@@ -501,7 +503,7 @@ def smooth_pair(R, B, kink=KINK, maxdev=None):
 # S27 (designer 07/11 "đường cong phải smooth"): đoạn loe X x R — liền tiếp tuyến chưa đủ, độ cong dồn ngay sau chỗ nhập mép chéo
 # (lược độ cong: đỉnh nhọn) trong khi module loe V K A cong ĐỀU. Giữ hai đầu mút + hướng tiếp tuyến hai đầu, chọn độ dài hai
 # tay nắm cho độ cong đều nhất (min độ lệch chuẩn / trung bình của κ, không đổi dấu)
-FLARE_FAIR = set('XxRKY7vwy')   # 07/11 "kiểm tra lại các chữ có loe khác": K Y 7 v w y loe chéo kém đều hơn module V
+FLARE_FAIR = set('XxRKY7vwy¥')   # 07/11 "kiểm tra lại các chữ có loe khác": K Y 7 v w y loe chéo kém đều hơn module V
 def _kappa(sg, n=24):
     P0, P1, P2, P3 = sg[1:]; ks = []
     for i in range(n + 1):
@@ -528,8 +530,10 @@ def _fair_flare(S):
         at0 = lin(h) and angle(tan_out(h), tan_in(sg)) < 1.0; at3 = lin(j) and angle(tan_out(sg), tan_in(j)) < 1.0
         if not (at0 or at3) or (at0 and at3): continue
         P0, P3 = sg[1], sg[4]
-        foot = P3 if at0 else P0                                   # chỉ ĐOẠN LOE: đầu kia trên đường chân / x-height / cap, ngắn
-        if min(abs(foot[1] - y) for y in (0.0, 495.0, 700.0)) > 1.0 or math.dist(P0, P3) > 110: continue
+        foot = P3 if at0 else P0                                   # chỉ ĐOẠN LOE: đầu kia trên đường chân / x-height / cap — hoặc
+        other = j if at0 else h                                    # nhập một cạnh NGANG (mặt cắt đuôi y −201), ngắn
+        horiz = other[0] == 'L' and abs(other[1][1] - other[2][1]) < 0.5
+        if (not horiz and min(abs(foot[1] - y) for y in (0.0, 495.0, 700.0)) > 1.0) or math.dist(P0, P3) > 110: continue
         u0 = unit((sg[2][0] - P0[0], sg[2][1] - P0[1])); u3 = unit((sg[3][0] - P3[0], sg[3][1] - P3[1]))
         if not u0 or not u3: continue
         best = None
@@ -561,6 +565,31 @@ def _fair_flare(S):
             if at0: H = list(h); H[2] = best[1][1]; S[i - 1] = H
             else: J = list(j); J[1] = best[1][4]; S[(i + 1) % n] = J
             nf += 1
+    return nf
+
+def _fix_tiny(R, B):
+    """10/11 ("xử hết 1 lần"): đoạn cong TÍ HON (dây cung < 12 u) có tay nắm ngược / dài quá dây cung (@: đoạn 7 u tay zigzag ở
+    góc cắt lòng) → làm tròn trong font thành gãy 8–10°. Dựng lại tay nắm Hermite theo tiếp tuyến hai bên (nút nối giữ nguyên
+    kiểu: liền / góc) — áp CHUNG cho hai master (cùng cấu trúc)"""
+    nf = 0
+    for i in range(len(R)):
+        if R[i][0] != 'C': continue
+        bad = False
+        for S in (R, B):
+            sg = S[i]; c = math.dist(sg[1], sg[4])
+            if c >= 12 or c < 1e-6: bad = bad or False; continue
+            ch = ((sg[4][0] - sg[1][0])/c, (sg[4][1] - sg[1][1])/c)
+            if (sg[2][0] - sg[1][0])*ch[0] + (sg[2][1] - sg[1][1])*ch[1] < -1e-6 or \
+               (sg[4][0] - sg[3][0])*ch[0] + (sg[4][1] - sg[3][1])*ch[1] < -1e-6 or \
+               math.dist(sg[1], sg[2]) > c or math.dist(sg[3], sg[4]) > c: bad = True
+        if not bad: continue
+        for S in (R, B):
+            n = len(S); sg = S[i]; h, j = S[i - 1], S[(i + 1) % n]; c = math.dist(sg[1], sg[4])
+            t0 = tan_out(h) if angle(tan_out(h), tan_in(sg)) < 30 else unit((sg[4][0] - sg[1][0], sg[4][1] - sg[1][1]))
+            t3 = tan_in(j) if angle(tan_out(sg), tan_in(j)) < 30 else unit((sg[4][0] - sg[1][0], sg[4][1] - sg[1][1]))
+            if not t0 or not t3: continue
+            S[i] = ['C', sg[1], (sg[1][0] + t0[0]*c/3, sg[1][1] + t0[1]*c/3), (sg[4][0] - t3[0]*c/3, sg[4][1] - t3[1]*c/3), sg[4]]
+        nf += 1
     return nf
 
 def main():
@@ -609,8 +638,11 @@ def main():
                     if not kk: break
                 if k_: stat.setdefault('S18', []).append(f'{c}×{k_}')
                 if c.isalpha() and len(c) == 1 and ord(c) < 0x80: REG.append((R_pre, B_pre, br, bb_, Rr, Bb))
+            nt = _fix_tiny(Rr, Bb)
+            if nt: stat.setdefault('S30', []).append(f'{c}×{nt}')
             n0 = len(LEFT); Rr, Bb, k_ = smooth_pair(Rr, Bb, KINK_CH.get(c, KINK), MAXDEV_CH.get(c))
-            if c in FLARE_FAIR:
+            import unicodedata as _ud
+            if c in FLARE_FAIR or (_ud.normalize('NFD', c)[0] in FLARE_FAIR and len(c) == 1):   # chữ có dấu theo chữ gốc (ý ỳ … Ý)
                 nf = _fair_flare(Rr) + _fair_flare(Bb)
                 if nf: stat.setdefault('S27', []).append(f'{c}×{nf}'); Rr, Bb, _ = smooth_pair(Rr, Bb, KINK_CH.get(c, KINK), MAXDEV_CH.get(c))
             if len(LEFT) > n0: stat.setdefault('S25 giữ', []).append(f'{c}{LEFT[n0:]}')
@@ -625,6 +657,7 @@ def main():
     print('compat:', {k: (v if not isinstance(v, list) else len(v)) for k, v in stat.items()}, 'không ghép:', stat['không ghép'][:30])
     print('S18 nội suy liền tiếp tuyến:', ' '.join(stat.get('S18', [])))
     print('S20 đồng bộ cấu trúc:', ' '.join(stat.get('S20', [])))
+    print('S30 đoạn tí hon zigzag dựng lại:', ' '.join(stat.get('S30', [])))
     print('S27 loe cong đều:', ' '.join(stat.get('S27', [])))
     print('S25 nút gãy nhỏ → liền:', ' '.join(stat.get('S25', [])), '· giữ (dời > %.1f u):' % MAXDEV, ' '.join(stat.get('S25 giữ', [])), '· bỏ contour rỗng:', ''.join(stat.get('S25 bỏ contour rỗng', [])))
     print('S18b ghép theo chữ gốc:', ''.join(sorted(set(stat.get('S18b', [])))))

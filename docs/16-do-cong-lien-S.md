@@ -283,3 +283,17 @@ Regular (designer_A) + Bold (designer_B); Medium / SemiBold nội suy lại. Ả
   cắt lòng cố ý; 7 Medium Italic 2.2°.
 - QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %; loe Italic 0 gợn
   (trừ y SemiBold Italic: điểm uốn sát 0 ở mũi đuôi).
+
+## S30 Hết các chỗ gãy còn lại (designer 10/11: "sửa luôn 7 Medium Italic còn gãy", "xử hết 1 lần nhé")
+
+| Chỗ | Nguyên nhân | Sửa |
+|---|---|---|
+| 7 Medium Italic 2.2°, Medium 1.6° | contour đảo chiều khi xuất khép bằng cạnh NGẦM (closePath) → nút đoạn cuối ↔ cạnh khép không qua bước đặt điểm nguyên | `export_font.draw`: cạnh khép tường minh trước `_snap_smooth` (mọi contour) |
+| @ Italic / Medium Italic 8–10° | đoạn cong tí hon (7 u) tay zigzag ở góc cắt lòng; sau bù co ≤ 3 u → làm tròn xoắn | `compat_masters._fix_tiny` (S30): đoạn < 12 u tay ngược / dài quá dây cung → tay Hermite theo tiếp tuyến hai bên; @ vẫn đồng bộ độ dài tay ở nút LIỀN (không đổi hướng — góc cắt giữ); khi xuất đoạn ≤ 3 u: tay về hai đầu |
+| đuôi y (mọi weight) đổi chiều cong ở mũi | đoạn loe đuôi có chân trên mặt cắt NGANG y −201 — S27 / S28 chỉ nhận đường chân / x-height / cap | đoạn loe nhận theo cạnh ngang ở đầu chân (S27 compat + S28 ital_comp) |
+| ý ỳ ỷ ỹ ỵ ÿ Ý Ỳ Ỷ Ỹ Ỵ Ÿ | dùng lại cặp outline chữ gốc từ TRƯỚC S27 → loe chưa làm đều từ S27b | S27 xét theo chữ gốc (NFD); thêm ¥ |
+
+- Quét nút gãy 2–12° trên file font, 312 ký tự × 8 style: còn 1 — 5 Medium Italic 11.6° = góc khấc vát cố ý (S20; 18° ở Roman,
+  nghiêng làm hẹp lại). Loe chéo Roman mọi ký tự (kể cả có dấu) độ đều ≤ 0.25; loe Italic: 0 gãy, 0 đổi chiều cong.
+- QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %.
+- Ảnh: `docs/img/s30-gay-con-lai.png` (lược độ cong 7 Medium Italic, y SemiBold Italic, ý Regular, @ Medium Italic — trước / sau).
