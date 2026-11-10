@@ -297,3 +297,12 @@ Regular (designer_A) + Bold (designer_B); Medium / SemiBold nội suy lại. Ả
   nghiêng làm hẹp lại). Loe chéo Roman mọi ký tự (kể cả có dấu) độ đều ≤ 0.25; loe Italic: 0 gãy, 0 đổi chiều cong.
 - QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %.
 - Ảnh: `docs/img/s30-gay-con-lai.png` (lược độ cong 7 Medium Italic, y SemiBold Italic, ý Regular, @ Medium Italic — trước / sau).
+
+## S31 Kiểm tra các chữ có khấc khác (designer 10/11: "kiểm tra lại các chữ có khấc khác xem có hở không")
+
+- Quét 1: khe trắng hẹp < 8 u (đóng hình thái bằng đĩa r 4 u) ở mọi ký tự × 4 weight → 42 ký tự có vùng bị lấp, phóng to từng chỗ:
+  tất cả là NÁCH NHỌN tự nhiên (vai n m h – thân, nách b d p q, đỉnh trong V v W w, nách K k M, bụng B gặp nhau tại một điểm,
+  khấc vát 5 liền mực, mũi giữa { }) — không có khe cắt vào mực.
+- Quét 2: dấu hiệu khấc nêm như N cũ (hai cạnh ngắn < 30 u liền nhau, quay > 120°, miệng < 10 u, lõm vào mực): 0 ký tự.
+- Phóng to mọi đỉnh nhọn A V v W w M N Y y K k X x Z z 7 4 Æ æ & (Regular, Bold): liền một khối.
+- `qa_outline.py`: thêm kiểm "khe" (khe nêm hẹp) vào phần quét outline xuất font — bắt đúng hai khấc của N trước S29.

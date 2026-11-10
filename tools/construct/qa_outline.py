@@ -124,6 +124,25 @@ if __name__ == '__main__':
             ch = k.rsplit('-', 1)[0]
             iss = [x for x in check(_cm(d)) if not (x[0] == 'spike' and x[3] <= 170) and (ch, x[0]) not in INTENT]
             if iss: fr[k] = iss
+        # S31 (designer 10/11 "kiểm tra lại các chữ có khấc khác xem có hở không"): KHE NÊM HẸP — hai cạnh ngắn liền nhau (< 30 u)
+        # quay gần ngược (> 120°), miệng < 10 u, lõm vào mực → đọc thành vết hở ở cỡ chữ thường (N trước S29: 5.6 × 14 u)
+        def _area(cont):
+            pts = [tuple(cont[0][1])] + [tuple(c[-1]) for c in cont[1:]]
+            return 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(pts, pts[1:] + pts[:1]))
+        for k, d in FO.items():
+            cs_ = contours(_cm(d))
+            if not cs_: continue
+            sgn = 1 if _area(max(cs_, key=lambda c: abs(_area(c)))) > 0 else -1
+            for cont in cs_:
+                S = segs(cont); n = len(S)
+                for i in range(n):
+                    a, b = S[i], S[(i + 1) % n]
+                    if seglen(a) > 30 or seglen(b) > 30 or math.dist(a[1], b[-1]) > 10: continue
+                    u, v = tan_in(a), tan_out(b)
+                    if u is None or v is None: continue
+                    turn = abs((math.degrees(v - u) + 180) % 360 - 180)
+                    cr = math.sin(v - u)
+                    if turn > 120 and cr*sgn < 0: fr.setdefault(k, []).append(('khe', 0, a[-1], round(math.dist(a[1], b[-1]), 1)))
         print('outline xuất font — lỗi:', len(fr), dict(Counter(t for v in fr.values() for t, *_ in v)))
         for k, v in sorted(fr.items())[:40]: print(f'  {k:12s}', ' '.join(f'{t}@({p[0]:.0f},{p[1]:.0f})' for t, _, p, _ in v[:6]))
     if '--json' in sys.argv: json.dump(rep, open(sys.argv[sys.argv.index('--json') + 1], 'w'), ensure_ascii=False, default=list)
