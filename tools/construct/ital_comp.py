@@ -127,6 +127,7 @@ def compensate(d, ang, stem):
                     if not d0: continue                                    # tay suy biến: giữ suy biến (trùng neo)
                     L1_, L0_ = math.dist(a1[hi], a1[ai]), math.dist(a0[hi], a0[ai])
                     L = L1_ if L1_ >= min(8.0, 0.5*L0_) else L0_
+                    L = min(L, 1.5*L0_ + 2.0)                              # giao cạnh gần song song vọt xa: W loe tay 12 → 110 u (xoắn)
                     a1[hi] = (a1[ai][0] + d0[0]*L, a1[ai][1] + d0[1]*L)
         # ĐOẠN LOE (nhập cạnh thẳng > 40 u, đầu kia trên đường chân / x-height / cap / descender; dây cung ≤ 110 u): KHÔNG dời từng
         # cạnh (điểm chân và điểm nhập dời khác nhau → dây cung méo, độ cong dồn một đầu: K Italic 0.35 → 1.5) — TỊNH TIẾN NGANG

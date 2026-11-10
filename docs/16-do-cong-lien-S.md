@@ -306,3 +306,13 @@ Regular (designer_A) + Bold (designer_B); Medium / SemiBold nội suy lại. Ả
 - Quét 2: dấu hiệu khấc nêm như N cũ (hai cạnh ngắn < 30 u liền nhau, quay > 120°, miệng < 10 u, lõm vào mực): 0 ký tự.
 - Phóng to mọi đỉnh nhọn A V v W w M N Y y K k X x Z z 7 4 Æ æ & (Regular, Bold): liền một khối.
 - `qa_outline.py`: thêm kiểm "khe" (khe nêm hẹp) vào phần quét outline xuất font — bắt đúng hai khấc của N trước S29.
+
+## S32 Italic: kiểm tra các chữ có khấc (designer 10/11: "kiểm tra lại italic các chữ có khấc luôn")
+
+- Quét file font Italic (4 weight): khe nêm hẹp 0; khe trắng < 8 u trùng nhóm nách nhọn tự nhiên của Roman.
+- Tìm thấy: **W Italic loe ngoài trên phải** — sau bù S26 tay nắm dài 110 u (Roman 12 u) → vòng xoắn, Medium Italic thêm hai đoạn tí hon
+  quay ngược (miệng 0 u) → vết trắng mảnh cắt vào loe. Nguyên nhân: giao cạnh dời gần song song vọt xa, bước "giữ hướng tay như
+  Roman" giữ nguyên độ dài vọt. `ital_comp`: độ dài tay sau bù ≤ 1.5 × Roman + 2 u.
+- @ Medium: tay nắm kéo dài khi làm tròn vượt dây cung đoạn 5.8 u → `_snap_smooth` kéo dài tay ≤ 0.9 dây cung đoạn.
+- Sau S32 (8 style): khe nêm 0, tay nắm dài quá dây cung 0, nút gãy 2–12° 0, loe Italic 0 gãy / 0 đổi chiều cong; qa_font 0.
+- Ảnh: `docs/img/s32-italic-khac.png` (W loe trên phải Italic 4 weight trước / sau; đỉnh nhọn N A V v w K M Italic / Bold Italic).

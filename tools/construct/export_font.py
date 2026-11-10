@@ -134,7 +134,7 @@ def _snap_smooth(segs):
             e = ang(v, d)
             if bb is None or e < bb[0] - 1e-6: bb = (e, q)
         return bb[1] if bb else None
-    def best_lc(Q, P, L0):
+    def best_lc(Q, P, L0, cmax=1e9):
         # cạnh thẳng Q → P (P = nút), tay nắm từ P: dò P' = P ± 1 u (gần đường thẳng QP ≤ 0.8 u) × độ dài tay ±4 u
         dq = u_(Q, P); bb = None
         if not dq: return None
@@ -146,8 +146,8 @@ def _snap_smooth(segs):
                 d2 = u_(Q, P2)
                 if not d2: continue
                 for k in range(-8, 9):
-                    L = (L0 if L0 >= 5 else 7.0) + k*0.5                 # tay tí hon (< 5 u) kéo dài: làm tròn tay 3 u lệch tới 10°
-                    if L < 1 or (L0 < 5 and L < 5): continue
+                    L = (L0 if L0 >= 5 else min(7.0, cmax)) + k*0.5      # tay tí hon (< 5 u) kéo dài: làm tròn tay 3 u lệch tới 10°
+                    if L < 1 or (L0 < 5 and L < min(5, cmax)) or L > max(L0, cmax): continue
                     q = (round(P2[0] + dq[0]*L), round(P2[1] + dq[1]*L)); v = u_(P2, q)
                     if not v: continue
                     e = ang(v, d2) + 0.3*(abs(ox) + abs(oy))
@@ -157,10 +157,10 @@ def _snap_smooth(segs):
         if not smooth[i]: continue
         a, b = R[i], R[(i + 1) % n]; P = a[-1]
         if a[0] == 'L' and b[0] == 'C':
-            r = best_lc(a[1], P, math.dist(segs[(i + 1) % n][2], segs[(i + 1) % n][1]))
+            r = best_lc(a[1], P, math.dist(segs[(i + 1) % n][2], segs[(i + 1) % n][1]), 0.9*math.dist(segs[(i + 1) % n][1], segs[(i + 1) % n][4]))
             if r: a[2] = r[1]; b[1] = r[1]; b[2] = r[2]
         elif a[0] == 'C' and b[0] == 'L':
-            r = best_lc(b[2], P, math.dist(segs[i][3], segs[i][4]))
+            r = best_lc(b[2], P, math.dist(segs[i][3], segs[i][4]), 0.9*math.dist(segs[i][1], segs[i][4]))
             if r: a[4] = r[1]; b[1] = r[1]; a[3] = r[2]
         elif a[0] == 'C' and b[0] == 'C':
             # bộ ba (tay vào, neo, tay ra) NGUYÊN thẳng hàng nhất: neo ±1, tay dài ±1, tay ngắn dò theo hướng (tay 3 u: lệch tới 10°)
@@ -177,8 +177,9 @@ def _snap_smooth(segs):
                                 H = (a[3][0] + hx, a[3][1] + hy); dd = u_(H, P2)
                                 if not dd: continue
                                 for k in range(-6, 7):
-                                    L = (lb if lb >= 5 else 7.0) + k*0.5
-                                    if L < 1 or (lb < 5 and L < 5): continue
+                                    cm_ = 0.9*math.dist(sb[1], sb[4])
+                                    L = (lb if lb >= 5 else min(7.0, cm_)) + k*0.5
+                                    if L < 1 or (lb < 5 and L < min(5, cm_)) or L > max(lb, cm_): continue
                                     q = (round(P2[0] + dd[0]*L), round(P2[1] + dd[1]*L)); e = ang(dd, u_(P2, q))
                                     c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy))
                                     if bb is None or c_ < bb[0] - 1e-6: bb = (c_, P2, H, q)
@@ -186,8 +187,9 @@ def _snap_smooth(segs):
                                 H = (b[2][0] + hx, b[2][1] + hy); dd = u_(P2, H)
                                 if not dd: continue
                                 for k in range(-6, 7):
-                                    L = (la if la >= 5 else 7.0) + k*0.5
-                                    if L < 1 or (la < 5 and L < 5): continue
+                                    cm_ = 0.9*math.dist(sa[1], sa[4])
+                                    L = (la if la >= 5 else min(7.0, cm_)) + k*0.5
+                                    if L < 1 or (la < 5 and L < min(5, cm_)) or L > max(la, cm_): continue
                                     q = (round(P2[0] - dd[0]*L), round(P2[1] - dd[1]*L)); e = ang(u_(q, P2), dd)
                                     c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy))
                                     if bb is None or c_ < bb[0] - 1e-6: bb = (c_, P2, q, H)
