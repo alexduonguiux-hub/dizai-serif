@@ -223,3 +223,22 @@ tròn / chéo đậm hơn chữ thân đứng ~11 %, màu chữ lốm đốm.
   (đầu kia trên đường chân / x-height / cap, dây cung < 110 u); bụng, đuôi R giữ nguyên.
 - QA: nút cong ↔ thẳng gãy (mới thêm vào kiểm): X x R 0; lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0.
 - Ảnh: `docs/img/s27-loe-X-x-R.png`.
+
+### S27b Quét lại mọi đoạn loe (designer 10/11: "kiểm tra lại các chữ có loe khác xem có gãy không")
+
+Quét outline xuất font, 4 weight: đoạn cong nhập một mép thẳng, đầu kia trên đường chân / x-height / cap, dây cung < 110 u.
+Độ đều = độ lệch chuẩn / trung bình của độ cong (0 = cung tròn đều).
+
+| Loại | Trước | Sau |
+|---|---|---|
+| Gãy ở chỗ nhập mép | 0 (sau S27) | 0 |
+| Module loe chéo V (chuẩn) | 0.04–0.18 | — |
+| K chân dưới | 0.35–0.53 (độ cong dồn về chân, như X x trước S27) | ≤ 0.23 |
+| Y 7 v w y | 0.20–0.47 | ≤ 0.2 |
+| Loe chân thân đứng (H I E L K R n m h …) — module chung | 0.36–0.39 | giữ nguyên |
+| A V chân ngoài, k tay trên, 2 góc chân | đều; một điểm uốn nhỏ ở mũi vuốt nhọn (hình loe ngoài) | giữ |
+
+- `compat_masters.FLARE_FAIR` = X x R K Y 7 v w y; `_fair_flare` chỉ xử lý mép CHÉO — S27 trước lỡ làm đều cả loe chân thân R
+  (thân thẳng) → nay trả về module loe thân chung (0.36–0.39 như H, K).
+- QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0.
+- Ảnh: `docs/img/s27b-loe-cong-deu.png` (lược độ cong K w 7 Y trước / sau).

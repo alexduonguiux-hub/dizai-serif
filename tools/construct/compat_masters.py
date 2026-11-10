@@ -465,7 +465,7 @@ def smooth_pair(R, B, kink=KINK, maxdev=None):
 # S27 (designer 07/11 "đường cong phải smooth"): đoạn loe X x R — liền tiếp tuyến chưa đủ, độ cong dồn ngay sau chỗ nhập mép chéo
 # (lược độ cong: đỉnh nhọn) trong khi module loe V K A cong ĐỀU. Giữ hai đầu mút + hướng tiếp tuyến hai đầu, chọn độ dài hai
 # tay nắm cho độ cong đều nhất (min độ lệch chuẩn / trung bình của κ, không đổi dấu)
-FLARE_FAIR = set('XxR')
+FLARE_FAIR = set('XxRKY7vwy')   # 07/11 "kiểm tra lại các chữ có loe khác": K Y 7 v w y loe chéo kém đều hơn module V
 def _kappa(sg, n=24):
     P0, P1, P2, P3 = sg[1:]; ks = []
     for i in range(n + 1):
@@ -480,7 +480,8 @@ def _fair_flare(S):
     """đoạn loe nhập mép chéo: TRƯỢT điểm nhập dọc mép (mép giữ hướng; ±40 u) + chọn hai tay nắm → độ cong đều nhất (cung đều
     như module loe V K A). Đầu chân (góc với đường chân / đỉnh) giữ nguyên"""
     n = len(S); nf = 0
-    lin = lambda x: x[0] == 'L' and math.dist(x[1], x[2]) > 40
+    # chỉ mép CHÉO: loe chân thân đứng / thanh ngang là module loe thân chung (H I E L n m…) — giữ nguyên
+    lin = lambda x: x[0] == 'L' and math.dist(x[1], x[2]) > 40 and 0.05 < abs(x[2][0] - x[1][0])/math.dist(x[1], x[2]) < 0.98
     def score(cand):
         ks = _kappa(cand)
         if not ks or min(ks)*max(ks) < 0: return None
