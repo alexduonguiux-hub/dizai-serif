@@ -242,3 +242,21 @@ Quét outline xuất font, 4 weight: đoạn cong nhập một mép thẳng, đ�
   (thân thẳng) → nay trả về module loe thân chung (0.36–0.39 như H, K).
 - QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0.
 - Ảnh: `docs/img/s27b-loe-cong-deu.png` (lược độ cong K w 7 Y trước / sau).
+
+## S28 Italic: đoạn loe (designer 10/11: "kiểm tra lại italic các chữ có loe luôn")
+
+Quét outline font Italic (4 weight) so với chính đoạn loe đó ở Roman. Trước S28: 178 cờ.
+
+| Lỗi | Nguyên nhân | Sửa |
+|---|---|---|
+| Đổi chiều cong (gợn) ở loe chân thân H I E L n m … | S26 dời từng cạnh điều khiển theo độ dày đo ở chỗ khác nhau → điểm chân và điểm nhập dời lệch nhau (phép nghiêng KHÔNG tạo điểm uốn — affine) | `ital_comp`: đoạn loe KHÔNG dời từng cạnh — tịnh tiến NGANG nguyên đoạn loe Roman cho điểm nhập nằm trên mép đã bù (hình module giữ, liền tiếp tuyến, chân trên đường chân) |
+| Loe chéo K Italic dồn độ cong (0.35 → 1.5) | như trên (điểm chân dời 6.4 u, điểm nhập 3 u) | như trên |
+| Gãy 2–18° ở chỗ nhập mép | làm tròn toạ độ NGUYÊN sau khi nghiêng: tay nắm loe ngắn (3–22 u) lệch hướng | `export_font._snap_smooth`: ở nút liền, tay nắm (và điểm nối ±1 u trên mép) đặt vào điểm nguyên thẳng hàng nhất; S27 tay nắm ở chỗ nối liền ≥ 16 u (đầu góc chân tự do); `ital_comp` cứu tay quá ngắn (< 8 u / < ½ Roman) |
+| (S26) nét chính o O lại +5 % | kéo dài mọi tay nắm về độ dài Roman làm mất phần bù | chỉ cứu tay quá ngắn |
+
+- Áp `_snap_smooth` cho cả Roman (cùng làm tròn → Roman / Italic cùng số điểm → variable dựng được).
+- Sau S28: Italic so với Roman nghiêng thuần — độ đều loe chéo chênh trung vị 0.05, loe thân 0.08; không đổi chiều cong; gãy còn
+  x Medium / SemiBold 2.1°, x ¥ Medium Italic 2.0–2.4° (sai số làm tròn khi nội suy hai master nguyên — không thấy bằng mắt).
+- Độ dày Italic (S26) giữ: E (bản đồ khoảng cách) n H o O v V x X s S K e trong ±3 % so với Roman, 4 weight.
+- QA Roman: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; loe chéo K ≤ 0.24.
+- Ảnh: `docs/img/s28-italic-loe.png` (lược độ cong H K x n Italic trước / sau).

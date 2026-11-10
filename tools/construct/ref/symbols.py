@@ -68,9 +68,9 @@ def hdilate(p, d, dy=0.0, dist=None):
         # [±d, ±dy] theo pháp tuyến cạnh, √((d·nx)² + (dy·ny)²) — cạnh đứng dời d, cạnh ngang dời dy; điểm trong / góc = giao các
         # cạnh đã dời → mép ngang vẫn ngang, mép đứng vẫn đứng, góc giữ sắc, số điểm không đổi
         def nrm(u_): return (u_[1], -u_[0]) if area > 0 else (-u_[1], u_[0])
-        def offl(p_, u_):
+        def offl(p_, u_, sg_=None):
             nv_ = nrm(u_)
-            k_ = dist(p_, u_, nv_) if dist else math.sqrt((d*nv_[0])**2 + (dy*nv_[1])**2)
+            k_ = dist(p_, u_, nv_, sg_) if dist else math.sqrt((d*nv_[0])**2 + (dy*nv_[1])**2)
             return ((p_[0] + k_*nv_[0], p_[1] + k_*nv_[1]), u_)
         def isect(L1, L2):
             (p_, u_), (q_, v_) = L1, L2; den = u_[0]*v_[1] - u_[1]*v_[0]
@@ -83,7 +83,7 @@ def hdilate(p, d, dy=0.0, dist=None):
             E = []
             for k_ in range(len(P) - 1):
                 u_ = unit((P[k_ + 1][0] - P[k_][0], P[k_ + 1][1] - P[k_][1]))
-                if u_: E.append((k_, offl(P[k_], u_)))
+                if u_: E.append((k_, offl(P[k_], u_, sg)))
             if not E: new.append([sg[0]] + list(P)); continue
             if sg[0] == 'L':
                 (p0, u0) = E[0][1]; new.append(['L', p0, (p0[0] + P[1][0] - P[0][0], p0[1] + P[1][1] - P[0][1])]); continue

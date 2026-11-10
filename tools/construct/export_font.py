@@ -111,16 +111,108 @@ def skew(p, a):
     t = math.tan(math.radians(a)); yc = SPc.XH/2
     return (p[0] + (p[1] - yc)*t, p[1])
 
+def _snap_smooth(segs):
+    """10/11 ("kiểm tra lại italic các chữ có loe"): làm tròn toạ độ nguyên sau khi nghiêng làm nút liền lệch tới 2–3° (tay nắm
+    loe ~20 u, toạ độ không còn nguyên). Neo làm tròn; ở nút liền (< 0.5° trước làm tròn), tay nắm đặt vào điểm NGUYÊN thẳng hàng
+    nhất với tiếp tuyến bên kia (cạnh thẳng, hoặc tay nắm dài hơn), dò độ dài ±4 u quanh độ dài gốc"""
+    def u_(a, b):
+        L = math.hypot(b[0] - a[0], b[1] - a[1]); return ((b[0] - a[0])/L, (b[1] - a[1])/L) if L > 1e-9 else None
+    def ang(a, b):
+        return 180.0 if not a or not b else math.degrees(math.acos(max(-1.0, min(1.0, a[0]*b[0] + a[1]*b[1]))))
+    n = len(segs)
+    def t_end(sg): return u_(sg[-2] if sg[0] == 'C' and math.dist(sg[-2], sg[-1]) > 1e-9 else sg[1], sg[-1])
+    def t_start(sg): return u_(sg[1], sg[2] if sg[0] == 'C' and math.dist(sg[2], sg[1]) > 1e-9 else sg[-1])
+    smooth = [ang(t_end(segs[i]), t_start(segs[(i + 1) % n])) < 1.5 for i in range(n)]   # góc cố ý đều > 25°
+    R = [[sg[0]] + [(round(q[0]), round(q[1])) for q in sg[1:]] for sg in segs]
+    def best(P, d, L0):
+        bb = None
+        for k in range(-8, 9):
+            L = L0 + k*0.5
+            if L < 1: continue
+            q = (round(P[0] + d[0]*L), round(P[1] + d[1]*L)); v = u_(P, q)
+            if not v: continue
+            e = ang(v, d)
+            if bb is None or e < bb[0] - 1e-6: bb = (e, q)
+        return bb[1] if bb else None
+    def best_lc(Q, P, L0):
+        # cạnh thẳng Q → P (P = nút), tay nắm từ P: dò P' = P ± 1 u (gần đường thẳng QP ≤ 0.8 u) × độ dài tay ±4 u
+        dq = u_(Q, P); bb = None
+        if not dq: return None
+        for ox in (-1, 0, 1):
+            for oy in (-1, 0, 1):
+                P2 = (P[0] + ox, P[1] + oy)
+                off = abs((P2[0] - Q[0])*dq[1] - (P2[1] - Q[1])*dq[0])
+                if off > 0.8: continue
+                d2 = u_(Q, P2)
+                if not d2: continue
+                for k in range(-8, 9):
+                    L = L0 + k*0.5
+                    if L < 1: continue
+                    q = (round(P2[0] + dq[0]*L), round(P2[1] + dq[1]*L)); v = u_(P2, q)
+                    if not v: continue
+                    e = ang(v, d2) + 0.3*(abs(ox) + abs(oy))
+                    if bb is None or e < bb[0] - 1e-6: bb = (e, P2, q)
+        return bb
+    for i in range(n):
+        if not smooth[i]: continue
+        a, b = R[i], R[(i + 1) % n]; P = a[-1]
+        if a[0] == 'L' and b[0] == 'C':
+            r = best_lc(a[1], P, math.dist(segs[(i + 1) % n][2], segs[(i + 1) % n][1]))
+            if r: a[2] = r[1]; b[1] = r[1]; b[2] = r[2]
+        elif a[0] == 'C' and b[0] == 'L':
+            r = best_lc(b[2], P, math.dist(segs[i][3], segs[i][4]))
+            if r: a[4] = r[1]; b[1] = r[1]; a[3] = r[2]
+        elif a[0] == 'C' and b[0] == 'C':
+            la, lb = math.dist(segs[i][3], segs[i][4]), math.dist(segs[(i + 1) % n][2], segs[(i + 1) % n][1])
+            if la >= lb:
+                d = u_(a[3], P); q = best(P, d, lb) if d else None
+                if q: b[2] = q
+            else:
+                d = u_(b[2], P); q = best(P, d, la) if d else None
+                if q: a[3] = q
+    for i in range(n):                                            # điểm cuối đoạn = điểm đầu đoạn sau
+        R[(i + 1) % n][1] = R[i][-1]
+    # làm tròn làm độ cong sát 0 ở mũi loe LẬT DẤU (gợn, bán kính > 1000 u): nhích tay nắm KHÔNG nằm ở nút liền ±1–2 u
+    def kap(sg, m=24):
+        P0, P1, P2, P3 = sg[1:]; ks = []
+        for k in range(m + 1):
+            t = k/m; v = 1 - t
+            d1 = [3*v*v*(P1[j] - P0[j]) + 6*v*t*(P2[j] - P1[j]) + 3*t*t*(P3[j] - P2[j]) for j in (0, 1)]
+            d2 = [6*v*(P2[j] - 2*P1[j] + P0[j]) + 6*t*(P3[j] - 2*P2[j] + P1[j]) for j in (0, 1)]
+            sp = math.hypot(*d1)
+            if sp < 1e-9: return None
+            ks.append((d1[0]*d2[1] - d1[1]*d2[0])/sp**3)
+        return ks
+    def flip(sg):
+        ks = kap(sg); return ks is not None and min(ks)*max(ks) < 0
+    for i in range(n):
+        if R[i][0] != 'C' or flip(segs[i]) or not flip(R[i]): continue
+        free = [k for k, fixed in ((2, smooth[(i - 1) % n]), (3, smooth[i])) if not fixed] or [2, 3]
+        bb = None
+        for k in free:
+            for ddx in (-2, -1, 0, 1, 2):
+                for ddy in (-2, -1, 0, 1, 2):
+                    c_ = [list(q) if isinstance(q, tuple) else q for q in R[i]]; c_ = [R[i][0]] + list(R[i][1:])
+                    c_[k] = (R[i][k][0] + ddx, R[i][k][1] + ddy)
+                    if not flip(c_) and (bb is None or abs(ddx) + abs(ddy) < bb[0]): bb = (abs(ddx) + abs(ddy), c_)
+        if bb: R[i] = bb[1]
+    return R
+
 def draw(glyph, cs, dx, ang):
     pen = glyph.getPen()
     T = (lambda p: skew((p[0] + dx, p[1]), ang)) if ang else (lambda p: (p[0] + dx, p[1]))
     for c in cs:
-        pen.moveTo(T(c[0][1])); cur = c[0][1]
+        segs = []; cur = c[0][1]
         for s in c[1:]:
             if all(math.dist(q, cur) < 0.01 for q in s[1:]): continue      # đoạn suy biến (độ dài 0) — fontbakery 06/11, '2' Bold
-            if s[0] == 'L': pen.lineTo(T(s[1]))
-            else: pen.curveTo(T(s[1]), T(s[2]), T(s[3]))
+            segs.append(['L', T(cur), T(s[1])] if s[0] == 'L' else ['C', T(cur), T(s[1]), T(s[2]), T(s[3])])
             cur = s[-1]
+        if not segs: continue
+        segs = _snap_smooth(segs)                                  # cả Roman: cùng làm tròn → cùng số điểm (variable)
+        pen.moveTo(segs[0][1])
+        for sg in segs:
+            if sg[0] == 'L': pen.lineTo(sg[2])
+            else: pen.curveTo(sg[2], sg[3], sg[4])
         pen.closePath()
 
 import ital_comp as IC

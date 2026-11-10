@@ -502,9 +502,11 @@ def _fair_flare(S):
             else: Q0, Q3 = P0, (P3[0] - u3[0]*st, P3[1] - u3[1]*st)
             c = math.dist(Q0, Q3)
             if c < 15: continue
-            for ia in range(2, 31, 2):
+            hmin = min(max(16.0, 0.2*c), 0.6*c)                     # tay nắm ≥ 16 u (≤ 0.6 dây cung) — tay ngắn làm tròn toạ độ nguyên
+            for ia in range(2, 31, 2):                              # trong font lệch hướng tới 8° (K Italic)
                 for ib in range(2, 31, 2):
                     a, b = ia/40*c*1.33, ib/40*c*1.33
+                    a, b = (max(hmin, a), max(0.15*c, b)) if at0 else (max(0.15*c, a), max(hmin, b))   # sàn chỉ ở tay NỐI LIỀN
                     cand = ['C', Q0, (Q0[0] + u0[0]*a, Q0[1] + u0[1]*a), (Q3[0] + u3[0]*b, Q3[1] + u3[1]*b), Q3]
                     sc = score(cand)
                     if sc is not None and (best is None or sc < best[0] - 1e-4 or (abs(sc - best[0]) < 1e-4 and abs(st) < abs(best[2]))): best = (sc, cand, st)
@@ -515,7 +517,7 @@ def _fair_flare(S):
             for da in range(-8, 9):
                 for db in range(-8, 9):
                     a, b = a0 + da*c/120, b0 + db*c/120
-                    if a <= 0 or b <= 0: continue
+                    if (a if at0 else b) < hmin or min(a, b) < 0.15*c: continue
                     cd = ['C', Q0, (Q0[0] + u0[0]*a, Q0[1] + u0[1]*a), (Q3[0] + u3[0]*b, Q3[1] + u3[1]*b), Q3]
                     sc = score(cd)
                     if sc is not None and sc < best[0]: best = (sc, cd, st)
