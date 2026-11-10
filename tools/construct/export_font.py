@@ -146,8 +146,8 @@ def _snap_smooth(segs):
                 d2 = u_(Q, P2)
                 if not d2: continue
                 for k in range(-8, 9):
-                    L = L0 + k*0.5
-                    if L < 1: continue
+                    L = (L0 if L0 >= 5 else 7.0) + k*0.5                 # tay tí hon (< 5 u) kéo dài: làm tròn tay 3 u lệch tới 10°
+                    if L < 1 or (L0 < 5 and L < 5): continue
                     q = (round(P2[0] + dq[0]*L), round(P2[1] + dq[1]*L)); v = u_(P2, q)
                     if not v: continue
                     e = ang(v, d2) + 0.3*(abs(ox) + abs(oy))
@@ -163,13 +163,36 @@ def _snap_smooth(segs):
             r = best_lc(b[2], P, math.dist(segs[i][3], segs[i][4]))
             if r: a[4] = r[1]; b[1] = r[1]; a[3] = r[2]
         elif a[0] == 'C' and b[0] == 'C':
-            la, lb = math.dist(segs[i][3], segs[i][4]), math.dist(segs[(i + 1) % n][2], segs[(i + 1) % n][1])
-            if la >= lb:
-                d = u_(a[3], P); q = best(P, d, lb) if d else None
-                if q: b[2] = q
-            else:
-                d = u_(b[2], P); q = best(P, d, la) if d else None
-                if q: a[3] = q
+            # bộ ba (tay vào, neo, tay ra) NGUYÊN thẳng hàng nhất: neo ±1, tay dài ±1, tay ngắn dò theo hướng (tay 3 u: lệch tới 10°)
+            sa, sb = segs[i], segs[(i + 1) % n]
+            la, lb = math.dist(sa[3], sa[4]), math.dist(sb[2], sb[1])
+            if la < 0.5 or lb < 0.5: continue                         # tay suy biến (trùng neo): giữ
+            bb = None
+            for ox in (-1, 0, 1):
+                for oy in (-1, 0, 1):
+                    P2 = (P[0] + ox, P[1] + oy)
+                    for hx in (-1, 0, 1):
+                        for hy in (-1, 0, 1):
+                            if la >= lb:
+                                H = (a[3][0] + hx, a[3][1] + hy); dd = u_(H, P2)
+                                if not dd: continue
+                                for k in range(-6, 7):
+                                    L = (lb if lb >= 5 else 7.0) + k*0.5
+                                    if L < 1 or (lb < 5 and L < 5): continue
+                                    q = (round(P2[0] + dd[0]*L), round(P2[1] + dd[1]*L)); e = ang(dd, u_(P2, q))
+                                    c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy))
+                                    if bb is None or c_ < bb[0] - 1e-6: bb = (c_, P2, H, q)
+                            else:
+                                H = (b[2][0] + hx, b[2][1] + hy); dd = u_(P2, H)
+                                if not dd: continue
+                                for k in range(-6, 7):
+                                    L = (la if la >= 5 else 7.0) + k*0.5
+                                    if L < 1 or (la < 5 and L < 5): continue
+                                    q = (round(P2[0] - dd[0]*L), round(P2[1] - dd[1]*L)); e = ang(u_(q, P2), dd)
+                                    c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy))
+                                    if bb is None or c_ < bb[0] - 1e-6: bb = (c_, P2, q, H)
+            if bb:
+                _, P2, Hin, Hout = bb; a[3] = Hin; a[4] = P2; b[1] = P2; b[2] = Hout
     for i in range(n):                                            # điểm cuối đoạn = điểm đầu đoạn sau
         R[(i + 1) % n][1] = R[i][-1]
     # làm tròn làm độ cong sát 0 ở mũi loe LẬT DẤU (gợn, bán kính > 1000 u): nhích tay nắm KHÔNG nằm ở nút liền ±1–2 u
@@ -185,9 +208,13 @@ def _snap_smooth(segs):
         return ks
     def flip(sg):
         ks = kap(sg); return ks is not None and min(ks)*max(ks) < 0
+    def straightish(sg):                                          # đoạn cong gần thẳng (độ cong × dây cung < 0.02): dấu độ cong
+        ks = kap(sg); c = math.dist(sg[1], sg[4])                # dao động vì làm tròn — không phải gợn
+        return ks is None or max(abs(k) for k in ks)*c < 0.02
     for i in range(n):
-        if R[i][0] != 'C' or flip(segs[i]) or not flip(R[i]): continue
-        free = [k for k, fixed in ((2, smooth[(i - 1) % n]), (3, smooth[i])) if not fixed] or [2, 3]
+        if R[i][0] != 'C' or flip(segs[i]) or not flip(R[i]) or straightish(segs[i]): continue
+        free = [k for k, fixed in ((2, smooth[(i - 1) % n]), (3, smooth[i])) if not fixed]   # tay ở nút liền: không đụng
+        if not free: continue
         bb = None
         for k in free:
             for ddx in (-2, -1, 0, 1, 2):
@@ -217,6 +244,61 @@ def draw(glyph, cs, dx, ang):
 
 import ital_comp as IC
 _STEM = {}
+def pair_fix(fR, fB):
+    """10/11 ("sửa luôn mấy chỗ gãy x ¥ còn lại"): Medium / SemiBold là NỘI SUY của hai master đã làm tròn số nguyên — mỗi master
+    liền nhưng tỉ lệ tay nắm / cạnh lệch nhau sau làm tròn → bản nội suy gãy 2–2.4° (x, ¥). Ở mỗi nút liền (< 1.5° ở cả hai
+    master), dò CẶP điểm nguyên cho tay nắm (tay ngắn hơn nếu hai bên đều cong) ở hai master (±2 u), chọn cặp có góc gãy lớn
+    nhất tại t = 0, ⅓, ⅔, 1 nhỏ nhất (phạt nhẹ độ dời)"""
+    def u_(a, b):
+        L = math.hypot(b[0] - a[0], b[1] - a[1]); return ((b[0] - a[0])/L, (b[1] - a[1])/L) if L > 1e-9 else None
+    def ang(a, b):
+        return 180.0 if not a or not b else math.degrees(math.acos(max(-1.0, min(1.0, a[0]*b[0] + a[1]*b[1]))))
+    lerp = lambda a, b, t: (a[0] + (b[0] - a[0])*t, a[1] + (b[1] - a[1])*t)
+    TS = (0.0, 1/3, 2/3, 1.0); nfix = 0
+    for g in fR:
+        if g.name not in fB: continue
+        gb = fB[g.name]
+        if len(g.contours) != len(gb.contours): continue
+        for cR, cB in zip(g.contours, gb.contours):
+            pR, pB = cR.points, cB.points; n = len(pR)
+            if n != len(pB) or n < 3: continue
+            for i in range(n):
+                if pR[i].segmentType is None: continue
+                a_, b_ = (i - 1) % n, (i + 1) % n
+                # hai lân cận: (điểm trước, điểm sau) — tay nắm nếu off-curve, điểm neo nếu cạnh thẳng
+                P = lambda pts, k: (pts[k].x, pts[k].y)
+                kin = ang(u_(P(pR, a_), P(pR, i)), u_(P(pR, i), P(pR, b_)))
+                kib = ang(u_(P(pB, a_), P(pB, i)), u_(P(pB, i), P(pB, b_)))
+                if kin > 3.0 or kib > 3.0: continue                      # góc cố ý đều > 25°
+                offa, offb = pR[a_].segmentType is None, pR[b_].segmentType is None
+                if not (offa or offb): continue
+                def worst(Ra, Rb, Ba, Bb):
+                    m = 0.0
+                    for t in TS:
+                        A = lerp(Ra, Ba, t); X = lerp(P(pR, i), P(pB, i), t); Bq = lerp(Rb, Bb, t)
+                        m = max(m, ang(u_(A, X), u_(X, Bq)))
+                    return m
+                base = worst(P(pR, a_), P(pR, b_), P(pB, a_), P(pB, b_))
+                if base < 1.0: continue
+                # tay nắm được dời: tay off-curve; hai bên đều off-curve → tay ngắn hơn (ở master Regular)
+                if offa and offb:
+                    mv = a_ if math.dist(P(pR, a_), P(pR, i)) < math.dist(P(pR, b_), P(pR, i)) else b_
+                else: mv = a_ if offa else b_
+                best = (base, 0, None)
+                rng = (-2, -1, 0, 1, 2)
+                for dxr in rng:
+                    for dyr in rng:
+                        for dxb in rng:
+                            for dyb in rng:
+                                hr = (pR[mv].x + dxr, pR[mv].y + dyr); hb = (pB[mv].x + dxb, pB[mv].y + dyb)
+                                if mv == a_: w_ = worst(hr, P(pR, b_), hb, P(pB, b_))
+                                else: w_ = worst(P(pR, a_), hr, P(pB, a_), hb)
+                                cost = w_ + 0.15*(abs(dxr) + abs(dyr) + abs(dxb) + abs(dyb))
+                                if cost < best[0] + 0.15*best[1] - 1e-6: best = (w_, abs(dxr) + abs(dyr) + abs(dxb) + abs(dyb), (hr, hb))
+                if best[2]:
+                    (pR[mv].x, pR[mv].y), (pB[mv].x, pB[mv].y) = best[2]; nfix += 1
+    return nfix
+
 def master(w, ang, FL, groups, kern):
     f = ufoLib2.Font()
     style = w + (' Italic' if ang else '') if w != 'Regular' or not ang else 'Italic'
@@ -327,8 +409,16 @@ def main():
         ds = DesignSpaceDocument()
         ax = AxisDescriptor(); ax.name = 'Weight'; ax.tag = 'wght'; ax.minimum, ax.default, ax.maximum = 400, 400, 700
         ds.addAxis(ax)
+        MS = {w: master(w, ang, FL, groups, ks[w]) for w in ('Regular', 'Bold')}
+        # 10/11: outline bản TĨNH Medium / SemiBold dựng thẳng từ toạ độ số thực cùng weight (qua _snap_smooth) — instance nội suy
+        # từ hai master NGUYÊN rồi làm tròn lần nữa làm tay nắm ngắn lệch hướng: 110–170 nút gãy 2–11° (j Medium 11°)
+        for w in ('Medium', 'SemiBold'):
+            fm = master(w, ang, FL, groups, ks.get(w, ks['Regular'])); pm = os.path.join(BUILD, f'{PS}{tag}-{w}-snap.ufo')
+            if os.path.exists(pm): shutil.rmtree(pm)
+            fm.save(pm)
+        print('nút liền khi nội suy (đặt cặp tay nắm nguyên):', pair_fix(MS['Regular'], MS['Bold']))
         for w in ('Regular', 'Bold'):
-            f = master(w, ang, FL, groups, ks[w]); p = os.path.join(BUILD, f'{PS}{tag}-{w}.ufo')
+            f = MS[w]; p = os.path.join(BUILD, f'{PS}{tag}-{w}.ufo')
             if os.path.exists(p): shutil.rmtree(p)
             f.save(p)
             s = SourceDescriptor(); s.path = p; s.location = {'Weight': WGHT[w]}; s.familyName = FAMILY
@@ -413,9 +503,22 @@ def compile_fonts():
         subprocess.run(['fontmake', '-m', dsp, '-o', 'variable', '--output-dir', VF, '--flatten-components'], check=True,
                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         dst = os.path.join(VF, f'{PS}{tag}[wght].ttf'); os.replace(os.path.join(VF, f'{PS}{tag}-VF.ttf'), dst); stat(dst, bool(tag))
-        for fmt in ('otf', 'ttf'):
-            subprocess.run(['fontmake', '-m', dsp, '-i', '-o', fmt, '--output-dir', os.path.join(FONTS, fmt), '--flatten-components'],
-                           check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        INST = os.path.join(BUILD, f'inst{tag}'); shutil.rmtree(INST, ignore_errors=True)
+        subprocess.run(['fontmake', '-m', dsp, '-i', '-o', 'ufo', '--output-dir', INST], check=True,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for u_ in sorted(os.listdir(INST)):
+            if not u_.endswith('.ufo'): continue
+            up = os.path.join(INST, u_); fi = ufoLib2.Font.open(up)
+            w = next((x for x in ('SemiBold', 'Medium') if x in (fi.info.styleName or '')), None)
+            if w:
+                fs = ufoLib2.Font.open(os.path.join(BUILD, f'{PS}{tag}-{w}-snap.ufo'))
+                for g in fi:
+                    if g.name in fs and len(fs[g.name].contours) == len(g.contours) and not g.components:
+                        g.clearContours(); fs[g.name].drawPoints(g.getPointPen())
+                fi.save(up, overwrite=True)
+            for fmt in ('otf', 'ttf'):
+                subprocess.run(['fontmake', '-u', up, '-o', fmt, '--output-dir', os.path.join(FONTS, fmt), '--flatten-components'],
+                               check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     # file gộp Roman + Italic (designer 06/11 "italic không kết hợp trong variable luôn được hả"): trục wght 400–700 + slnt 0 … −10°
     # — Italic = Roman nghiêng 10° nên nghiêng là một trục liên tục, 4 master (R / B × đứng / nghiêng) cùng cấu trúc
     combined(VF)

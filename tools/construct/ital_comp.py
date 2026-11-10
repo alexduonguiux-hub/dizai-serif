@@ -116,28 +116,18 @@ def compensate(d, ang, stem):
     out = SY.hdilate(p, 0.1*stem, 0.0, dist=dist)
     after = _segs(out)
     if [len(c) for c in before] == [len(c) for c in after] and all(x[0] == y[0] for c0, c1 in zip(before, after) for x, y in zip(c0, c1)):
+        # HƯỚNG tay nắm = Roman (dời song song Tiller–Hanson không đổi hướng cạnh điều khiển; nhưng neo dời tới giao điểm mới còn tay
+        # ngắn đứng yên → quay hướng: góc nhọn z 153° → 27°, ? , 5 …). Giữ độ dài sau bù (chỉ cứu tay < 8 u / < ½ Roman). Nút liền ở
+        # Roman tự liền lại (hai tay / cạnh thẳng cùng hướng gốc, cạnh thẳng dời song song)
         for S0, S1 in zip(before, after):
-            n = len(S0)
-            for i in range(n):
-                j = (i + 1) % n
-                if _ang(_tout(S0[i]), _tin(S0[j])) > 0.5: continue        # góc ở Roman: giữ
-                if S1[i][0] == S1[j][0] == 'L': continue
-                pnt = S1[i][-1]
-                if S1[i][0] == 'L': t = _tout(S1[i])
-                elif S1[j][0] == 'L': t = _tin(S1[j])
-                else:
-                    a_, b_ = math.dist(S1[i][3], pnt), math.dist(S1[j][2], pnt); u_, v_ = _tout(S1[i]), _tin(S1[j])
-                    t = _unit((u_[0]*a_ + v_[0]*b_, u_[1]*a_ + v_[1]*b_)) if u_ and v_ else None
-                if not t: continue
-                # độ dài tay nắm ≥ bản Roman (giao cạnh dời có thể co tay còn ~3 u → làm tròn toạ độ nguyên gãy tới 18°)
-                if S1[i][0] == 'C':
-                    L1_, L0_ = math.dist(S1[i][3], pnt), math.dist(S0[i][3], S0[i][-1])
-                    L = L1_ if L1_ >= min(8.0, 0.5*L0_) else L0_         # chỉ cứu tay quá ngắn (kéo dài mọi tay → o mất phần bù)
-                    if L > 1e-9: S1[i][3] = (pnt[0] - t[0]*L, pnt[1] - t[1]*L)
-                if S1[j][0] == 'C':
-                    L1_, L0_ = math.dist(S1[j][2], pnt), math.dist(S0[j][2], S0[j][1])
+            for i, (a0, a1) in enumerate(zip(S0, S1)):
+                if a1[0] != 'C': continue
+                for hi, ai in ((2, 1), (3, 4)):
+                    d0 = _unit((a0[hi][0] - a0[ai][0], a0[hi][1] - a0[ai][1]))
+                    if not d0: continue                                    # tay suy biến: giữ suy biến (trùng neo)
+                    L1_, L0_ = math.dist(a1[hi], a1[ai]), math.dist(a0[hi], a0[ai])
                     L = L1_ if L1_ >= min(8.0, 0.5*L0_) else L0_
-                    if L > 1e-9: S1[j][2] = (pnt[0] + t[0]*L, pnt[1] + t[1]*L)
+                    a1[hi] = (a1[ai][0] + d0[0]*L, a1[ai][1] + d0[1]*L)
         # ĐOẠN LOE (nhập cạnh thẳng > 40 u, đầu kia trên đường chân / x-height / cap / descender; dây cung ≤ 110 u): KHÔNG dời từng
         # cạnh (điểm chân và điểm nhập dời khác nhau → dây cung méo, độ cong dồn một đầu: K Italic 0.35 → 1.5) — TỊNH TIẾN NGANG
         # nguyên đoạn loe Roman cho điểm nhập nằm trên mép thẳng ĐÃ BÙ: hình module giữ nguyên, liền tiếp tuyến (mép bù song song),

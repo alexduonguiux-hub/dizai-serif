@@ -260,3 +260,26 @@ Quét outline font Italic (4 weight) so với chính đoạn loe đó ở Roman.
 - Độ dày Italic (S26) giữ: E (bản đồ khoảng cách) n H o O v V x X s S K e trong ±3 % so với Roman, 4 weight.
 - QA Roman: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; loe chéo K ≤ 0.24.
 - Ảnh: `docs/img/s28-italic-loe.png` (lược độ cong H K x n Italic trước / sau).
+
+## S29 N đóng khấc + nút gãy do làm tròn / nội suy (designer 10/11: "Hở mối nối N", "sửa luôn mấy chỗ gãy x ¥ còn lại")
+
+**N:** bản vẽ N Regular (và Bold theo S20) có khấc nêm ở đỉnh dưới phải và đỉnh trên trái — mép thân đi 14 u rồi mặt cắt dốc
+lệch 5.6 u → khe 5.6 × 14 u đọc thành VẾT HỞ. `ref/fix_N_notch.py`: mép đáy / đỉnh chạy thẳng tới chân / đỉnh nét chéo (một điểm),
+Regular (designer_A) + Bold (designer_B); Medium / SemiBold nội suy lại. Ảnh: `docs/img/s29-N-dong-khac.png`.
+
+**Nút gãy trong font** (quét mọi nút cong ↔ cong / cong ↔ thẳng 2–12°, 312 ký tự × 8 style): 674 → 5.
+
+| Nguồn | Sửa |
+|---|---|
+| Bản tĩnh Medium / SemiBold = instance NỘI SUY từ hai master đã làm tròn rồi làm tròn lần nữa → tay nắm ngắn lệch hướng (113 / 131 nút, j Medium 11°) | `export_font`: instance UFO (tên, kerning, feature của fontmake) nhưng OUTLINE thay bằng bản dựng thẳng từ toạ độ số thực cùng weight qua `_snap_smooth` (bản variable giữ nguyên; lệch ≤ 1 u do làm tròn) |
+| Hai master nguyên: tỉ lệ tay nắm / cạnh lệch sau làm tròn → nội suy gãy (x, ¥ 2–2.4°) | `pair_fix`: ở mỗi nút liền, dò CẶP điểm nguyên cho tay nắm ở hai master (±2 u), min góc gãy lớn nhất tại t = 0, ⅓, ⅔, 1 |
+| Làm tròn tay nắm cong ↔ cong rất ngắn (3 u → lệch tới 10°) | `_snap_smooth`: bộ ba (tay vào, neo, tay ra) nguyên thẳng hàng nhất (neo ±1, tay dài ±1); tay < 5 u kéo dài 7 u |
+| Bước chống "đổi chiều cong" nhích tay nắm ở nút liền / đoạn gần thẳng (A Medium 5°) | không đụng tay ở nút liền; bỏ qua đoạn gần thẳng |
+| S26 bù Italic: neo dời tới giao điểm mới, tay ngắn quay hướng → góc nhọn z 153° → 27° | `ital_comp`: hướng mọi tay nắm = Roman (dời song song không đổi hướng cạnh điều khiển) — 0 nút đổi góc > 1° |
+| S25 đồng bộ tỉ lệ phóng tay 0.1 → 16 u trên đoạn 10 u → vòng xoắn (A Bold chân trong) | `_sync_ratio`: tay ≤ 0.9 dây cung, đoạn không tự quay ngược |
+| ® loe chân R bên trong gãy 16° (hdilate) | `KINK_CH['®'] = 20` |
+
+- Còn lại (cố ý): 5 Medium Italic 11.6° = góc khấc vát S20 (18° ở Roman, nghiêng làm hẹp lại); @ Italic = đoạn tí hon 7 u trong góc
+  cắt lòng cố ý; 7 Medium Italic 2.2°.
+- QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %; loe Italic 0 gợn
+  (trừ y SemiBold Italic: điểm uốn sát 0 ở mũi đuôi).

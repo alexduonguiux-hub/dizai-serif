@@ -369,8 +369,8 @@ def _segdev(a, b):
     A = [bez(a, t/24) for t in range(25)]; Bp = [bez(b, t/48) for t in range(49)]
     Ap = [bez(a, t/48) for t in range(49)]; Bq = [bez(b, t/24) for t in range(25)]
     return max(max(min(math.dist(p, q) for q in Bp) for p in A), max(min(math.dist(p, q) for q in Ap) for p in Bq))
-KINK_CH = {'@': 0.0, 'X': 30.0, 'x': 30.0, 'R': 30.0}   # X x R: đoạn loe nhập mép chéo gãy 15–25° (designer 07/11 "X và x hơi gãy") → liền như loe K A V
-MAXDEV_CH = {'X': 12.0, 'x': 12.0, 'R': 12.0}
+KINK_CH = {'@': 0.0, 'X': 30.0, 'x': 30.0, 'R': 30.0, '®': 20.0}   # ®: loe chân R bên trong gãy 16° (hdilate)   # X x R: đoạn loe nhập mép chéo gãy 15–25° (designer 07/11 "X và x hơi gãy") → liền như loe K A V
+MAXDEV_CH = {'X': 12.0, 'x': 12.0, 'R': 12.0, '®': 8.0}
 #    # @: lòng elip của a bên trong bị mép thân CẮT DỌC — góc cắt cố ý (designer 07/11 "bụng @ nên cắt ngang như này"), không làm liền
 def _straight(sg):
     if sg[0] != 'C': return False
@@ -419,8 +419,18 @@ def _sync_ratio(R, B, i, j):
     rR, rB = aR/bR, aB/bB
     if abs(math.log(rR/rB)) < 0.02: return
     k0 = [list(R[i]), list(R[j]), list(B[i]), list(B[j])]; cands = []
+    def sane(S):                                               # tay nắm ≤ 0.9 dây cung, đoạn không tự quay ngược (A Bold: tay 0.1 → 16 u
+        for sg in (S[i], S[j]):                                # trên đoạn 10 u → vòng xoắn)
+            if sg[0] != 'C': continue
+            c = math.dist(sg[1], sg[4])
+            if math.dist(sg[1], sg[2]) > 0.9*c + 0.5 or math.dist(sg[3], sg[4]) > 0.9*c + 0.5: return False
+            ch = (sg[4][0] - sg[1][0], sg[4][1] - sg[1][1])
+            if (sg[2][0] - sg[1][0])*ch[0] + (sg[2][1] - sg[1][1])*ch[1] < -1e-6: return False
+            if (sg[4][0] - sg[3][0])*ch[0] + (sg[4][1] - sg[3][1])*ch[1] < -1e-6: return False
+        return True
     def tryit(f):
         R[i], R[j], B[i], B[j] = [list(x) for x in k0]; f()
+        if not (sane(R) and sane(B)): return
         a2, b2 = _hl(R, i, j); a3, b3 = _hl(B, i, j)
         if abs(math.log((a2/b2)/(a3/b3))) > 0.03: return
         dv = max(_segdev(k0[0], R[i]), _segdev(k0[1], R[j]), _segdev(k0[2], B[i]), _segdev(k0[3], B[j]))
@@ -438,6 +448,32 @@ def _sync_ratio(R, B, i, j):
     tryit(gm)
     if cands: R[i], R[j], B[i], B[j] = min(cands, key=lambda c: c[0])[1]
     else: R[i], R[j], B[i], B[j] = k0
+    _resplit(R, B, i, j)
+
+def _resplit(R, B, i, j):
+    """10/11: nút THẲNG → CONG có tỉ lệ (tay nắm : cạnh thẳng) lệch xa giữa hai master (A chân trong: R 0.33 / B 0.03 — tay B
+    2.7 u trên đoạn 10 u) mà không chỉnh độ dài tay được (tay vượt dây cung) → nội suy + làm tròn gãy 5°. Ở master có tỉ lệ NHỎ:
+    dời điểm nối NGƯỢC lên dọc cạnh thẳng, gộp phần cạnh thẳng + đoạn cong cũ thành MỘT cubic (fit, giữ hai hướng đầu mút)
+    cho tỉ lệ khớp master kia (sai số fit < 0.6 u)"""
+    for (Li, Ci) in ((i, j),):
+        if not (R[Li][0] == B[Li][0] == 'L' and R[Ci][0] == B[Ci][0] == 'C'): return
+        if max(angle(tan_out(X[Li]), tan_in(X[Ci])) for X in (R, B)) > 0.5: return
+        aR, bR = _hl(R, Li, Ci); aB, bB = _hl(B, Li, Ci)
+        if min(aR, bR, aB, bB) < 1e-6: return
+        rR, rB = bR/aR, bB/aB
+        if abs(math.log(rR/rB)) < 0.7: return                     # lệch < 2 lần: để _sync_ratio / làm tròn lo
+        X, r_t = (B, rR) if rB < rR else (R, rB)                  # X: master tỉ lệ nhỏ → kéo dài đoạn cong lên cạnh thẳng
+        Q, J = X[Li][1], X[Li][2]; u = unit((J[0] - Q[0], J[1] - Q[1])); a = math.dist(Q, J)
+        best = None
+        for k in range(1, 40):
+            sh = a*k/50; J2 = (J[0] - u[0]*sh, J[1] - u[1]*sh)
+            c, err = fit(['L', J2, J], X[Ci])
+            if c is None or err > 0.6: continue
+            ratio = math.dist(c[1], c[2])/(a - sh)
+            e = abs(math.log(ratio/r_t))
+            if best is None or e < best[0]: best = (e, J2, c)
+        if best and best[0] < abs(math.log(rR/rB)) - 0.3:
+            _, J2, c = best; X[Li] = ['L', Q, J2]; X[Ci] = c
 def smooth_pair(R, B, kink=KINK, maxdev=None):
     R, B = [list(x) for x in R], [list(x) for x in B]; nk = 0
     i = 0

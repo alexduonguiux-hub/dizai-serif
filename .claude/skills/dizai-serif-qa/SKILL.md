@@ -112,6 +112,8 @@ Ghi vào `docs/` kèm version và ngày.
 - **qa_stroke số:** số 4 so với 1 (`STEMFIG`, thân thẳng), không so với 0 (nét tròn) — S23. Ký tự dựng từ số (? ¿ hỏi ← 2, & ← 8) dùng bản GỐC trong `ref/designer_Q.json`: cân lại số không kéo theo ký hiệu đã duyệt.
 - **Italic (S26):** đo Italic so với Roman cùng weight bằng độ dày vuông góc (không chỉ diện tích mực — phép nghiêng giữ mực nhưng đổi màu theo hướng nét). Chuẩn: nét chính ±3 %. Bù quang học ở `ital_comp.py`.
 - **Module loe (S27):** đoạn loe nhập mép chéo phải liền tiếp tuyến VÀ cong đều (vẽ lược độ cong so với loe V); kiểm cả nút cong ↔ thẳng, không chỉ cong ↔ cong. Nách chéo là MỘT điểm (không mặt phẳng ngắn).
+- **Nút gãy trong FONT (S29):** quét nút cong ↔ cong và cong ↔ thẳng 2–12° trên file OTF của cả 8 style (không chỉ outline số thực): làm tròn toạ độ nguyên + nội suy hai master nguyên tạo gãy ở tay nắm ngắn. Bản tĩnh Medium / SemiBold dựng outline từ số thực (`*-snap.ufo`), không dùng instance nội suy.
+- **Khấc nêm hẹp (S29):** khe < 6 u × 14 u ở đỉnh nhọn đọc thành vết hở (N) — đỉnh chéo gặp thân là MỘT điểm.
 - **Pipeline:** chạy các bước bằng `&&`, không bằng vòng `for … > /dev/null` (S21–S22 `lower/derive.py` lỗi ở x mà không ai thấy).
 - **qa_stroke:** dấu giọt / nháy (, ; ‘ ’ ‚ “ ” „ ' " ′ ″) đo "nét chính" bằng đường kính hình tròn nội tiếp lớn nhất (trục giữa của giọt không ổn định).
 - **Nét chéo chữ thường:** nét mảnh v w x y k / thân n = nét mảnh / thân V hoa (±5 %).
