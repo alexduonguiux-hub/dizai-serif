@@ -1,0 +1,350 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<title>AnNam Serif Showreel</title>
+<style>
+@font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif[wght].woff2") format("woff2"); font-weight: 400 700; font-style: normal; }
+@font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif-Italic[wght].woff2") format("woff2"); font-weight: 400 700; font-style: italic; }
+:root { --paper:#f0efee; --g9:#215028; --g5:#749674; --cream:#e3e2dd; }
+* { margin:0; padding:0; box-sizing:border-box; }
+html,body { background:#000; }
+#stage { position:relative; width:1920px; height:1080px; overflow:hidden; background:var(--paper); color:var(--g9);
+  font-family:"AN"; font-kerning:normal; -webkit-font-smoothing:antialiased; }
+.scene { position:absolute; inset:0; display:none; overflow:hidden; }
+.abs { position:absolute; }
+.nw { white-space:nowrap; }
+/* mask = one line box trimmed to cap height (cap 700, asc 960, desc 240) */
+.m { display:inline-block; overflow:hidden; vertical-align:top; line-height:.7; }
+.m > span { display:inline-block; will-change:transform; }
+.hud { position:absolute; inset:0; pointer-events:none; font-size:21px; font-weight:500; letter-spacing:.02em; line-height:1; z-index:50; }
+.hud div { position:absolute; }
+svg.seal { display:block; }
+</style>
+</head>
+<body>
+<div id="stage">
+
+  <!-- S1 · AN NAM assembles -->
+  <div class="scene" id="s1"><div class="abs nw" id="s1w" style="font-size:500px;line-height:.7;"></div></div>
+
+  <!-- S2 · giant single glyphs -->
+  <div class="scene" id="s2a" style="background:var(--g9);color:var(--paper)"><div class="abs nw" id="s2ag" style="font-size:1500px;line-height:1">A</div></div>
+  <div class="scene" id="s2b"><div class="abs nw" id="s2bg" style="font-size:1250px;line-height:1">ơ</div></div>
+
+  <!-- S3 · rolling rows -->
+  <div class="scene" id="s3" style="background:var(--g9);color:var(--paper)"></div>
+
+  <!-- S4 · Vietnamese marks, fast cuts -->
+  <div class="scene" id="s4"><div class="abs nw" id="s4g" style="font-size:860px;line-height:1"></div></div>
+
+  <!-- S5 · weight stack -->
+  <div class="scene" id="s5"></div>
+
+  <!-- S6 · poster cube -->
+  <div class="scene" id="s6" style="background:var(--cream);perspective:2400px;">
+    <div id="cube" class="abs" style="left:50%;top:50%;width:680px;height:880px;margin:-440px 0 0 -340px;transform-style:preserve-3d;"></div>
+  </div>
+
+  <!-- S7 · ampersand tiles -->
+  <div class="scene" id="s7" style="background:var(--g9);color:var(--paper)"></div>
+
+  <!-- S8 · end card -->
+  <div class="scene" id="s8"></div>
+
+  <div class="hud" id="hud">
+    <div style="left:48px;top:40px">ĐÌZAI STUDIO</div>
+    <div style="left:50%;top:40px;transform:translateX(-50%)">AN NAM SERIF</div>
+    <div style="right:48px;top:40px">TYPE SPECIMEN — 2026</div>
+    <div style="left:48px;bottom:40px">ROMAN &amp; <i>ITALIC</i> · 400—700</div>
+    <div style="right:48px;bottom:40px" id="hudn">01 / 08</div>
+  </div>
+</div>
+
+<script>
+const W = 1920, H = 1080, FPS = 30, DUR = 10;
+const C = { paper:'#f0efee', g9:'#215028', g5:'#749674', cream:'#e3e2dd' };
+const $ = id => document.getElementById(id);
+const clamp = (x,a=0,b=1) => Math.min(b, Math.max(a, x));
+const seg = (t,a,b) => clamp((t-a)/(b-a));
+const lerp = (a,b,p) => a + (b-a)*p;
+const expoOut = p => p >= 1 ? 1 : 1 - Math.pow(2, -10*p);
+const expoInOut = p => p<=0?0:p>=1?1: p<.5 ? Math.pow(2,20*p-10)/2 : (2-Math.pow(2,-20*p+10))/2;
+const quartInOut = p => p<.5 ? 8*p*p*p*p : 1-Math.pow(-2*p+2,4)/2;
+const backOut = p => { const c1=1.4, c3=c1+1; return 1 + c3*Math.pow(p-1,3) + c1*Math.pow(p-1,2); };
+const wght = (el,w) => { el.style.fontVariationSettings = `"wght" ${w.toFixed(1)}`; el.style.fontWeight = Math.round(w); };
+
+// --- measuring glyph ink with canvas, so giant glyphs sit optically centred
+const cx = document.createElement('canvas').getContext('2d');
+function ink(text, size, weight=400, italic=false) {
+  cx.font = `${italic?'italic ':''}${weight} ${size}px AN`;
+  const m = cx.measureText(text);
+  return { l:m.actualBoundingBoxLeft, r:m.actualBoundingBoxRight, a:m.actualBoundingBoxAscent, d:m.actualBoundingBoxDescent, w:m.width };
+}
+// place element (line-height:1) so that its ink box is centred at (x,y)
+function centre(el, text, size, weight, italic, x=W/2, y=H/2) {
+  const k = ink(text, size, weight, italic);
+  // with line-height 1 the baseline sits at  (1 - (0.96+0.24))/2 + 0.96 = 0.86em
+  const base = 0.86*size;
+  const inkCx = (k.r - k.l)/2, inkCy = (k.d - k.a)/2;
+  el.style.left = (x - inkCx) + 'px';
+  el.style.top = (y - inkCy - base) + 'px';
+}
+// mask a word: returns array of inner spans
+function maskWord(host, text, opts={}) {
+  host.innerHTML = '';
+  const spans = [];
+  for (const ch of text) {
+    const m = document.createElement('span'); m.className = 'm';
+    if (opts.padTop) { m.style.paddingTop = opts.padTop; m.style.marginTop = '-' + opts.padTop; }
+    const s = document.createElement('span'); s.textContent = ch === ' ' ? ' ' : ch;
+    m.appendChild(s); host.appendChild(m); spans.push(s);
+  }
+  return spans;
+}
+
+// ================= build =================
+let seal = '';
+const sealReady = fetch('dizai-studio-seal.svg').then(r=>r.text()).then(s=>{
+  seal = s.replace(/fill="#215028"/g,'fill="currentColor"').replace('<svg','<svg class="seal"').replace(/width="[^"]*" height="[^"]*"/,'');
+});
+
+let S1, S3rows=[], S4list, S5lines=[], S7tiles=[], S8={};
+function build() {
+  // S1
+  S1 = maskWord($('s1w'), 'AN NAM');
+  // S3 rolling rows
+  const s3 = $('s3'); const fs3 = 176, band = 150, n3 = 7;
+  const top3 = (H - n3*band)/2;
+  for (let i=0;i<n3;i++){
+    const row = document.createElement('div'); row.className='abs';
+    row.style.cssText = `left:0;top:${top3+i*band+ (band-fs3*.7)/2}px;height:${fs3*.7}px;width:100%;overflow:hidden;font-size:${fs3}px;line-height:.7;`;
+    const inner = document.createElement('div'); inner.className='abs nw';
+    const txt = 'AN NAM SERIF — '.repeat(8);
+    inner.innerHTML = `<div style="height:${fs3*.7}px">${txt}</div><div style="height:${fs3*.7}px">${txt}</div><div style="height:${fs3*.7}px">${txt}</div>`;
+    row.appendChild(inner); s3.appendChild(row);
+    S3rows.push({row, inner, flip: (i===2||i===4)});
+  }
+  // S4 glyph cards
+  S4list = [
+    {g:'Ắ', bg:C.paper, fg:C.g9, w:700, it:false},
+    {g:'ệ', bg:C.g9, fg:C.paper, w:400, it:true},
+    {g:'Ộ', bg:C.g5, fg:C.paper, w:600, it:false},
+    {g:'ữ', bg:C.paper, fg:C.g9, w:500, it:true},
+    {g:'Ợ', bg:C.g9, fg:C.paper, w:700, it:false},
+    {g:'ỹ', bg:C.g5, fg:C.g9, w:400, it:true},
+    {g:'Đ', bg:C.paper, fg:C.g9, w:700, it:false},
+    {g:'ẫ', bg:C.g9, fg:C.paper, w:600, it:true},
+  ];
+  // S5 weight stack
+  const s5 = $('s5'); const n5 = 7, fs5 = 150, lh5 = 140;
+  for (let i=0;i<n5;i++){
+    const line = document.createElement('div'); line.className='abs nw';
+    line.style.cssText = `left:0;width:100%;text-align:center;top:${(H - n5*lh5)/2 + i*lh5 + 18}px;font-size:${fs5}px;`;
+    if (i===3) line.style.color = C.g5;
+    const spans = maskWord(line, 'Sài Gòn', {padTop:'.32em'});
+    s5.appendChild(line); S5lines.push({line, spans, i});
+  }
+  // S6 cube faces
+  const cube = $('cube'); const fw=680, fh=880;
+  const faces = [
+    {bg:C.g9, fg:C.paper, top:'AN', bot:'NAM', mid:'seal', note:['ĐÌZAI STUDIO','SAIGON, VIỆT NAM']},
+    {bg:C.g5, fg:C.g9, top:'SERIF', bot:'2026', mid:'Aa Ăă Ââ Đđ<br>Êê Ôô Ơơ Ưư', note:['ROMAN & ITALIC','400 — 700']},
+    {bg:C.paper, fg:C.g9, top:'Việt', bot:'Nam', mid:'<i>chữ glyphic<br>loe nét</i>', note:['326 GLYPHS','TIẾNG VIỆT ĐẦY ĐỦ'], italicTop:true},
+  ];
+  faces.forEach((f,k)=>{
+    const d = document.createElement('div'); d.className='abs';
+    d.style.cssText = `inset:0;background:${f.bg};color:${f.fg};backface-visibility:hidden;overflow:hidden;transform:rotateY(${k*90}deg) translateZ(${fw/2}px);`;
+    const fit = (txt, it) => { const k2 = ink(txt, 100, 700, it); return (fw-56) / ((k2.l + k2.r)/100); };
+    const fsT = fit(f.top, f.italicTop), fsB = fit(f.bot, false);
+    const pt = f.italicTop ? 'font-style:italic;' : '';
+    d.innerHTML = `
+      <div class="abs nw" style="left:28px;top:28px;font-size:${fsT}px;line-height:.7;font-weight:700;font-variation-settings:'wght' 700;${pt}${f.italicTop?'padding-top:.22em;margin-top:-.22em;':''}">${f.top}</div>
+      <div class="abs nw" style="left:28px;bottom:28px;font-size:${fsB}px;line-height:.7;font-weight:700;font-variation-settings:'wght' 700;">${f.bot}</div>
+      <div class="abs" style="left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;font-size:44px;line-height:1.05;font-weight:500;" data-mid="${k}">${f.mid==='seal'?'':f.mid}</div>
+      <div class="abs nw" style="left:28px;top:50%;margin-top:-70px;font-size:16px;font-weight:500;letter-spacing:.03em;">${f.note[0]}</div>
+      <div class="abs nw" style="right:28px;top:50%;margin-top:58px;font-size:16px;font-weight:500;letter-spacing:.03em;">${f.note[1]}</div>`;
+    cube.appendChild(d);
+    if (f.mid==='seal') { const s = d.querySelector('[data-mid]'); s.innerHTML = seal; const sv = s.querySelector('svg'); sv.style.height='200px'; sv.style.width='auto'; sv.style.margin='0 auto'; }
+  });
+  // S7 tiles
+  const s7 = $('s7'); const cell = 240, cols = 8, rows = 5, off = (H - rows*cell)/2;
+  for (let r=0;r<rows;r++) for (let c=0;c<cols;c++){
+    const t = document.createElement('div'); t.className='abs';
+    t.style.cssText = `left:${c*cell}px;top:${off+r*cell}px;width:${cell}px;height:${cell}px;`;
+    const g = document.createElement('div'); g.className='abs nw'; g.textContent='&';
+    g.style.cssText = `font-size:230px;line-height:1;font-style:italic;`;
+    t.appendChild(g); s7.appendChild(t);
+    S7tiles.push({t,g,r,c});
+  }
+  // S8 end card
+  const s8 = $('s8'); const fs8 = 340, cap = fs8*.7;
+  S8.l1 = document.createElement('div'); S8.l1.className='abs nw'; S8.l1.style.cssText=`left:44px;top:118px;font-size:${fs8}px;`;
+  S8.l2 = document.createElement('div'); S8.l2.className='abs nw'; S8.l2.style.cssText=`right:44px;top:${118+cap+38}px;font-size:${fs8}px;`;
+  S8.l3 = document.createElement('div'); S8.l3.className='abs nw'; S8.l3.style.cssText=`right:44px;top:${118+2*(cap+38)}px;font-size:${fs8}px;color:${C.g5};`;
+  S8.a = maskWord(S8.l1, 'AN NAM'); S8.b = maskWord(S8.l2, 'SERIF');
+  // 2026 slot counter
+  S8.digits = [];
+  '2026'.split('').forEach((d,k)=>{
+    const m = document.createElement('span'); m.className='m';
+    const col = document.createElement('span'); col.style.display='inline-block';
+    const seq = []; const loops = 1 + k; for (let L=0; L<loops; L++) for (let n=0;n<10;n++) seq.push(n); seq.push(+d);
+    col.innerHTML = seq.map(n=>`<div style="height:${cap}px">${n}</div>`).join('');
+    m.style.height = cap+'px'; m.appendChild(col); S8.l3.appendChild(m);
+    S8.digits.push({col, steps: seq.length-1, k});
+  });
+  S8.seal = document.createElement('div'); S8.seal.className='abs'; S8.seal.innerHTML = seal;
+  S8.seal.style.cssText = `left:48px;top:${118+2*(cap+38)-6}px;height:${cap+12}px;color:${C.g9};transform-origin:50% 50%;`;
+  const sv = S8.seal.querySelector('svg'); sv.style.height = (cap+12)+'px'; sv.style.width='auto';
+  S8.info = document.createElement('div'); S8.info.className='abs';
+  S8.info.style.cssText = `left:1430px;top:118px;font-size:22px;line-height:1.12;font-weight:500;letter-spacing:.02em;`;
+  S8.info2 = document.createElement('div'); S8.info2.className='abs';
+  S8.info2.style.cssText = `left:370px;top:${118+2*(cap+38)+cap-3*24.6}px;font-size:22px;line-height:1.12;font-weight:500;letter-spacing:.02em;`;
+  const lines = (host, arr) => arr.map(h=>{
+    const m = document.createElement('div'); m.style.overflow='hidden';
+    const s = document.createElement('div'); s.innerHTML = h; m.appendChild(s); host.appendChild(m); return s; });
+  S8.infoLines = lines(S8.info, ['ROMAN &amp; <i>ITALIC</i>','VARIABLE 400 — 700','326 GLYPHS','TIẾNG VIỆT ĐẦY ĐỦ'])
+    .concat(lines(S8.info2, ['TYPEFACE BY','ĐÌZAI STUDIO','<span style="color:#749674">DIZAI.STUDIO</span>']));
+  s8.append(S8.l1, S8.l2, S8.l3, S8.seal, S8.info, S8.info2);
+}
+
+// ================= render(t) =================
+function show(id, on, bg) { const el = $(id); el.style.display = on ? 'block' : 'none'; if (on && bg) el.style.background = bg; }
+const SCENES = [ ['s1',0,1], ['s2a',1,1.5], ['s2b',1.5,2], ['s3',2,3], ['s4',3,4], ['s5',4,5.5], ['s6',5.5,7], ['s7',7,8], ['s8',8,10.01] ];
+function hud(fg, n) { $('hud').style.color = fg; $('hudn').textContent = String(n).padStart(2,'0') + ' / 08'; }
+
+function render(t) {
+  for (const [id,a,b] of SCENES) show(id, t>=a && t<b);
+
+  // ---- S1 0–1: letters roll up from mask, weight swells on the beat
+  if (t < 1) {
+    const host = $('s1w');
+    const w = lerp(400, 700, expoOut(seg(t, .55, .85)));
+    wght(host, w);
+    host.style.left = '50%'; host.style.top = '50%';
+    S1.forEach((s,i)=>{ const p = expoOut(seg(t, .04 + i*.055, .04 + i*.055 + .38)); s.style.transform = `translateY(${(1-p)*105}%)`; });
+    // slight push-in
+    host.style.transform = `translate(-50%,-50%) scale(${lerp(.96, 1.0, seg(t,0,1))})`;
+    hud(C.g9, 1);
+  }
+  // ---- S2a 1–1.5: giant A, weight sweep
+  else if (t < 1.5) {
+    const g = $('s2ag'); const p = seg(t,1,1.5);
+    const w = lerp(700, 400, expoOut(p*1.4));
+    wght(g, w); centre(g, 'A', 1500, w, false, W/2 + 120, H/2 + 330);
+    g.style.transform = `scale(${lerp(1.12,1,expoOut(p))})`;
+    hud(C.paper, 2);
+  }
+  // ---- S2b 1.5–2: lowercase ơ spins in
+  else if (t < 2) {
+    const g = $('s2bg'); const p = seg(t,1.5,2);
+    const w = lerp(400, 650, expoOut(seg(t,1.6,1.95)));
+    wght(g, w); g.style.fontStyle = 'italic';
+    centre(g, 'ơ', 1250, w, true, W/2 - 40, H/2 + 20);
+    g.style.transformOrigin = '50% 60%';
+    g.style.transform = `rotate(${lerp(-38,0,expoOut(seg(t,1.5,1.85)))}deg) scale(${lerp(.7,1,expoOut(seg(t,1.5,1.8)))})`;
+    $('s2b').style.background = C.paper; $('s2b').style.color = C.g5;
+    hud(C.g9, 2);
+  }
+  // ---- S3 2–3: rolling rows
+  else if (t < 3) {
+    S3rows.forEach(({row,inner,flip},i)=>{
+      const dir = i%2 ? 1 : -1;
+      const x = -600 + dir*(t-2)*520 + (i*137)%300;
+      const inP = expoOut(seg(t, 2 + Math.abs(i-3)*.05, 2.36 + Math.abs(i-3)*.05));
+      let y = (1-inP); // 1 -> 0 (one slot below)
+      const outP = i===3 ? 0 : expoInOut(seg(t, 2.62 + (3-Math.abs(i-3))*.035, 2.9 + (3-Math.abs(i-3))*.035));
+      y -= outP;      // 0 -> -1 (one slot above)
+      const fs = 176*.7;
+      inner.style.transform = `translate(${x}px, ${(-1 - y)*fs}px)`;
+      row.style.transform = flip ? 'scaleY(-1)' : '';
+      const w = i===3 ? lerp(400,700,expoOut(seg(t,2.55,2.9))) : 400 + 300*Math.max(0,Math.sin((t-2)*6 - i*.7));
+      wght(inner, w);
+    });
+    hud(C.paper, 3);
+  }
+  // ---- S4 3–4: diacritic flash cards on 16ths
+  else if (t < 4) {
+    const k = Math.min(7, Math.floor((t-3)/0.125)); const c = S4list[k];
+    const p = seg(t, 3 + k*.125, 3 + (k+1)*.125);
+    const g = $('s4g'); g.textContent = c.g; g.style.fontStyle = c.it ? 'italic':'normal';
+    $('s4').style.background = c.bg; g.style.color = c.fg;
+    const w = c.w; wght(g, w); centre(g, c.g, 860, w, c.it, W/2, H/2 + 10);
+    g.style.transform = `scale(${lerp(1.14,1,expoOut(p))})`;
+    hud(c.fg, 4);
+  }
+  // ---- S5 4–5.5: "Sài Gòn" weight stack, slot roll + weight wave + tracking split
+  else if (t < 5.5) {
+    S5lines.forEach(({line,spans,i})=>{
+      const start = 4 + Math.abs(i-3)*.06;
+      const wave = seg(t, 4.45, 5.5);
+      const base = 400 + i*50;
+      const w = clamp(base + 260*Math.sin((t-4.45)*7 - i*.8)*Math.sin(Math.PI*wave), 400, 700);
+      wght(line, t < 4.45 ? base : w);
+      const split = (i%2===0) ? Math.sin(Math.PI*seg(t,4.7,5.3)) : 0;
+      spans.forEach((s,j)=>{
+        const p = expoOut(seg(t, start + j*.03, start + j*.03 + .4));
+        const outP = expoInOut(seg(t, 5.28 + j*.015 + i*.012, 5.5));
+        const dx = split * (j - 3) * 34;
+        s.style.transform = `translate(${dx}px, ${((1-p) - outP)*112}%)`;
+      });
+    });
+    hud(C.g9, 5);
+  }
+  // ---- S6 5.5–7: poster cube rotations
+  else if (t < 7) {
+    const r1 = expoInOut(seg(t, 5.78, 6.12)), r2 = expoInOut(seg(t, 6.42, 6.76));
+    const ang = 90*(r1 + r2);
+    const zin = expoOut(seg(t,5.5,5.85));
+    const breath = 1 - .1*Math.sin(Math.PI*r1) - .1*Math.sin(Math.PI*r2);
+    $('cube').style.transform = `scale(${lerp(.85,1,zin)*breath}) translateZ(-340px) rotateY(${-ang}deg)`;
+    hud(C.g9, 6);
+  }
+  // ---- S7 7–8: tumbling ampersands
+  else if (t < 8) {
+    S7tiles.forEach(({t:tile,g,r,c})=>{
+      const d = (r + c)*.035;
+      const a1 = expoInOut(seg(t, 7.0 + d, 7.42 + d)), a2 = expoInOut(seg(t, 7.5 + d*.6, 7.86 + d*.6));
+      const rot = 180*a1 + 180*a2;
+      const w = lerp(400, 700, a1) - 300*a2*0 ;
+      wght(g, w);
+      centre(g, '&', 230, w, true, 120, 120);
+      g.style.transformOrigin = '50% 50%';
+      const flip = (r+c)%2 ? 1 : -1;
+      g.style.transform = `rotate(${flip*rot}deg)`;
+      tile.style.color = ((r+c)%2 && a2>.5) ? C.g5 : C.paper;
+    });
+    hud(C.paper, 7);
+  }
+  // ---- S8 8–10: end card, website layout
+  else {
+    const w8 = lerp(700, 500, expoOut(seg(t, 8.5, 9.4)));
+    wght(S8.l1, w8); wght(S8.l2, w8); wght(S8.l3, 500);
+    S8.a.forEach((s,i)=>{ const p = expoOut(seg(t, 8.0 + i*.045, 8.45 + i*.045)); s.style.transform = `translateY(${(1-p)*105}%)`; });
+    S8.b.forEach((s,i)=>{ const p = expoOut(seg(t, 8.14 + i*.045, 8.6 + i*.045)); s.style.transform = `translateY(${(1-p)*105}%)`; });
+    const cap = 340*.7;
+    S8.digits.forEach(({col,steps,k})=>{
+      const p = expoOut(seg(t, 8.25 + k*.07, 9.05 + k*.12));
+      col.style.transform = `translateY(${-p*steps*cap}px)`;
+    });
+    const sp = backOut(seg(t, 8.3, 8.85));
+    S8.seal.style.transform = `rotate(${lerp(-120,0,expoOut(seg(t,8.3,9.0)))}deg) scale(${clamp(sp,0,2)})`;
+    S8.infoLines.forEach((s,i)=>{ const p = expoOut(seg(t, 8.45 + i*.06, 8.85 + i*.06)); s.style.transform = `translateY(${(1-p)*110}%)`; });
+    hud(C.g9, 8);
+  }
+}
+
+window.ready = (async () => {
+  await document.fonts.load('400 100px AN'); await document.fonts.load('italic 400 100px AN');
+  await document.fonts.load('700 100px AN'); await document.fonts.load('italic 700 100px AN');
+  await sealReady; await document.fonts.ready;
+  build(); render(0);
+  return true;
+})();
+window.render = render; window.DUR = DUR; window.FPS = FPS;
+
+// live preview: ?play
+if (location.search.includes('play')) window.ready.then(()=>{ const t0 = performance.now(); const loop = () => { render(((performance.now()-t0)/1000) % DUR); requestAnimationFrame(loop); }; loop(); });
+</script>
+</body>
+</html>
