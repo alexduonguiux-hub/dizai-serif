@@ -409,3 +409,37 @@ Tỉ lệ độ cong lớn nhất ở các nút mép ngoài số 2 (trên file O
 QA: gãy 2–12° trên 8 file OTF còn 2 nút 2–3°, không nút nào > 3° (trước: khấc vát 5 Medium Italic 11.8°). Loe Italic: 0 gãy / 0 đổi chiều
 cong. Độ dày Italic so với bản đứng: nét chính trong khoảng ±3.5 %. qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font: 0 lỗi.
 Ảnh: `docs/img/s38-so-2-lien-do-cong.png` (lược độ cong mép ngoài 2 Regular / Bold, trước / sau).
+
+## S39 S liền độ cong theo cách S38 (designer 11/11: "kiểm tra lại đường cong chữ S theo cách này luôn")
+
+Đo độ cong dọc toàn bộ đường viền S. Kiểu gợn giống số 2: độ cong tụt rồi lên lại tại cực trị.
+- Mép ngoài bụng trên, cực trái: Regular −5.4 → −2.4 | −6.4 → −7.4 (tỉ 2.7), Bold 2.0.
+- Mép ngoài bụng dưới, cực phải: Regular −5.1 → −2.4 | −4.5 → −5.9 (1.9). Bold đã liền (1.23): giữ.
+- Lòng dưới, cực phải: Regular 4.5 | 5.3 → 7.9; Bold 7.1 | 8.0 → 14.0.
+- Lòng trên: cực trái Regular 5.3 | 8.2 → 10.7; Bold đỉnh lòng 3.2 → 10.9.
+
+`ref/fix_S_fair.py` (từ bản lưu `designer_{A,B}_preSfair.json`, chạy SAU `fix_S_g2.py`), cách `fix_2_fair` (S38):
+- 7 chuỗi: mép ngoài bụng trên (điểm uốn sống → cực trái → ĐỈNH), mép ngoài bụng dưới Regular (điểm uốn → cực phải → ĐÁY),
+  lòng trên, lòng dưới (góc đầu nét → cực trị → điểm uốn sống).
+- Cố định: điểm uốn sống, góc đầu nét (tay < 1 u giữ suy biến), đỉnh / đáy mép ngoài (chuỗi kéo cả đuôi làm độ cong rơi gắt ngay sau
+  đỉnh / đáy). Cực trị chỉ trượt trên tiếp tuyến của nó. Mọi tay đổi độ dài, giữ hướng.
+- Mục tiêu: Σ (dκ/ds)², nhảy độ cong tại nút, khớp độ cong với đoạn kế ngoài chuỗi, chỉ một đỉnh độ cong, không đổi chiều cong.
+- Lệch so với bản vẽ ≤ 3 u (2.66–3.04 u).
+
+Nút liền trong bản vẽ (tỉ lệ độ cong hai bên): Regular xấu nhất 1.2 (cực phải bụng dưới), Bold 1.3 (điểm uốn sống).
+Trên file OTF (nút xấu nhất mỗi kiểu):
+
+| | Regular | Medium | SemiBold | Bold | Italic | Medium It. | SemiBold It. | Bold It. |
+|---|---|---|---|---|---|---|---|---|
+| S trước | 2.64 | 2.43 | 2.20 | 1.95 | 2.69 | 2.21 | 2.07 | 2.00 |
+| S S39 | 1.21 | 1.50 | 1.45 | 1.30 | 1.79 | 1.88 | 1.65 | 1.65 |
+| s trước | 1.81 | 2.01 | 1.79 | 3.99 | 1.82 | 2.27 | 2.38 | 4.89 |
+| s S39 | 1.45 | 1.49 | 2.23 | 1.85 | 1.71 | 2.73 | 1.91 | 2.11 |
+| $ trước | 2.56 | 2.32 | 2.17 | 1.94 | 3.52 | 2.49 | 2.29 | 1.95 |
+| $ S39 | 1.53 | 1.62 | 1.50 | 1.41 | 1.51 | 2.24 | 1.74 | 2.36 |
+
+s, $ và § dựng lại từ S theo luật. Một vài kiểu tăng (s SemiBold, s / $ Medium Italic, $ Bold Italic). Nút xấu nhất của s nằm ở
+chỗ nối của bản dựng s (derive), không phải chuỗi đã làm mượt. § Bold Italic có một nút 13× ở chỗ hai nửa § nối nhau (đoạn
+cong gắt gặp đoạn gần thẳng, mỗi đoạn ~30 u); hình nhìn như trước.
+QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy.
+Ảnh: `docs/img/s39-S-lien-do-cong.png` (lược độ cong S Regular / Bold, trước / sau).
