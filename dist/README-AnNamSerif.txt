@@ -1,4 +1,4 @@
-AnNam Serif — Version 0.900 (6 November 2026)
+AnNam Serif — Version 0.910 (11 November 2026)
 Design: Đìzai Studio · Vendor ID: DZAI
 
 A glyphic, flared serif with broad-nib contrast and full Vietnamese support

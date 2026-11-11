@@ -9,7 +9,7 @@ Mỗi gói kèm README, EULA tiếng Anh + tiếng Việt. Ra dist/commercial/.
 import os, zipfile
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
 FONTS = os.path.join(ROOT, 'fonts'); OUT = os.path.join(ROOT, 'dist', 'commercial'); C = os.path.join(ROOT, 'commercial')
-V = '0.900'
+V = '0.910'
 TIERS = {
     'Desktop':  ['otf', 'ttf', 'variable'],
     'Web':      ['woff2/variable', 'woff2/ttf', 'otf'],
