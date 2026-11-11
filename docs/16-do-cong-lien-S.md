@@ -356,3 +356,16 @@ Bold 15.5 → 5.0, lòng trên 17.5 / 10.4 → 6.9, đỉnh −4.6 → −1.4). 
   khi $ đổi theo S.
 - QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %.
 - Ảnh: `docs/img/s35-S-bung-duoi-tron.png` (bụng dưới phải Regular / Bold — trước / sau).
+
+## S37 Số 2 theo mẫu gốc Figma + cân độ dày bộ số (designer 11/11: "tham khảo đường cong số 2 từ mẫu gốc", "cân lại độ dày số cho đồng bộ")
+
+- Bỏ đề xuất S36 (ép vai phải bụng ngoài số 2 về cung tròn, chưa phát hành): làm mất vai phải "vuông" của bản vẽ.
+- Mẫu gốc Figma `2168:109`. Regular trùng bản vẽ cũ (`designer_Q`) → giữ đường cong gốc và phần đậm ngang +10 của S23. Bold là bản vẽ
+  MỚI: vai phải phẳng hơn, thanh chân 131, đầu nét trái hạ xuống 480, bụng 142. Bản này đã đậm hơn bản làm đậm S23 (139) nên dùng
+  nguyên hình, chỉ đổi đơn vị (× 711.3 / 251, lật trục y) và cho tay nắm góc chân trái suy biến (`ref/fix_fig_weight.py`, `FIG2_BOLD`).
+- Cân độ dày bộ số: đo nét dày nhất của từng nét chính (đường kính hình tròn nội tiếp lớn nhất, bỏ vùng khớp), Regular / Bold:
+  0 111/139 · 1 103/139 · 2 106/142 · 3 107/144 · 4 106/145 · 5 107/143 · 7 108/137 · 8 107/139. Riêng bụng 6 và 9 nhẹ hơn
+  (102/136, −4 %) → làm đậm ngang +4 (Regular) / +5 (Bold), cùng cách S23 → 105/140. Thứ tự này giữ nguyên: 8 trên nhẹ hơn 8 dưới
+  (luật), 3 trên nhẹ hơn 3 dưới.
+- ? ¿ và dấu hỏi vẫn dựng từ số 2 gốc (`designer_Q`), không đổi.
+- Ảnh: `docs/img/s37-so-2-figma.png` (Figma gốc / v0.910 / S37, Regular và Bold).

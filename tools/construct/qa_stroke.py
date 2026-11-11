@@ -148,6 +148,8 @@ def main():
             k = SPc.kind(c); fam = next((f for f, cs in FAM.items() if c in cs), None)
             if k in ('caps', 'lower', 'fig') and SPc.base(c) == c:
                 rc = STEMFIG.get(c, 'Hn0'[['caps','lower','fig'].index(k)]); rr = M['Bold'][rc]['E']/M['Regular'][rc]['E']
+                if k == 'fig' and c not in STEMFIG:   # S37: số so TRUNG VỊ bộ số — 0 (oval) tăng ít nhất (1.25), 2/3/4 = 1.37–1.38
+                    rr = float(np.median([M['Bold'][x]['E']/M['Regular'][x]['E'] for x in '0123456789' if M['Bold'].get(x) and M['Regular'].get(x)]))
             elif c in XBASE and M['Bold'].get(XBASE[c]) and M['Regular'].get(XBASE[c]):   # ký hiệu dựng thẳng từ chữ: theo CHỮ GỐC
                 rr = M['Bold'][XBASE[c]]['E']/M['Regular'][XBASE[c]]['E']
             elif fam: rr = float(np.median([M['Bold'][x]['E']/M['Regular'][x]['E'] for x in FAM[fam] if x in M['Bold'] and M['Bold'][x] and M['Regular'][x]]))
