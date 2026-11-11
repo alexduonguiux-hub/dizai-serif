@@ -329,3 +329,18 @@ Regular (designer_A) + Bold (designer_B); Medium / SemiBold nội suy lại. Ả
   thật sau bù). `ital_comp`: tay suy biến ở Roman giữ suy biến; độ dài tay = Roman × tỉ lệ dây cung, kẹp ±8 % quanh độ dài bước dời
   (giữ phần bù o O e). Sau: profile Italic bám Roman, đuôi S hết uốn, bụng phải 2 hết nhảy; độ dày Italic ±3 %; nút gãy 2–12° chỉ còn
   góc khấc vát cố ý 5 Medium Italic; loe Italic 0 gãy / 0 đổi chiều cong. Ảnh: `docs/img/s33-italic-2-S.png`.
+
+## S34 S liền độ cong có ràng buộc (designer 11/11: "tôi cảm giác S glyph các đường cong vẫn hơi gãy")
+
+Góc ở mọi nút S đã liền; cái "gãy" mắt thấy là BƯỚC NHẢY ĐỘ CONG tại nút (bụng ngoài trái −1.9 → −7.8 ×10⁻³ Regular, đáy lòng dưới
+Bold 15.5 → 5.0, lòng trên 17.5 / 10.4 → 6.9, đỉnh −4.6 → −1.4). S17 (ép G2 toàn bộ) làm bụng mất tròn → lần này có ràng buộc:
+
+- `ref/fix_S_g2.py` (từ bản lưu `designer_{A,B}_preS34.json`): giữ HƯỚNG tiếp tuyến mọi nút; chỉ đổi độ dài tay nắm (× 0.75 … 1.35) và
+  cho nút trượt DỌC tiếp tuyến của nó (± 12 u); mỗi đoạn lệch ≤ 3 u so với vector Figma; không thêm điểm uốn; nút có độ cong đổi dấu
+  (điểm uốn sống) bỏ qua; dò từng nút nhiều lượt giảm Σ (κ trái − κ phải)² / κ².
+- Kết quả (tỉ lệ độ cong hai bên nút, 1.0 = liền): đỉnh 3.2 → 1.1, đáy lòng dưới Bold 3.1 → 1.4 / Regular 2.0 → 1.2, lòng trên
+  1.5–1.9 → 1.0–1.6, bụng ngoài trái 4.2 → 2.6 (Regular), 3.5 → 2.0 (Bold), bụng phải dưới 2.7 → 2.3 / 2.3 → 1.6 — phần còn lại là dáng
+  bụng của bản vẽ (nửa dưới phía sống phẳng hơn), gỡ hết phải sửa dáng > 3 u.
+- Lệch hình (Hausdorff) S 2.65–2.8 u; s thường (dựng từ S) 3.0–3.4 u; $ Š theo S.
+- QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %.
+- Ảnh: `docs/img/s34-S-lien-do-cong.png` (lược độ cong S Regular / Bold, s Regular, S Italic — trước / sau).
