@@ -26,7 +26,7 @@ BUILD = os.path.join(OUT, 'ufo')
 FAMILY, PS = 'AnNam Serif', 'AnNamSerif'   # designer 06/11: AnNam → thêm chữ phân biệt với BT Annam Neue (BeauType)
 VENDOR = 'DZAI'                                # Đìzai Studio (4 ký tự theo chuẩn OpenType — 'DIZAI' 5 ký tự không dùng được) — nên đăng ký với Microsoft (mstwsite@microsoft.com)
 #          # designer 06/11 "Đổi tên Font thành AnNam" (trước: Dizai Serif / DizaiSerif)
-VERSION = (0, 910)
+VERSION = (0, 911)
 ITALIC_ANGLE = 10.0
 WGHT = {'Regular': 400, 'Medium': 500, 'SemiBold': 600, 'Bold': 700}
 
