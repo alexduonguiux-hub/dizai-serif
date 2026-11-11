@@ -1,6 +1,6 @@
 # AnNam Serif (dự án Dizai Serif)
 
-Tên phát hành của bộ chữ: **AnNam Serif** (designer 06/11; thêm "Serif" để phân biệt với BT Annam Neue của BeauType), vendor ID DZAI. File font: `fonts/variable/AnNamSerif[wght].ttf`, `AnNamSerif-Italic[wght].ttf`, `AnNamSerif[slnt,wght].ttf`; bản tĩnh `fonts/otf/`, `fonts/ttf/`; web `fonts/woff2/`; gói `dist/AnNamSerif-v0.912.zip`.
+Tên phát hành của bộ chữ: **AnNam Serif** (designer 06/11; thêm "Serif" để phân biệt với BT Annam Neue của BeauType), vendor ID DZAI. File font: `fonts/variable/AnNamSerif[wght].ttf`, `AnNamSerif-Italic[wght].ttf`, `AnNamSerif[slnt,wght].ttf`; bản tĩnh `fonts/otf/`, `fonts/ttf/`; web `fonts/woff2/`; gói `dist/AnNamSerif-v0.913.zip`.
 
 Chữ glyphic loe nét, tương phản theo bút dẹt, tỉ lệ La Mã cổ điển. Hiện có bản
 Regular (hoa A–Z, số 0–9) và Bold (A–T). Chưa có chữ thường và dấu tiếng Việt.
