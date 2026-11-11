@@ -316,3 +316,16 @@ Regular (designer_A) + Bold (designer_B); Medium / SemiBold nội suy lại. Ả
 - @ Medium: tay nắm kéo dài khi làm tròn vượt dây cung đoạn 5.8 u → `_snap_smooth` kéo dài tay ≤ 0.9 dây cung đoạn.
 - Sau S32 (8 style): khe nêm 0, tay nắm dài quá dây cung 0, nút gãy 2–12° 0, loe Italic 0 gãy / 0 đổi chiều cong; qa_font 0.
 - Ảnh: `docs/img/s32-italic-khac.png` (W loe trên phải Italic 4 weight trước / sau; đỉnh nhọn N A V v w K M Italic / Bold Italic).
+
+## S33 QA đường cong số 2 và S (designer 11/11: "QA/QA lại đường curve của các glyph số 2, và chữ S")
+
+Đo trên file font, 8 style: gãy ở nút, bước nhảy độ cong (G2) tại nút liền, điểm uốn từng đoạn, lược độ cong toàn glyph.
+
+- **Roman:** đường cong = bản vẽ designer (2: designer_B sau S23; S: vector Figma) — pipeline không đổi profile độ cong. Các bước
+  nhảy G2 có sẵn trong bản vẽ: 2 bụng phải −8.2 → −5.9 ×10⁻³ (bụng "chụm" nhẹ ở cực phải), 2 nách trong đầu nét; S Bold đáy lòng
+  dưới 15.5 → 5.3, lòng trên 17.5 / 10.4 → 6.9 (đã có trong Figma). Không sửa — đề xuất G2 cục bộ (chỉ độ dài tay nắm ở nút, giữ neo
+  + hướng) ở `docs/img/s33-de-xuat-g2-2-S.png`: lược đều hơn nhưng đổi hình thấy được ở mép ngoài S → chờ designer.
+- **Italic (lỗi do S26 bù quang học):** bụng phải 2 Italic nhảy 4.5 → 22; đuôi S Italic có điểm uốn (tay suy biến Roman thành tay
+  thật sau bù). `ital_comp`: tay suy biến ở Roman giữ suy biến; độ dài tay = Roman × tỉ lệ dây cung, kẹp ±8 % quanh độ dài bước dời
+  (giữ phần bù o O e). Sau: profile Italic bám Roman, đuôi S hết uốn, bụng phải 2 hết nhảy; độ dày Italic ±3 %; nút gãy 2–12° chỉ còn
+  góc khấc vát cố ý 5 Medium Italic; loe Italic 0 gãy / 0 đổi chiều cong. Ảnh: `docs/img/s33-italic-2-S.png`.

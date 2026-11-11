@@ -122,12 +122,15 @@ def compensate(d, ang, stem):
         for S0, S1 in zip(before, after):
             for i, (a0, a1) in enumerate(zip(S0, S1)):
                 if a1[0] != 'C': continue
+                c0, c1 = math.dist(a0[1], a0[4]), math.dist(a1[1], a1[4])
+                sc = min(1.3, max(0.7, c1/c0)) if c0 > 1e-6 else 1.0
                 for hi, ai in ((2, 1), (3, 4)):
                     d0 = _unit((a0[hi][0] - a0[ai][0], a0[hi][1] - a0[ai][1]))
-                    if not d0: continue                                    # tay suy biến: giữ suy biến (trùng neo)
-                    L1_, L0_ = math.dist(a1[hi], a1[ai]), math.dist(a0[hi], a0[ai])
-                    L = L1_ if L1_ >= min(8.0, 0.5*L0_) else L0_
-                    L = min(L, 1.5*L0_ + 2.0)                              # giao cạnh gần song song vọt xa: W loe tay 12 → 110 u (xoắn)
+                    if not d0: a1[hi] = a1[ai]; continue                   # tay suy biến ở Roman: GIỮ suy biến (đuôi S Italic uốn)
+                    # 11/11 ("QA lại đường curve 2, S"): độ dài = Roman × tỉ lệ dây cung — độ dài tay từ giao cạnh dời làm độ cong
+                    # dồn (bụng phải 2 Italic 4.5 → 22 ×10⁻³; W loe tay 12 → 110 u)
+                    Lr = math.dist(a0[hi], a0[ai])*sc; L1_ = math.dist(a1[hi], a1[ai])
+                    L = min(max(L1_, 0.92*Lr), 1.08*Lr)                    # giữ phần bù (o O e) nhưng kẹp ±8 % quanh Roman
                     a1[hi] = (a1[ai][0] + d0[0]*L, a1[ai][1] + d0[1]*L)
         # ĐOẠN LOE (nhập cạnh thẳng > 40 u, đầu kia trên đường chân / x-height / cap / descender; dây cung ≤ 110 u): KHÔNG dời từng
         # cạnh (điểm chân và điểm nhập dời khác nhau → dây cung méo, độ cong dồn một đầu: K Italic 0.35 → 1.5) — TỊNH TIẾN NGANG
