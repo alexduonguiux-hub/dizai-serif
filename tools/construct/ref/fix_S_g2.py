@@ -72,10 +72,40 @@ def fair(S0):
             S[i], S[j] = (best[1], best[2]) if best else (ci, cj)
     return S
 
-def run(d):
+# S35 (designer 11/11: "đường cong bụng chỗ này của S regular chưa tròn trịa và mềm mại" — bụng dưới phải): hai đoạn hai bên CỰC
+# PHẢI bụng dưới (mép ngoài + lòng) có tay nắm phía cực phải quá dài (hệ số 0.81 / 0.91 cho đoạn quay 60°, cung tròn 0.62) →
+# mép đứng thẳng một đoạn rồi bẻ gắt ("vuông"). Đưa tay nắm phía cực phải về hệ số cung tròn × ROUND (đầy hơn tròn một chút);
+# vị trí cực phải (bề ngang, độ dày tại đó) giữ nguyên.
+ROUND = 1.05
+BOWL_R = {'S-Regular': [(394.0, 170.0)], 'S-Bold': [(463.0, 182.0)]}   # chỉ MÉP NGOÀI — lòng (elip hẹp đứng) cần tay dài ở cực phải, rút ngắn → lòng nhọn
+def _circ(turn):
+    th = math.radians(turn); return (4/3)*math.tan(th/4)/math.tan(th/2)
+def round_bowl(S, nodes):
+    from compat_masters import unit, angle, tan_in, tan_out
+    n = len(S)
+    for i in range(n):
+        a, b = S[i], S[(i + 1) % n]
+        if a[0] != 'C' or b[0] != 'C': continue
+        P = a[4]
+        if not any(math.dist(P, q) < 3 for q in nodes): continue
+        for sg, hi, ai in ((a, 3, 4), (b, 2, 1)):
+            P0, P3 = sg[1], sg[4]
+            u = unit((sg[2][0] - P0[0], sg[2][1] - P0[1])); v = unit((sg[3][0] - P3[0], sg[3][1] - P3[1]))
+            den = u[0]*v[1] - u[1]*v[0]
+            if abs(den) < 1e-6: continue
+            t = ((P3[0] - P0[0])*v[1] - (P3[1] - P0[1])*v[0])/den; X = (P0[0] + u[0]*t, P0[1] + u[1]*t)
+            box = math.dist(sg[ai], X); turn = angle(tan_in(sg), tan_out(sg))
+            f = min(math.dist(sg[hi], sg[ai])/box, _circ(turn)*ROUND)
+            d = unit((sg[hi][0] - sg[ai][0], sg[hi][1] - sg[ai][1]))
+            sg[hi] = (sg[ai][0] + d[0]*f*box, sg[ai][1] + d[1]*f*box)
+    return S
+
+def run(d, key=None):
     from interp import contours
     from compat import to_d
-    return to_d([fair(S) for S in contours([d])])
+    cs = [[list(x) for x in S] for S in contours([d])]
+    if key in BOWL_R: cs = [round_bowl(S, BOWL_R[key]) for S in cs]
+    return to_d([fair(S) for S in cs])
 
 if __name__ == '__main__':
     from interp import contours
@@ -83,5 +113,5 @@ if __name__ == '__main__':
         p = os.path.join(HERE, f); keep = os.path.join(HERE, f.replace('.json', '_preS34.json'))
         if not os.path.exists(keep): shutil.copy(p, keep)
         src = json.load(open(keep)); D = json.load(open(p))
-        D[k] = [run(src[k][0])]; print(k, 'liền độ cong (≤ %.1f u)' % MAXDEV)
+        D[k] = [run(src[k][0], k)]; print(k, 'bụng dưới tròn + liền độ cong (≤ %.1f u)' % MAXDEV)
         json.dump(D, open(p, 'w'), ensure_ascii=False, separators=(',', ':'))

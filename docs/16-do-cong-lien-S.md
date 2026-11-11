@@ -344,3 +344,15 @@ Bold 15.5 → 5.0, lòng trên 17.5 / 10.4 → 6.9, đỉnh −4.6 → −1.4). 
 - Lệch hình (Hausdorff) S 2.65–2.8 u; s thường (dựng từ S) 3.0–3.4 u; $ Š theo S.
 - QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %.
 - Ảnh: `docs/img/s34-S-lien-do-cong.png` (lược độ cong S Regular / Bold, s Regular, S Italic — trước / sau).
+
+## S35 S bụng dưới phải tròn hơn (designer 11/11: "đường cong bụng chỗ này của S regular chưa tròn trịa và mềm mại")
+
+- Đo hệ số tay nắm (so với hộp tiếp tuyến; cung tròn: 0.552 cho đoạn quay 90°, 0.62 cho 60°): mép ngoài bụng dưới, hai đoạn hai bên
+  cực phải có tay phía cực phải 0.81 (đoạn 60°) và 0.62 (90°) → mép đứng thẳng một đoạn rồi bẻ gắt ("vuông"). Bold 0.79.
+- `ref/fix_S_g2.py` (`round_bowl`, trước bước liền độ cong S34): tay phía cực phải MÉP NGOÀI bụng dưới về hệ số cung tròn × 1.05;
+  cực phải (bề ngang, độ dày tại đó) giữ. Lòng KHÔNG đổi (thử rút cả lòng → lòng nhọn ở cực phải).
+- Sau: Regular 0.81 / 0.62 → 0.65 / 0.58; nút cực phải ngoài: tỉ lệ độ cong hai bên 2.3 → 1.9 (Bold 1.6 → 1.2). s $ § Š š theo S.
+- qa_stroke: kiểm chéo weight cho ký hiệu dựng thẳng từ chữ (¢ € $ ¥) so với chữ gốc (`XBASE`) — ¢ bị báo vì trung vị nhóm dịch
+  khi $ đổi theo S.
+- QA: lệch cấu trúc 0, nội suy gãy 0, qa_outline 0, qa_stroke 0, qa_font 0, kerning va chạm 0; Italic độ dày ±3 %.
+- Ảnh: `docs/img/s35-S-bung-duoi-tron.png` (bụng dưới phải Regular / Bold — trước / sau).

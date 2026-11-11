@@ -88,6 +88,7 @@ FAM = {
 STEMFIG = {'4': '1', 'æ': 'o', 'œ': 'o'}   # æ œ: không có thân → so với o
 # S25 (07/11): ký hiệu dựng từ chữ → so với CHỮ GỐC (trung vị nhóm trộn S, Y, C… báo nhầm $ & ¥ +12 %, € @ −12 %);
 # một cờ độ dày chỉ tính khi CẢ HAI cách đo (T: trục giữa, E: bản đồ khoảng cách) cùng lệch — T dao động ở chữ thân ngắn (a, !, Æ)
+XBASE = {'¢': 'c', '€': 'C', '$': 'S', '¥': 'Y'}   # 11/11: kiểm chéo weight — ¢ theo c (trung vị nhóm dịch khi $ đổi theo S)
 SYMBASE = {'$': 'S', '¥': 'Y', '€': 'C', '@': 'o', '&': '8', '¢': 'c', '≠': '='}
 def _off2(r, q):
     a, b = r['T']/q['T'] - 1, r['E']/q['E'] - 1
@@ -147,6 +148,8 @@ def main():
             k = SPc.kind(c); fam = next((f for f, cs in FAM.items() if c in cs), None)
             if k in ('caps', 'lower', 'fig') and SPc.base(c) == c:
                 rc = STEMFIG.get(c, 'Hn0'[['caps','lower','fig'].index(k)]); rr = M['Bold'][rc]['E']/M['Regular'][rc]['E']
+            elif c in XBASE and M['Bold'].get(XBASE[c]) and M['Regular'].get(XBASE[c]):   # ký hiệu dựng thẳng từ chữ: theo CHỮ GỐC
+                rr = M['Bold'][XBASE[c]]['E']/M['Regular'][XBASE[c]]['E']
             elif fam: rr = float(np.median([M['Bold'][x]['E']/M['Regular'][x]['E'] for x in FAM[fam] if x in M['Bold'] and M['Bold'][x] and M['Regular'][x]]))
             else: continue
             r_ = Ts[-1]/Ts[0]
