@@ -111,10 +111,21 @@ def skew(p, a):
     t = math.tan(math.radians(a)); yc = SPc.XH/2
     return (p[0] + (p[1] - yc)*t, p[1])
 
+def _kends(sg):
+    """độ cong ở hai đầu một đoạn cong (None nếu tay suy biến)"""
+    P0, P1, P2, P3 = sg[1:]
+    def k(u, w):
+        L = math.hypot(*u); return (u[0]*w[1] - u[1]*w[0])/L**3 if L > 1e-6 else None
+    return (k((P1[0] - P0[0], P1[1] - P0[1]), (P2[0] - P1[0], P2[1] - P1[1])),
+            k((P3[0] - P2[0], P3[1] - P2[1]), (P1[0] - P2[0], P1[1] - P2[1])))
+
+
 def _snap_smooth(segs):
     """10/11 ("kiểm tra lại italic các chữ có loe"): làm tròn toạ độ nguyên sau khi nghiêng làm nút liền lệch tới 2–3° (tay nắm
     loe ~20 u, toạ độ không còn nguyên). Neo làm tròn; ở nút liền (< 0.5° trước làm tròn), tay nắm đặt vào điểm NGUYÊN thẳng hàng
-    nhất với tiếp tuyến bên kia (cạnh thẳng, hoặc tay nắm dài hơn), dò độ dài ±4 u quanh độ dài gốc"""
+    nhất với tiếp tuyến bên kia (cạnh thẳng, hoặc tay nắm dài hơn), dò độ dài ±4 u quanh độ dài gốc.
+    S38 (11/11): khi hoà (tiếp tuyến đứng / ngang — mọi độ dài đều thẳng hàng) chọn độ dài GẦN GỐC nhất; trước đây lấy độ dài
+    dò đầu tiên = NGẮN nhất (tay ở cực trị ngắn đi tới 3 u → nhảy độ cong, vd. 2 Regular cực phải 24.6 → 22 u)"""
     def u_(a, b):
         L = math.hypot(b[0] - a[0], b[1] - a[1]); return ((b[0] - a[0])/L, (b[1] - a[1])/L) if L > 1e-9 else None
     def ang(a, b):
@@ -131,7 +142,7 @@ def _snap_smooth(segs):
             if L < 1: continue
             q = (round(P[0] + d[0]*L), round(P[1] + d[1]*L)); v = u_(P, q)
             if not v: continue
-            e = ang(v, d)
+            e = ang(v, d) + 0.001*abs(k)                             # hoà (tiếp tuyến đứng / ngang): độ dài gần gốc nhất
             if bb is None or e < bb[0] - 1e-6: bb = (e, q)
         return bb[1] if bb else None
     def best_lc(Q, P, L0, cmax=1e9):
@@ -150,7 +161,7 @@ def _snap_smooth(segs):
                     if L < 1 or (L0 < 5 and L < min(5, cmax)) or L > max(L0, cmax): continue
                     q = (round(P2[0] + dq[0]*L), round(P2[1] + dq[1]*L)); v = u_(P2, q)
                     if not v: continue
-                    e = ang(v, d2) + 0.3*(abs(ox) + abs(oy))
+                    e = ang(v, d2) + 0.3*(abs(ox) + abs(oy)) + 0.001*abs(k)
                     if bb is None or e < bb[0] - 1e-6: bb = (e, P2, q)
         return bb
     for i in range(n):
@@ -166,6 +177,13 @@ def _snap_smooth(segs):
             # bộ ba (tay vào, neo, tay ra) NGUYÊN thẳng hàng nhất: neo ±1, tay dài ±1, tay ngắn dò theo hướng (tay 3 u: lệch tới 10°)
             sa, sb = segs[i], segs[(i + 1) % n]
             la, lb = math.dist(sa[3], sa[4]), math.dist(sb[2], sb[1])
+            kf = _kends(sa) + _kends(sb)                               # S38: độ cong 4 đầu đoạn (bản số thực) — làm tròn tay nắm sát
+            def kcost(P2, Hin, Hout):                                  # tiếp tuyến làm độ cong đổi tới 30 % (2 Bold cực phải 4.9 → 3.4)
+                kn = _kends(['C', a[1], a[2], Hin, P2]) + _kends(['C', P2, Hout, b[3], b[4]]); c = 0.0
+                for x, y in zip(kf, kn):
+                    if x is None or abs(x) < 5e-4: continue
+                    c += 3.0 if (y is None or x*y <= 0) else abs(math.log(abs(y/x)))
+                return c
             if la < 0.5 or lb < 0.5: continue                         # tay suy biến (trùng neo): giữ
             bb = None
             for ox in (-1, 0, 1):
@@ -181,7 +199,9 @@ def _snap_smooth(segs):
                                     L = (lb if lb >= 5 else min(7.0, cm_)) + k*0.5
                                     if L < 1 or (lb < 5 and L < min(5, cm_)) or L > max(lb, cm_): continue
                                     q = (round(P2[0] + dd[0]*L), round(P2[1] + dd[1]*L)); e = ang(dd, u_(P2, q))
-                                    c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy))
+                                    c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy)) + 0.001*abs(k)
+                                    if bb is not None and c_ - 2.0 > bb[0]: continue
+                                    c_ += 2.0*kcost(P2, H, q)
                                     if bb is None or c_ < bb[0] - 1e-6: bb = (c_, P2, H, q)
                             else:
                                 H = (b[2][0] + hx, b[2][1] + hy); dd = u_(P2, H)
@@ -191,7 +211,9 @@ def _snap_smooth(segs):
                                     L = (la if la >= 5 else min(7.0, cm_)) + k*0.5
                                     if L < 1 or (la < 5 and L < min(5, cm_)) or L > max(la, cm_): continue
                                     q = (round(P2[0] - dd[0]*L), round(P2[1] - dd[1]*L)); e = ang(u_(q, P2), dd)
-                                    c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy))
+                                    c_ = e + 0.25*(abs(ox) + abs(oy) + abs(hx) + abs(hy)) + 0.001*abs(k)
+                                    if bb is not None and c_ - 2.0 > bb[0]: continue
+                                    c_ += 2.0*kcost(P2, q, H)
                                     if bb is None or c_ < bb[0] - 1e-6: bb = (c_, P2, q, H)
             if bb:
                 _, P2, Hin, Hout = bb; a[3] = Hin; a[4] = P2; b[1] = P2; b[2] = Hout
@@ -251,6 +273,18 @@ def draw(glyph, cs, dx, ang):
 
 import ital_comp as IC
 _STEM = {}
+_PAIR = {}
+from weights import TW
+def _lerp_d(a, b, t):
+    """nội suy hai chuỗi path cùng cấu trúc (None nếu khác)"""
+    ta, tb = re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', a), re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', b)
+    if len(ta) != len(tb) or any((x in 'MLCZ') != (y in 'MLCZ') or (x in 'MLCZ' and x != y) for x, y in zip(ta, tb)): return None
+    out = []
+    for x, y in zip(ta, tb):
+        out.append(x if x in 'MLCZ' else '%.3f' % (float(x) + (float(y) - float(x))*t))
+    d = ''
+    for tok in out: d += tok if tok in 'MLCZ' else (' ' if d and d[-1] not in 'MLCZ' else '') + tok
+    return d
 def pair_fix(fR, fB):
     """10/11 ("sửa luôn mấy chỗ gãy x ¥ còn lại"): Medium / SemiBold là NỘI SUY của hai master đã làm tròn số nguyên — mỗi master
     liền nhưng tỉ lệ tay nắm / cạnh lệch nhau sau làm tròn → bản nội suy gãy 2–2.4° (x, ¥). Ở mỗi nút liền (< 1.5° ở cả hai
@@ -341,7 +375,16 @@ def master(w, ang, FL, groups, kern):
             d_ = O[k]
             if ang:                                                # S26: bù quang học trước khi nghiêng (ital_comp.py)
                 if w not in _STEM: _STEM[w] = IC.stem_of(O[f'H-{w}'])
-                d_ = IC.compensate(d_, ang, _STEM[w])
+                d_ = None
+                if f'{c}-Regular' in O and f'{c}-Bold' in O:      # S38: hai master bù CHUNG (nội suy liền); Medium / SemiBold Italic
+                    if c not in _PAIR:                             # = nội suy hai master đã bù (khớp bản variable, liền độ cong)
+                        for w2 in ('Regular', 'Bold'):
+                            if w2 not in _STEM: _STEM[w2] = IC.stem_of(O[f'H-{w2}'])
+                        _PAIR[c] = IC.compensate_pair(O[f'{c}-Regular'], O[f'{c}-Bold'], ang, _STEM['Regular'], _STEM['Bold'],
+                                                      smooth=c != '@')   # @: góc cắt bụng cố ý (designer 10/11)
+                    if w in ('Regular', 'Bold'): d_ = _PAIR[c][0 if w == 'Regular' else 1]
+                    else: d_ = _lerp_d(*_PAIR[c], TW[w])
+                if d_ is None: d_ = IC.compensate(O[k], ang, _STEM[w], smooth=c != '@')
             cs = parse(d_)
             for j in FL.get(c, []): cs[j] = reverse(cs[j])
             draw(g, cs, SP[w][c]['dx'], ang)

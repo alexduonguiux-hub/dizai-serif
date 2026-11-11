@@ -369,3 +369,43 @@ Bold 15.5 → 5.0, lòng trên 17.5 / 10.4 → 6.9, đỉnh −4.6 → −1.4). 
   (luật), 3 trên nhẹ hơn 3 dưới.
 - ? ¿ và dấu hỏi vẫn dựng từ số 2 gốc (`designer_Q`), không đổi.
 - Ảnh: `docs/img/s37-so-2-figma.png` (Figma gốc / v0.910 / S37, Regular và Bold).
+
+## S38 Số 2 liền độ cong: mép ngoài bụng, bước xuất font, Italic (designer 11/11: "cảm giác đường cong vẫn còn gợn chứ không có mượt")
+
+Đo độ cong dọc mép ngoài bụng số 2 (từ góc đầu nét trái qua đỉnh, vai, cực phải, tới chỗ vào nét chéo). Ba nguồn gây gợn:
+
+1. **Bản vẽ.** Độ cong lên, tụt, rồi lên lại: Regular −6.1 → −2.9 → −8.2 ×10⁻³, Bold −5.9 → −4.0 → −5.8. Ngay đỉnh còn nhảy −2.2 → 0.
+   `ref/fix_2_fair.py` (từ bản lưu `designer_B_pre2fair.json`, chạy SAU `fix_fig_weight.py`) làm mượt cả chuỗi:
+   - cố định: góc đầu nét, điểm vào nét chéo, đỉnh (y = 711.3, tiếp tuyến ngang), cực phải (bề ngang, tiếp tuyến đứng);
+   - được đổi: độ dài tay nắm; đỉnh và cực phải trượt trên tiếp tuyến của chúng; nút vai dời ≤ 10 u, xoay ≤ 6°;
+   - mục tiêu: Σ (dκ/ds)², phạt nhảy độ cong tại nút, phạt độ cong tụt rồi lên lại (chỉ một đỉnh), cấm đổi chiều cong;
+   - lệch so với bản vẽ ≤ 4 u (Regular) / 3 u (Bold).
+   Kết quả: độ cong tăng đều từ đỉnh (−2.4) lên vai (−5.5), giữ đều qua cực phải, rồi giảm dần; không nút nào nhảy.
+2. **Xuất font** (`export_font._snap_smooth`). Khi làm tròn toạ độ, bước này dò độ dài tay nắm ±3 u. Ở nút có tiếp tuyến đứng hoặc
+   ngang, mọi độ dài đều thẳng hàng như nhau, nên trước đây lấy độ dài dò đầu tiên, tức NGẮN nhất (2 Regular cực phải: tay 24.6 → 22 u,
+   độ cong 4.8 → 6.9). Lỗi này áp cho mọi glyph. Sửa:
+   - khi hoà, chọn độ dài gần gốc nhất;
+   - ở nút liền C–C, chọn điểm nguyên còn tính cả sai lệch độ cong ở 4 đầu hai đoạn (làm tròn tay nắm sát tiếp tuyến làm độ cong
+     đổi tới 30 %: 2 Bold cực phải 4.9 → 3.4).
+3. **Italic** (`ital_comp`).
+   - Bước bù dời điểm điều khiển không đều, lại ép hướng tay nắm về đúng hướng bản đứng → cực phải 2 Bold Italic độ cong gấp 1.8.
+     `_refit` dựng lại mỗi đoạn cong như đường song song mượt của đoạn bản đứng: độ dời pháp tuyến được làm trơn bằng spline bậc 3
+     theo độ dài cung qua cả chuỗi đoạn nối liền; neo ở nút liền đặt tại neo bản đứng cộng độ dời; tiếp tuyến ở nút liền trong chuỗi
+     xoay theo đạo hàm độ dời. Ở góc thật vẫn giữ hướng bản đứng (S28).
+   - Phép nghiêng giữ tỉ lệ độ cong hai bên mỗi nút, nên `_g2` chỉnh độ dài tay nắm cho tỉ lệ về như bản đứng. Chỉ nhận thay đổi làm
+     giảm tổng lệch ở nút đó và hai nút bên cạnh.
+   - Hai master Italic bù cùng nhau (`compensate_pair`): nút mà bản nội suy gãy thì đồng bộ tỉ lệ tay như compat_masters.
+   - Medium / SemiBold Italic tĩnh = nội suy hai master Italic đã bù (khớp bản variable).
+   - @ giữ góc cắt bụng cố ý (không khớp lại).
+
+Tỉ lệ độ cong lớn nhất ở các nút mép ngoài số 2 (trên file OTF, 1.0 = liền):
+
+| | Regular | Medium | SemiBold | Bold | Italic | Medium It. | SemiBold It. | Bold It. |
+|---|---|---|---|---|---|---|---|---|
+| bản vẽ mượt (1), bước xuất cũ | 1.43 | 1.50 | 1.48 | 1.27 | 1.65 | – | – | 2.91 |
+| + sửa hoà khi làm tròn (2a) | 1.14 | 1.27 | 1.20 | 1.41 | 1.65 | 1.94 | 3.10 | 2.91 |
+| S38 đủ (1 + 2 + 3) | 1.06 | 1.07 | 1.20 | 1.25 | 1.05 | 1.41 | 1.55 | 1.60 |
+
+QA: gãy 2–12° trên 8 file OTF còn 2 nút 2–3°, không nút nào > 3° (trước: khấc vát 5 Medium Italic 11.8°). Loe Italic: 0 gãy / 0 đổi chiều
+cong. Độ dày Italic so với bản đứng: nét chính trong khoảng ±3.5 %. qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font: 0 lỗi.
+Ảnh: `docs/img/s38-so-2-lien-do-cong.png` (lược độ cong mép ngoài 2 Regular / Bold, trước / sau).
