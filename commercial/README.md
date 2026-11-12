@@ -42,11 +42,11 @@ Giá đặt theo mặt bằng font indie một họ 8 kiểu có variable. Giá 
 
    | Product | File đính kèm (dist/commercial/) | Variant |
    |---|---|---|
-   | AnNam Serif — Desktop License | AnNamSerif-Desktop-v0.914.zip | 1–2 / 3–5 / 6–10 máy |
-   | AnNam Serif — Web License | AnNamSerif-Web-v0.914.zip | Small / Medium / Large |
-   | AnNam Serif — App / Game License | AnNamSerif-AppGame-v0.914.zip | Indie / Studio |
-   | AnNam Serif — Logo / Brand License | AnNamSerif-LogoBrand-v0.914.zip | Small Business / Enterprise |
-   | (tuỳ chọn) AnNam Serif — Complete | AnNamSerif-Complete-v0.914.zip | gộp 4 gói (biến thể nhỏ nhất), giảm ~20 % |
+   | AnNam Serif — Desktop License | AnNamSerif-Desktop-v0.915.zip | 1–2 / 3–5 / 6–10 máy |
+   | AnNam Serif — Web License | AnNamSerif-Web-v0.915.zip | Small / Medium / Large |
+   | AnNam Serif — App / Game License | AnNamSerif-AppGame-v0.915.zip | Indie / Studio |
+   | AnNam Serif — Logo / Brand License | AnNamSerif-LogoBrand-v0.915.zip | Small Business / Enterprise |
+   | (tuỳ chọn) AnNam Serif — Complete | AnNamSerif-Complete-v0.915.zip | gộp 4 gói (biến thể nhỏ nhất), giảm ~20 % |
 
    Nếu file chỉ gắn được ở cấp product, mọi variant cùng nhận một zip. Gói zip đã làm như vậy.
 3. Mô tả product: dán phần "Giới hạn" của biến thể và link EULA (EN/VI).
@@ -58,7 +58,7 @@ Giá đặt theo mặt bằng font indie một họ 8 kiểu có variable. Giá 
 
 ## 4. Bản dùng thử (Trial)
 
-`dist/AnNamSerif-Trial-v0.914.zip` (40 KB): Regular, Bold, Italic; chỉ Latin cơ bản (96 ký tự, **không có tiếng Việt**).
+`dist/AnNamSerif-Trial-v0.915.zip` (40 KB): Regular, Bold, Italic; chỉ Latin cơ bản (96 ký tự, **không có tiếng Việt**).
 - Tên họ "AnNam Serif Trial", PS `AnNamSerifTrial-*`, nên không đụng bản thương mại khi cài cùng máy.
 - fsType 2 (không cho nhúng vào PDF/ứng dụng).
 - Kèm EULA-Trial (song ngữ).
