@@ -465,3 +465,16 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
   - Cặp đổi (Bold): ST −35 → −30, SV −45 → −40, SO −15 → −10, SS −10 → 0, as −15 → −10.
 - QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; va chạm kerning 0; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy.
 - Ảnh: `docs/img/s40-S-figma.png` (S cũ / Figma chồng bản dựng / S mới), `docs/img/s40-S-weights.png` (S s $ qua các weight, trước / sau).
+
+## S41 W hoa rộng ra, lòng thoáng hơn (designer 12/11: "Điều chỉnh lại bề rộng chữ W hoa để spacing giữa các glyph của nó rộng ra xíu không bị nặng"; "chữ w thì ổn")
+
+`ref/widen_W.py` (từ bản lưu `designer_{A,B}_preW.json`): W = 4 nét chéo thẳng + mặt cắt phẳng + 4 cụm loe. Nới lòng mà nét KHÔNG đậm lên:
+1. mỗi mép nét giãn ngang quanh tâm chữ (× 1.061 Regular, × 1.062 Bold) → tâm nét, đỉnh, đáy giãn ra;
+2. dời mép vào phía mực e = (f·w − w·cosθ / cosθ') / 2 (w: bề ngang nét đo tới mép song song đối diện) → bề dày đo vuông góc giữ
+   nguyên (qa_stroke: Regular 102.5 → 102.5, Bold 141.8 → 141.8);
+3. neo giữa các mép, và giữa mép với đường đỉnh / đáy: giao điểm lại (mặt cắt đáy V giữ dáng);
+4. cụm loe dời + xoay cứng theo mép mang nó, rồi co dọc quanh điểm gắn cho đầu chạm đúng y = 700 (nút trong cụm vẫn liền).
+- Bề ngang thực +40 u: Regular 780 → 820, Bold 801 → 841; advance 820 → 860 / 850 → 889. Không nút gãy mới.
+- w thường giữ nguyên: w dựng từ v (`w_from_v`), không từ W.
+- Kerning tính lại: Wo / We / W. / OW / WO … chặt thêm 5 u (W rộng hơn), WA / AW giữ.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s41-W-rong.png`.
