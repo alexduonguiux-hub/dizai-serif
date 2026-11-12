@@ -1,6 +1,6 @@
 """Bản dùng thử AnNam Serif Trial: Regular + Bold + Italic, chỉ Basic Latin (không dấu Việt), dùng thử cá nhân.
 
-Ra dist/AnNamSerif-Trial-v0.913.zip (OTF + EULA Trial + README). Đổi tên họ để không đụng bản thương mại khi cài cùng máy.
+Ra dist/AnNamSerif-Trial-v0.914.zip (OTF + EULA Trial + README). Đổi tên họ để không đụng bản thương mại khi cài cùng máy.
 """
 import os, sys, zipfile, io
 from fontTools.ttLib import TTFont
@@ -33,7 +33,7 @@ def build(style):
     b = io.BytesIO(); t.save(b); return f'{TPS}-{style}.otf', b.getvalue()
 
 
-README = """AnNam Serif Trial — Version 0.913
+README = """AnNam Serif Trial — Version 0.914
 Design: Đìzai Studio
 
 This trial contains Regular, Bold and Italic with the Basic Latin character set only
@@ -48,7 +48,7 @@ is available under a Desktop, Web, App / Game or Logo / Brand license.
 
 if __name__ == '__main__':
     os.makedirs(DIST, exist_ok=True)
-    zp = os.path.join(DIST, 'AnNamSerif-Trial-v0.913.zip')
+    zp = os.path.join(DIST, 'AnNamSerif-Trial-v0.914.zip')
     with zipfile.ZipFile(zp, 'w', zipfile.ZIP_DEFLATED) as z:
         for st in STYLES:
             n, data = build(st); z.writestr(f'AnNamSerif-Trial/{n}', data)
