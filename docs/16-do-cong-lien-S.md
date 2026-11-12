@@ -443,3 +443,25 @@ chỗ nối của bản dựng s (derive), không phải chuỗi đã làm mư�
 cong gắt gặp đoạn gần thẳng, mỗi đoạn ~30 u); hình nhìn như trước.
 QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy.
 Ảnh: `docs/img/s39-S-lien-do-cong.png` (lược độ cong S Regular / Bold, trước / sau).
+
+## S40 S Regular theo bản vẽ mới + các weight suy từ Regular (designer 12/11: "Update lại đường cong bụng chữ S", "Update lại lần nữa", "Tôi có update nét bụng 1 chút", "dựa trên S regular tính lại cho các weight khác", "tính lại kerning cho chữ S và các chữ khác")
+
+- **Nguồn:** Figma 2145:1228 → vector 2179:2, bản cập nhật cuối: tay trên rộng thêm, lòng bụng dưới chỉnh ±1 đv. Quy đổi theo chiều cao
+  S (đáy −14.2, đỉnh 711.3): hệ số 3.0324 (mặt cắt đầu nét 120 u, bản cũ 119.3). S rộng 403 u (bản cũ 394).
+- **Dựng lại** (`ref/fix_S_figma2.py`). Vector mới 39 đoạn, nút gãy 1–3.1° → dựng lại đúng cấu trúc 14 đoạn của S Bold:
+  - neo ở cực trị, điểm uốn sống, góc đầu nét của bản vẽ mới;
+  - mỗi đoạn một cubic, tay khớp bình phương tối thiểu (lệch ≤ 2.2 u);
+  - làm mượt độ cong 4 chuỗi như S39 (lệch thêm ≤ 2 u). Mọi nút liền độ cong (tỉ lệ ≈ 1.0).
+  - Thay cho S34 / S35 / S39 ở S Regular (`fix_S_g2.py`, `fix_S_fair.py` giờ chỉ chạy S Bold).
+- **S Bold** (`ref/fix_S_bold_from_reg.py`) = S Regular mới + (S Bold cũ − S Regular cũ), cộng theo từng điểm điều khiển:
+  - giữ phần chênh weight designer đã duyệt (độ đậm, tương phản, đầu nét, S19), dáng bụng theo bản mới;
+  - hai tay ở mỗi nút liền đưa về chung hướng (phân giác), rồi làm mượt như S39;
+  - Medium / SemiBold = nội suy; Italic qua bước bù S38; s $ § Š dựng lại theo S.
+- **s** (`lower/derive.py` `_merge_smooth`): sau phép hợp + nét viền, gộp cặp đoạn cong nối liền nếu một cubic khớp (sai < 0.6 u). Bản
+  boolean để lại điểm ở chỗ nối khác nhau giữa Regular / Bold (s Bold thừa điểm sát cực trái) → ghép lệch nút, s Medium gãy 11°.
+- **Spacing / kerning tính lại toàn bộ** (`spacing.py`):
+  - S rộng thêm 8 u (Regular), 7 u (Bold); s +6 / +7; $ +9; § +6.
+  - Cặp đổi (Regular): AS −50 → −55, SO −15 → −10, oS −15 → −20, Sa 10 → 5, S" −10 → 0.
+  - Cặp đổi (Bold): ST −35 → −30, SV −45 → −40, SO −15 → −10, SS −10 → 0, as −15 → −10.
+- QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; va chạm kerning 0; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy.
+- Ảnh: `docs/img/s40-S-figma.png` (S cũ / Figma chồng bản dựng / S mới), `docs/img/s40-S-weights.png` (S s $ qua các weight, trước / sau).

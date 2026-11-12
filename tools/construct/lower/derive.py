@@ -13,7 +13,7 @@ Nét (u):          Regular   Bold (theo mẫu a Bold)
   chéo mảnh t     44        56.7     (+12.7 như nét mảnh vòng Bold)
   ngang mảnh H    39.6      52.3     (thanh e)
 """
-import sys, os, json, math
+import math, sys, os, json
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
 import pathops
 import lower as L
@@ -305,7 +305,37 @@ def s_from_S(w):
     p = V.xform(Sp, lambda x, y: ((x - x0)*sx, (y - y0)*sy - 11.3 + d))
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 8)   # miter 4 vát cụt mũi loe nhọn (designer 05/11: 'đỉnh loe không nhọn'); 40 kéo mũi thành kim
     stp.convertConicsToQuads()
-    return L._q2c(V.U(p, L._q2c(stp)))
+    return _merge_smooth(L._q2c(V.U(p, L._q2c(stp))))
+
+
+def _merge_smooth(path, tol=0.6, kink=1.0):
+    """S40 (12/11): gộp cặp đoạn cong nối LIỀN (< 1°) khi một cubic khớp được (sai < 0.6 u) — phép hợp + nét viền để lại điểm ở
+    đường nối khác nhau giữa Regular / Bold (s Bold thừa điểm sát cực trái) → compat ghép lệch nút, s Medium gãy 11°"""
+    sys.path.insert(0, os.path.join(HERE, '..')); import compat_masters as CM
+    out = pathops.Path(); pen = out.getPen()
+    for c in path.contours:
+        segs = []; cur = None
+        for v, ps in c.segments:
+            if v == 'moveTo': cur = ps[0]
+            elif v == 'lineTo': segs.append(['L', cur, ps[0]]); cur = ps[0]
+            elif v == 'curveTo': segs.append(['C', cur, *ps]); cur = ps[-1]
+        if segs and math.dist(segs[-1][-1], segs[0][1]) > 1e-6: segs.append(['L', segs[-1][-1], segs[0][1]])
+        changed = True
+        while changed and len(segs) > 3:
+            changed = False; n = len(segs)
+            for i in range(n):
+                j = (i + 1) % n; a, b = segs[i], segs[j]
+                if a[0] != 'C' or b[0] != 'C' or j == 0: continue
+                if CM.angle(CM.tan_out(a), CM.tan_in(b)) > kink: continue
+                m, err = CM.fit(a, b)
+                if m is not None and err < tol: segs[i] = m; del segs[j]; changed = True; break
+        if not segs: continue
+        pen.moveTo(segs[0][1])
+        for sg in segs:
+            if sg[0] == 'L': pen.lineTo(sg[2])
+            else: pen.curveTo(sg[2], sg[3], sg[4])
+        pen.closePath()
+    return out
 
 # v w x y k z: CHỮ HOA của designer thu nhỏ (designer 05/11: "chữ z cũng không đồng bộ style do thiếu module",
 # "đồng bộ v w x y k theo chữ hoa") — giữ loe S5, đỉnh, mỏ của chữ hoa; thu ngang CAP_SX, dọc về x-height, bù nét

@@ -113,7 +113,7 @@ def run(d, key):
     return to_d(cs)
 
 if __name__ == '__main__':
-    for f, k in (('designer_A.json', 'S-Regular'), ('designer_B.json', 'S-Bold')):
+    for f, k in (('designer_B.json', 'S-Bold'),):        # S40: S Regular = bản vẽ mới 12/11 (fix_S_figma2.py)
         if len(sys.argv) > 1 and k not in sys.argv[1:]: continue
         p = os.path.join(HERE, f); keep = os.path.join(HERE, f.replace('.json', '_preSfair.json'))
         if not os.path.exists(keep): shutil.copy(p, keep)

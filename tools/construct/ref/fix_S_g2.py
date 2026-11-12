@@ -109,7 +109,7 @@ def run(d, key=None):
 
 if __name__ == '__main__':
     from interp import contours
-    for f, k in (('designer_A.json', 'S-Regular'), ('designer_B.json', 'S-Bold')):
+    for f, k in (('designer_B.json', 'S-Bold'),):        # S40: S Regular = bản vẽ mới 12/11 (fix_S_figma2.py)
         p = os.path.join(HERE, f); keep = os.path.join(HERE, f.replace('.json', '_preS34.json'))
         if not os.path.exists(keep): shutil.copy(p, keep)
         src = json.load(open(keep)); D = json.load(open(p))
