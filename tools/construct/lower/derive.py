@@ -229,7 +229,7 @@ def glyph(ch, w):
     if ch == 'u':
         n = n_like(w); return N(V.xform(n, lambda x, y: (-x, XH - y)))
     if ch == 'r': return V.U(vstem(0, v, 0, XH, 'tlblbr'), c_half(w, True, C_KX['r']))
-    if ch == 'f': return L.raw('f', w)                       # khối r nâng lên ascender + thanh t (lower.py)
+    if ch == 'f': return fix_f_hook(L.raw('f', w))           # khối r nâng lên ascender + thanh t (lower.py); S42 móc trên
     if ch == 'j':                                            # móc t lật ngang + đỉnh thân t (lower.py) + chấm
         o = L.raw('j', w); return V.U(o, dot(o.bounds[2] - 8*S - v/2, w))
     h = (v - W['Regular']['V'])/2                           # thân Bold dày đều hai phía
@@ -306,6 +306,100 @@ def s_from_S(w):
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 8)   # miter 4 vát cụt mũi loe nhọn (designer 05/11: 'đỉnh loe không nhọn'); 40 kéo mũi thành kim
     stp.convertConicsToQuads()
     return _merge_smooth(L._q2c(V.U(p, L._q2c(stp))))
+
+
+def _segs_of(path):
+    out = []
+    for c in path.contours:
+        segs = []; cur = None
+        for v, ps in c.segments:
+            if v == 'moveTo': cur = ps[0]
+            elif v == 'lineTo': segs.append(['L', cur, ps[0]]); cur = ps[0]
+            elif v == 'curveTo': segs.append(['C', cur, *ps]); cur = ps[-1]
+        if segs and math.dist(segs[-1][-1], segs[0][1]) > 1e-6: segs.append(['L', segs[-1][-1], segs[0][1]])
+        out.append(segs)
+    return out
+
+
+def _path_of(cs):
+    out = pathops.Path(); pen = out.getPen()
+    for segs in cs:
+        pen.moveTo(segs[0][1])
+        for sg in segs:
+            if sg[0] == 'L': pen.lineTo(sg[2])
+            else: pen.curveTo(sg[2], sg[3], sg[4])
+        pen.closePath()
+    return out
+
+
+def fix_f_hook(path):
+    """S42 (designer 13/11: "Móc trên chữ f lỗi. Đường kẻ đỏ … lẽ ra nó nên là như vậy"):
+      - MÉP NGOÀI móc: hai đoạn (đầu móc → đỉnh → mép trái thân) gãy độ cong gần đầu móc → MỘT cung: tiếp tuyến đứng ở mép thân,
+        khớp bình phương tối thiểu đoạn dài (đỉnh → thân), đi qua góc đầu móc; hướng tại đầu móc dò để sai nhỏ nhất;
+      - MÉP PHẢI thân: đoạn trên thanh ngang lõm vào ~2 u → thẳng đứng tới điểm bắt đầu lượn, rồi cung tròn tiếp tuyến tới đỉnh lòng
+        móc (giữ hướng nối sang đoạn lòng tiếp theo)"""
+    sys.path.insert(0, os.path.join(HERE, '..')); import compat_masters as CM
+    cs = _segs_of(path); S = max(cs, key=len); n = len(S)
+    pts = [sg[-1] for sg in S]; top = max(range(n), key=lambda i: pts[i][1])      # đoạn kết thúc tại đỉnh móc
+    a, b = S[top], S[(top + 1) % n]                                                 # a: đầu móc → đỉnh; b: đỉnh → mép trái thân
+    assert a[0] == b[0] == 'C' and abs(b[4][0] - b[3][0]) < 0.5, 'f: không nhận ra mép ngoài móc'
+    P0, P3 = a[1], b[4]
+    import numpy as np
+    from scipy.optimize import minimize
+    samp = np.array([CM.bez(b, k/40) for k in range(41)] + [CM.bez(a, k/40) for k in range(41)])
+    TT = np.linspace(0, 1, 61)
+    def cub(x):
+        th = math.radians(x[0]); u0 = (-math.cos(th), math.sin(th))
+        return ['C', P0, (P0[0] + u0[0]*x[1], P0[1] + u0[1]*x[1]), (P3[0], P3[1] + x[2]), P3]
+    def kseq(c):
+        P = np.array(c[1:], float); out = []
+        for t in TT:
+            u = 1 - t; d1 = 3*u*u*(P[1] - P[0]) + 6*u*t*(P[2] - P[1]) + 3*t*t*(P[3] - P[2]); d2 = 6*u*(P[2] - 2*P[1] + P[0]) + 6*t*(P[3] - 2*P[2] + P[1])
+            out.append(abs(d1[0]*d2[1] - d1[1]*d2[0])/max(np.hypot(*d1), 1e-9)**3*1e3)
+        return np.array(out)
+    def cost(x):
+        if x[1] < 5 or x[2] < 5: return 1e9
+        c = cub(x); Q = np.array([CM.bez(c, t) for t in TT])
+        dev = np.max(np.min(np.hypot(*(samp[:, None, :] - Q[None]).transpose(2, 0, 1)), 1))
+        k = kseq(c); pre = np.maximum.accumulate(k); post = np.maximum.accumulate(k[::-1])[::-1]
+        dip = float(np.sum(np.maximum(0, np.minimum(pre, post) - k)**2))
+        ytop = max(q[1] for q in Q)
+        return dev + 2*dip + 20*max(0, ytop - 708.0)
+    best = min((cost([d, la, lb]), [d, la, lb]) for d in range(-30, 31, 3) for la in range(20, 160, 10) for lb in range(20, 160, 10))
+    r = minimize(cost, best[1], method='Nelder-Mead', options=dict(xatol=1e-3, fatol=1e-5, maxiter=4000))
+    c = cub(r.x)
+    S[top] = c; del S[(top + 1) % n]
+    if (top + 1) % n == 0: S.insert(0, S.pop())
+    n = len(S)
+    # mép phải thân: từ thanh ngang (y = mặt trên thanh) đi lên tới ĐỈNH LÒNG móc E (điểm đầu đoạn cong xuống mặt cắt dưới đầu móc)
+    tv = next(i for i in range(n) if S[i][0] == 'L' and abs(S[i][1][0] - S[i][2][0]) < 0.5 and S[i][2][1] - S[i][1][1] > 40
+              and S[i][1][1] > 500)                                                  # mặt cắt đầu móc (đứng, đi lên)
+    j = (tv - 2) % n; E = S[j][4]; h = S[j][3]                                        # đoạn kết thúc tại E
+    k = j
+    while not (S[k][0] == 'L' and abs(S[k][1][0] - S[k][2][0]) < 0.5 and S[k][2][1] > S[k][1][1]): k = (k - 1) % n
+    xr, yb = S[k][1]
+    nx = S[(j + 1) % n]; Tb = nx[4]                                                    # đoạn lòng E → mặt cắt dưới đầu móc Tb
+    d1 = (Tb[0] - nx[3][0], Tb[1] - nx[3][1]); L1 = math.hypot(*d1); d1 = (d1[0]/L1, d1[1]/L1)   # hướng tới Tb (giữ góc mặt cắt)
+    sampI = np.array([CM.bez(S[j], q/30) for q in range(31)] + [CM.bez(nx, q/30) for q in range(31)])
+    sampI = sampI[sampI[:, 1] > E[1] - 45]                                            # phần lòng gần đỉnh (mép thân thấp hơn: thẳng)
+    def cubI(x):
+        ys = x[0]; return ['C', (xr, ys), (xr, ys + x[1]), (Tb[0] - d1[0]*x[2], Tb[1] - d1[1]*x[2]), Tb]
+    def costI(x):
+        if x[1] < 3 or x[2] < 3 or x[0] < yb + 5: return 1e9
+        c = cubI(x); Q = np.array([CM.bez(c, t) for t in TT])
+        dev = np.max(np.min(np.hypot(*(sampI[:, None, :] - Q[None]).transpose(2, 0, 1)), 1))
+        k = kseq(c); pre = np.maximum.accumulate(k); post = np.maximum.accumulate(k[::-1])[::-1]
+        return dev + 2*float(np.sum(np.maximum(0, np.minimum(pre, post) - k)**2))
+    bI = min((costI([y0, l1, l2]), [y0, l1, l2]) for y0 in np.arange(E[1] - 80, E[1] - 5, 5) for l1 in range(5, 80, 5) for l2 in range(5, 80, 5))
+    rI = minimize(costI, bI[1], method='Nelder-Mead', options=dict(xatol=1e-3, fatol=1e-5, maxiter=4000))
+    cI = cubI(rI.x)
+    new = [['L', (xr, yb), (xr, rI.x[0])], cI]
+    idx = [(k + q) % n for q in range(((j + 1 - k) % n) + 1)]                          # thay L, …, đoạn tới E, đoạn E → Tb
+    S2 = [sg for q, sg in enumerate(S) if q not in idx]
+    ins = sorted(idx)[0] if not (0 in idx and n - 1 in idx) else 0
+    S = S2[:ins] + new + S2[ins:]
+    for q in range(len(S)): S[q][1] = S[q - 1][-1]
+    big = max(cs, key=len); return _path_of([S if c_ is big else c_ for c_ in cs])
 
 
 def _merge_smooth(path, tol=0.6, kink=1.0):

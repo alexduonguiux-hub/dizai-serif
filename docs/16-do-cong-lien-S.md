@@ -478,3 +478,18 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - w thường giữ nguyên: w dựng từ v (`w_from_v`), không từ W.
 - Kerning tính lại: Wo / We / W. / OW / WO … chặt thêm 5 u (W rộng hơn), WA / AW giữ.
 - QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s41-W-rong.png`.
+
+## S42 Loe chân hai mặt + móc trên chữ f (designer 13/11: "Kiểm tra lại chân loe các chữ thẳng xem 2 mặt loe đã đồng bộ chưa", "Móc trên chữ f lỗi. Đường kẻ đỏ tôi kẻ là cho bạn thấy lẽ ra nó nên là như vậy")
+
+- **Quét loe chân.** Loe = đoạn cong nối mép thân đứng với đường chân. Hai mặt của cùng thân so sau khi lật gương: độ vươn, chiều cao,
+  tay nắm. Kết quả: 207 thân × 4 weight khớp ≤ 0.6 u (k 0.8 u ở tay nắm — không thấy được, giữ).
+  - Thân chỉ có loe một bên đều hợp lý (bên kia nối thanh / bụng: B D E L Þ, a d u …), trừ **1 Bold**: mép phải đi thẳng xuống chân
+    (Regular loe hai bên) → Medium / SemiBold nội suy ra vệt loe phải cao 165 / 260 u.
+  - `ref/fix_1_bold_flare.py`: thêm loe phải = ảnh gương loe trái (vươn 22.7, cao 69.8). Sau: 208 thân, 0 lệch.
+- **Móc f** (`lower/derive.py` `fix_f_hook`, mọi weight):
+  - mép ngoài: hai đoạn (đầu móc → đỉnh → thân) gãy độ cong sát đầu móc → MỘT cung (tiếp tuyến đứng ở mép thân; độ cong một đỉnh;
+    đỉnh 707.4 như cũ; lệch ≤ ~2 u so với bản cũ);
+  - mép phải thân: lõm vào ~2 u ở đoạn trên thanh → thẳng đứng tới chỗ uốn, rồi MỘT đường cong tới mặt cắt dưới đầu móc (bản thô
+    gãy 10° ở đỉnh lòng, độ cong 32 → 21 → 34). Độ cong lòng giờ một đỉnh.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s42-f-moc.png` (lược độ cong, đường đỏ = mép thân thẳng),
+  `docs/img/s42-f-1.png` (f 1 fi qua các weight, trước / sau).
