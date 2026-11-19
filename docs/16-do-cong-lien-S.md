@@ -537,3 +537,20 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - d q p: cân như S45 (hai trục × 0.96 / × 1.07–1.10, giữ hướng nghiêng); thêm ràng buộc lòng CẮT VÀO THÂN không nông hơn bản vẽ
   (dời lòng ra khỏi thân làm lòng chạm hờ mép thân → góc lưng chừng 13–17°, q Medium–Bold gãy). Nét nhấn 96.4, nét mảnh 42.1.
 - QA: 0 lỗi; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s45-a-goc.png`, `docs/img/s45-can-bung.png`.
+
+## S46 Cân nét mảnh / nét dày chữ thường + số (designer 19/11: "audit lại toàn bộ cân bằng weight… các nét mỏng và dày nhất luôn bằng nhau" — "không điều chỉnh chữ hoa… chữ thường và số")
+
+- Audit (trục giữa, bỏ khớp + đầu nét; `stroke_balance.measure`) trên v0.917, Regular: thân chữ thường 102 đều; nét mảnh bụng 40–44,
+  số 0 5 6 9 chỉ 29–31, 3 7 8 36; nét tròn e a s 94–98 (nhẹ hơn thân), số 0 6 7 9 107–111 (nặng). Bold: nét mảnh 48–71, e 114.
+- Chuẩn designer chọn: **một nét mảnh chung** chữ thường + số = 42 / 48.7 / 55.3 / 62 (Regular → Bold); **nét tròn = thân + 2 %** =
+  104 / 111 / 119 / 128 (o e s c g); số = 106 / 117 / 129 / 140.
+- `tools/construct/stroke_balance.py` (luật, chạy trong pipeline sau `lower.py` và `derive.py`; số: chạy một lần từ ảnh chụp
+  `ref/designer_B_preS46.json`): chỉ dời điểm neo TRƠN giữa hai đoạn cong, MÉP LÒNG (mép lõm) nhận cả độ đổi, bóng ngoài giữ nguyên
+  (không đổi bề ngang / spacing); tay nắm đi cùng điểm neo (giữ liền tiếp tuyến); độ đổi nội suy theo bề dày tại điểm, giải lặp
+  (Jacobian + Broyden) tới đúng chuẩn; chỉ nhận khi không chiều nào xấu đi.
+- e: không có điểm neo trơn để dời → luật lòng co của e áp từ Regular (`E_K0` 0.08 → Bold 0.215 trong `lower.py`).
+- Sau (nét mảnh / nét tròn), Regular: b c d g o p q 42/104, s 41/104, e 40/106; số 0 3 6 8 9 42–43 / 105–107.
+  Bold: b d p q 62/124 (thân), c g o s 60–62/128, e 56/127; số 0 3 6 9 62/140, 8 68/139.
+- Giữ nguyên có chủ ý: n h m u (chỗ mảnh nhất là vai — khớp vòm–thân, 38 / 52); a (bụng đã duyệt S45b; dời lòng làm bậc ở góc
+  lòng–thân); 5 (chỗ mảnh là khớp bụng–thân 29); 2 (không có nét mảnh); 4 7 và chéo v w x y k z (nét thẳng, 43–45 / 62–63).
+- QA: 0 lỗi outline; chéo weight 0; đơn điệu 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-can-net.png`.

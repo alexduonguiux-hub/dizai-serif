@@ -42,7 +42,8 @@ B_K = 0.105                    # lòng co THEO TỈ LỆ bán trục −10.5 % (
 # nét tròn Bold dày thêm đúng B_STEM như thân (designer 05/11: "kiểm tra lại độ dày các chữ còn lại"): co lòng 10.5 % chung
 # cho mọi chữ làm lòng nhỏ co ít → o +17.6, g +13.4, a +13.5 (thân +22.6). Hệ số co lòng giải riêng để thành bụng xa thân
 # (đo bằng đường tròn nội tiếp) = Regular + B_STEM: o 101.2 → 123.8, g 101.1 → 123.7, a 96.6 → 119.2
-B_KG = {'o': 0.1396, 'g': 0.1955, 'a': 0.1929, 'e': 0.1396}   # e (QA độ dày 05/11): co 10.5 % chung làm thành e Bold nhẹ hơn n 12 % → như o
+B_KG = {'o': 0.1396, 'g': 0.1955, 'a': 0.1929, 'e': 0.215}   # e (QA độ dày 05/11): co 10.5 % chung làm thành e Bold nhẹ hơn n 12 % → như o; S46: e Bold nét tròn = thân + 2 % (128) → 0.215
+E_K0 = 0.08                    # S46: e Regular nét tròn 94 → thân + 2 % (104): lòng co E_K0 ngay từ Regular (e qua cùng luật bold())
 B_SHIFT = 9.9                  # lòng dời về phía thân 9.9 (a: lệch tâm 10 → 13.5 px)
 B_BAR = 12.7                   # nét ngang mảnh (thanh e) dày thêm bằng phần lòng co
 B_THIN = 6.4                   # nét nối / tai g: nở đều mỗi phía (= nửa phần trên)
@@ -169,7 +170,9 @@ def raw(ch, weight):
     if spec:                                                   # bản vẽ Bold của designer
         o = V.U(*[_path(SHAPES[k], m) for k, m in spec]); return V.move(o, -o.bounds[0], 0)
     set_weight(weight)
-    if weight == 'Regular':
+    if ch == 'e':                                              # S46: e mọi weight theo luật lòng co (Regular E_K0 → Bold 0.215)
+        B_KG['e'] = E_K0 + (_B0['B_KG']['e'] - E_K0)*TW[weight]
+    if weight == 'Regular' and ch != 'e':
         o = V.U(*[piece(k, m, weight) for k, m in GLYPH[ch]])
         if ch == 'a': o = _a_open(o)
         return V.move(o, -o.bounds[0], 0)
