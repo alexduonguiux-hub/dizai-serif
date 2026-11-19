@@ -554,3 +554,11 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - Giữ nguyên có chủ ý: n h m u (chỗ mảnh nhất là vai — khớp vòm–thân, 38 / 52); a (bụng đã duyệt S45b; dời lòng làm bậc ở góc
   lòng–thân); 5 (chỗ mảnh là khớp bụng–thân 29); 2 (không có nét mảnh); 4 7 và chéo v w x y k z (nét thẳng, 43–45 / 62–63).
 - QA: 0 lỗi outline; chéo weight 0; đơn điệu 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-can-net.png`.
+
+### S46b Bụng a về bản cũ, nét mảnh dày thêm (designer 19/11: "bụng chữ a cũ đúng hơn" — "nét mỏng bụng của chữ a cũ dày thêm xíu là được")
+
+- a dùng lại bụng bản vẽ S44 (v0.917), bỏ cân S45 / S45b.
+- Lòng a co đều × 0.984 quanh điểm đáy-phải lòng (giữ tỉ lệ + góc nghiêng elip lòng, đáy lòng sát thân không đổi):
+  nét mảnh trên-trái 37 → 42 u (= chuẩn nét mảnh), nét nhấn 106 → 107; Bold / Medium / SemiBold theo luật cũ.
+  Hằng `D_A_BOWL_S46` trong `src_lower.py`.
+- QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-a-net-mong.png` (v0.917 / mới, Regular / Bold).
