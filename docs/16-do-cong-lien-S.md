@@ -516,3 +516,14 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
   từng chữ. Chữ có dấu / dẫn xuất (à á ạ … đ ₫) dựng lại theo.
 - QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy; loe chân hai mặt 224 thân khớp (k 0.8 u). Ảnh: `docs/img/s44-adqp.png`
   (xám: v0.916, đen: S44).
+
+## S45 Cân độ dày bụng a b d p q (designer 19/11: "các chữ vừa update khi nãy chưa cân bằng weight với các chữ cũ. có điểm mỏng hơn và dày hơn")
+
+- Đo vòng bụng (mỗi điểm mép ngoài → khoảng cách nhỏ nhất tới mép lòng, bỏ vùng thân), Regular:
+  bản vẽ S44 nét nhấn 107–109 u (bản đã duyệt v0.916: 96.2), nét mảnh 33–34 u (42.1); a 106 / 64 (96 / 75).
+- `lower/balance_bowls.py` → khối `D_*_S45` trong `src_lower.py`: giữ MÉP NGOÀI và HƯỚNG NGHIÊNG lòng của bản vẽ; dời + co giãn lòng
+  theo hai trục của chính nó (affine điểm điều khiển) cho nét nhấn / nét mảnh về đúng số bản đã duyệt, thay đổi nhỏ nhất
+  (dời ≤ 2 px, giãn 0.96–1.10; a thu trục dài 0.87).
+- Sau: nét nhấn 96.0–96.9 (cũ 96.3–96.5), nét mảnh 42.1; Medium 104–107 (cũ 106), SemiBold 114–115 (cũ 115), Bold 123–124 (cũ 124).
+  Dáng bản vẽ giữ: lòng d q cao (đỉnh mảnh 43–45, đáy dày 82–84), p b ngược lại.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s45-can-bung.png` (v0.916 / v0.917 / S45).

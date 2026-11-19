@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Trang so sánh toàn bộ glyph (designer 19/11: "cho preview html tất cả glyph để so sánh").
     python3 tools/construct/glyph_compare.py [commit_cũ]   → docs/preview/glyph-compare.html + docs/preview/cmp/{old,new}/*.woff2
-Bản cũ mặc định = commit phát hành v0.916 (bộ zip đã gửi); font woff2 hai bản chép vào docs/preview/cmp/. Glyph "đổi" = outline hoặc advance khác nhau giữa hai file OTF."""
+Bản cũ mặc định = commit phát hành v0.917 (bộ zip đã gửi); font woff2 hai bản chép vào docs/preview/cmp/. Glyph "đổi" = outline hoặc advance khác nhau giữa hai file OTF."""
 import io, json, os, subprocess, sys, unicodedata
 from fontTools.ttLib import TTFont
 from fontTools.pens.recordingPen import RecordingPen
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.join(HERE, '..', '..')
-OLD = sys.argv[1] if len(sys.argv) > 1 else 'ed3182d'
+OLD = sys.argv[1] if len(sys.argv) > 1 else '77166af'
 STY = ['Regular', 'Medium', 'SemiBold', 'Bold', 'Italic', 'MediumItalic', 'SemiBoldItalic', 'BoldItalic']
 sys.path[:0] = [HERE, os.path.join(HERE, 'ref')]
 import spacing as SPc
@@ -62,7 +62,7 @@ for c in chars:
     G.setdefault(group(c), []).append(c)
 data = dict(groups=[[k, ''.join(G.get(k, []))] for k in ('caps', 'lower', 'fig', 'capsx', 'lowerx', 'lig', 'punct', 'mark')],
             lig=LIG, names={c: cmap_names.get(c, '') for c in chars}, changed=changed, adv=advs,
-            old_label='v0.916', new_label='bản hiện tại')
+            old_label='v0.917', new_label='bản hiện tại')
 tpl = open(os.path.join(HERE, 'glyph_compare_template.html'), encoding='utf-8').read()
 ff = '\n'.join('@font-face { font-family: "%s-%s"; src: url("cmp/%s/AnNamSerif-%s.woff2") format("woff2"); font-display: block }' % (p, s, d, s)
                for p, d in (('N', 'new'), ('O', 'old')) for s in STY)
