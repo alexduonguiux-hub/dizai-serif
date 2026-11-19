@@ -77,11 +77,13 @@ def kind(ch):
 def base(ch):
     if ch in 'Đđ₫': return {'Đ': 'D', 'đ': 'd', '₫': '₫'}[ch]
     b = unicodedata.normalize('NFD', ch)[0]; return b if b != ch or ch in CAPS + LOWER else ch
+LIG = {'ﬀ': 'ff', '\ue000': 'ft', '\ue001': 'tf', '\ue002': 'tt'}   # S43 chữ ghép: trái theo chữ đầu, phải theo chữ sau
 def rclass(ch):                       # class phía phải (chữ đứng trước)
+    if ch in LIG: return LIG[ch][1]
     nfd = unicodedata.normalize('NFD', ch)
     if '̛' in nfd: return nfd[0] + '̛'   # sừng
     return base(ch)
-def lclass(ch): return base(ch)       # class phía trái (chữ đứng sau)
+def lclass(ch): return LIG[ch][0] if ch in LIG else base(ch)       # class phía trái (chữ đứng sau)
 
 # ---------- profile ----------
 def flatten(p, n=16):

@@ -31,7 +31,7 @@ def kern_exp(w, a, b):
     return KN[w]['class'].get(f'{SPc.rclass(a)}|{SPc.lclass(b)}', 0.0) if v is None else v
 
 def check(ft, w, tag, rep, pairs=True):
-    chars = [c for c in E.CHARS if c not in '\xa0\xad']                 # U+00AD: HarfBuzz ẩn (đúng chuẩn)
+    chars = [c for c in E.CHARS if c not in '\xa0\xad' and not 0xE000 <= ord(c) <= 0xF8FF]   # U+00AD: HarfBuzz ẩn; PUA (chữ ghép S43) không cmap — kiểm qua liga
     bad_adv = [c for c in chars if abs(shape(ft, c)[1][0].x_advance - SP[w][c]['adv']) > 1.0]
     bad_k = []
     if pairs:

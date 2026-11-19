@@ -41,9 +41,11 @@ def use(style):
 use('Roman')
 CHARS = sorted(SP['Regular'], key=ord)
 
+LIGN = {'ﬀ': 'f_f', '\ue000': 'f_t', '\ue001': 't_f', '\ue002': 't_t'}   # S43 chữ ghép (liga); PUA nội bộ không vào cmap
 def gname(c):
     u = ord(c)
     if c == ' ': return 'space'
+    if c in LIGN: return LIGN[c]
     return UV2AGL.get(u) or ('uni%04X' % u)
 
 def parse(d):
@@ -369,7 +371,7 @@ def master(w, ang, FL, groups, kern):
     for c in CHARS:
         if c == '\xa0': continue                                   # U+00A0 trỏ về glyph space
         g = f.newGlyph(gname(c)); g.width = SP[w][c]['adv']
-        g.unicodes = [ord(c)] + ([0x00A0] if c == ' ' else [])
+        g.unicodes = [] if 0xE000 <= ord(c) <= 0xF8FF else [ord(c)] + ([0x00A0] if c == ' ' else [])
         k = f'{c}-{w}'
         if k in O:
             d_ = O[k]
@@ -403,7 +405,10 @@ def features():
         if len(d) > 1 and all(x in SP['Regular'] for x in d):
             L.append('    sub ' + ' '.join(gname(x) for x in d) + ' by ' + gname(c) + ';')
     # i / j + dấu trên → ı ȷ (đã có chữ dựng sẵn cho tiếng Việt; dấu rời cho chữ khác)
-    return 'languagesystem DFLT dflt;\nlanguagesystem latn dflt;\n\nfeature ccmp {\n' + '\n'.join(sorted(L, key=lambda s: -s.count(' '))) + '\n} ccmp;\n'
+    lg = '\n'.join('    sub ' + ' '.join(gname(x) for x in v) + ' by ' + gname(k) + ';' for k, v in
+                   (('ﬀ', 'ff'), ('\ue000', 'ft'), ('\ue001', 'tf'), ('\ue002', 'tt')) if k in SP['Regular'])
+    return ('languagesystem DFLT dflt;\nlanguagesystem latn dflt;\n\nfeature ccmp {\n' + '\n'.join(sorted(L, key=lambda s: -s.count(' ')))
+            + '\n} ccmp;\n\nfeature liga {\n' + lg + '\n} liga;\n')
 
 def kerning_data():
     rc = {}; lc = {}

@@ -314,6 +314,26 @@ def build_w(S, L, w):
     # ı ȷ : i j bỏ chấm (chấm i đáy ở XH + 70)
     for c0, c1 in (('i', 'ı'), ('j', 'ȷ')):
         g = ref_outline(L[f'{c0}-{w}']); G[c1] = I(g, rect(-500, -500, 2000, XH + 30))
+    # S43 chữ ghép ff ft tf tt (designer 19/11: "thêm glyph cho cặp chữ tf, ft, tt, ff"): hai chữ GỐC (f đã sửa móc S42, t) đặt
+    # cạnh nhau, khoảng giữa hai thân = lòng n (nhịp thân như chữ thường); hai thanh ngang nối thành MỘT thanh liền (cùng cao độ
+    # thanh f / t). Móc f và đầu t cách thân sau ≥ 70 u — không chạm.
+    def _spans(g, y):
+        r = I(g, rect(-1000, y - 0.05, 3000, y + 0.05)); xs = []
+        for c in r.contours: b = c.bounds; xs.append((b[0], b[2]))
+        return sorted(xs)
+    def _vspans(g, x):
+        r = I(g, rect(x - 0.05, -500, x + 0.05, 2000)); ys = []
+        for c in r.contours: b = c.bounds; ys.append((b[1], b[3]))
+        return sorted(ys)
+    gf, gt, gn = ref_outline(L[f'f-{w}']), ref_outline(L[f't-{w}']), ref_outline(L[f'n-{w}'])
+    sn = _spans(gn, 250); counter = sn[1][0] - sn[0][1]                       # lòng n
+    stem = _spans(gf, 250)[0]                                                 # thân f (= thân t)
+    bar = next(v for v in _vspans(gf, stem[1] + 40) if v[0] > 300)          # thanh ngang (cao độ) ở bên phải thân
+    barR = _spans(gf, (bar[0] + bar[1])/2)[-1][1]                             # mép phải thanh
+    dl = stem[1] + counter - stem[0]                                          # dời chữ thứ hai
+    for lig, (a, b) in (('ﬀ', ('f', 'f')), ('\ue000', ('f', 't')), ('\ue001', ('t', 'f')), ('\ue002', ('t', 't'))):
+        A, B = (gf if a == 'f' else gt), (gf if b == 'f' else gt)
+        G[lig] = U(A, move(B, dl, 0), rect(barR - 5, bar[0], dl + 5, bar[1]))
     # dấu tổ hợp (rộng 0): CÙNG bộ dấu (vn_punct.marks) đặt ở vùng dấu chữ thường, tâm x = 0 (spacing đặt về trước)
     yl = 495 + 8.4 + V.GAP_ML + 3
     def above(m): b = bounds(m); return move(m, -(b[0] + b[2])/2, yl - b[1])

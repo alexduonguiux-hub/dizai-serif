@@ -493,3 +493,13 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
     gãy 10° ở đỉnh lòng, độ cong 32 → 21 → 34). Độ cong lòng giờ một đỉnh.
 - QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s42-f-moc.png` (lược độ cong, đường đỏ = mép thân thẳng),
   `docs/img/s42-f-1.png` (f 1 fi qua các weight, trước / sau).
+
+## S43 Chữ ghép ff ft tf tt (designer 19/11: "thêm glyph cho cặp chữ tf, ft, tt, ff")
+
+- Dựng (`ref/symbols.py`): hai chữ gốc (f đã sửa móc S42, t) đặt cạnh nhau, khoảng giữa hai thân = lòng n (nhịp thân như chữ thường);
+  hai thanh ngang nối thành MỘT thanh liền (cùng cao độ thanh f / t). Móc f / đầu t cách thân sau ≥ 70 u — không chạm.
+- Mã: ff = U+FB00 (ﬀ); ft / tf / tt dùng mã PUA nội bộ U+E000–E002 để đi qua pipeline (spacing, kerning, QA). Khi xuất: tên glyph
+  `f_f f_t t_f t_t`, PUA KHÔNG vào cmap; tính năng `liga`: f f → f_f, f t → f_t, t f → t_f, t t → t_t.
+- Kerning: mặt trái chữ ghép cùng lớp chữ đầu, mặt phải cùng lớp chữ sau (`spacing.LIG`).
+- qa_font: bỏ qua PUA khi dò theo cmap (kiểm qua liga: "offset" → o f_f s e t, "often" → o f_t e n, "matt" → m a t_t).
+- Ảnh: `docs/img/s43-chu-ghep.png`.
