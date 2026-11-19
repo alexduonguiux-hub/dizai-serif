@@ -5,7 +5,7 @@ và dày hơn").
 
 Đo vòng bụng (mỗi điểm mép ngoài → khoảng cách nhỏ nhất tới mép lòng, bỏ vùng thân): bản vẽ S44 nét nhấn 107–109 u (bản cũ đã
 duyệt 96.2), nét mảnh 33–34 u (cũ 42.1); a 106 / 64 (cũ 96 / 75). Giữ MÉP NGOÀI và HƯỚNG NGHIÊNG lòng của bản vẽ; chỉ dời + co giãn
-lòng theo hai trục của chính nó (biến đổi affine điểm điều khiển → vẫn là đường Bézier gốc) để nét nhấn / nét mảnh về đúng số bản
+lòng (tịnh tiến + co giãn ĐỀU quanh tâm lòng — S45b: giữ tỉ lệ và góc nghiêng elip lòng; co hai trục khác nhau làm lòng a tròn, mất góc) để nét nhấn / nét mảnh về đúng số bản
 cũ, thay đổi nhỏ nhất. Luật Bold (lower.bold) đọc lòng bản Regular → Bold cân theo."""
 import math, os, re, subprocess, sys
 import numpy as np
@@ -62,19 +62,36 @@ if __name__ == '__main__':
         c0 = Pi0.mean(0); U, s, Vt = np.linalg.svd(Pi0 - c0, full_matrices=False); R = Vt          # trục lòng
         def A_(x):
             dx, dy, la, lb = x
-            M = R.T @ np.diag([math.exp(la), math.exp(lb)]) @ R
+            if ch == 'a': lb = la                                      # S45b: a co giãn ĐỀU — giữ tỉ lệ + góc nghiêng lòng bản vẽ
+            M = R.T @ np.diag([math.exp(la), math.exp(lb)]) @ R      # (designer: "mất góc của bụng chữ a"); d q p: hai trục (S45)
             return lambda p: (M @ (np.array(p) - c0) + c0 + np.array([dx, dy]))
+        # S45b: a — lòng KHÔNG dời xuống (y Figma hướng xuống: dy > 0): dời xuống 7 px làm đáy lòng sát chân thân, nét còn 19 u
+        # S45b: vùng gần thân (dải 30 px ngoài thân, cả hai phía): lòng không được tiến sát mép ngoài hơn bản vẽ (a dời lòng 20 u
+        # → nét đáy cạnh thân còn 19 u)
+        band = (ex[0] - 30, ex[1] + 30)
+        def junction(Pi):
+            o = Po[((Po[:, 0] >= band[0]) & (Po[:, 0] < ex[0])) | ((Po[:, 0] > ex[1]) & (Po[:, 0] <= band[1]))]
+            if not len(o): return 1e9
+            return float(np.min(np.hypot(o[:, None, 0] - Pi[None, :, 0], o[:, None, 1] - Pi[None, :, 1])))*SL.S
+        jmin0 = junction(sample(inner, m)); mn0 = stats(Po, sample(inner, m), ex)[1]
+        # độ CẮT SÂU của lòng vào thân (bản vẽ ~9 px → góc lòng–thân rõ): giữ ≥ bản vẽ — dời lòng ra khỏi thân làm lòng chạm hờ mép
+        # thân, góc lưng chừng 13–17° (q Medium–Bold gãy)
+        stem_right = (ex[0] + ex[1])/2 > Po[:, 0].mean()
+        def depth(Pi): return (Pi[:, 0].max() - (ex[0] + 4)) if stem_right else ((ex[1] - 4) - Pi[:, 0].min())
+        dep0 = depth(sample(inner, m))
         def cost(x):
             T = A_(x); Pi = np.array([T(p) for p in Pi0])
             a, b, c, dd, e, f = m; Pi = np.stack([a*Pi[:, 0] + b*Pi[:, 1] + c, dd*Pi[:, 0] + e*Pi[:, 1] + f], 1)
             mx, mn = stats(Po, Pi, ex)
-            return ((mx - tmax)/tmax)**2 + ((mn - tmin)/tmin)**2 + 1e-4*(x[0]**2 + x[1]**2) + 0.05*(x[2]**2 + x[3]**2)
+            # a: nét mảnh chỉ cần KHÔNG MỎNG HƠN bản vẽ (đỉnh a mảnh hơn a cũ là chủ ý của bản vẽ)
+            return ((mx - tmax)/tmax)**2 + (((mn - tmin)/tmin)**2 if ch != 'a' else 4*max(0.0, (mn0 - mn)/mn0)**2) + 1e-4*(x[0]**2 + x[1]**2) + 0.05*(x[2]**2 + x[3]**2) + 50*max(0.0, (jmin0 - junction(Pi))/jmin0)**2 + (5*max(0.0, x[1] - 0.5)**2 if ch == 'a' else 0.0) + 5*max(0.0, dep0 - depth(Pi))**2
         r = minimize(cost, [0, 0, 0, 0], method='Nelder-Mead', options=dict(xatol=1e-4, fatol=1e-10, maxiter=4000))
         T = A_(r.x)
         inner2 = [[t, [tuple(T(p)) for p in P]] for t, P in inner]
         Pi = sample(inner2, m); mx, mn = stats(Po, Pi, ex); mx0, mn0 = stats(Po, sample(inner, m), ex)
+        print(f'{ch}: cắt vào thân {dep0:.1f} → {depth(Pi):.1f} px · ', end='')
         print(f'{ch}: nhấn {mx0:.1f} → {mx:.1f} (đích {tmax:.1f}) · mảnh {mn0:.1f} → {mn:.1f} (đích {tmin:.1f}) · '
-              f'dời ({r.x[0]:.2f}, {r.x[1]:.2f}) px · giãn {math.exp(r.x[2]):.3f} / {math.exp(r.x[3]):.3f}')
+              f'dời ({r.x[0]:.2f}, {r.x[1]:.2f}) px · giãn {math.exp(r.x[2]):.3f} / {math.exp(r.x[2] if ch == "a" else r.x[3]):.3f}')
         out[const] = to_str([outer, inner2])
     p = os.path.join(HERE, 'src_lower.py'); s = open(p).read()
     blk = '# --- S45 (lower/balance_bowls.py, sinh tự động): lòng bụng cân theo độ dày bản đã duyệt ---\n' + \

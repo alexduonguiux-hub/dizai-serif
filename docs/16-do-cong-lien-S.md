@@ -527,3 +527,13 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - Sau: nét nhấn 96.0–96.9 (cũ 96.3–96.5), nét mảnh 42.1; Medium 104–107 (cũ 106), SemiBold 114–115 (cũ 115), Bold 123–124 (cũ 124).
   Dáng bản vẽ giữ: lòng d q cao (đỉnh mảnh 43–45, đáy dày 82–84), p b ngược lại.
 - QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s45-can-bung.png` (v0.916 / v0.917 / S45).
+
+### S45b Giữ góc bụng a (designer 19/11: "bị mất góc của bụng chữ a rồi")
+
+- S45 co lòng a theo trục dài × 0.87, giãn trục ngắn × 1.08 → lòng gần tròn, mất góc nghiêng elip của bản vẽ.
+- a: lòng giữ gần nguyên bản vẽ (co giãn đều × 1.003, dời 0.5 px, KHÔNG dời xuống — dời xuống làm đáy lòng sát chân thân, nét 19 u).
+  qa_stroke: nét chính a = 104 u = thân n (bản vẽ không nặng hơn chữ khác; a cũ 96 là nhẹ). Nét nhấn vòng 105, nét mảnh 64 (đỉnh a
+  mảnh là chủ ý bản vẽ).
+- d q p: cân như S45 (hai trục × 0.96 / × 1.07–1.10, giữ hướng nghiêng); thêm ràng buộc lòng CẮT VÀO THÂN không nông hơn bản vẽ
+  (dời lòng ra khỏi thân làm lòng chạm hờ mép thân → góc lưng chừng 13–17°, q Medium–Bold gãy). Nét nhấn 96.4, nét mảnh 42.1.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s45-a-goc.png`, `docs/img/s45-can-bung.png`.
