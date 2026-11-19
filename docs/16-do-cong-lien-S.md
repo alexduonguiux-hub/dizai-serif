@@ -503,3 +503,16 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - Kerning: mặt trái chữ ghép cùng lớp chữ đầu, mặt phải cùng lớp chữ sau (`spacing.LIG`).
 - qa_font: bỏ qua PUA khi dò theo cmap (kiểm qua liga: "offset" → o f_f s e t, "often" → o f_t e n, "matt" → m a t_t).
 - Ảnh: `docs/img/s43-chu-ghep.png`.
+
+## S44 a b d p q theo bản vẽ mới (designer 19/11, Figma 2232:788: "update lại các chữ này")
+
+- Bản vẽ trong cùng hệ toạ độ khung nguồn (`src_lower.GLYPH`). So từng mảnh: thân a d q p KHÔNG đổi; bụng đổi:
+  - d, q: lòng nâng lên 5–6 px (14–17 u) → nét trên bụng mỏng, nét dưới dày;
+  - p: bụng KHÔNG còn lật gương q — cùng chiều nghiêng (trục nhấn chung), lòng dời xuống 2 px;
+  - a: lòng bụng mới.
+- `src_lower.py`: mảnh bụng riêng `a_bowl d_bowl q_bowl p_bowl` (S44); **b** (không có trong bản vẽ) dùng bụng p — cùng chiều nghiêng —
+  đặt bên phải thân đi lên, chồng thân như p. o giữ (chỉ dùng mép ngoài bụng d — không đổi).
+- Bold / Medium / SemiBold theo luật cũ (`lower.bold`: vòng giãn, lòng elip co + dời về thân, thân dày) — luật đọc mảnh bụng riêng của
+  từng chữ. Chữ có dấu / dẫn xuất (à á ạ … đ ₫) dựng lại theo.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy; loe chân hai mặt 224 thân khớp (k 0.8 u). Ảnh: `docs/img/s44-adqp.png`
+  (xám: v0.916, đen: S44).

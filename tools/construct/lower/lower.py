@@ -202,9 +202,10 @@ def bold(ch):
         bowl = V.D(V.xform(outer, st), cin)
         return V.U(bowl, V.move(stem, (k - 1)*(outer.bounds[2] - c), 0))
     if ch in 'dbqp':
-        bm, sm = G['bowl'], G['stem']
-        outer = _path(_first_contour(SHAPES['bowl']), bm); c, k, st = _stretch(outer.bounds)
-        cpts = [st(*q) for q in _samples(_path('M' + SHAPES['bowl'].split('M')[2], bm))]
+        bk = next(key for key, _ in GLYPH[ch] if 'bowl' in key)                    # S44: mảnh bụng riêng từng chữ
+        bm, sm = G[bk], G['stem']
+        outer = _path(_first_contour(SHAPES[bk]), bm); c, k, st = _stretch(outer.bounds)
+        cpts = [st(*q) for q in _samples(_path('M' + SHAPES[bk].split('M')[2], bm))]
         ctr, M = _ell_from_pts(cpts)
         stem = piece('stem', sm, 'Bold'); sx = (stem.bounds[0] + stem.bounds[2])/2; side = 1 if sx > c else -1
         x0, _, x1, _ = outer.bounds; edge = x1 if side > 0 else x0
