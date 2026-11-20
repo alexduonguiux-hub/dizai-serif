@@ -18,3 +18,4 @@ PV_OUT=$DIZAI_OUT PV_OUTI=$DIZAI_OUTI PV_FONTS=$DIZAI_FONTS PV_PS=AnNamGolden PV
 echo DONE
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_lines.py tools/construct/qa_ref/AnNamSerif-v0918-%s.otf fonts/golden/otf/AnNamGolden-%s.otf --xh=535 | grep -v "^    ")
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_bars.py fonts/golden/otf/AnNamGolden-%s.otf 28.2 38.7)
+(cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_arms.py fonts/golden/otf/AnNamGolden-%s.otf)
