@@ -88,3 +88,9 @@ QA: thanh ngang AnNam Serif 42–43 / 56–58, Golden 32–33 / 41–45, 0 lỗi
 Kerning hai họ gần như nhau; chỗ khác là sidebearing: spacing lấy H / n làm chuẩn khoảng trắng — loe Golden to hơn làm H "thoáng" hơn → chuẩn tăng → mọi chữ tròn / chéo nới 5–8 u mỗi bên (o 33 vs 28, O 39 vs 31, A V 28 vs 20). Nay Golden đo chuẩn khoảng trắng trên H / n của AnNam Serif (DIZAI_TREF): chữ tròn / chéo = AnNam Serif; H n Golden khít 8 u để bù loe. Version 0.924.
 
 ![spacing](img/s60-spacing.png)
+
+## S61 — chữ hoa Golden dày y như AnNam Serif (20/11, "Golden hoa nên có độ dày y chang Serif. khác loe chân")
+
+CAPS_AS_SERIF: chữ HOA Golden bỏ mọi bước nét mảnh riêng (G7 G9 G6 G10 G11 G8, nét ngang 0.88) — giữ đúng độ dày AnNam Serif; chỉ khác loe chân (× 1.45, giữ như cũ — thử × 2.9 bỏ) và tay loe đầu thanh (G13, 114 / 148). Diện tích mực chữ hoa Golden / Serif = 1.000–1.012 (phần chênh = loe). Chữ thường Golden giữ nguyên (nét ngang 0.88). Version 0.925.
+
+![chữ hoa](img/s61-caps.png)
