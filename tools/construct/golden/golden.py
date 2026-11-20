@@ -325,12 +325,12 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
             def at(sg, tv, out, end):
                 if sg[0] != 'C':
                     q = sg[1]
-                    ix_ = next((m for m in range(n) if S_[m][1] is q), None)          # đoạn gần thẳng hàng (≤ 10°) với đoạn kề DÀI HƠN:
+                    ix_ = next((m for m in range(n) if S_[m][1] is q), None)          # đoạn gần thẳng hàng (≤ 6°) với đoạn kề DÀI HƠN:
                     u0_ = unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))                 # cùng một mép nét (bị chia bởi mẩu nối / khớp)
                     for nb in ((S_[ix_ - 1], S_[(ix_ + 1) % n]) if ix_ is not None and u0_ else ()):
                         if nb[0] == 'C' or math.dist(*nb[1]) < max(60, math.dist(q[0], q[1])): continue
                         u1 = unit((nb[1][1][0] - nb[1][0][0], nb[1][1][1] - nb[1][0][1]))
-                        if abs(u0_[0]*u1[0] + u0_[1]*u1[1]) < math.cos(math.radians(10)): continue
+                        if abs(u0_[0]*u1[0] + u0_[1]*u1[1]) < math.cos(math.radians(6)): continue
                         mid1 = ((nb[1][0][0] + nb[1][1][0])/2, (nb[1][0][1] + nb[1][1][1])/2); o1 = (u1[1], -u1[0])
                         if inside((mid1[0] + 1.5*o1[0], mid1[1] + 1.5*o1[1]), P): o1 = (-o1[0], -o1[1])
                         v1 = shrink(mid1, o1, 20)
@@ -351,12 +351,12 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
                     if h and math.dist(q[0], q[1]) < 1.2*h[0]: return 0.0      # đoạn ngắn hơn bề dày = mặt cắt đầu nét: giữ
                     own = shrink(mid, out, 20)                          # đoạn thẳng: mép đối diện song song ±20° (thanh, thân, chéo)
                     if own == 0.0:                                      # không đo được (vd. đoạn hội tụ về đỉnh V của W) nhưng thẳng hàng
-                        ix = next((m for m in range(n) if S_[m][1] is q), None)   # (≤ 10°) với đoạn kề dài: dời cùng nét đó (không xoay)
+                        ix = next((m for m in range(n) if S_[m][1] is q), None)   # (≤ 6°) với đoạn kề dài: dời cùng nét đó (không xoay)
                         u0 = unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))
                         for nb in ((S_[ix - 1], S_[(ix + 1) % n]) if ix is not None and u0 else ()):
                             if nb[0] == 'C' or math.dist(*nb[1]) < 60: continue
                             u1 = unit((nb[1][1][0] - nb[1][0][0], nb[1][1][1] - nb[1][0][1]))
-                            if abs(u0[0]*u1[0] + u0[1]*u1[1]) < math.cos(math.radians(10)): continue
+                            if abs(u0[0]*u1[0] + u0[1]*u1[1]) < math.cos(math.radians(6)): continue
                             mid1 = ((nb[1][0][0] + nb[1][1][0])/2, (nb[1][0][1] + nb[1][1][1])/2); o1 = (u1[1], -u1[0])
                             if inside((mid1[0] + 1.5*o1[0], mid1[1] + 1.5*o1[1]), P): o1 = (-o1[0], -o1[1])
                             v1 = shrink(mid1, o1, 20)
