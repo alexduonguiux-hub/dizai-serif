@@ -532,7 +532,8 @@ def g8_solve(d, ch, w, low, xtop=None):
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
 EFAM = set('eæœ')
 def _top_thick(cs, c_eye):
-    P = polys(cs); Pe = polys([c_eye])[0]; pk = max(Pe, key=lambda p: p[1]); best = None
+    Pe = polys([c_eye])[0]; pk = max(Pe, key=lambda p: p[1]); best = None
+    P = polys([c for c in cs if min(q[1] for q in polys([c])[0]) < pk[1]])   # chỉ thân chữ — bỏ contour dấu phía trên
     for dx in range(-60, 61, 6):
         x = pk[0] + dx; hits = []
         for pl in P:
