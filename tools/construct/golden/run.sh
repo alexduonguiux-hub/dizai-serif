@@ -17,3 +17,4 @@ python3 export_font.py > $DIZAI_OUT/export.log 2>&1; tail -3 $DIZAI_OUT/export.l
 PV_OUT=$DIZAI_OUT PV_OUTI=$DIZAI_OUTI PV_FONTS=$DIZAI_FONTS PV_PS=AnNamGolden PV_NAME="AnNam Golden" PV_HTML=annam-golden.html PV_XH=535 PV_GUIDES=0 python3 preview_html.py | cut -c1-120
 echo DONE
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_lines.py tools/construct/qa_ref/AnNamSerif-v0918-%s.otf fonts/golden/otf/AnNamGolden-%s.otf --xh=535 | grep -v "^    ")
+(cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_bars.py fonts/golden/otf/AnNamGolden-%s.otf 32 44)
