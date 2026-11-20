@@ -57,3 +57,11 @@ QA: thanh ngang AnNam Serif 42–43 / 56–58, Golden 32–33 / 41–45, 0 lỗi
 - Version 0.920.
 
 ![tay loe](img/s56-arms.png)
+
+## S57 — đỉnh A của Æ, chân l Golden (20/11)
+
+- Æ: đoạn ngắn ở đỉnh trong A (thẳng hàng với mép trong nét chéo, 65.9°) bị xoay thành 14.5° (Bold) → gãy. Nguyên nhân: hướng ra ngoài của đoạn thẳng thử ở điểm 3 u sát góc — góc hẹp nên điểm thử lọt vào thân E bên cạnh, pháp tuyến đảo, điểm nối trượt XUỐNG 28 u thay vì lên. Sửa: đoạn thẳng thử ở GIỮA đoạn. Nay 65.2° / 64.3°.
+- G14 (chỉ Golden, designer "dùng chân chữ t cho chân chữ l"): l = loe đỉnh của l + thân dưới và móc chân của t (cùng bề thân, dời ngang trùng mép trái).
+- Rà từng cờ đổi chiều cong: A e Æ ø — cung phẳng, không gợn; W — gợn ~1 u ở cung loe đầu chéo mảnh (chỉ thấy khi phóng 30×). Version 0.921.
+
+![Æ, l](img/s57-ae-l.png)
