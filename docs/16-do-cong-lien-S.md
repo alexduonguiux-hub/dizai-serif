@@ -561,4 +561,6 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - Lòng a co đều × 0.984 quanh điểm đáy-phải lòng (giữ tỉ lệ + góc nghiêng elip lòng, đáy lòng sát thân không đổi):
   nét mảnh trên-trái 37 → 42 u (= chuẩn nét mảnh), nét nhấn 106 → 107; Bold / Medium / SemiBold theo luật cũ.
   Hằng `D_A_BOWL_S46` trong `src_lower.py`.
-- QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-a-net-mong.png` (v0.917 / mới, Regular / Bold).
+- S46c (designer 20/11: "phần mỏng nhất của bụng chữ a nên dày thêm 1 chút nữa"): chỗ mảnh nhất là đáy-phải bụng, sát thân (29 u).
+  Lòng co thêm × 0.965 theo trục điểm mảnh trên-trái → đáy-phải (giữ điểm trên-trái): đáy-phải 29 → 38, trên-trái 42, nét nhấn 108.
+- QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-a-net-mong.png` (v0.917 / S46b / S46c, Regular / Bold).
