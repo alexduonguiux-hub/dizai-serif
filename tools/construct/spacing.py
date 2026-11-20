@@ -75,7 +75,7 @@ def kind(ch):
     if ch in FIG: return 'fig'
     return 'punct'
 def base(ch):
-    if ch in 'Đđ₫': return {'Đ': 'D', 'đ': 'd', '₫': '₫'}[ch]
+    if ch in 'Đđ₫Øø': return {'Đ': 'D', 'đ': 'd', '₫': '₫', 'Ø': 'O', 'ø': 'o'}[ch]   # Ø ø = O o + nét gạch (spacing theo O o)
     b = unicodedata.normalize('NFD', ch)[0]; return b if b != ch or ch in CAPS + LOWER else ch
 LIG = {'ﬀ': 'ff', '\ue000': 'ft', '\ue001': 'tf', '\ue002': 'tt'}   # S43 chữ ghép: trái theo chữ đầu, phải theo chữ sau
 def rclass(ch):                       # class phía phải (chữ đứng trước)

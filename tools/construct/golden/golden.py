@@ -482,7 +482,9 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
                             Ls = [0.0]
                             for u_, v_ in zip(pts, pts[1:]): Ls.append(Ls[-1] + math.dist(u_, v_))
                             tot = Ls[-1] or 1.0
-                            for pp, ll in zip(pts[1:-1], Ls[1:-1]):
+                            for ix_, (pp, ll) in enumerate(zip(pts[1:-1], Ls[1:-1]), 1):
+                                if ix_ == 1: FIX[id(pp)] = (pp, DA); continue          # tay nắm kề góc đầu: đi cùng góc (giữ tiếp tuyến)
+                                if ix_ == len(pts) - 2: FIX[id(pp)] = (pp, DB); continue
                                 f = ll/tot; FIX[id(pp)] = (pp, (DA[0] + (DB[0] - DA[0])*f, DA[1] + (DB[1] - DA[1])*f))
                 i = (i + 1) % n
     plan = []
