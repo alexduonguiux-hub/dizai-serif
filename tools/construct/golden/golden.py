@@ -608,6 +608,87 @@ def s_thin(d, w):
         if done: break
     return d
 
+# ---------- G10 nét mảnh cong của mọi lòng còn lại (B D P R b d p q a g C G c U J …): kéo dãn chuỗi cung lõm theo chiều đứng ----------
+# Luật mới (designer 20/11 "đồng bộ tất cả"): nét cong chỉ làm mảnh bằng biến đổi lòng. Mỗi chuỗi điểm neo TRƠN liên tiếp trên mép lòng
+# (nằm giữa hai góc, hoặc trọn một lòng kín toàn cung) có điểm cao nhất T / thấp nhất B. Nếu bề dày tại đó là nét mảnh (≤ 1.7 × chuẩn),
+# nửa trên chuỗi kéo lên δT tuyến tính theo độ cao từ y_giữa (affine → mép trơn), nửa dưới kéo xuống δB. Góc đầu chuỗi nằm trên đoạn
+# thẳng đứng thì trượt theo đoạn đó; góc khác (thanh ngang, đầu nét) đứng yên và làm mốc cho độ dốc. Lặp 3 lượt (đo lại).
+G10_SKIP = set('oOQsSeæœnmhuµijlfrtITı\u0237')
+def _g10_chains(cs):
+    import stroke_balance as SB
+    sm = {(gi, i) for gi, i, _ in SB.nodes(cs)}; out = []
+    for gi, g in enumerate(cs):
+        n = len(g); cor = [m for m in range(n) if (gi, m) not in sm]
+        if not cor:
+            out.append((gi, list(range(n)), None, None)); continue
+        for a_, b_ in zip(cor, cor[1:] + [cor[0] + n]):
+            ch = [m % n for m in range(a_ + 1, b_)]
+            if len(ch) >= 1: out.append((gi, ch, a_ % n, b_ % n))
+    return out
+def g10(d, w, tgt=None):
+    sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB
+    tgt = RING_T[w] if tgt is None else tgt
+    for _ in range(3):
+        cs = SB.contours(d); pr = SB.probe([d]); P = {(p[1], p[2]): p for p in pr}; moved = False
+        polys_ = SB.mask_paths([d])[2]
+        G_bz = lambda sg, t: bz(sg[1], sg[2], sg[3], sg[4], t)
+        for gi, ch, e0, e1 in _g10_chains(cs):
+            g = cs[gi]; n = len(g); Y = lambda m: g[m][-1][1]
+            def slide(e):                                         # góc trượt được khi đoạn thẳng kề nó gần đứng
+                if e is None: return True
+                for sg in (g[e], g[(e + 1) % n]):
+                    if sg[0] == 'L':
+                        dx, dy = sg[2][0] - sg[1][0], sg[2][1] - sg[1][1]
+                        if abs(dy) > 1 and abs(dx/dy) < 0.2: return True
+                return False
+            sd = [P[(gi, m)][5] for m in ch if (gi, m) in P]
+            if not sd or sum(sd)/len(sd) < 0.5: continue          # chỉ mép LÒNG (lõm); mép ngoài lồi giữ nguyên
+            segs_ch = sorted({m for m in ch} | {(m + 1) % n for m in ch} | ({(e0 + 1) % n} if e0 is not None else set()))
+            yall = [Y(m) for m in ch] + [Y(e) for e in (e0, e1) if e is not None]
+            ym_ = (max(yall) + min(yall))/2
+            top, bot = [], []                                     # lấy mẫu dày dọc các cung của chuỗi, chỗ tiếp tuyến gần ngang
+            for j in segs_ch:
+                sg = g[j]
+                if sg[0] != 'C': continue
+                for k in range(1, 20):
+                    t_ = k/20; q = G_bz(sg, t_); q2 = G_bz(sg, t_ + 0.01)
+                    tx, ty = q2[0] - q[0], q2[1] - q[1]
+                    if abs(ty) > 0.35*math.hypot(tx, ty): continue
+                    up = SB.inside((q[0], q[1] + 3), polys_)
+                    if up == SB.inside((q[0], q[1] - 3), polys_): continue
+                    h = SB.ray(q, (0, 1 if up else -1), polys_)
+                    if not h or h > 400: continue
+                    (top if q[1] > ym_ else bot).append((h, 1 if up else -1, q[1]))
+            if not top and not bot: continue
+            ym = ym_; yT = max([max(yall)] + [y for _, _, y in top]); yB = min([min(yall)] + [y for _, _, y in bot])
+            fixed_y = [Y(e) for e in (e0, e1) if e is not None and not slide(e)]
+            lo_t = max([ym] + [y for y in fixed_y if ym <= y < yT]); hi_b = min([ym] + [y for y in fixed_y if yB < y <= ym])
+            rT = lambda y: max(0.0, min(1.0, (y - lo_t)/max(1.0, yT - lo_t)))
+            rB = lambda y: max(0.0, min(1.0, (hi_b - y)/max(1.0, hi_b - yB)))
+            # δ lớn nhất sao cho mọi mẫu sau khi kéo (dày − δ·dốc) vẫn ≥ chuẩn; mẫu giới hạn chạm đúng chuẩn
+            def delta(smp, r):
+                ds = [(h - tgt)/r(y) for h, _, y in smp if r(y) > 0.15 and h <= 1.8*tgt]
+                return max(0.0, min(ds)) if ds else 0.0
+            dT, dB = delta(top, rT), delta(bot, rB)
+            sT = top[0][1] if top else 1; sB = bot[0][1] if bot else -1
+            if dT < 0.5 and dB < 0.5: continue
+            def f(y):
+                if y > lo_t: return y + sT*dT*rT(y)
+                if y < hi_b: return y + sB*dB*rB(y)
+                return y
+            pts = []
+            for m in ch:
+                A, Bs = g[m], g[(m + 1) % n]
+                pts += ([A[3], A[4]] if A[0] == 'C' else [A[2]]) + ([Bs[1], Bs[2]] if Bs[0] == 'C' else [Bs[1]])
+            for e in (e0, e1):
+                if e is not None and slide(e):
+                    A, Bs = g[e], g[(e + 1) % n]; pts += [A[-1], Bs[1]]
+            for q in {id(q): q for q in pts}.values(): q[1] = f(q[1])
+            moved = True
+        d = SB.to_d(cs)
+        if not moved: break
+    return d
+
 # ---------- G8 đồng bộ nét mảnh mọi chữ (designer 20/11: "kiểm tra đồng bộ hết độ dày các nét mỏng") ----------
 # Sau các luật trên, nét mảnh từng chữ gốc (Regular, Bold) đo lại; nét mảnh (≤ 1.4 × chuẩn) nhân thêm hệ số r = chuẩn / đo (lặp 3
 # lượt, giới hạn 0.7–1.4) theo đúng luật G2 (mép lòng của cung, hai mép của đoạn thẳng). Chuẩn = RING_T (32 / 45). Chữ có dấu dùng r
@@ -768,6 +849,8 @@ def main():
                 base = RING[b_]
                 if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
                 G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
+        if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP:      # G10 nét mảnh cong (lòng kéo dãn đứng)
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = g10(G[f'{c}-{w}'], w)
         if c.isalpha() and len(c) == 1 and c.isascii() and c not in NOHAIR and c not in EFAM:   # G8 chữ gốc (e: chỉ G9 đỉnh cung)
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
