@@ -812,6 +812,25 @@ def arm_depth(d, w):
                 tip[1] = g_ + sgn*Dd; n_ += 1
     return fmt(cs), n_
 
+# ---------- G14 chân l = chân t (designer 20/11 "dùng chân chữ t cho chân chữ l" — chỉ Golden) ----------
+# Hai thân cùng bề dày → ghép: phần trên l (loe đỉnh + mép trái tới y = đầu cung móc t) + thân dưới & móc chân của t dời ngang cho trùng
+# mép trái thân l + mép phải đi thẳng lên loe đỉnh l. Cấu trúc như nhau ở Regular / Bold → nội suy được.
+def l_from_t(dl, dt):
+    L = SB_contours(dl)[0]; T = SB_contours(dt)[0]
+    # l: [0]L đáy [1]C loe phải dưới [2]L thân phải [3]C loe phải trên [4]L đỉnh [5]C loe trái trên [6]L thân trái [7]C loe trái dưới
+    # t: [5]L thân trái xuống tới y0 · [6..10] móc chân · [11]C mép phải lên tới thanh
+    xl = L[6][1][0]; dx = xl - T[5][1][0]; y0 = T[5][2][1]
+    sh = lambda p: [p[0] + dx, p[1]]
+    out = [L[3], L[4], L[5], ['L', list(L[6][1]), [xl, y0]]]
+    for sg in T[6:12]: out.append([sg[0]] + [sh(p) for p in sg[1:]])
+    top_r = L[3][1]
+    out.append(['L', list(out[-1][-1]), list(top_r)])
+    return SB_to_d([out])
+def SB_contours(d):
+    sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB; return SB.contours(d)
+def SB_to_d(cs):
+    sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB; return SB.to_d(cs)
+
 # ---------- G8 đồng bộ nét mảnh mọi chữ (designer 20/11: "kiểm tra đồng bộ hết độ dày các nét mỏng") ----------
 # Sau các luật trên, nét mảnh từng chữ gốc (Regular, Bold) đo lại; nét mảnh (≤ 1.4 × chuẩn) nhân thêm hệ số r = chuẩn / đo (lặp 3
 # lượt, giới hạn 0.7–1.4) theo đúng luật G2 (mép lòng của cung, hai mép của đoạn thẳng). Chuẩn = RING_T (32 / 45). Chữ có dấu dùng r
@@ -980,6 +999,9 @@ def main():
         if c in ARMD:                                                 # G13 tay loe đầu thanh dài bằng nhau (cả Æ Œ)
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = arm_depth(G[f'{c}-{w}'], w)[0]
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    if 'l-Regular' in G and 't-Regular' in G:                     # G14 chân l = chân t
+        for w in ('Regular', 'Bold'): G[f'l-{w}'] = l_from_t(G[f'l-{w}'], G[f't-{w}'])
+        for w, t in TW.items(): G[f'l-{w}'] = lerp_d(G['l-Regular'], G['l-Bold'], t)
     for c in chars:                                               # G8 chữ có dấu / chữ ghép: r của chữ gốc
         b_ = unicodedata.normalize('NFD', c)[0]
         if c == b_ or f'{c}-Regular' not in G or b_ in NOHAIR or not ((b_, 'Regular') in G8R): continue
