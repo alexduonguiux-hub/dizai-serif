@@ -155,6 +155,8 @@ def tan_end(k, q, at_start):
     return None
 
 # ---------- G3 chân loe ----------
+FLARE_KX_CAP = 1.45             # designer 20/11 "các chữ hoa Golden đuôi chân loe dài thêm ra thêm xíu" (chữ thường giữ 1.3)
+FLK = [1.3]                    # bề rộng loe đang dùng (g23 đặt theo chữ hoa / thường)
 FLARE_KX, FLARE_KY = 1.3, 0.85   # designer 20/11: loe rộng hơn 30 %; "giảm chiều cao của loe để cảm giác vuốt nhọn hơn" → cao × 0.85
 FLSEG = set()                   # (id điểm đầu, id điểm cuối) của các cung loe — luật nét mảnh không bẻ hình loe
 def g3(cs):
@@ -190,7 +192,7 @@ def g3(cs):
                 for p in sside:
                     p[0] = C0[0] + (p[0] - C0[0])*FLARE_KY; p[1] = C0[1] + (p[1] - C0[1])*FLARE_KY
                 for p in fside + extra:                                 # phía chân: rộng × KX, cao × KY
-                    p[0] = C0[0] + (p[0] - C0[0])*FLARE_KX; p[1] = Z + (p[1] - Z)*FLARE_KY
+                    p[0] = C0[0] + (p[0] - C0[0])*FLK[0]; p[1] = Z + (p[1] - Z)*FLARE_KY
                 FLSEG.add((id(q[0]), id(q[3]))); n_fl += 1
     return n_fl
 
@@ -301,7 +303,8 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
         pin = 2.0 if abs(nn[0]) < 0.05 and any(abs(hy - g) < 0.8 for g in GUIDES) else 1.0   # mép đối diện nằm trên đường kẻ: mép này nhận gấp đôi
         if ratio is not None and t > 2.2*STEM[w]: return 0.0       # tia đi xuyên lòng / khoảng trắng: không phải một nét
         if abs_t is not None:
-            return (t - abs_t)/2*pin if 0.5*abs_t <= t <= 1.6*abs_t else 0.0
+            at_ = abs_t*BAR_K if abs(nout[1]) > 0.97 else abs_t      # nét NGANG: hiệu chỉnh quang học (trông dày hơn nét đứng / cong)
+            return (t - at_)/2*pin if 0.5*abs_t <= t <= 1.6*abs_t else 0.0
         f = 1.0 if t <= wl else max(0.0, (wh - t)/(wh - wl))
         return (1 - R_)/2*t*f*pin
     moves = []
@@ -497,6 +500,7 @@ def split_curves(cs, mask=None, minlen=60):
 
 def g23(d, ch, w, low, mask=None):
     cs = parse(d)
+    FLK[0] = FLARE_KX_CAP if unicodedata.normalize('NFD', ch)[0].isupper() else FLARE_KX
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
     if unicodedata.category(ch)[0] == 'L': nf += g3b(cs)
     nt = 0
@@ -704,9 +708,10 @@ def g10(d, w, tgt=None):
                     if not SB.inside((q[0] + 3*nv[0], q[1] + 3*nv[1]), polys_) or abs(nv[1]) < 0.3: continue
                     h = SB.ray(q, nv, polys_)
                     if not h or h > 400: continue
-                    (top if q[1] > ym_ else bot).append((h/abs(nv[1]), 1 if nv[1] > 0 else -1, q[1], abs(nv[1])))   # bề dày quy về độ dời đứng
+                    (top if q[1] > ym_ else bot).append((h/abs(nv[1]), 1 if nv[1] > 0 else -1, q[1], abs(nv[1]), q[0]))   # bề dày quy về độ dời đứng
             if not top and not bot: continue
             ym = ym_; yT = max([max(yall)] + [x[2] for x in top]); yB = min([min(yall)] + [x[2] for x in bot])
+            fixed_e = [tuple(g[e][-1][:2]) for e in (e0, e1) if e is not None and not slide(e)]
             fixed_y = [Y(e) for e in (e0, e1) if e is not None and not slide(e)]
             lo_t = max([ym] + [y for y in fixed_y if ym <= y < yT]); hi_b = min([ym] + [y for y in fixed_y if yB < y <= ym])
             rT = lambda y: max(0.0, (y - lo_t)/max(1.0, yT - lo_t))      # không cắt ở 1: tay nắm vượt đỉnh / đáy cùng một phép affine
@@ -714,10 +719,11 @@ def g10(d, w, tgt=None):
             # δ lớn nhất sao cho mọi mẫu sau khi kéo (dày − δ·dốc) vẫn ≥ chuẩn; mẫu giới hạn chạm đúng chuẩn
             def delta(smp, r):
                 amin = 0.3 if hole[gi] else 0.937                 # lòng hở: chỉ mẫu tiếp tuyến gần ngang (≤ 20°) — vai / đầu nét mảnh chủ ý không giới hạn
-                ds = [(h - tgt/an)/r(y) for h, _, y, an in smp if r(y) > 0.15 and an >= amin and 0.5*tgt <= h*an <= 1.8*tgt]   # < ½ chuẩn: mũi đầu nét
+                ds = [(h - tgt/an)/r(y) for h, _, y, an, x in smp if r(y) > 0.15 and an >= amin and 0.5*tgt <= h*an <= 1.8*tgt
+                      and all(math.dist((x, y), fe) > 90 for fe in fixed_e)]   # < ½ chuẩn: mũi; gần đầu nét cắt (90 u): độ thuôn chủ ý
                 return max(-0.4*tgt, min(ds)) if ds else 0.0                     # âm: nét đang mảnh hơn chuẩn → lòng co lại (dày lên)
             dT, dB = delta(top, rT), delta(bot, rB)
-            if not hole[gi]: dT, dB = max(0.0, dT), max(0.0, dB)  # lòng hở (C c n u J…): chỉ kéo mảnh — đầu nét / vai mảnh là chủ ý
+            # S55 (designer "các nét mỏng phải bằng nhau"): lòng hở cũng được làm DÀY tới chuẩn; mẫu gần đầu nét cắt (góc không trượt) bỏ qua
             sT = top[0][1] if top else 1; sB = bot[0][1] if bot else -1
             if abs(dT) < 0.5 and abs(dB) < 0.5: continue
             def f(y):
@@ -741,8 +747,9 @@ def g10(d, w, tgt=None):
 # dày hơn của các chữ khác". Điểm nối cung–thân (tiếp tuyến ngang, thân đứng) dời đứng δ = bề dày thanh (tia đứng tới mép trên) − chuẩn
 # nét mảnh; tay nắm kề nó dời cùng (giữ ngang → cung trơn); đầu nhọn loe đứng yên.
 TBAR = set('T')
+BAR_K = 1.0                    # chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học)
 def bar_thin(d, w, tgt=None):
-    tgt = RING_T[w] if tgt is None else tgt
+    tgt = (RING_T[w] if tgt is None else tgt)*BAR_K
     cs = parse(d); P = polys(cs); n_ = 0
     for c in cs:
         S_ = segs(c); n = len(S_)
