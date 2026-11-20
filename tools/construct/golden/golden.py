@@ -309,7 +309,18 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             # đoạn cong: đo tại nút (lệch vào 2 u); đoạn THẲNG: đo ở giữa đoạn, cả đoạn dời đều (thanh ngang không vát đầu)
             def at(sg, tv, out, end):
                 if sg[0] != 'C':
-                    q = sg[1]; mid = ((q[0][0] + q[1][0])/2, (q[0][1] + q[1][1])/2)
+                    q = sg[1]
+                    if math.dist(q[0], q[1]) < 30:                     # đoạn ngắn nối tiếp một đoạn thẳng dài gần thẳng hàng (≤ 20°):
+                        ix = next((m for m in range(n) if S_[m][1] is q), None)   # là phần của cùng nét — dời cùng nét đó, góc nối giữ nguyên
+                        u0 = unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))
+                        for nb in ((S_[ix - 1], S_[(ix + 1) % n]) if ix is not None and u0 else ()):
+                            if nb[0] == 'C' or math.dist(*nb[1]) < 60: continue
+                            u1 = unit((nb[1][1][0] - nb[1][0][0], nb[1][1][1] - nb[1][0][1]))
+                            if abs(u0[0]*u1[0] + u0[1]*u1[1]) < math.cos(math.radians(20)): continue
+                            mid1 = ((nb[1][0][0] + nb[1][1][0])/2, (nb[1][0][1] + nb[1][1][1])/2); o1 = (u1[1], -u1[0])
+                            if inside((mid1[0] + 1.5*o1[0], mid1[1] + 1.5*o1[1]), P): o1 = (-o1[0], -o1[1])
+                            return shrink(mid1, o1, 20)
+                    mid = ((q[0][0] + q[1][0])/2, (q[0][1] + q[1][1])/2)
                     if abs(q[0][1] - q[1][1]) < 0.5 and any(abs(q[0][1] - g) < 0.8 for g in GUIDES): return 0.0   # mép trên đường kẻ: đứng yên
                     h = ray(mid, (-out[0], -out[1]), P)
                     if h and math.dist(q[0], q[1]) < 1.2*h[0]: return 0.0      # đoạn ngắn hơn bề dày = mặt cắt đầu nét: giữ
@@ -329,11 +340,15 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             if da == 0 and db == 0: continue
             n1, n2 = outs; cosang = n1[0]*n2[0] + n1[1]*n2[1]
             if cosang > 0.985:                                    # nút trơn
-                m = unit((n1[0] + n2[0], n1[1] + n2[1])); d = (da + db)/2; D = (-m[0]*d, -m[1]*d)
+                m = unit((n1[0] + n2[0], n1[1] + n2[1]))
+                d = (da + db) if (ratio is None and (a[0] == 'C') != (b[0] == 'C')) else (da + db)/2   # cung–thẳng liền tiếp tuyến: theo đoạn thẳng
+                D = (-m[0]*d, -m[1]*d)
             else:                                                 # góc: D·n1 = −da, D·n2 = −db
                 det = n1[0]*n2[1] - n1[1]*n2[0]
-                if abs(det) < 0.15: continue
-                D = ((-da*n2[1] + db*n1[1])/det, (-db*n1[0] + da*n2[0])/det)
+                if abs(det) < 0.15:                                # hai mép gần thẳng hàng (≤ 8.6°): dời vuông góc theo phía có độ dời
+                    if cosang < 0.95: continue
+                    m = unit((n1[0] + n2[0], n1[1] + n2[1])); d = max(da, db); D = (-m[0]*d, -m[1]*d)
+                else: D = ((-da*n2[1] + db*n1[1])/det, (-db*n1[0] + da*n2[0])/det)
                 if math.hypot(*D) > 3*max(da, db): continue
             hs = []
             if a[0] == 'C': hs.append(a[1][2])
