@@ -254,6 +254,8 @@ def g3b(cs):
                 t = tan_end(*chain[-1], not fwd)
                 if not t or abs(t[1]) >= 0.06: continue
                 tip = q[1] if fwd else q[0]; Y0 = endp[1]
+                root = q[0] if fwd else q[1]                              # gốc mép cắt phải nằm trên đường kẻ (đầu tay chữ, không phải lòng)
+                if not any(abs(root[1] - g) < 0.8 for g in GUIDES): continue
                 if abs(tip[1] - Y0) < 20: continue
                 mv = []
                 for _, cq in chain:
@@ -295,6 +297,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             a, b = S_[i - 1], S_[i]                               # nút = điểm cuối a = điểm đầu b
             node = b[1][0]
             if id(node) in fixed: continue
+            if ratio is None and a[0] == 'C' and b[0] == 'C': continue          # nét cong: không dời từng nút (làm mảnh bằng biến đổi lòng)
             ta, tb = tan_end(*a, False), tan_end(*b, True)
             if not ta or not tb: continue
             if any(abs(node[1] - g) < 0.8 for g in GUIDES) and (abs(ta[1]) < 0.05 or abs(tb[1]) < 0.05): continue   # nút trên đường kẻ, tiếp tuyến ngang
@@ -334,6 +337,21 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             if b[0] == 'C': hs.append(b[1][1])
             moves.append((node, hs, D))
     mv = {id(nd): D for nd, _, D in moves}
+    if ratio is None:                                             # loe đi theo nét thẳng: đầu xa của cung kề nút đã dời (góc chân)
+        extra = []                                                # trượt theo đường chân của nó cùng độ dời chiếu lên đường đó
+        for c in cs:
+            S_ = segs(c); n = len(S_)
+            for i in range(n):
+                k_, q = S_[i]
+                if k_ != 'C': continue
+                for near, far, farh, nxt in ((q[0], q[3], q[2], S_[(i + 1) % n]), (q[3], q[0], q[1], S_[i - 1])):
+                    Dn = mv.get(id(near))
+                    if not Dn or id(far) in mv or nxt[0] == 'C': continue
+                    a_, b_ = nxt[1][0], nxt[1][-1]; u = unit((b_[0] - a_[0], b_[1] - a_[1]))
+                    if not u: continue
+                    pr = Dn[0]*u[0] + Dn[1]*u[1]; Df = (pr*u[0], pr*u[1])
+                    if abs(pr) > 0.05: extra.append((far, [farh], Df)); mv[id(far)] = Df
+        moves += extra
     moves = [m for m in moves if id(m[0]) not in FLMID]
     for c in cs:                                                  # điểm giữa cung loe: dời theo trung bình hai đầu (giữ hình loe)
         for cmd, ps in c:
@@ -425,6 +443,7 @@ def g23(d, ch, w, low, mask=None):
     nt = 0
     if unicodedata.category(ch)[0] == 'L' or ch in LIG:
         NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµsS$eæœ'   # e: chia cung làm gợn đuôi e (designer 20/11)      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
+        NOSPLIT[0] = True                                         # luật mới: không chia cung (nét cong làm mảnh bằng biến đổi lòng)
         cs, mask = split_curves(cs, mask)
         top = (OVT + D if ch in low else 712.0) + 3
         skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
