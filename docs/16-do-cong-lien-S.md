@@ -587,3 +587,13 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - Lòng tỉ lệ dài / rộng 1.37, nghiêng 15° như bản vẽ. Nét mảnh / nét nhấn: Regular 32–36 / 107–109, Bold 56–60 / 134–137
   (chuẩn chung 42 / 104 và 62 / 128 — lệch theo chủ ý bản vẽ).
 - Zip 0.918 đóng lại. QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s48-bdpq.png`.
+
+## S49 Đồng bộ nét mảnh toàn bộ chữ (designer 20/11: "đồng bộ nét mảnh cho cả Serif" — chọn "đồng bộ tất cả", kể cả b d p q a)
+
+- `tools/construct/hair_sync.py` (sau `build.py`, rồi `DIZAI_RTOL=1.5 DIZAI_CTOL=0.3 compat_masters.py` để Medium / SemiBold nội suy
+  liền tiếp tuyến): chuẩn nét mảnh 42 (Regular) / 62 (Bold) cho mọi chữ hoa + thường có nét mảnh; dùng lại luật An Nam Golden —
+  vòm n m h u dịch nguyên khối, lòng o O ơ Ơ Q và bụng b d p q co / giãn theo trục dài (Q giữ vùng đuôi, b d p q giữ mép thân),
+  s S Newton mép lòng, chữ khác hệ số nét mảnh 0.7–1.3.
+- Sau (Regular): đa số 40–43; Bold 60–64. Còn lệch: a 32 / 52 (góc bụng a vuốt nhọn — chủ ý S46c), Q 38 R, e 56 B, U 72 B, n u 66 B.
+- QA: 0 lỗi outline; gãy > 3° trên 8 OTF: 0; đơn điệu weight 0.
+- Golden đồng bộ cùng cách (chuẩn 32 / 45, G8): Regular 27–33, Bold 36–45 (còn lệch: vòm m n h u 27–29 R, e 36 B, M W 39 B).
