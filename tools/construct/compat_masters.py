@@ -97,7 +97,7 @@ def simplify_pair(R, B, tol=TOL):
                     dev = abs((b[0] - a[0])*(c[1] - a[1]) - (b[1] - a[1])*(c[0] - a[0]))/L if L > 1e-9 else 0
                     m = ['L', a, c] if (dev < 0.35 or tiny) else None
                 elif (s1[0] == 'C' or s2[0] == 'C') and (kink < KINK or tiny):
-                    m, err = fit(tocubic(s1), tocubic(s2)); m = m if err < tol else None
+                    m, err = fit(tocubic(s1), tocubic(s2)); m = m if err < float(os.environ.get('DIZAI_CTOL', tol)) else None   # DIZAI_CTOL: Golden 0.3
                 else: m = None
                 if m is None: ok = False; break
                 if out == 'R': newR = m
@@ -111,7 +111,8 @@ def simplify_pair(R, B, tol=TOL):
 
 ITP = float(os.environ.get("DIZAI_ITP", "2.0"))      # độ: gãy cho phép ở bản nội suy (S 1.3° giữ nguyên vector designer)
 AXT = math.sin(math.radians(2.0))                    # tiếp tuyến lệch trục < 2° → nút ở cực trị
-RTOL = 3.6                                           # u: sai số khớp lại khi dời nút (≈ 0.5 % cao chữ; s Regular cần 3.58)
+RTOL = float(os.environ.get("DIZAI_RTOL", "3.6"))   # An Nam Golden: 1.5 (không xoá luật nét mảnh)
+#                                          # u: sai số khớp lại khi dời nút (≈ 0.5 % cao chữ; s Regular cần 3.58)
 
 def _split(s, t):
     a, b, c, d = s[1:]

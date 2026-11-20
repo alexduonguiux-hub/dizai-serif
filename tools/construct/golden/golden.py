@@ -194,15 +194,49 @@ def g3(cs):
                 FLSEG.add((id(q[0]), id(q[3]))); n_fl += 1
     return n_fl
 
+# ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
+ARCH = set('nmhuµ')
+def arch_thin(cs, w):
+    """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
+    δ = (1 − THIN_R)·bề dày đỉnh — dáng cung giữ nguyên, điểm nối trượt trên thân. Trả về id các điểm đã dời (G2 bỏ qua)."""
+    P = polys(cs); done = set()
+    for c in cs:
+        S_ = segs(c); n = len(S_)
+        vert = lambda sg: sg[0] != 'C' and abs(sg[1][0][0] - sg[1][1][0]) < 0.5 and abs(sg[1][0][1] - sg[1][1][1]) > 30
+        i = 0
+        while i < n:
+            if vert(S_[i]) and S_[(i + 1) % n][0] == 'C':
+                j = i + 1; chain = []
+                while S_[j % n][0] == 'C' and len(chain) < n: chain.append(S_[j % n]); j += 1
+                if vert(S_[j % n]) and chain:
+                    pts = []
+                    for _, q in chain:
+                        for p_ in q:
+                            if all(p_ is not r for r in pts): pts.append(p_)
+                    ys = [p_[1] for p_ in pts]; top, bot = max(ys), min(ys)
+                    ends = (chain[0][1][0][1], chain[-1][1][3][1])
+                    if top > max(ends) + 20:   pk = max(pts, key=lambda p_: p_[1]); sg = 1     # vòm: đỉnh cao hơn hai đầu
+                    elif bot < min(ends) - 20: pk = min(pts, key=lambda p_: p_[1]); sg = -1   # đáy u
+                    else: i = j; continue
+                    if inside((pk[0], pk[1] + sg*2), P):                                       # mực ở phía ngoài cung → là lòng
+                        h = ray(pk, (0, sg), P)
+                        if h:
+                            dlt = (1 - THIN_R[w])*h[0]
+                            for p_ in pts: p_[1] += sg*dlt
+                            done |= {id(p_) for p_ in pts}
+                i = j
+            else: i += 1
+    return done
+
 # ---------- G2 nét mảnh ----------
-THIN_R = 0.8
+THIN_R = {'Regular': 0.8, 'Bold': 0.65}   # designer 20/11: "giảm nét mảnh của các weight medium, semibold, bold" — Bold 0.65 (M / SB nội suy)
 PAR = 50                       # mép đối diện lệch ≤ PAR° (vòng có lòng nghiêng: mép lòng đối diện lệch tới ~45°)
 HAIR = {'Regular': 42.0, 'Bold': 62.0}; STEM = {'Regular': 104.0, 'Bold': 140.0}
-def g2(cs, w, skip, ratio=None):
+def g2(cs, w, skip, ratio=None, fixed=frozenset()):
     """ratio: thu MỌI nét (không chỉ nét mảnh) về × ratio — dùng sau khi giãn ngang (G4)"""
     P = polys(cs); wl, wh = 1.4*HAIR[w], 0.7*STEM[w]
     if ratio is not None: wl, wh = 1e9, 2e9
-    R_ = THIN_R if ratio is None else ratio
+    R_ = THIN_R[w] if ratio is None else ratio
     def shrink(pt, nout, par=PAR):
         h = ray(pt, (-nout[0], -nout[1]), P)
         if not h: return 0.0
@@ -218,6 +252,7 @@ def g2(cs, w, skip, ratio=None):
         for i in range(n):
             a, b = S_[i - 1], S_[i]                               # nút = điểm cuối a = điểm đầu b
             node = b[1][0]
+            if id(node) in fixed: continue
             ta, tb = tan_end(*a, False), tan_end(*b, True)
             if not ta or not tb: continue
             outs = []
@@ -235,6 +270,12 @@ def g2(cs, w, skip, ratio=None):
                 sgn = -1 if end else 1
                 return shrink((node[0] + sgn*2*tv[0], node[1] + sgn*2*tv[1]), out)
             da, db = at(a, ta, outs[0], True), at(b, tb, outs[1], False)
+            if a[0] == 'C' and b[0] == 'C' and ratio is None:           # nút giữa hai cung: chỉ mép LÒNG (lõm) dời, gấp đôi; mép lồi
+                q1, q2 = bz(*a[1], 0.5), bz(*b[1], 0.5)                  # (bóng ngoài, đường vượt) giữ nguyên
+                mx, my = (q1[0] + q2[0])/2 - node[0], (q1[1] + q2[1])/2 - node[1]
+                nv = outs[0]; cv = (mx*nv[0] + my*nv[1])/max(1e-6, math.dist(q1, q2))
+                fct = 0.0 if cv < -0.01 else (2.0 if cv > 0.01 else 1.0)
+                da, db = da*fct, db*fct
             if da == 0 and db == 0: continue
             n1, n2 = outs; cosang = n1[0]*n2[0] + n1[1]*n2[1]
             if cosang > 0.985:                                    # nút trơn
@@ -273,7 +314,7 @@ def g2(cs, w, skip, ratio=None):
         for _ in range(2):
             cur = [DD.get(id(p_), (0.0, 0.0)) for p_ in nodes]; new = list(cur)
             for i in range(n):
-                if not smooth[i]: continue
+                if not smooth[i] or id(nodes[i]) in fixed: continue
                 l, r = cur[i - 1], cur[(i + 1) % n]
                 new[i] = (0.5*cur[i][0] + 0.25*(l[0] + r[0]), 0.5*cur[i][1] + 0.25*(l[1] + r[1]))
             for i in range(n):
@@ -338,11 +379,12 @@ def g23(d, ch, w, low, mask=None):
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
     nt = 0
     if unicodedata.category(ch)[0] == 'L' or ch in LIG:
-        NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aª'
+        NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµ'      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
         cs, mask = split_curves(cs, mask)
         top = (OVT + D if ch in low else 712.0) + 3
         skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
-        nt = g2(cs, w, skip)
+        fixed = arch_thin(cs, w) if unicodedata.normalize('NFD', ch)[0] in ARCH else frozenset()
+        nt = g2(cs, w, skip, fixed=fixed)
     return fmt(cs), nf, nt, mask
 
 # ---------- G5 đầu t vát (designer 20/11, hình phác: "đầu chữ t đổi thành kiểu này cho golden") ----------
