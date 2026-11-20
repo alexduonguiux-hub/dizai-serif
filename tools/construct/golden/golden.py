@@ -317,6 +317,9 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
                 sgn = -1 if end else 1
                 return shrink((node[0] + sgn*2*tv[0], node[1] + sgn*2*tv[1]), out)
             da, db = at(a, ta, outs[0], True), at(b, tb, outs[1], False)
+            if ratio is None and (a[0] == 'C') != (b[0] == 'C'):       # góc cung–thẳng: chỉ phía đoạn thẳng quyết định (cung không bị
+                if a[0] == 'C': da = 0.0                                # kéo theo góc → đáy lòng G không gợn)
+                else: db = 0.0
             if a[0] == 'C' and b[0] == 'C' and ratio is None:           # nút giữa hai cung: chỉ mép LÒNG (lõm) dời, gấp đôi; mép lồi
                 q1, q2 = bz(*a[1], 0.5), bz(*b[1], 0.5)                  # (bóng ngoài, đường vượt) giữ nguyên
                 mx, my = (q1[0] + q2[0])/2 - node[0], (q1[1] + q2[1])/2 - node[1]
@@ -552,10 +555,43 @@ def _solve_ring1(d0, d, w):
 
 # ---------- G7 s S nét mảnh theo chuẩn vòng (designer 20/11: "kiểm tra lại nét mỏng nhất của s") ----------
 SFAM = set('sS')
+# G7 s S (luật mới): mép lòng trên / dưới là chuỗi điểm neo lõm nối từ đầu nét về sống. Mỗi lòng kéo dãn theo chiều đứng, tuyến tính
+# theo độ cao tính từ điểm neo chân chuỗi (đứng yên): y' = y ± δ·(y − y_chân)/(y_đỉnh − y_chân) — phép affine nên mép lòng giữ trơn,
+# không có điểm neo bị đẩy riêng (lối cũ dời từng điểm neo → lòng gãy góc). δ = bề dày đỉnh lòng − chuẩn, lặp 4 lượt.
+def _s_chains(cs, pr):
+    import stroke_balance as SB
+    sm = {(gi, i) for gi, i, _ in SB.nodes(cs)}; side = {(p[1], p[2]): p for p in pr}; out = []
+    for gi, g in enumerate(cs):
+        n = len(g)
+        for k in range(n):
+            if (gi, k) in sm: continue                                            # góc đầu nét; chuỗi lõm đi lùi hoặc tiến
+            for st in (-1, 1):
+                ch = []; m = (k + st) % n
+                while (gi, m) in sm and (gi, m) in side and side[(gi, m)][5] >= 0.5 and len(ch) < n:
+                    ch.append(m); m = (m + st) % n
+                if len(ch) >= 2 and (gi, m) in sm: out.append((gi, k, ch, m))   # (contour, góc đầu nét, chuỗi lõm, nút chân)
+    return out
 def s_thin(d, w):
     sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB
-    out, r = SB.balance([d], RING_T[w], None)
-    return out[0] if isinstance(out, list) else out
+    tgt = RING_T[w]
+    for _ in range(4):
+        cs = SB.contours(d); pr = SB.probe([d]); P = {(p[1], p[2]): p for p in pr}; done = True
+        for gi, k, ch, m0 in _s_chains(cs, pr):
+            g = cs[gi]; n = len(g); ys = g[m0][-1][1]
+            ext = max(ch, key=lambda m: abs(g[m][-1][1] - ys)); yt = g[ext][-1][1]
+            if abs(yt - ys) < 40: continue
+            dlt = P[(gi, ext)][4] - tgt
+            if abs(dlt) < 0.5: continue
+            done = False; sg = 1 if yt > ys else -1
+            f = lambda y: y + sg*dlt*max(0.0, (y - ys)*sg)/abs(yt - ys)
+            pts = []
+            for m in ch:                                     # nút + hai tay của nó
+                A, B = g[m], g[(m + 1) % n]
+                pts += ([A[3], A[4]] if A[0] == 'C' else [A[2]]) + ([B[1], B[2]] if B[0] == 'C' else [B[1]])
+            for q in {id(q): q for q in pts}.values(): q[1] = f(q[1])
+        d = SB.to_d(cs)
+        if done: break
+    return d
 
 # ---------- G8 đồng bộ nét mảnh mọi chữ (designer 20/11: "kiểm tra đồng bộ hết độ dày các nét mỏng") ----------
 # Sau các luật trên, nét mảnh từng chữ gốc (Regular, Bold) đo lại; nét mảnh (≤ 1.4 × chuẩn) nhân thêm hệ số r = chuẩn / đo (lặp 3
@@ -669,6 +705,20 @@ def composable(c):
     nfd = unicodedata.normalize('NFD', c); b = nfd[0]
     return c != b and b.isalpha() and b not in 'iIjJ' and not (set(nfd) & NOCOMP)
 
+def drop_tiny(dR, dB, lim=2.0):
+    """đoạn dài < lim u (ở một trong hai master) — mẩu nối của bản vẽ bị luật làm mảnh co lại: bỏ ở CẢ HAI master (giữ tương thích)"""
+    R, B = parse(dR), parse(dB); n = 0
+    if len(R) != len(B): return dR, dB, 0
+    for cr, cb in zip(R, B):
+        if len(cr) != len(cb): continue
+        j = 1
+        while j < len(cr) - 2:                                    # không đụng đoạn cuối (điểm khép contour)
+            if cr[j][0] == cb[j][0] and cr[j][0] in 'LC':
+                L = [math.dist(c[j - 1][1][-1], c[j][1][-1]) for c in (cr, cb)]
+                if min(L) < lim:
+                    del cr[j]; del cb[j]; n += 1; continue
+            j += 1
+    return (fmt(R), fmt(B), n) if n else (dR, dB, 0)
 def lerp_d(a, b, t):
     A, B = parse(a), parse(b)
     for ca, cb in zip(A, B):
@@ -725,6 +775,14 @@ def main():
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rebase(O[f'{c}-{w}'], O[f'{b_}-{w}'], G[f'{b_}-{w}'], G[f'{c}-{w}'])
         else: continue
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    ntiny = []
+    for c in chars:
+        if f'{c}-Regular' not in G: continue
+        G[f'{c}-Regular'], G[f'{c}-Bold'], k = drop_tiny(G[f'{c}-Regular'], G[f'{c}-Bold'])
+        if k:
+            ntiny.append(c)
+            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    print('bỏ đoạn siêu ngắn (< 2 u):', ''.join(ntiny))
     print('chữ có dấu ghép = chữ gốc + dấu:', nrb)
     print('G8 hệ số nét mảnh:', ' '.join(f'{c}{w[0]}{r:.2f}' for (c, w), r in sorted(G8R.items()) if abs(r - 1) > 0.02))
     os.makedirs(OUT, exist_ok=True)
