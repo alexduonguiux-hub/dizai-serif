@@ -381,7 +381,7 @@ def g23(d, ch, w, low, mask=None):
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
     nt = 0
     if unicodedata.category(ch)[0] == 'L' or ch in LIG:
-        NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµsS$'      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
+        NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµsS$eæœ'   # e: chia cung làm gợn đuôi e (designer 20/11)      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
         cs, mask = split_curves(cs, mask)
         top = (OVT + D if ch in low else 712.0) + 3
         skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
@@ -591,7 +591,7 @@ def main():
                 base = RING[b_]
                 if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
                 G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
-        if c.isalpha() and len(c) == 1 and c.isascii() and c not in NOHAIR:              # G8 chữ gốc: giải hệ số
+        if c.isalpha() and len(c) == 1 and c.isascii() and c not in NOHAIR and c not in EFAM:   # G8 chữ gốc (e: chỉ G9 đỉnh cung)
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
