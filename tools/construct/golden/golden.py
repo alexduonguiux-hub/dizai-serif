@@ -155,7 +155,8 @@ def tan_end(k, q, at_start):
     return None
 
 # ---------- G3 chân loe ----------
-FLARE_KX_CAP = 1.45             # designer 20/11 "các chữ hoa Golden đuôi chân loe dài thêm ra thêm xíu" (chữ thường giữ 1.3)
+CAPS_AS_SERIF = True            # designer 20/11 "Golden hoa nên có độ dày y chang Serif. khác loe chân"
+FLARE_KX_CAP = 2.9             # designer 20/11 "loe chân nên rộng thêm x2" (1.45 → 2.9)              # designer 20/11 "các chữ hoa Golden đuôi chân loe dài thêm ra thêm xíu" (chữ thường giữ 1.3)
 FLK = [1.3]                    # bề rộng loe đang dùng (g23 đặt theo chữ hoa / thường)
 FLARE_KX, FLARE_KY = 1.3, 0.85   # designer 20/11: loe rộng hơn 30 %; "giảm chiều cao của loe để cảm giác vuốt nhọn hơn" → cao × 0.85
 FLSEG = set()                   # (id điểm đầu, id điểm cuối) của các cung loe — luật nét mảnh không bẻ hình loe
@@ -1046,21 +1047,22 @@ def main():
             d, nf, nt, mask = g23(d, c, w, low, mask if w == 'Bold' else None); NF[w] += nf; NT[w] += nt
             G[f'{c}-{w}'] = d
         b_ = unicodedata.normalize('NFD', c)[0]
-        if b_ in EFAM:                                            # G9 đỉnh e = chuẩn nét mảnh
+        CAP_ = b_.isupper() and CAPS_AS_SERIF                         # chữ HOA: độ dày y như AnNam Serif (chỉ khác loe)
+        if b_ in EFAM and not CAP_:                                   # G9 đỉnh e = chuẩn nét mảnh
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = e_top(G[f'{c}-{w}'], RING_T[w])
-        if b_ in SFAM:                                            # G7 s S: nét mảnh = RING_T (cùng chuẩn vòng), mép lòng, lặp Newton
+        if b_ in SFAM and not CAP_:                                   # G7 s S: nét mảnh = RING_T (cùng chuẩn vòng), mép lòng, lặp Newton
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'] = s_thin(G[f'{c}-{w}'], w)
-        if b_ in RING:
+        if b_ in RING and not CAP_:
             for w in ('Regular', 'Bold'):
                 base = RING[b_]
                 if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
                 G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
-        if c in TBAR:                                             # G11 thanh T = chuẩn nét mảnh
+        if c in TBAR and not CAP_:                                    # G11 thanh T = chuẩn nét mảnh
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = bar_thin(G[f'{c}-{w}'], w)[0]
-        if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP:      # G10 nét mảnh cong (lòng kéo dãn đứng)
+        if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP and not CAP_:      # G10 nét mảnh cong (lòng kéo dãn đứng)
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = g10(G[f'{c}-{w}'], w)
-        if c.isalpha() and len(c) == 1 and c.isascii():                          # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
+        if c.isalpha() and len(c) == 1 and c.isascii() and not CAP_:             # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
         if c in TCH:                                                  # G15 thanh t hai bên mảnh đều
