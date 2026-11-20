@@ -527,6 +527,36 @@ def g8_solve(d, ch, w, low, xtop=None):
         cur = g8_apply(cur, ch, w, r, low, xtop)
     return cur, rt
 
+# ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
+# Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
+# y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
+EFAM = set('eæœ')
+def _top_thick(cs, c_eye):
+    P = polys(cs); Pe = polys([c_eye])[0]; pk = max(Pe, key=lambda p: p[1]); best = None
+    for dx in range(-60, 61, 6):
+        x = pk[0] + dx; hits = []
+        for pl in P:
+            for i in range(len(pl)):
+                (x1, y1), (x2, y2) = pl[i - 1], pl[i]
+                if (x1 <= x) != (x2 <= x): hits.append(y1 + (x - x1)*(y2 - y1)/(x2 - x1))
+        up = sorted(h for h in hits if h >= pk[1] - 40)
+        ins = [h for h in up]
+        if len(ins) >= 2:
+            ins.sort(); t = ins[-1] - ins[-2]
+            if best is None or t < best: best = t
+    return best
+def e_top(d, tgt):
+    cs = parse(d)
+    ar = lambda c: 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(polys([c])[0], polys([c])[0][1:] + polys([c])[0][:1]))
+    A0 = ar(cs[0]); inn = [c for c in cs[1:] if ar(c)*A0 < 0]
+    if not inn: return d
+    eye = max(inn, key=lambda c: sum(p[1] for p in polys([c])[0])/len(polys([c])[0]))
+    t = _top_thick(cs, eye)
+    if t is None or abs(t - tgt) < 0.5: return d
+    ys = [p[1] for p in polys([eye])[0]]; yb, yt = min(ys), max(ys); dl = t - tgt
+    for p in pts_of(eye): p[1] += dl*max(0.0, (p[1] - yb)/(yt - yb))
+    return fmt(cs)
+
 def lerp_d(a, b, t):
     A, B = parse(a), parse(b)
     for ca, cb in zip(A, B):
@@ -551,6 +581,8 @@ def main():
             d, nf, nt, mask = g23(d, c, w, low, mask if w == 'Bold' else None); NF[w] += nf; NT[w] += nt
             G[f'{c}-{w}'] = d
         b_ = unicodedata.normalize('NFD', c)[0]
+        if b_ in EFAM:                                            # G9 đỉnh e = chuẩn nét mảnh
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = e_top(G[f'{c}-{w}'], RING_T[w])
         if b_ in SFAM:                                            # G7 s S: nét mảnh = RING_T (cùng chuẩn vòng), mép lòng, lặp Newton
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'] = s_thin(G[f'{c}-{w}'], w)

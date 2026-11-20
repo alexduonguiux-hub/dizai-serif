@@ -6,7 +6,7 @@ Chuẩn: nét mảnh 42 (Regular) / 62 (Bold) cho mọi chữ có nét mảnh; M
 Dùng lại luật của An Nam Golden (golden/golden.py), đo bằng trục giữa (stroke_balance.measure):
   - vòm n m h u: lòng vòm / lòng đáy u dịch nguyên khối tới đỉnh vòm = chuẩn (giữ dáng cung);
   - vòng o O ơ Ơ Q, bụng b d p q: lòng giãn / co theo trục dài của chính nó (Q: vùng đuôi giữ; b d p q: mép thân giữ);
-  - s S: mép lòng dời theo Newton (stroke_balance.balance);
+  - s S: mép lòng dời theo Newton (stroke_balance.balance); e: lòng mắt kéo đứng tới đỉnh cung = chuẩn;
   - chữ khác: nét mảnh (≤ 1.4 × chuẩn) nhân hệ số r = chuẩn / đo (mép lòng của cung, hai mép đoạn thẳng), tổng r trong 0.7–1.3.
 Chữ có dấu dùng hệ số của chữ gốc. Bỏ qua chữ không có nét mảnh (i j l f r t I T).
 """
@@ -34,6 +34,8 @@ def main():
                 tl = 'stem' if b in GD.BOWL else (b == 'Q')
                 if (b, w, 'k') not in K: K[(b, w, 'k')] = GD.solve_ring(d, d, w, tl)
                 d = GD.ring_scale(d, K[(b, w, 'k')], tl)
+            elif b in GD.EFAM:
+                d = GD.e_top(d, T[w])
             elif b in GD.SFAM:
                 d = GD.s_thin(d, w)
             elif b not in GD.ARCH:
