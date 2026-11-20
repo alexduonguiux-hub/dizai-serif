@@ -578,6 +578,35 @@ def rebase(src_c, src_b, new_b, new_c):
         out.append(rep)
     return fmt(out)
 
+# ---------- ghép chữ có dấu = chữ gốc + dấu (designer 20/11: "nên dùng e rồi gắn dấu vào thôi") ----------
+NOCOMP = {'\u031b', '\u0327'}           # sừng ơ ư, móc ç: dính liền thân — giữ glyph riêng
+def compose(base_d, acc_d):
+    """thân = đúng contour chữ gốc (canh theo tâm ngang phần thân của chữ có dấu); dấu = contour của chữ có dấu nằm ngoài thân"""
+    B, A = parse(base_d), parse(acc_d)
+    PB = [polys([c])[0] for c in B]
+    sa = lambda pl: 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(pl, pl[1:] + pl[:1]))
+    outer = [pl for pl in PB if sa(pl)*sa(PB[0]) > 0]
+    ylo = min(p[1] for pl in PB for p in pl); yhi = max(p[1] for pl in PB for p in pl)
+    bx0 = min(p[0] for pl in PB for p in pl); bx1 = max(p[0] for pl in PB for p in pl)
+    PA = [polys([c])[0] for c in A]
+    bod = [pl for pl in PA if min(p[1] for p in pl) < yhi - 5 and max(p[1] for p in pl) > ylo + 5]
+    if not bod: return acc_d
+    ax0 = min(p[0] for pl in bod for p in pl); ax1 = max(p[0] for pl in bod for p in pl)
+    dx = (ax0 + ax1)/2 - (bx0 + bx1)/2
+    sh = [[(x + dx, y) for x, y in pl] for pl in outer]
+    def ink(pt): return inside(pt, sh)
+    marks = []
+    for c, pl in zip(A, PA):
+        cxm = sum(p[0] for p in pl)/len(pl); cym = sum(p[1] for p in pl)/len(pl)
+        if not ink((cxm, cym)) and not (min(p[1] for p in pl) < yhi - 5 and max(p[1] for p in pl) > ylo + 5 and
+                                          min(p[0] for p in pl) < ax1 and max(p[0] for p in pl) > ax0 and abs(sa(pl)) > 0.25*abs(sa(PB[0]))):
+            marks.append(c)
+    body = [[[k, [[x + dx, y] for x, y in ps]] for k, ps in c] for c in B]
+    return fmt(body + marks)
+def composable(c):
+    nfd = unicodedata.normalize('NFD', c); b = nfd[0]
+    return c != b and b.isalpha() and b not in 'iIjJ' and not (set(nfd) & NOCOMP)
+
 def lerp_d(a, b, t):
     A, B = parse(a), parse(b)
     for ca, cb in zip(A, B):
@@ -624,15 +653,17 @@ def main():
             if abs(r - 1) > 0.01: G[f'{c}-{w}'] = g8_apply(G[f'{c}-{w}'], c, w, r, low)
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     nrb = 0
-    for c in chars:                                               # thân chữ có dấu = chữ gốc (sau mọi luật)
+    for c in chars:                                               # chữ có dấu = chữ gốc + dấu (sau mọi luật)
         b_ = unicodedata.normalize('NFD', c)[0]
-        if c == b_ or f'{c}-Regular' not in G or f'{b_}-Regular' not in G: continue
-        for w in ('Regular', 'Bold'):
-            nd = rebase(O[f'{c}-{w}'], O[f'{b_}-{w}'], G[f'{b_}-{w}'], G[f'{c}-{w}'])
-            if nd != G[f'{c}-{w}']: nrb += 1
-            G[f'{c}-{w}'] = nd
+        if f'{c}-Regular' not in G or f'{b_}-Regular' not in G: continue
+        if composable(c):
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = compose(G[f'{b_}-{w}'], G[f'{c}-{w}'])
+            nrb += 1
+        elif c != b_:
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rebase(O[f'{c}-{w}'], O[f'{b_}-{w}'], G[f'{b_}-{w}'], G[f'{c}-{w}'])
+        else: continue
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
-    print('chữ có dấu đồng nhất thân với chữ gốc:', nrb)
+    print('chữ có dấu ghép = chữ gốc + dấu:', nrb)
     print('G8 hệ số nét mảnh:', ' '.join(f'{c}{w[0]}{r:.2f}' for (c, w), r in sorted(G8R.items()) if abs(r - 1) > 0.02))
     os.makedirs(OUT, exist_ok=True)
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))

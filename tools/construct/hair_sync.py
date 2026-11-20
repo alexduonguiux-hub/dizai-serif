@@ -46,7 +46,9 @@ def main():
     for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)
         b = unicodedata.normalize('NFD', c)[0]
         if c == b or f'{b}-Regular' not in O: continue
-        for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.rebase(SRC[f'{c}-{w}'], SRC[f'{b}-{w}'], O[f'{b}-{w}'], O[f'{c}-{w}'])
+        for w in ('Regular', 'Bold'):
+            O[f'{c}-{w}'] = (GD.compose(O[f'{b}-{w}'], O[f'{c}-{w}']) if GD.composable(c)          # chữ có dấu = chữ gốc + dấu
+                             else GD.rebase(SRC[f'{c}-{w}'], SRC[f'{b}-{w}'], O[f'{b}-{w}'], O[f'{c}-{w}']))
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     json.dump(O, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('hair_sync:', ' '.join(f'{b}{w[0]}{k}{v:.2f}' for (b, w, k), v in sorted(K.items()) if abs(v - 1) > 0.02))
