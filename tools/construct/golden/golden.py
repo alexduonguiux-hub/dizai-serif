@@ -196,6 +196,7 @@ def g3(cs):
 
 # ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
 ARCH = set('nmhuµ')
+ARCH_T = {'Regular': 32.0, 'Bold': 45.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
     """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
     δ = (1 − THIN_R)·bề dày đỉnh — dáng cung giữ nguyên, điểm nối trượt trên thân. Trả về id các điểm đã dời (G2 bỏ qua)."""
@@ -221,7 +222,7 @@ def arch_thin(cs, w):
                     if inside((pk[0], pk[1] + sg*2), P):                                       # mực ở phía ngoài cung → là lòng
                         h = ray(pk, (0, sg), P)
                         if h:
-                            dlt = (1 - THIN_R[w])*h[0]
+                            dlt = h[0] - ARCH_T[w]                                  # đỉnh vòm / đáy u = đúng chuẩn nét mảnh
                             for p_ in pts: p_[1] += sg*dlt
                             done |= {id(p_) for p_ in pts}
                 i = j
@@ -232,11 +233,11 @@ def arch_thin(cs, w):
 THIN_R = {'Regular': 0.8, 'Bold': 0.65}   # designer 20/11: "giảm nét mảnh của các weight medium, semibold, bold" — Bold 0.65 (M / SB nội suy)
 PAR = 50                       # mép đối diện lệch ≤ PAR° (vòng có lòng nghiêng: mép lòng đối diện lệch tới ~45°)
 HAIR = {'Regular': 42.0, 'Bold': 62.0}; STEM = {'Regular': 104.0, 'Bold': 140.0}
-def g2(cs, w, skip, ratio=None, fixed=frozenset()):
+def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
     """ratio: thu MỌI nét (không chỉ nét mảnh) về × ratio — dùng sau khi giãn ngang (G4)"""
     P = polys(cs); wl, wh = 1.4*HAIR[w], 0.7*STEM[w]
     if ratio is not None: wl, wh = 1e9, 2e9
-    R_ = THIN_R[w] if ratio is None else ratio
+    R_ = (THIN_R[w] if thin is None else thin) if ratio is None else ratio
     def shrink(pt, nout, par=PAR):
         h = ray(pt, (-nout[0], -nout[1]), P)
         if not h: return 0.0
@@ -379,7 +380,7 @@ def g23(d, ch, w, low, mask=None):
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
     nt = 0
     if unicodedata.category(ch)[0] == 'L' or ch in LIG:
-        NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµ'      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
+        NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµsS$'      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
         cs, mask = split_curves(cs, mask)
         top = (OVT + D if ch in low else 712.0) + 3
         skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
@@ -483,6 +484,45 @@ def _solve_ring1(d0, d, w):
     a_ = max(abs((p[0] - cx)*u[0] + (p[1] - cy)*u[1]) for p in P)
     return 1 + (cur - tgt)/a_
 
+# ---------- G7 s S nét mảnh theo chuẩn vòng (designer 20/11: "kiểm tra lại nét mỏng nhất của s") ----------
+SFAM = set('sS')
+def s_thin(d, w):
+    sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB
+    out, r = SB.balance([d], RING_T[w], None)
+    return out[0] if isinstance(out, list) else out
+
+# ---------- G8 đồng bộ nét mảnh mọi chữ (designer 20/11: "kiểm tra đồng bộ hết độ dày các nét mỏng") ----------
+# Sau các luật trên, nét mảnh từng chữ gốc (Regular, Bold) đo lại; nét mảnh (≤ 1.4 × chuẩn) nhân thêm hệ số r = chuẩn / đo (lặp 3
+# lượt, giới hạn 0.7–1.4) theo đúng luật G2 (mép lòng của cung, hai mép của đoạn thẳng). Chuẩn = RING_T (32 / 45). Chữ có dấu dùng r
+# của chữ gốc. Bỏ qua chữ không có nét mảnh (i j l f r t I) — đo của chúng là thân.
+NOHAIR = set('ijlfrtITı\u0237')
+G8R = {}
+def g8_apply(d, ch, w, r, low, xtop=None):
+    cs = parse(d)
+    top = ((OVT + D if xtop is None else xtop) if ch in low else 712.0) + 3
+    skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
+    fixed = frozenset()
+    if unicodedata.normalize('NFD', ch)[0] == 'Q':
+        c_ = _counter(cs)
+        if c_ is not None:
+            P_ = polys([c_])[0]; cx_ = sum(p[0] for p in P_)/len(P_); cy_ = sum(p[1] for p in P_)/len(P_)
+            fixed = {id(p) for p in pts_of(c_) if p[0] > cx_ and p[1] < cy_ + 40}
+    old = NOSPLIT[0]; NOSPLIT[0] = True
+    g2(cs, w, skip, fixed=fixed, thin=r)
+    NOSPLIT[0] = old
+    return fmt(cs)
+def g8_solve(d, ch, w, low, xtop=None):
+    sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB
+    rt = 1.0; cur = d
+    for _ in range(3):
+        t = SB.measure([cur])[0]
+        if abs(t - RING_T[w]) < 1.0: break
+        r = max(0.7/rt, min(1.3/rt, RING_T[w]/t))               # tổng hệ số trong 0.7–1.3 (0.6–1.45 làm méo S, tai g, B) (đo trúng khớp / tay dày: không đẩy quá)
+        if abs(r - 1) < 0.01: break
+        rt *= r
+        cur = g8_apply(cur, ch, w, r, low, xtop)
+    return cur, rt
+
 def lerp_d(a, b, t):
     A, B = parse(a), parse(b)
     for ca, cb in zip(A, B):
@@ -507,12 +547,26 @@ def main():
             d, nf, nt, mask = g23(d, c, w, low, mask if w == 'Bold' else None); NF[w] += nf; NT[w] += nt
             G[f'{c}-{w}'] = d
         b_ = unicodedata.normalize('NFD', c)[0]
+        if b_ in SFAM:                                            # G7 s S: nét mảnh = RING_T (cùng chuẩn vòng), mép lòng, lặp Newton
+            for w in ('Regular', 'Bold'):
+                G[f'{c}-{w}'] = s_thin(G[f'{c}-{w}'], w)
         if b_ in RING:
             for w in ('Regular', 'Bold'):
                 base = RING[b_]
                 if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
                 G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
+        if c.isalpha() and len(c) == 1 and c.isascii() and c not in NOHAIR:              # G8 chữ gốc: giải hệ số
+            for w in ('Regular', 'Bold'):
+                G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    for c in chars:                                               # G8 chữ có dấu / chữ ghép: r của chữ gốc
+        b_ = unicodedata.normalize('NFD', c)[0]
+        if c == b_ or f'{c}-Regular' not in G or b_ in NOHAIR or not ((b_, 'Regular') in G8R): continue
+        for w in ('Regular', 'Bold'):
+            r = G8R[(b_, w)]
+            if abs(r - 1) > 0.01: G[f'{c}-{w}'] = g8_apply(G[f'{c}-{w}'], c, w, r, low)
+        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    print('G8 hệ số nét mảnh:', ' '.join(f'{c}{w[0]}{r:.2f}' for (c, w), r in sorted(G8R.items()) if abs(r - 1) > 0.02))
     os.makedirs(OUT, exist_ok=True)
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('G6 lòng giãn:', {f'{b}-{w}': round(k, 3) for (b, w), k in RINGK.items()})
