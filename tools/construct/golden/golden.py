@@ -556,7 +556,7 @@ def g23(d, ch, w, low, mask=None):
     cs = parse(d)
     FLK[0] = FLARE_KX_CAP if unicodedata.normalize('NFD', ch)[0].isupper() else FLARE_KX
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
-    if unicodedata.category(ch)[0] == 'L': nf += g3b(cs)
+    if unicodedata.normalize('NFD', ch)[0].isupper(): nf += g3b(cs)   # loe đầu tay chỉ cho chữ HOA (m n: đầu cờ x-height không phải tay)
     nt = 0
     if unicodedata.category(ch)[0] == 'L' or ch in LIG:
         NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµsS$eæœ'   # e: chia cung làm gợn đuôi e (designer 20/11)      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
