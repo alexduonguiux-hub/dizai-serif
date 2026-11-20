@@ -768,6 +768,48 @@ def bar_thin(d, w, tgt=None):
                 node[1] += dl; hd[1] += dl; n_ += 1
     return fmt(cs), n_
 
+# ---------- G13 tay loe đầu thanh dài bằng nhau (designer 20/11 "phần loe của T và E đang không bằng nhau. Lẽ ra nó phải bằng nhau") ----------
+# Mép cắt đứng ở đầu tay (gốc trên đường kẻ 0 / 700, dài 20–250) — độ sâu loe — đặt đúng ARM_D[w] cho MỌI tay (E F L T Z, phần E của Æ Œ):
+# đầu mũi dời tới đường kẻ ∓ ARM_D; chuỗi cung loe (từ mũi tới tiếp tuyến ngang ở mép thanh, y = Y0) giãn đứng affine quanh Y0.
+ARMD = set('EFLTZÆŒ')
+ARM_D = {'Regular': 114.0, 'Bold': 148.0}          # Golden: theo T (tay thuần, nhận đủ G3b ×1.4); AnNam Serif đặt lại 94 / 122 (bản vẽ gốc)
+def arm_depth(d, w):
+    cs = parse(d); Dd = ARM_D[w]; n_ = 0
+    for c in cs:
+        S_ = segs(c); n = len(S_)
+        for i in range(n):
+            k, q = S_[i]
+            if k == 'C' or abs(q[0][0] - q[1][0]) > 0.5: continue
+            for g_ in (700.0, 0.0):
+                ends = [p for p in q if abs(p[1] - g_) < 0.6]
+                if len(ends) != 1: continue
+                root = ends[0]; tip = q[1] if root is q[0] else q[0]
+                old = abs(tip[1] - g_)
+                if not (20 <= old <= 250) or abs(old - Dd) < 0.5: continue
+                fwd = tip is q[1]                                   # chuỗi cung nối tiếp từ mũi
+                j = (i + 1) % n if fwd else (i - 1) % n; chain = []
+                while S_[j][0] == 'C' and len(chain) < 4:
+                    chain.append(S_[j]); t = tan_end(*S_[j], not fwd)
+                    if t and abs(t[1]) < 0.06: break
+                    j = (j + 1) % n if fwd else (j - 1) % n
+                else: continue
+                if not chain: continue
+                endp = chain[-1][1][3] if fwd else chain[-1][1][0]; Y0 = endp[1]
+                sgn = -1 if g_ > 300 else 1                          # mũi nằm dưới đường 700 / trên đường 0
+                dold = abs(tip[1] - Y0); dnew = abs((g_ + sgn*Dd) - Y0)
+                if dold < 5: continue
+                kf = dnew/dold; mv = []
+                for _, cq in chain:
+                    for p_ in cq:
+                        if p_ is endp or any(p_ is m for m in mv): continue
+                        mv.append(p_)
+                hfar = chain[-1][1][2] if fwd else chain[-1][1][1]
+                for p_ in mv:
+                    if p_ is hfar: continue
+                    p_[1] = Y0 + (p_[1] - Y0)*kf
+                tip[1] = g_ + sgn*Dd; n_ += 1
+    return fmt(cs), n_
+
 # ---------- G8 đồng bộ nét mảnh mọi chữ (designer 20/11: "kiểm tra đồng bộ hết độ dày các nét mỏng") ----------
 # Sau các luật trên, nét mảnh từng chữ gốc (Regular, Bold) đo lại; nét mảnh (≤ 1.4 × chuẩn) nhân thêm hệ số r = chuẩn / đo (lặp 3
 # lượt, giới hạn 0.7–1.4) theo đúng luật G2 (mép lòng của cung, hai mép của đoạn thẳng). Chuẩn = RING_T (32 / 45). Chữ có dấu dùng r
@@ -933,6 +975,8 @@ def main():
         if c.isalpha() and len(c) == 1 and c.isascii():                          # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
+        if c in ARMD:                                                 # G13 tay loe đầu thanh dài bằng nhau (cả Æ Œ)
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = arm_depth(G[f'{c}-{w}'], w)[0]
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     for c in chars:                                               # G8 chữ có dấu / chữ ghép: r của chữ gốc
         b_ = unicodedata.normalize('NFD', c)[0]

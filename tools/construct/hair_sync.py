@@ -20,6 +20,7 @@ XTOP = 503.4
 
 def main():
     GD.RING_T.update(T); GD.ARCH_T.update(T); GD.BAR_K = 1.0     # AnNam Serif: không hiệu chỉnh nét ngang (chỉ Golden)
+    GD.ARM_D.update({'Regular': 94.0, 'Bold': 122.0})        # G13: tay loe đầu thanh = độ sâu bản vẽ gốc v0.918 (mọi tay bằng nhau)
     O = json.load(open(os.path.join(OUT, 'outlines.json'))); SRC = dict(O); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
     chars = [c for c in SP['Regular'] if f'{c}-Regular' in O]
     for c in chars:                                               # mẩu nối < 3 u (nách K): bỏ trước mọi luật — không có tiếp tuyến
@@ -46,6 +47,10 @@ def main():
             d, _ = GD.g8_solve(d, c, w, low, XTOP)                      # G8 tuyệt đối: đoạn thẳng nét mảnh = chuẩn (gồm thanh e f t)
             O[f'{c}-{w}'] = d
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    for c in order:                                               # G13 tay loe đầu thanh dài bằng nhau (E F L T Z Æ Œ)
+        if c in GD.ARMD and f'{c}-Regular' in O:
+            for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.arm_depth(O[f'{c}-{w}'], w)[0]
+            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)
         b = unicodedata.normalize('NFD', c)[0]
         if c == b or f'{b}-Regular' not in O: continue
