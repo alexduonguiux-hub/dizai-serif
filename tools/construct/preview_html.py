@@ -6,7 +6,13 @@
 import json, os, re, unicodedata
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.join(HERE, "..", "..")
-outl = json.load(open(os.path.join(ROOT, "out", "construct", "outlines.json")))
+# PV_*: trang cho họ khác (An Nam Golden: golden/run.sh) — thư mục outline, font, tên họ, file ra, x-height, guide dựng
+PVO = os.environ.get("PV_OUT") or os.path.join(ROOT, "out", "construct")
+PVOI = os.environ.get("PV_OUTI") or os.path.join(ROOT, "out", "construct_italic")
+PVF = os.environ.get("PV_FONTS") or os.path.join(ROOT, "fonts")
+PVPS, PVNAME = os.environ.get("PV_PS", "AnNamSerif"), os.environ.get("PV_NAME", "AnNam Serif")
+PVHTML = os.environ.get("PV_HTML", "dizai-serif.html"); PVXH = float(os.environ.get("PV_XH", 495.0)); PVGD = os.environ.get("PV_GUIDES", "1") == "1"
+outl = json.load(open(os.path.join(PVO, "outlines.json")))
 ref = json.load(open(os.path.join(HERE, "ref_glyphs.json")))
 src = open(os.path.join(HERE, "glyphs.js")).read()
 VN = re.search(r"const VN = '([^']*)'", src).group(1)
@@ -39,11 +45,11 @@ def entry(ch, w, grp):
     if k not in outl: return None
     return {"c": ch, "u": ord(ch), "g": grp, "a": r.get("W", 0) + 80, "W": r.get("W", 0), "p": short(outl[k]),
             "bx": [round(min(xs)), round(max(xs))] if xs else [0, 0],
-            "s": "interp" if r.get("src") == "interp" else ("rule" if rule else "designer"), "gd": [rg(x) for x in r.get("guides", []) if x["type"] != "handles"]}
+            "s": "interp" if r.get("src") == "interp" else ("rule" if rule else "designer"), "gd": [rg(x) for x in r.get("guides", []) if x["type"] != "handles"] if PVGD else []}
 
 import unicodedata as _ud
-SP = json.load(open(os.path.join(ROOT, "out", "construct", "spacing.json")))
-KN = json.load(open(os.path.join(ROOT, "out", "construct", "kerning.json")))
+SP = json.load(open(os.path.join(PVO, "spacing.json")))
+KN = json.load(open(os.path.join(PVO, "kerning.json")))
 def _base(ch):
     if ch in "Đđ": return {"Đ": "D", "đ": "d"}[ch]
     return _ud.normalize("NFD", ch)[0]
@@ -62,8 +68,8 @@ for w in ("Regular", "Medium", "SemiBold", "Bold"):
 # Italic (designer 06/11 "bản italic chưa có trên preview"): outline nhánh Italic (out/construct_italic — hiện = glyph Roman),
 # nghiêng 10° quanh ½ x-height như export_font; kerning / spacing dùng chung Roman
 import math
-_T = math.tan(math.radians(10)); _YC = 495.0/2
-_OI = os.path.join(ROOT, "out", "construct_italic", "outlines.json")
+_T = math.tan(math.radians(10)); _YC = PVXH/2
+_OI = os.path.join(PVOI, "outlines.json")
 outl_i = json.load(open(_OI)) if os.path.exists(_OI) else outl
 def _skew(d):
     nums = list(re.finditer(r"-?\d+(?:\.\d+)?", d)); out = []; last = 0
@@ -84,16 +90,17 @@ html = open(os.path.join(HERE, "preview_template.html")).read().replace("/*DATA*
 # font variable thật (export_font.py) nhúng woff2 base64 → mục "Font variable" của trang
 import base64, io
 FF = []
-for fam, fn in (("AnNam VF", "AnNamSerif[wght].ttf"), ("AnNam VF Italic", "AnNamSerif-Italic[wght].ttf"),
-                ("AnNam VF Combined", "AnNamSerif[slnt,wght].ttf")):
-    fp = os.path.join(ROOT, "fonts", "variable", fn)
+for fam, fn in (("AnNam VF", f"{PVPS}[wght].ttf"), ("AnNam VF Italic", f"{PVPS}-Italic[wght].ttf"),
+                ("AnNam VF Combined", f"{PVPS}[slnt,wght].ttf")):
+    fp = os.path.join(PVF, "variable", fn)
     if not os.path.exists(fp): continue
     from fontTools.ttLib import TTFont
     f = TTFont(fp); f.flavor = "woff2"; b = io.BytesIO(); f.save(b)
     FF.append('@font-face { font-family: "%s"; src: url(data:font/woff2;base64,%s) format("woff2"); font-weight: 400 700; font-display: block; }'
               % (fam, base64.b64encode(b.getvalue()).decode()))
 html = html.replace("/*FONTS*/", "\n".join(FF))
+if PVNAME != "AnNam Serif": html = html.replace("AnNam Serif", PVNAME).replace("AnNamSerif", PVPS)
 os.makedirs(os.path.join(ROOT, "docs", "preview"), exist_ok=True)
-out = os.path.join(ROOT, "docs", "preview", "dizai-serif.html")
+out = os.path.join(ROOT, "docs", "preview", PVHTML)
 open(out, "w").write(html)
 print(out, round(len(html) / 1024), "KB", {w: len(v) for w, v in data["weights"].items()})
