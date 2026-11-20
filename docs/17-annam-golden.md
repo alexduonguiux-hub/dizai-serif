@@ -74,3 +74,11 @@ QA: thanh ngang AnNam Serif 42–43 / 56–58, Golden 32–33 / 41–45, 0 lỗi
 - Rà toàn bộ: Golden 0 cờ độ cong / gãy; AnNam Serif chỉ W 3.7° (có sẵn ở bản vẽ gốc). Version 0.922.
 
 ![W t Ø](img/s58-w-t.png)
+
+## S59 — nét mảnh Golden = AnNam Serif (20/11, "nét xéo của golden mỏng quá" → "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif")
+
+- RING_T / ARCH_T Golden 32 / 44 → 42 / 56.5 (= AnNam Serif); bỏ bước làm mảnh theo tỉ lệ (THIN_R 0.8 / 0.65 → 1.0). Nét ngang giữ 0.88 × (37 / 50).
+- Sửa lỗi: G3b (loe đầu tay ×1.4, chỉ dành cho tay chữ hoa) áp nhầm cho đầu cờ x-height của m n h r … — kéo dài đầu cờ và làm mảnh vai vòm (m 31). Nay chỉ chữ hoa.
+- Đo: Golden 41–42 / 56 (m n u Bold 56–63 theo bản vẽ), thanh 37–38 / 50–51; 0 cờ độ cong / gãy mới. Version 0.923.
+
+![nét mảnh](img/s59-hair.png)

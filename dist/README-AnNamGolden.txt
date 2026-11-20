@@ -1,8 +1,8 @@
-AnNam Golden — Version 0.922 (20 November 2026)
+AnNam Golden — Version 0.923 (20 November 2026)
 Design: Đìzai Studio · Vendor ID: DZAI
 
 A display companion to AnNam Serif: taller x-height (535), larger flares,
-finer hairlines (32 / 44 units), wider v x y, and the same broad-nib contrast and full Vietnamese support
+hairlines matched to AnNam Serif (42 / 56.5 units; horizontals 0.88×), wider v x y, and the same broad-nib contrast and full Vietnamese support
 (all 134 precomposed Vietnamese letters; decomposed input — base letter + combining marks — is composed automatically).
 4 weights: Regular 400 · Medium 500 · SemiBold 600 · Bold 700, each in Roman and Italic (10° slant).
 
