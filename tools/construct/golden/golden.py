@@ -198,7 +198,7 @@ def g3(cs):
 
 # ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
 ARCH = set()                   # (cũ: 'nmhuµ' dịch nguyên khối) — nay vòm / đáy u dùng G10 (dốc tuyến tính, vai cạnh thân gần đứng yên)
-ARCH_T = {'Regular': 32.0, 'Bold': 45.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
+ARCH_T = {'Regular': 42.0, 'Bold': 56.5}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
     """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
     δ = (1 − THIN_R)·bề dày đỉnh — dáng cung giữ nguyên, điểm nối trượt trên thân. Trả về id các điểm đã dời (G2 bỏ qua)."""
@@ -285,7 +285,7 @@ def g3b(cs):
 
 # ---------- G2 nét mảnh ----------
 GUIDES = (0.0, 700.0, 535.0, 495.0)   # đường chân, cao chữ hoa, x-height Golden / AnNam Serif: mép thẳng nằm trên đó không dời
-THIN_R = {'Regular': 0.8, 'Bold': 0.65}   # designer 20/11: "giảm nét mảnh của các weight medium, semibold, bold" — Bold 0.65 (M / SB nội suy)
+THIN_R = {'Regular': 1.0, 'Bold': 1.0}   # S59: nét mảnh Golden = AnNam Serif → không làm mảnh theo tỉ lệ (trước 0.8 / 0.65)   # designer 20/11: "giảm nét mảnh của các weight medium, semibold, bold" — Bold 0.65 (M / SB nội suy)
 PAR = 50                       # mép đối diện lệch ≤ PAR° (vòng có lòng nghiêng: mép lòng đối diện lệch tới ~45°)
 HAIR = {'Regular': 42.0, 'Bold': 62.0}; STEM = {'Regular': 104.0, 'Bold': 140.0}
 def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
@@ -629,7 +629,7 @@ def g4(d, ch, w):
 # cho chữ cùng gốc (ó ò ỏ õ ọ ô … ơ Ơ).
 RING = {'o': 'o', 'O': 'O', 'ơ': 'o', 'Ơ': 'O', 'Q': 'Q'}   # Q: lòng có đuôi ăn vào — vùng đuôi giữ nguyên (ring_scale tail)
 RINGK = {}
-RING_T = {'Regular': 32.0, 'Bold': 44.0}   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
+RING_T = {'Regular': 42.0, 'Bold': 56.5}   # designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
                                            # — không theo tỉ lệ AnNam Serif (o 42 / O 34 ở bản gốc vốn lệch). M / SB nội suy.
 def _counter(cs):
     ar = lambda c: 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(polys([c])[0], polys([c])[0][1:] + polys([c])[0][:1]))
