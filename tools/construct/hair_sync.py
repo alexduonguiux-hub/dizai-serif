@@ -19,7 +19,7 @@ T = {'Regular': 42.0, 'Bold': 56.5}           # designer 20/11 "đồng bộ wei
 XTOP = 503.4
 
 def main():
-    GD.RING_T.update(T); GD.ARCH_T.update(T)
+    GD.RING_T.update(T); GD.ARCH_T.update(T); GD.BAR_K = 1.0     # AnNam Serif: không hiệu chỉnh nét ngang (chỉ Golden)
     O = json.load(open(os.path.join(OUT, 'outlines.json'))); SRC = dict(O); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
     chars = [c for c in SP['Regular'] if f'{c}-Regular' in O]
     for c in chars:                                               # mẩu nối < 3 u (nách K): bỏ trước mọi luật — không có tiếp tuyến

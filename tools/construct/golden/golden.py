@@ -747,7 +747,7 @@ def g10(d, w, tgt=None):
 # dày hơn của các chữ khác". Điểm nối cung–thân (tiếp tuyến ngang, thân đứng) dời đứng δ = bề dày thanh (tia đứng tới mép trên) − chuẩn
 # nét mảnh; tay nắm kề nó dời cùng (giữ ngang → cung trơn); đầu nhọn loe đứng yên.
 TBAR = set('T')
-BAR_K = 1.0                    # chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học)
+BAR_K = 0.88                   # designer 20/11 chọn k 0.88 ("nét ngang F L T E Z dầy hơn nét còn lại") — chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học)
 def bar_thin(d, w, tgt=None):
     tgt = (RING_T[w] if tgt is None else tgt)*BAR_K
     cs = parse(d); P = polys(cs); n_ = 0
