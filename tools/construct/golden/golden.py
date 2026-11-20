@@ -312,7 +312,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             if ratio is None and a[0] == 'C' and b[0] == 'C': continue          # nét cong: không dời từng nút (làm mảnh bằng biến đổi lòng)
             ta, tb = tan_end(*a, False), tan_end(*b, True)
             if not ta or not tb: continue
-            if any(abs(node[1] - g) < 0.8 for g in GUIDES) and (abs(ta[1]) < 0.05 or abs(tb[1]) < 0.05): continue   # nút trên đường kẻ, tiếp tuyến ngang
+            if any(abs(node[1] - g) < 0.8 for g in GUIDES) and (abs(ta[1]) < 0.05 or abs(tb[1]) < 0.05) and not (a[0] != 'C' and b[0] != 'C'): continue   # nút trên đường kẻ, tiếp tuyến ngang (góc thẳng–thẳng: được trượt dọc đường kẻ — chéo M W Y K dời song song)
             outs = []
             for tv, sg in ((ta, -3), (tb, 3)):                         # hướng ra ngoài: thử ở điểm lùi 3 u vào trong đoạn (góc chữ T)
                 nv = (tv[1], -tv[0]); bp = (node[0] + sg*tv[0], node[1] + sg*tv[1])
@@ -369,7 +369,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             if a[0] == 'C': hs.append(a[1][2])
             if b[0] == 'C': hs.append(b[1][1])
             moves.append((node, hs, D))
-            if os.environ.get('G2DBG') and 600 < node[1] < 700: print('g2', [round(v,1) for v in node], a[0], b[0], round(da,2), round(db,2), [round(v,2) for v in D])
+            if os.environ.get('G2DBG') and float(os.environ.get('G2Y0', 600)) < node[1] < float(os.environ.get('G2Y1', 700)): print('g2', [round(v,1) for v in node], a[0], b[0], round(da,2), round(db,2), [round(v,2) for v in D])
     mv = {id(nd): D for nd, _, D in moves}
     if ratio is None:                                             # loe đi theo nét thẳng: đầu xa của cung kề nút đã dời (góc chân)
         extra = []                                                # trượt theo đường chân của nó cùng độ dời chiếu lên đường đó
@@ -848,6 +848,9 @@ def lerp_d(a, b, t):
 def main():
     O = json.load(open(os.path.join(SRC, 'outlines.json'))); SP = json.load(open(os.path.join(SRC, 'spacing.json')))
     chars = list(SP['Regular']); low = set(lower_set(chars)); G = {}; NF = {'Regular': 0, 'Bold': 0}; NT = dict(NF)
+    for c in chars:                                               # mẩu nối < 3 u của bản vẽ (nách K): bỏ TRƯỚC mọi luật (không có tiếp tuyến)
+        if f'{c}-Regular' in O:
+            O[f'{c}-Regular'], O[f'{c}-Bold'], _ = drop_tiny(O[f'{c}-Regular'], O[f'{c}-Bold'], 3.0)
     for c in chars:
         if f'{c}-Regular' not in O: continue
         for w in ('Regular', 'Bold'):

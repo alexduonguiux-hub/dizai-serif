@@ -22,6 +22,10 @@ def main():
     GD.RING_T.update(T); GD.ARCH_T.update(T)
     O = json.load(open(os.path.join(OUT, 'outlines.json'))); SRC = dict(O); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
     chars = [c for c in SP['Regular'] if f'{c}-Regular' in O]
+    for c in chars:                                               # mẩu nối < 3 u (nách K): bỏ trước mọi luật — không có tiếp tuyến
+        O[f'{c}-Regular'], O[f'{c}-Bold'], _ = GD.drop_tiny(O[f'{c}-Regular'], O[f'{c}-Bold'], 3.0)
+        for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    SRC = dict(O)
     low = set(GD.lower_set(chars)); K = {}
     order = sorted(chars, key=lambda c: (unicodedata.normalize('NFD', c) != c or len(c) > 1 or not c.isascii(), c))   # chữ gốc trước
     for c in order:
