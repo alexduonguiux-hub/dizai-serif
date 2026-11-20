@@ -723,7 +723,7 @@ def g10(d, w, tgt=None):
                       and all(math.dist((x, y), fe) > 90 for fe in fixed_e)]   # < ½ chuẩn: mũi; gần đầu nét cắt (90 u): độ thuôn chủ ý
                 return max(-0.4*tgt, min(ds)) if ds else 0.0                     # âm: nét đang mảnh hơn chuẩn → lòng co lại (dày lên)
             dT, dB = delta(top, rT), delta(bot, rB)
-            # S55 (designer "các nét mỏng phải bằng nhau"): lòng hở cũng được làm DÀY tới chuẩn; mẫu gần đầu nét cắt (góc không trượt) bỏ qua
+            if not hole[gi]: dT, dB = max(0.0, dT), max(0.0, dB)  # lòng hở (C c n u J…): chỉ kéo mảnh — đầu nét / vai mảnh là chủ ý
             sT = top[0][1] if top else 1; sB = bot[0][1] if bot else -1
             if abs(dT) < 0.5 and abs(dB) < 0.5: continue
             def f(y):
