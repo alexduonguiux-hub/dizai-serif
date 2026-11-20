@@ -476,6 +476,18 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
                     if run and not sm[j % n] and len(run) >= 2:
                         A_, B_ = run[0][1][0], run[-1][1][3]
                         DA, DB = DD.get(id(A_), (0.0, 0.0)), DD.get(id(B_), (0.0, 0.0))
+                        prv, nxt_ = S_[(i - 1) % n], S_[j % n]
+                        endsA = endsB = None
+                        def proj(Dv, sg_):                                 # đầu còn lại trượt dọc đoạn thẳng của nó: chiếu độ dời
+                            u_ = unit((sg_[1][1][0] - sg_[1][0][0], sg_[1][1][1] - sg_[1][0][1]))
+                            if not u_: return (0.0, 0.0)
+                            pr_ = Dv[0]*u_[0] + Dv[1]*u_[1]; return (pr_*u_[0], pr_*u_[1])
+                        if DA == (0.0, 0.0) and DB != (0.0, 0.0) and prv[0] != 'C' and id(A_) not in fixed:
+                            DA = proj(DB, prv); endsA = A_                     # (loe đi theo nét — cả chuỗi cung tịnh tiến gần như nguyên khối)
+                        elif DB == (0.0, 0.0) and DA != (0.0, 0.0) and nxt_[0] != 'C' and id(B_) not in fixed:
+                            DB = proj(DA, nxt_); endsB = B_
+                        if endsA is not None and DA != (0.0, 0.0): FIX[id(endsA)] = (endsA, DA)
+                        if endsB is not None and DB != (0.0, 0.0): FIX[id(endsB)] = (endsB, DB)
                         if DA != (0.0, 0.0) or DB != (0.0, 0.0):
                             pts = [run[0][1][0]]
                             for _k, q_ in run: pts += [q_[1], q_[2], q_[3]]
