@@ -38,3 +38,11 @@ QA mới `tools/construct/qa_lines.py` (chạy cuối pipeline, so với v0.918)
 - QA mới `tools/construct/qa_bars.py`: độ dày thanh ngang mọi chữ so chuẩn (lệch > 3 u = lỗi). Kết quả: AnNam Serif 42 / 62 ± 1, Golden 32 / 44 ± 1, 0 lỗi.
 
 ![bảng chữ](img/s52-all.png)
+
+## S54 — weight AnNam Serif đồng bộ theo Golden (designer 20/11 "đồng bộ weight của serif giống với golden")
+
+Golden giữ tương phản cố định qua các weight (nét mảnh / thân = 32/104 = 44/140 ≈ 0.31). AnNam Serif trước đây 42 → 62 (0.40 → 0.44: Bold mất tương phản, nặng). Nay nét mảnh AnNam Serif tăng đúng theo thân: Regular 42, Bold 56.5 (= 42 × 140/104), Medium / SemiBold nội suy (46.8 / 51.7) — tương phản 0.40 cố định.
+Kèm: đoạn thẳng gần thẳng hàng (≤ 6°) với đoạn kề dài hơn (mép nét bị chia bởi khớp / mẩu nối, vd. chéo mảnh W, tay K) dời cùng nét đó.
+QA: thanh ngang AnNam Serif 42–43 / 56–58, Golden 32–33 / 41–45, 0 lỗi; đoạn thẳng đổi hướng Golden 0, AnNam Serif 2 (x Regular 0.52°, K Bold 0.67° — ≤ 3 u trên cả đoạn); 0 lỗi outline; đơn điệu 4 weight AnNam Serif 0 lỗi.
+
+![4 weight](img/s54-weights.png)
