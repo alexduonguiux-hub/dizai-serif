@@ -3,6 +3,7 @@
     python3 tools/construct/qa_lines.py <font gốc %s> <font mới %s> [weights…]
 So từng đoạn thẳng (dài ≥ 40 u) của font gốc với đoạn cùng vị trí (contour, thứ tự) ở font mới:
   - đoạn NGANG / ĐỨNG ở bản gốc phải còn ngang / đứng (lệch ≤ 0.3°);
+  - mép thẳng nằm trên đường kẻ (0 / 700 / x-height 495 → --xh=535 cho Golden) phải còn nằm đúng trên đó;
   - (--all) mọi đoạn thẳng giữ hướng (lệch ≤ 0.5°) — dùng cho AnNam Serif (không có phép giãn ngang / nâng x-height).
 Glyph đổi cấu trúc (số contour / đoạn khác) liệt kê riêng, so theo hướng gần nhất.
 """
@@ -26,8 +27,10 @@ def lines(font, ch):
 def ang(a, b): return math.degrees(math.atan2(b[1] - a[1], b[0] - a[0]))
 def dang(x, y): d = (x - y + 180) % 360 - 180; return abs(d)
 
+XH = 495.0
 def check(base, new, chars, allang):
     bad, struct = [], []
+    GMAP = {0.0: 0.0, 700.0: 700.0, 495.0: XH}
     for ch in chars:
         A, B = lines(base, ch), lines(new, ch)
         if not A or not B: continue
@@ -46,10 +49,14 @@ def check(base, new, chars, allang):
                 d = dang(ang(sb[1], sb[2]), a0)
                 if d > (0.3 if axis else 0.5):
                     bad.append((ch, round(d, 2), [round(v) for v in sb[1]], [round(v) for v in sb[2]]))
+                gy = next((g for g in GMAP if abs(sa[1][1] - g) < 0.5 and abs(sa[2][1] - g) < 0.5), None)
+                if gy is not None and same and (abs(sb[1][1] - GMAP[gy]) > 0.5 or abs(sb[2][1] - GMAP[gy]) > 0.5):
+                    bad.append((ch, 'rời đường kẻ', gy, [round(v) for v in sb[1]], [round(v) for v in sb[2]]))
     return bad, struct
 
 if __name__ == '__main__':
     args = [a for a in sys.argv[1:] if not a.startswith('--')]; allang = '--all' in sys.argv
+    XH = next((float(a.split('=')[1]) for a in sys.argv if a.startswith('--xh=')), 495.0)
     pb, pn = args[0], args[1]; ws = args[2:] or ['Regular', 'Bold']
     tot = 0
     for w in ws:
