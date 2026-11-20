@@ -47,7 +47,8 @@ def check(base, new, chars, allang):
                 if not cands: continue
                 sb = min(cands, key=lambda s: dang(ang(s[1], s[2]), a0) + 0.01*math.dist(s[1], sa[1]))
                 d = dang(ang(sb[1], sb[2]), a0)
-                if d > (0.3 if axis else 0.5):
+                tol = max(0.3 if axis else 0.5, math.degrees(math.atan2(1.2, math.dist(sa[1], sa[2]))))   # + sai số làm tròn toạ độ nguyên (±0.6 u mỗi đầu)
+                if d > tol:
                     bad.append((ch, round(d, 2), [round(v) for v in sb[1]], [round(v) for v in sb[2]]))
                 gy = next((g for g in GMAP if abs(sa[1][1] - g) < 0.5 and abs(sa[2][1] - g) < 0.5), None)
                 if gy is not None and same and (abs(sb[1][1] - GMAP[gy]) > 0.5 or abs(sb[2][1] - GMAP[gy]) > 0.5):
