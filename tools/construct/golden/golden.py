@@ -700,8 +700,8 @@ def g10(d, w, tgt=None):
                 A, Bs = g[m], g[(m + 1) % n]
                 pts += ([A[3], A[4]] if A[0] == 'C' else [A[2]]) + ([Bs[1], Bs[2]] if Bs[0] == 'C' else [Bs[1]])
             for e in (e0, e1):
-                if e is not None and slide(e):
-                    A, Bs = g[e], g[(e + 1) % n]; pts += [A[-1], Bs[1]]
+                if e is not None and slide(e):                    # góc trượt: dời cả tay nắm kề nó (cung không bị uốn ngược)
+                    A, Bs = g[e], g[(e + 1) % n]; pts += [A[-1], Bs[1]] + ([A[3]] if A[0] == 'C' else []) + ([Bs[2]] if Bs[0] == 'C' else [])
             for q in {id(q): q for q in pts}.values(): q[1] = f(q[1])
             moved = True
         d = SB.to_d(cs)
