@@ -47,9 +47,6 @@ def parse(d):
 def fmt(cs):
     s = ''
     for c in cs:
-        if len(c) > 2 and c[-1][0] == 'Z' and c[-2][1]:               # điểm cuối trùng điểm đầu (contour khép bằng đoạn cong / thẳng):
-            M0, E = c[0][1][0], c[-2][1][-1]                            # luật chỉ dời điểm đầu → kéo điểm cuối theo
-            if math.dist(M0, E) < 8 and (E[0], E[1]) != (M0[0], M0[1]): E[0], E[1] = M0[0], M0[1]
         for cmd, pts in c: s += cmd + ' '.join(f'{x:.2f} {y:.2f}' for x, y in pts)
     return s
 def pts_of(c):
@@ -206,11 +203,11 @@ def g2(cs, w, skip, ratio=None):
     P = polys(cs); wl, wh = 1.4*HAIR[w], 0.7*STEM[w]
     if ratio is not None: wl, wh = 1e9, 2e9
     R_ = THIN_R if ratio is None else ratio
-    def shrink(pt, nout):
+    def shrink(pt, nout, par=PAR):
         h = ray(pt, (-nout[0], -nout[1]), P)
         if not h: return 0.0
         t, nn = h
-        if abs(nn[0]*nout[0] + nn[1]*nout[1]) < math.cos(math.radians(PAR)): return 0.0   # mép đối diện không song song
+        if abs(nn[0]*nout[0] + nn[1]*nout[1]) < math.cos(math.radians(par)): return 0.0   # mép đối diện không song song
         if ratio is not None and t > 2.2*STEM[w]: return 0.0       # tia đi xuyên lòng / khoảng trắng: không phải một nét
         f = 1.0 if t <= wl else max(0.0, (wh - t)/(wh - wl))
         return (1 - R_)/2*t*f
@@ -231,7 +228,10 @@ def g2(cs, w, skip, ratio=None):
             # đoạn cong: đo tại nút (lệch vào 2 u); đoạn THẲNG: đo ở giữa đoạn, cả đoạn dời đều (thanh ngang không vát đầu)
             def at(sg, tv, out, end):
                 if sg[0] != 'C':
-                    q = sg[1]; return shrink(((q[0][0] + q[1][0])/2, (q[0][1] + q[1][1])/2), out)
+                    q = sg[1]; mid = ((q[0][0] + q[1][0])/2, (q[0][1] + q[1][1])/2)
+                    h = ray(mid, (-out[0], -out[1]), P)
+                    if h and math.dist(q[0], q[1]) < 1.2*h[0]: return 0.0      # đoạn ngắn hơn bề dày = mặt cắt đầu nét: giữ
+                    return shrink(mid, out, 20)                         # đoạn thẳng: mép đối diện song song ±20° (thanh, thân, chéo)
                 sgn = -1 if end else 1
                 return shrink((node[0] + sgn*2*tv[0], node[1] + sgn*2*tv[1]), out)
             da, db = at(a, ta, outs[0], True), at(b, tb, outs[1], False)
@@ -257,10 +257,57 @@ def g2(cs, w, skip, ratio=None):
                     a_, b_, h1, h2 = FLMID[id(p)]; Da, Db = mv.get(id(a_), (0.0, 0.0)), mv.get(id(b_), (0.0, 0.0))
                     D = ((Da[0] + Db[0])/2, (Da[1] + Db[1])/2)
                     if D != (0.0, 0.0): moves.append((p, [h1, h2], D))
-    for node, hs, D in moves:                                     # dời sau khi đo xong (đo trên hình gốc)
-        for p in [node] + hs: p[0] += D[0]; p[1] += D[1]
+    # dời: điểm neo theo D; tay nắm theo pha trộn D hai đầu cung (1/3, 2/3) rồi chiếu về hướng tiếp tuyến CŨ tại điểm neo
+    # (giữ liền tiếp tuyến, cung đổi đều như một đường offset — không xoắn cạnh nút)
+    DD = {id(nd): D for nd, _, D in moves}
+    # làm mượt độ dời dọc contour qua các nút trơn (2 lượt, ½ – ¼ – ¼): bề dày đổi dần, không khấc / gợn giữa hai nút kề
+    HS = {id(nd): hs for nd, hs, _ in moves}
+    for c in cs:
+        S_ = segs(c); n = len(S_)
+        nodes = [sg[1][0] for sg in S_]
+        smooth = []
+        for i in range(n):
+            a, b = S_[i - 1], S_[i]
+            ta, tb = tan_end(*a, False), tan_end(*b, True)
+            smooth.append(bool(ta and tb and a[0] == 'C' and b[0] == 'C' and ta[0]*tb[0] + ta[1]*tb[1] > 0.995))
+        for _ in range(2):
+            cur = [DD.get(id(p_), (0.0, 0.0)) for p_ in nodes]; new = list(cur)
+            for i in range(n):
+                if not smooth[i]: continue
+                l, r = cur[i - 1], cur[(i + 1) % n]
+                new[i] = (0.5*cur[i][0] + 0.25*(l[0] + r[0]), 0.5*cur[i][1] + 0.25*(l[1] + r[1]))
+            for i in range(n):
+                if new[i] != (0.0, 0.0) or id(nodes[i]) in DD:
+                    if id(nodes[i]) not in HS:
+                        a, b = S_[i - 1], S_[i]
+                        HS[id(nodes[i])] = ([a[1][2]] if a[0] == 'C' else []) + ([b[1][1]] if b[0] == 'C' else [])
+                    DD[id(nodes[i])] = new[i]
+    allnodes = {id(p_): p_ for c in cs for sg in segs(c) for p_ in sg[1][:1]}
+    moves = [(allnodes[k], HS.get(k, []), D) for k, D in DD.items() if k in allnodes and D != (0.0, 0.0)]
+    plan = []
+    for c in cs:
+        for k_, q in segs(c):
+            if k_ != 'C': continue
+            p0, h1, h2, p3 = q; D0, D3 = DD.get(id(p0), (0.0, 0.0)), DD.get(id(p3), (0.0, 0.0))
+            if D0 == (0.0, 0.0) and D3 == (0.0, 0.0): continue
+            def tgt(h, p, Dh, Dp):
+                u = unit((h[0] - p[0], h[1] - p[1]))
+                if not u: return None
+                hx, hy = h[0] + Dh[0], h[1] + Dh[1]; px, py = p[0] + Dp[0], p[1] + Dp[1]
+                L = max(0.25*math.dist(h, p), (hx - px)*u[0] + (hy - py)*u[1])
+                return (px + u[0]*L, py + u[1]*L)
+            D1 = ((2*D0[0] + D3[0])/3, (2*D0[1] + D3[1])/3); D2 = ((D0[0] + 2*D3[0])/3, (D0[1] + 2*D3[1])/3)
+            plan.append((h1, tgt(h1, p0, D1, D0))); plan.append((h2, tgt(h2, p3, D2, D3)))
+    moved = set()
+    for h, t_ in plan:
+        if t_ is not None and id(h) not in moved: h[0], h[1] = t_; moved.add(id(h))
+    for node, hs, D in moves:
+        node[0] += D[0]; node[1] += D[1]
+        for h in hs:
+            if id(h) not in moved: h[0] += D[0]; h[1] += D[1]; moved.add(id(h))
     return len(moves)
 
+NOSPLIT = [False]               # a: lòng dựng theo elip của bản vẽ — chia cung làm lòng gợn ở weight đậm → chỉ dời điểm neo gốc
 FLMID = {}                      # id điểm giữa cung loe (sau khi chia đôi) → hai điểm đầu cung
 def split_curves(cs, mask=None, minlen=60):
     """chia đôi (t = ½, đúng hình) mọi cubic dài ≥ minlen — thêm điểm neo ở giữa cung để luật nét mảnh đặt được tại chỗ
@@ -270,7 +317,11 @@ def split_curves(cs, mask=None, minlen=60):
     for c in cs:
         nc = [c[0]]; cur = c[0][1][0]
         for cmd, ps in c[1:]:
-            sp = (mask[j] if mask is not None else (cmd == 'C' and math.dist(cur, ps[2]) >= minlen)); mk.append(sp); j += 1
+            def straight(p0, p1, p2, p3):                         # "cong" mà thẳng (tay nắm nằm trên dây cung): không chia
+                L = math.dist(p0, p3) or 1; ux, uy = (p3[0] - p0[0])/L, (p3[1] - p0[1])/L
+                return max(abs((q[0] - p0[0])*uy - (q[1] - p0[1])*ux) for q in (p1, p2)) < 1.5
+            sp = (mask[j] if mask is not None else (cmd == 'C' and math.dist(cur, ps[2]) >= minlen and NOSPLIT[0] is False
+                                                    and not straight(cur, *ps))); mk.append(sp); j += 1
             if sp:
                 p0, p1, p2, p3 = cur, ps[0], ps[1], ps[2]
                 m = lambda a, b: [(a[0] + b[0])/2, (a[1] + b[1])/2]
@@ -287,6 +338,7 @@ def g23(d, ch, w, low, mask=None):
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
     nt = 0
     if unicodedata.category(ch)[0] == 'L' or ch in LIG:
+        NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aª'
         cs, mask = split_curves(cs, mask)
         top = (OVT + D if ch in low else 712.0) + 3
         skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
