@@ -320,8 +320,10 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
             if not ta or not tb: continue
             if any(abs(node[1] - g) < 0.8 for g in GUIDES) and (abs(ta[1]) < 0.05 or abs(tb[1]) < 0.05) and not (a[0] != 'C' and b[0] != 'C'): continue   # nút trên đường kẻ, tiếp tuyến ngang (góc thẳng–thẳng: được trượt dọc đường kẻ — chéo M W Y K dời song song)
             outs = []
-            for tv, sg in ((ta, -3), (tb, 3)):                         # hướng ra ngoài: thử ở điểm lùi 3 u vào trong đoạn (góc chữ T)
-                nv = (tv[1], -tv[0]); bp = (node[0] + sg*tv[0], node[1] + sg*tv[1])
+            for tv, sg, seg_ in ((ta, -3, a), (tb, 3, b)):             # hướng ra ngoài: thử ở điểm lùi 3 u vào trong đoạn (góc chữ T);
+                nv = (tv[1], -tv[0]); bp = (node[0] + sg*tv[0], node[1] + sg*tv[1])   # đoạn THẲNG: thử ở giữa đoạn (góc hẹp —
+                if seg_[0] != 'C':                                             # đỉnh trong A của Æ — điểm sát góc lọt vào nét kề)
+                    bp = ((seg_[1][0][0] + seg_[1][-1][0])/2, (seg_[1][0][1] + seg_[1][-1][1])/2)
                 if inside((bp[0] + 1.5*nv[0], bp[1] + 1.5*nv[1]), P): nv = (-nv[0], -nv[1])
                 outs.append(nv)
             # đoạn cong: đo tại nút (lệch vào 2 u); đoạn THẲNG: đo ở giữa đoạn, cả đoạn dời đều (thanh ngang không vát đầu)
