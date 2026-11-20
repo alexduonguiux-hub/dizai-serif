@@ -364,11 +364,12 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
                     nl, dl = (n2, db) if a[0] == 'C' else (n1, da)               # (cả đoạn dời song song — mép trong thanh Z không dốc)
                     D = (-nl[0]*dl, -nl[1]*dl)
                 else: D = ((-da*n2[1] + db*n1[1])/det, (-db*n1[0] + da*n2[0])/det)
-                if math.hypot(*D) > 3*max(da, db): continue
+                if math.hypot(*D) > 3*max(abs(da), abs(db)): continue      # (giá trị tuyệt đối: làm DÀY có da / db âm)
             hs = []
             if a[0] == 'C': hs.append(a[1][2])
             if b[0] == 'C': hs.append(b[1][1])
             moves.append((node, hs, D))
+            if os.environ.get('G2DBG') and 600 < node[1] < 700: print('g2', [round(v,1) for v in node], a[0], b[0], round(da,2), round(db,2), [round(v,2) for v in D])
     mv = {id(nd): D for nd, _, D in moves}
     if ratio is None:                                             # loe đi theo nét thẳng: đầu xa của cung kề nút đã dời (góc chân)
         extra = []                                                # trượt theo đường chân của nó cùng độ dời chiếu lên đường đó
