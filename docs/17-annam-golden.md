@@ -65,3 +65,12 @@ QA: thanh ngang AnNam Serif 42–43 / 56–58, Golden 32–33 / 41–45, 0 lỗi
 - Rà từng cờ đổi chiều cong: A e Æ ø — cung phẳng, không gợn; W — gợn ~1 u ở cung loe đầu chéo mảnh (chỉ thấy khi phóng 30×). Version 0.921.
 
 ![Æ, l](img/s57-ae-l.png)
+
+## S58 — W hết gợn, thanh t Golden đều hai bên, Ø (20/11)
+
+- Chuỗi cung nằm giữa hai góc (cung loe đầu chéo mảnh W…): độ dời mọi điểm nội suy tuyến tính giữa hai góc; tay nắm kề góc đi cùng góc (giữ tiếp tuyến); nếu một đầu đứng yên mà kề đoạn thẳng thì trượt dọc đoạn đó theo hình chiếu độ dời (loe đi theo nét — cả chuỗi gần như tịnh tiến). Trước: chỉ lan một phần qua bước làm trơn → gợn ~1 u, Golden uốn chữ S.
+- G15 (Golden) thanh t: mép dưới phần thanh bên trái thân (mép trên là nét chéo đầu t — G8 không làm mảnh được) đặt bằng mép dưới bên phải → hai bên cùng 28 / 40 (cả ft tf tt).
+- Ø ø spacing theo O o (Ø = O + nét gạch): advance tăng đều 4 weight.
+- Rà toàn bộ: Golden 0 cờ độ cong / gãy; AnNam Serif chỉ W 3.7° (có sẵn ở bản vẽ gốc). Version 0.922.
+
+![W t Ø](img/s58-w-t.png)
