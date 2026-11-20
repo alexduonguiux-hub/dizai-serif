@@ -155,9 +155,6 @@ def tan_end(k, q, at_start):
     return None
 
 # ---------- G3 chân loe ----------
-FLW = ['Regular']                # weight đang dựng (g3 không nhận tham số weight)
-FL_BUILD = None                  # S53 (thử): None = phóng tỉ lệ cũ; (H, W, α°, κ) = dựng loe loa kèn theo bề dày nét
-FLARE_CONC = 0.0                 # S53 (thử): tay nắm cung loe kéo về góc thân–chân C0 → loe lõm sâu kiểu loa kèn
 FLARE_KX, FLARE_KY = 1.3, 0.85   # designer 20/11: loe rộng hơn 30 %; "giảm chiều cao của loe để cảm giác vuốt nhọn hơn" → cao × 0.85
 FLSEG = set()                   # (id điểm đầu, id điểm cuối) của các cung loe — luật nét mảnh không bẻ hình loe
 def g3(cs):
@@ -188,45 +185,12 @@ def g3(cs):
                 if not td or not tc or abs(td[0]*tc[1] - td[1]*tc[0]) > 0.03: continue   # loe liền tiếp tuyến với thân
                 if abs(td[1]) < 0.5: continue                       # thân phải đứng / chéo, không nằm ngang
                 cx = Sp[0] + (Z - Sp[1])*td[0]/td[1]; C0 = (cx, Z)    # giao đường thân × đường chân
-                if FL_BUILD:                                            # dựng loe: S trên thân cách C0 = H·t, mũi F trên chân cách C0 = W·t
-                    Hk, Wk, al, kp = FL_BUILD
-                    Pq = polys(cs); up = unit((Sp[0] - C0[0], Sp[1] - C0[1]))   # hướng dọc thân, ra xa chân
-                    nrm = (up[1], -up[0])
-                    if not inside((Sp[0] + 3*nrm[0], Sp[1] + 3*nrm[1]), Pq): nrm = (-nrm[0], -nrm[1])   # nrm: vào trong nét
-                    hh = ray((Sp[0] + 1*nrm[0], Sp[1] + 1*nrm[1]), nrm, Pq)
-                    if hh:
-                        t_ = min(hh[0] + 1, STEM[FLW[0]]*1.05)              # bề dày nét tại thân (≤ thân chuẩn: tia không đi xuyên lòng)
-                        Ef = q[3] if not rev else q[0]
-                        sd = 1 if (Ef[0] - C0[0]) > 0 else -1               # mũi ra phía nào trên đường chân
-                        Hs, Ws = Hk*t_, Wk*t_
-                        yq = Z + (Hs + 20)*(1 if up[1] > 0 else -1); xq = C0[0] + (yq - C0[1])*up[0]/up[1] if abs(up[1]) > 0.3 else C0[0]
-                        fr = ray((xq + sd*1.5, yq), (sd, 0), Pq)          # khoảng trống ngang ngay trên vùng loe (tới nét bên cạnh)
-                        if fr and fr[0] < 400: Ws = min(Ws, 0.3*fr[0])
-                        S_new = (C0[0] + up[0]*Hs, C0[1] + up[1]*Hs); F_new = (C0[0] + sd*Ws, Z)
-                        hS = (C0[0] + up[0]*Hs*(1 - kp), C0[1] + up[1]*Hs*(1 - kp))
-                        a_ = math.radians(al); vy = 1 if up[1] > 0 else -1
-                        hF = (F_new[0] - sd*math.cos(a_)*Ws*kp, Z + vy*math.sin(a_)*Ws*kp)
-                        if extra:
-                            ex = extra[0]; off = (Ef[0] - ex[0], Ef[1] - ex[1]); ex[0], ex[1] = F_new
-                            F_c = (F_new[0] + off[0], F_new[1] + off[1])
-                        else: F_c = F_new
-                        pS, hSp, hFp, pF = (q[0], q[1], q[2], q[3]) if not rev else (q[3], q[2], q[1], q[0])
-                        pS[0], pS[1] = S_new; hSp[0], hSp[1] = hS; hFp[0], hFp[1] = hF[0] + (F_c[0] - F_new[0]), hF[1] + (F_c[1] - F_new[1]); pF[0], pF[1] = F_c
-                        FLSEG.add((id(q[0]), id(q[3]))); n_fl += 1
-                        continue
                 sside = [q[0], q[1]] if not rev else [q[3], q[2]]      # điểm nối thân + tay nắm của nó: trượt trên đường thân
                 fside = [q[2], q[3]] if not rev else [q[1], q[0]]
                 for p in sside:
                     p[0] = C0[0] + (p[0] - C0[0])*FLARE_KY; p[1] = C0[1] + (p[1] - C0[1])*FLARE_KY
                 for p in fside + extra:                                 # phía chân: rộng × KX, cao × KY
                     p[0] = C0[0] + (p[0] - C0[0])*FLARE_KX; p[1] = Z + (p[1] - Z)*FLARE_KY
-                if FLARE_CONC:                                          # tay nắm hai đầu cung loe trượt trên tiếp tuyến của nó về phía C0
-                    for h_, e_ in ((q[1], q[0]), (q[2], q[3])):
-                        u_ = unit((h_[0] - e_[0], h_[1] - e_[1]))
-                        if not u_: continue
-                        Lc = (C0[0] - e_[0])*u_[0] + (C0[1] - e_[1])*u_[1]          # khoảng từ đầu cung tới chân chiếu của C0 trên tiếp tuyến
-                        L0 = math.dist(h_, e_)
-                        if Lc > L0: L1 = L0 + (Lc - L0)*FLARE_CONC; h_[0] = e_[0] + u_[0]*L1; h_[1] = e_[1] + u_[1]*L1
                 FLSEG.add((id(q[0]), id(q[3]))); n_fl += 1
     return n_fl
 
@@ -510,7 +474,7 @@ def split_curves(cs, mask=None, minlen=60):
     return out, mk
 
 def g23(d, ch, w, low, mask=None):
-    cs = parse(d); FLW[0] = w
+    cs = parse(d)
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
     if unicodedata.category(ch)[0] == 'L': nf += g3b(cs)
     nt = 0
@@ -903,99 +867,6 @@ def lerp_d(a, b, t):
             for p, q in zip(pa, pb): p[0] += (q[0] - p[0])*t; p[1] += (q[1] - p[1])*t
     return fmt(A)
 
-# ---------- G12 đuôi a e vuốt nhọn (designer 20/11 "vuốt nhọn đuôi a và e") ----------
-# Mặt cắt đầu nét (đoạn thẳng nối mép ngoài – mép trong) thu còn TAPER_K độ dài: điểm phía trong trượt về phía mép ngoài; mép trong rời
-# điểm mới song song mép ngoài (tay nắm theo hướng ngược của mép ngoài khi tới đầu nét) → đầu nét thành mũi nhọn, dày tăng dần.
-TAPER = {'e': lambda a, b: abs(a[0] - b[0]) < 1 and min(a[1], b[1]) < 220 and abs(a[1] - b[1]) > 30,
-         'a': lambda a, b: abs(a[0] - b[0]) < 1 and min(a[1], b[1]) > 250 and abs(a[1] - b[1]) > 60 and a[0] < 150}
-TAPER_K = 0.0                   # 0 = tắt; thử 0.12
-TAPER_R = 2.5                   # vùng ép mép trong (× bề dài mặt cắt)
-def taper(d, ch):
-    if not TAPER_K or ch not in TAPER: return d
-    cs = parse(d)
-    for c in cs:
-        S_ = segs(c); n = len(S_)
-        P_ = polys([c])[0]; cx = sum(p[0] for p in P_)/len(P_); cy = sum(p[1] for p in P_)/len(P_)
-        for i in range(n):
-            k, q = S_[i]; a_, b_ = q[0], q[-1]
-            if not TAPER[ch](a_, b_): continue
-            fwd = math.dist(b_, (cx, cy)) < math.dist(a_, (cx, cy))   # b_ là điểm phía trong
-            outer, inner = (a_, b_) if fwd else (b_, a_)
-            po = S_[i - 1] if fwd else S_[(i + 1) % n]; pi = S_[(i + 1) % n] if fwd else S_[i - 1]
-            if po[0] != 'C' or pi[0] != 'C': continue
-            ho = po[1][2] if fwd else po[1][1]; hi = pi[1][1] if fwd else pi[1][2]
-            u = unit((outer[0] - ho[0], outer[1] - ho[1]))
-            if not u: continue
-            tip = (outer[0] + (inner[0] - outer[0])*TAPER_K, outer[1] + (inner[1] - outer[1])*TAPER_K)
-            # ép mép trong về tiếp tuyến mép ngoài tại mũi: điểm cách đường đó d → d·(1 − (1 − K)·w), w = 1 ở mũi, giảm tuyến tính
-            # về 0 ở R = TAPER_R × bề dài mặt cắt (đo theo khoảng cách tới mũi cũ); điểm neo và tay nắm của nó dời cùng lượng
-            cut = math.dist(outer, inner); R = TAPER_R*min(cut, 70.0); o0 = (inner[0], inner[1])
-            nv = (-u[1], u[0])
-            def squash(pts_, w_):
-                for pp in pts_:
-                    dd = (pp[0] - outer[0])*nv[0] + (pp[1] - outer[1])*nv[1]
-                    f = (1 - TAPER_K)*w_
-                    pp[0] -= nv[0]*dd*f; pp[1] -= nv[1]*dd*f
-            j = (i + 1) % n if fwd else i - 1; seen = set()
-            groups = [([inner, hi], 1.0)]
-            for _ in range(3):                                    # các điểm neo mép trong kế tiếp (đi xa mũi)
-                kk, qq = S_[j]
-                nd = qq[-1] if fwd else qq[0]
-                if math.dist(nd, o0) >= R: 
-                    if kk == 'C': groups.append(([qq[2] if fwd else qq[1]], max(0.0, 1 - math.dist(qq[2] if fwd else qq[1], o0)/R)))
-                    break
-                hs_ = []
-                if kk == 'C': hs_.append(qq[2] if fwd else qq[1])
-                nx = S_[(j + 1) % n] if fwd else S_[j - 1]
-                if nx[0] == 'C': hs_.append(nx[1][1] if fwd else nx[1][2])
-                groups.append(([nd] + hs_, max(0.0, 1 - math.dist(nd, o0)/R)))
-                j = (j + 1) % n if fwd else j - 1
-            done_ = set()
-            for pts_, w_ in groups:
-                pts_ = [pp for pp in pts_ if id(pp) not in done_]; done_ |= {id(pp) for pp in pts_}
-                squash(pts_, w_)
-            if k == 'C':
-                q[1][0], q[1][1] = a_[0] + (b_[0] - a_[0])/3, a_[1] + (b_[1] - a_[1])/3
-                q[2][0], q[2][1] = a_[0] + 2*(b_[0] - a_[0])/3, a_[1] + 2*(b_[1] - a_[1])/3
-            return fmt(cs)
-    return d
-
-def process(c, O, low, G, NF=None, NT=None):
-    """mọi luật Golden cho MỘT chữ (Regular + Bold, rồi nội suy M / SB) — main() và bản thử (proto) dùng chung"""
-    NF = NF if NF is not None else {'Regular': 0, 'Bold': 0}; NT = NT if NT is not None else dict(NF); mask = None
-    for w in ('Regular', 'Bold'):
-        d = O[f'{c}-{w}']
-        if c in low: d = g1(d, c)
-        d = taper(d, c)
-        if c in TCH:
-            for _ in range(2):                                          # tt: hai đầu t
-                cs_ = parse(d)
-                if not t_head(cs_, OVH[w]): break
-                d = fmt(cs_)
-        d = g4(d, c, w)
-        d, nf, nt, mask = g23(d, c, w, low, mask if w == 'Bold' else None); NF[w] += nf; NT[w] += nt
-        G[f'{c}-{w}'] = d
-    b_ = unicodedata.normalize('NFD', c)[0]
-    if b_ in EFAM:                                            # G9 đỉnh e = chuẩn nét mảnh
-        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = e_top(G[f'{c}-{w}'], RING_T[w])
-    if b_ in SFAM:                                            # G7 s S: nét mảnh = RING_T (cùng chuẩn vòng), mép lòng, lặp Newton
-        for w in ('Regular', 'Bold'):
-            G[f'{c}-{w}'] = s_thin(G[f'{c}-{w}'], w)
-    if b_ in RING:
-        for w in ('Regular', 'Bold'):
-            base = RING[b_]
-            if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
-            G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
-    if c in TBAR:                                             # G11 thanh T = chuẩn nét mảnh
-        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = bar_thin(G[f'{c}-{w}'], w)[0]
-    if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP:      # G10 nét mảnh cong (lòng kéo dãn đứng)
-        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = g10(G[f'{c}-{w}'], w)
-    if c.isalpha() and len(c) == 1 and c.isascii():                          # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
-        for w in ('Regular', 'Bold'):
-            G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
-    for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
-
-
 def main():
     O = json.load(open(os.path.join(SRC, 'outlines.json'))); SP = json.load(open(os.path.join(SRC, 'spacing.json')))
     chars = list(SP['Regular']); low = set(lower_set(chars)); G = {}; NF = {'Regular': 0, 'Bold': 0}; NT = dict(NF)
@@ -1004,7 +875,36 @@ def main():
             O[f'{c}-Regular'], O[f'{c}-Bold'], _ = drop_tiny(O[f'{c}-Regular'], O[f'{c}-Bold'], 3.0)
     for c in chars:
         if f'{c}-Regular' not in O: continue
-        process(c, O, low, G, NF, NT)
+        for w in ('Regular', 'Bold'):
+            d = O[f'{c}-{w}']
+            if c in low: d = g1(d, c)
+            if c in TCH:
+                for _ in range(2):                                          # tt: hai đầu t
+                    cs_ = parse(d)
+                    if not t_head(cs_, OVH[w]): break
+                    d = fmt(cs_)
+            d = g4(d, c, w)
+            d, nf, nt, mask = g23(d, c, w, low, mask if w == 'Bold' else None); NF[w] += nf; NT[w] += nt
+            G[f'{c}-{w}'] = d
+        b_ = unicodedata.normalize('NFD', c)[0]
+        if b_ in EFAM:                                            # G9 đỉnh e = chuẩn nét mảnh
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = e_top(G[f'{c}-{w}'], RING_T[w])
+        if b_ in SFAM:                                            # G7 s S: nét mảnh = RING_T (cùng chuẩn vòng), mép lòng, lặp Newton
+            for w in ('Regular', 'Bold'):
+                G[f'{c}-{w}'] = s_thin(G[f'{c}-{w}'], w)
+        if b_ in RING:
+            for w in ('Regular', 'Bold'):
+                base = RING[b_]
+                if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
+                G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
+        if c in TBAR:                                             # G11 thanh T = chuẩn nét mảnh
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = bar_thin(G[f'{c}-{w}'], w)[0]
+        if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP:      # G10 nét mảnh cong (lòng kéo dãn đứng)
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = g10(G[f'{c}-{w}'], w)
+        if c.isalpha() and len(c) == 1 and c.isascii():                          # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
+            for w in ('Regular', 'Bold'):
+                G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
+        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     for c in chars:                                               # G8 chữ có dấu / chữ ghép: r của chữ gốc
         b_ = unicodedata.normalize('NFD', c)[0]
         if c == b_ or f'{c}-Regular' not in G or b_ in NOHAIR or not ((b_, 'Regular') in G8R): continue
