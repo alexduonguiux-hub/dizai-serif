@@ -360,6 +360,9 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
                 if abs(det) < 0.15:                                # hai mép gần thẳng hàng (≤ 8.6°): dời vuông góc theo phía có độ dời
                     if cosang < 0.95: continue
                     m = unit((n1[0] + n2[0], n1[1] + n2[1])); d = max(da, db); D = (-m[0]*d, -m[1]*d)
+                elif ratio is None and (a[0] == 'C') != (b[0] == 'C'):    # góc cung–thẳng: điểm nối dời theo pháp tuyến đoạn thẳng
+                    nl, dl = (n2, db) if a[0] == 'C' else (n1, da)               # (cả đoạn dời song song — mép trong thanh Z không dốc)
+                    D = (-nl[0]*dl, -nl[1]*dl)
                 else: D = ((-da*n2[1] + db*n1[1])/det, (-db*n1[0] + da*n2[0])/det)
                 if math.hypot(*D) > 3*max(da, db): continue
             hs = []
