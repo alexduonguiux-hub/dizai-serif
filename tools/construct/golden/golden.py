@@ -680,8 +680,8 @@ def g10(d, w, tgt=None):
             ym = ym_; yT = max([max(yall)] + [x[2] for x in top]); yB = min([min(yall)] + [x[2] for x in bot])
             fixed_y = [Y(e) for e in (e0, e1) if e is not None and not slide(e)]
             lo_t = max([ym] + [y for y in fixed_y if ym <= y < yT]); hi_b = min([ym] + [y for y in fixed_y if yB < y <= ym])
-            rT = lambda y: max(0.0, min(1.0, (y - lo_t)/max(1.0, yT - lo_t)))
-            rB = lambda y: max(0.0, min(1.0, (hi_b - y)/max(1.0, hi_b - yB)))
+            rT = lambda y: max(0.0, (y - lo_t)/max(1.0, yT - lo_t))      # không cắt ở 1: tay nắm vượt đỉnh / đáy cùng một phép affine
+            rB = lambda y: max(0.0, (hi_b - y)/max(1.0, hi_b - yB))
             # δ lớn nhất sao cho mọi mẫu sau khi kéo (dày − δ·dốc) vẫn ≥ chuẩn; mẫu giới hạn chạm đúng chuẩn
             def delta(smp, r):
                 amin = 0.3 if hole[gi] else 0.937                 # lòng hở: chỉ mẫu tiếp tuyến gần ngang (≤ 20°) — vai / đầu nét mảnh chủ ý không giới hạn
