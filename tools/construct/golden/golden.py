@@ -214,10 +214,11 @@ def arch_thin(cs, w):
                     for _, q in chain:
                         for p_ in q:
                             if all(p_ is not r for r in pts): pts.append(p_)
-                    ys = [p_[1] for p_ in pts]; top, bot = max(ys), min(ys)
+                    cv = [bz(*q, t_/24) for _, q in chain for t_ in range(25)]                # điểm TRÊN cung (không lấy tay nắm)
+                    ys = [p_[1] for p_ in cv]; top, bot = max(ys), min(ys)
                     ends = (chain[0][1][0][1], chain[-1][1][3][1])
-                    if top > max(ends) + 20:   pk = max(pts, key=lambda p_: p_[1]); sg = 1     # vòm: đỉnh cao hơn hai đầu
-                    elif bot < min(ends) - 20: pk = min(pts, key=lambda p_: p_[1]); sg = -1   # đáy u
+                    if top > max(ends) + 20:   pk = max(cv, key=lambda p_: p_[1]); sg = 1      # vòm: đỉnh cao hơn hai đầu
+                    elif bot < min(ends) - 20: pk = min(cv, key=lambda p_: p_[1]); sg = -1    # đáy u
                     else: i = j; continue
                     if inside((pk[0], pk[1] + sg*2), P):                                       # mực ở phía ngoài cung → là lòng
                         h = ray(pk, (0, sg), P)
@@ -463,12 +464,15 @@ def ring_scale(d, k, tail=False):
     sxx = sum((p[0] - cx)**2 for p in P); syy = sum((p[1] - cy)**2 for p in P); sxy = sum((p[0] - cx)*(p[1] - cy) for p in P)
     th = 0.5*math.atan2(2*sxy, sxx - syy); u = (math.cos(th), math.sin(th))          # trục dài
     pts = pts_of(c)
-    prot = [p for p in pts if p[0] > cx and p[1] < cy + 40] if tail else []
+    prot = [p for p in pts if p[0] > cx and p[1] < cy + 40] if tail is True else []
+    if tail == 'stem':                                          # b d p q: mép thân thẳng của lòng giữ nguyên
+        S_ = segs(c); prot = [q_ for k_, sg in S_ if k_ != 'C' for q_ in sg]
     for p in pts:
         wgt = 1.0
         if prot: wgt = 0.0 if any(p is q for q in prot) else min(1.0, min(math.dist(p, q) for q in prot)/120)
         t = (p[0] - cx)*u[0] + (p[1] - cy)*u[1]; p[0] += wgt*(k - 1)*t*u[0]; p[1] += wgt*(k - 1)*t*u[1]
     return fmt(cs)
+BOWL = set('bdpq')                 # lòng có mép thân thẳng: ring_scale(tail='stem')
 def solve_ring(d0, d, w, tail=False):
     k = 1.0
     for _ in range(3):                                         # lặp: đo lại sau khi giãn (chỗ mảnh dịch theo trục)
