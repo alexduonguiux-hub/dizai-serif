@@ -384,6 +384,11 @@ def g23(d, ch, w, low, mask=None):
         top = (OVT + D if ch in low else 712.0) + 3
         skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
         fixed = arch_thin(cs, w) if unicodedata.normalize('NFD', ch)[0] in ARCH else frozenset()
+        if unicodedata.normalize('NFD', ch)[0] == 'Q':                  # Q: lòng góc dưới-phải (đuôi ăn vào) giữ nguyên — không khấc
+            c_ = _counter(cs)
+            if c_ is not None:
+                P_ = polys([c_])[0]; cx_ = sum(p[0] for p in P_)/len(P_); cy_ = sum(p[1] for p in P_)/len(P_)
+                fixed = set(fixed) | {id(p) for p in pts_of(c_) if p[0] > cx_ and p[1] < cy_ + 40}
         nt = g2(cs, w, skip, fixed=fixed)
     return fmt(cs), nf, nt, mask
 
@@ -440,27 +445,38 @@ def g4(d, ch, w):
 # ---------- G6 vòng o O mảnh hơn (designer 20/11: "làm vòng o O mảnh hơn nữa") ----------
 # Lòng (contour trong lớn nhất) giãn theo TRỤC DÀI của chính nó quanh tâm: chỗ mảnh của vòng nằm ở hai đầu trục dài lòng nghiêng
 # → mảnh đúng chỗ; góc nghiêng, nét nhấn, bóng ngoài giữ. Hệ số giải theo o / O (nét mảnh = THIN_R × AnNam Serif), áp cùng hệ số
-# cho chữ cùng gốc (ó ò ỏ õ ọ ô … ơ Ơ Q).
-RING = {'o': 'o', 'O': 'O', 'Q': 'O', 'ơ': 'o', 'Ơ': 'O'}
+# cho chữ cùng gốc (ó ò ỏ õ ọ ô … ơ Ơ).
+RING = {'o': 'o', 'O': 'O', 'ơ': 'o', 'Ơ': 'O', 'Q': 'Q'}   # Q: lòng có đuôi ăn vào — vùng đuôi giữ nguyên (ring_scale tail)
 RINGK = {}
+RING_T = {'Regular': 32.0, 'Bold': 44.0}   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
+                                           # — không theo tỉ lệ AnNam Serif (o 42 / O 34 ở bản gốc vốn lệch). M / SB nội suy.
 def _counter(cs):
     ar = lambda c: 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(polys([c])[0], polys([c])[0][1:] + polys([c])[0][:1]))
     A0 = ar(cs[0]); inn = [c for c in cs[1:] if ar(c)*A0 < 0 and sum(1 for k, _ in c if k == 'C') >= 4]
     return max(inn, key=lambda c: abs(ar(c))) if inn else None
-def ring_scale(d, k):
+def ring_scale(d, k, tail=False):
+    """tail (Q): điểm lòng ở góc dưới-phải (đuôi ăn vào) giữ nguyên, độ giãn tăng dần theo khoảng cách tới vùng đó (120 u)"""
     cs = parse(d); c = _counter(cs)
     if c is None or abs(k - 1) < 1e-6: return d
     P = polys([c])[0]; n = len(P); cx = sum(p[0] for p in P)/n; cy = sum(p[1] for p in P)/n
     sxx = sum((p[0] - cx)**2 for p in P); syy = sum((p[1] - cy)**2 for p in P); sxy = sum((p[0] - cx)*(p[1] - cy) for p in P)
     th = 0.5*math.atan2(2*sxy, sxx - syy); u = (math.cos(th), math.sin(th))          # trục dài
-    for p in pts_of(c):
-        t = (p[0] - cx)*u[0] + (p[1] - cy)*u[1]; p[0] += (k - 1)*t*u[0]; p[1] += (k - 1)*t*u[1]
+    pts = pts_of(c)
+    prot = [p for p in pts if p[0] > cx and p[1] < cy + 40] if tail else []
+    for p in pts:
+        wgt = 1.0
+        if prot: wgt = 0.0 if any(p is q for q in prot) else min(1.0, min(math.dist(p, q) for q in prot)/120)
+        t = (p[0] - cx)*u[0] + (p[1] - cy)*u[1]; p[0] += wgt*(k - 1)*t*u[0]; p[1] += wgt*(k - 1)*t*u[1]
     return fmt(cs)
-def solve_ring(d0, d, w):
-    """k = 1 + Δ / a: Δ = nét mảnh hiện tại − đích (THIN_R × AnNam Serif), a = bán trục dài lòng — lòng dài thêm đúng Δ mỗi đầu"""
+def solve_ring(d0, d, w, tail=False):
+    k = 1.0
+    for _ in range(3):                                         # lặp: đo lại sau khi giãn (chỗ mảnh dịch theo trục)
+        k *= _solve_ring1(d0, ring_scale(d, k, tail), w)
+    return k
+def _solve_ring1(d0, d, w):
+    """k = 1 + Δ / a: Δ = nét mảnh hiện tại − RING_T (âm → lòng ngắn lại, nét dày lên), a = bán trục dài lòng"""
     sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB
-    tgt = THIN_R[w]*SB.measure([d0])[0]; cur = SB.measure([d])[0]
-    if cur <= tgt: return 1.0
+    tgt = RING_T[w]; cur = SB.measure([d])[0]
     c = _counter(parse(d)); P = polys([c])[0]; n = len(P); cx = sum(p[0] for p in P)/n; cy = sum(p[1] for p in P)/n
     sxx = sum((p[0] - cx)**2 for p in P); syy = sum((p[1] - cy)**2 for p in P); sxy = sum((p[0] - cx)*(p[1] - cy) for p in P)
     th = 0.5*math.atan2(2*sxy, sxx - syy); u = (math.cos(th), math.sin(th))
@@ -494,8 +510,8 @@ def main():
         if b_ in RING:
             for w in ('Regular', 'Bold'):
                 base = RING[b_]
-                if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w)
-                G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)])
+                if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
+                G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     os.makedirs(OUT, exist_ok=True)
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
