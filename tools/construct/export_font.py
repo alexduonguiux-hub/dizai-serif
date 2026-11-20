@@ -21,16 +21,17 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'
 from fontTools.agl import UV2AGL
 from fontTools.designspaceLib import DesignSpaceDocument, AxisDescriptor, SourceDescriptor, InstanceDescriptor
 import spacing as SPc
-ROOT = os.path.join(HERE, '..', '..'); OUT = os.path.join(ROOT, 'out', 'construct'); FONTS = os.path.join(ROOT, 'fonts')
+ROOT = os.path.join(HERE, '..', '..'); OUT = os.environ.get('DIZAI_OUT') or os.path.join(ROOT, 'out', 'construct')
+FONTS = os.environ.get('DIZAI_FONTS') or os.path.join(ROOT, 'fonts')   # DIZAI_*: họ An Nam Golden (golden/run.sh)
 BUILD = os.path.join(OUT, 'ufo')
-FAMILY, PS = 'AnNam Serif', 'AnNamSerif'   # designer 06/11: AnNam → thêm chữ phân biệt với BT Annam Neue (BeauType)
+FAMILY, PS = os.environ.get('DIZAI_FAMILY', 'AnNam Serif'), os.environ.get('DIZAI_PS', 'AnNamSerif')   # designer 06/11: AnNam → thêm chữ phân biệt với BT Annam Neue (BeauType)
 VENDOR = 'DZAI'                                # Đìzai Studio (4 ký tự theo chuẩn OpenType — 'DIZAI' 5 ký tự không dùng được) — nên đăng ký với Microsoft (mstwsite@microsoft.com)
 #          # designer 06/11 "Đổi tên Font thành AnNam" (trước: Dizai Serif / DizaiSerif)
 VERSION = (0, 918)
 ITALIC_ANGLE = 10.0
 WGHT = {'Regular': 400, 'Medium': 500, 'SemiBold': 600, 'Bold': 700}
 
-OUTI = os.path.join(ROOT, 'out', 'construct_italic')            # Italic I2 (italic.py): thiết kế italic đứng, nghiêng khi xuất
+OUTI = os.environ.get('DIZAI_OUTI') or os.path.join(ROOT, 'out', 'construct_italic')            # Italic I2 (italic.py): thiết kế italic đứng, nghiêng khi xuất
 def use(style):
     """nạp outline / spacing / kerning của Roman hoặc Italic (I2 nếu có out/construct_italic, không thì Roman nghiêng — I1)"""
     global O, SP, KN

@@ -117,7 +117,7 @@ if __name__ == '__main__':
             c = toks[i]; i += 1; n = {'M': 1, 'L': 1, 'C': 3, 'Z': 0}[c]
             out.append([c] + [[float(toks[i + 2*j]), float(toks[i + 2*j + 1])] for j in range(n)]); i += 2*n
         return out
-    OUTF = os.path.join(HERE, '..', '..', 'out', 'construct', 'outlines.json')
+    OUTF = os.path.join(os.environ.get('DIZAI_OUT') or os.path.join(HERE, '..', '..', 'out', 'construct'), 'outlines.json')
     if os.path.exists(OUTF):
         FO = json.load(open(OUTF)); fr = {}
         for k, d in FO.items():

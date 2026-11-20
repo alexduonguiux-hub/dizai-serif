@@ -48,7 +48,7 @@ SIDE_ADJ = {}   # bỏ (05/11): kern cặp chữ theo trắng cặp tham chiếu
 # chỉnh tay theo designer (05/11: "ƯA hơi xa"): U / Ư + A (mọi A có dấu cùng class trái 'A') khe chân 134 — gấp đôi HA (67);
 # kéo thêm 20 ở hai master (ƯA = UA theo luật ơn = on). Medium / SemiBold nội suy theo
 KADJ = {}   # bỏ (05/11): UA ƯA AU theo trắng cặp tham chiếu   # + AU ("và AU"): A + U / Ư / Ú … (cùng class trái 'U')
-CAP, XH = 700.0, 495.0
+CAP, XH = 700.0, float(os.environ.get('DIZAI_XH', 495.0))   # DIZAI_XH: họ An Nam Golden (x-height 535)
 
 src = open(os.path.join(HERE, 'glyphs.js')).read()
 import re

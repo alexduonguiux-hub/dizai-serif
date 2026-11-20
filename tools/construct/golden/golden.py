@@ -1,0 +1,303 @@
+#!/usr/bin/env python3
+"""An Nam Golden — họ chữ phát triển từ AnNam Serif (designer 19–20/11).
+    python3 tools/construct/golden/golden.py      (sau build.py + compat_masters của AnNam Serif) → out/golden/outlines.json
+
+Luật (đánh số G*), áp lên outline Regular + Bold đã ghép cấu trúc của AnNam Serif; Medium / SemiBold = nội suy ĐÚNG (1/3, 2/3)
+như bản gốc (cùng cấu trúc điểm → master variable tương thích):
+  G1  x-height 495 → 535 (designer 20/11: "nâng x-height lên, giữ nguyên bề ngang chữ"), chỉ chữ thường (+ chữ ghép, dấu tổ hợp):
+      - vùng chữ x (0 … 503.4, gồm đường vượt) giãn đứng × 535/495; dưới 0 (phần xuống, vượt đáy) giữ; bề ngang giữ nguyên;
+      - chữ có phần vươn (b d h k l þ): đầu thân giữ 699 — chỉ đoạn thân thẳng 503.4 → 628.9 co lại, loe đầu thân giữ hình;
+        đ: thanh ngang giữ dày, dời theo tâm; f: móc giữ hình, cao thêm 20; ß: phần trên co đều;
+      - chữ x (a c e … t, ơ ư, ð): phần trên x-height (đầu t, sừng, …) dời lên nguyên khối Δ = 40.7;
+      - contour nằm trọn trên x-height (dấu thanh, dấu mũ, chấm i j) dời lên Δ — khoảng dấu – chữ giữ nguyên.
+  G3  chân loe lớn hơn 30 %: loe = đoạn cong nối thân (đoạn thẳng dài) với đoạn thẳng ngắn chạm đường chân / đỉnh (đoạn ngang).
+      Phóng đều × 1.3 quanh giao điểm đường thân với đường chân: điểm nối thân trượt trên đường thân, hướng tiếp tuyến giữ
+      (liền tiếp tuyến), mặt chân giữ trên đường chân — loe cao hơn và rộng hơn 30 %; áp cho mọi loe (chân, đỉnh thân, chéo).
+  G4  v x y (+ ý ỳ ỷ ỹ ỵ ÿ) rộng thêm × 1.08 (= 535/495, góc chéo như AnNam Serif) quanh tâm; mọi nét thu lại × 1/1.08 theo
+      luật G2 (dời mép theo pháp tuyến) → nét giữ bề dày; dấu giữ hình.
+  G2  nét mảnh còn 80 % (thanh ngang, chéo mảnh, vòng mảnh, khớp mảnh — chữ hoa và thường): mỗi mép dời vào
+      δ = 0.1·w (w = bề dày nét đo vuông góc tại đó, chỉ khi mép đối diện song song ngược chiều ±50° — là một NÉT, không phải mũi
+      nhọn); w ≤ 1.4 × nét mảnh chuẩn: đủ 0.1·w, giảm tuyến tính về 0 ở 0.7 × thân; thân dày giữ nguyên. Điểm neo dời theo hai
+      pháp tuyến của hai đoạn kề (góc: giải hai ràng buộc, trơn: theo pháp tuyến chung); tay nắm đi cùng điểm neo. Dấu, chấm giữ.
+"""
+import json, os, re, sys, unicodedata
+HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.join(HERE, '..', '..', '..')
+SRC = os.path.join(ROOT, 'out', 'construct'); OUT = os.environ.get('GOLDEN_OUT') or os.path.join(ROOT, 'out', 'golden')
+TW = {'Medium': 1/3, 'SemiBold': 2/3}
+
+XH0, XH1 = 495.0, 535.0
+S = XH1/XH0; OVT = 503.4; D = OVT*(S - 1)          # đỉnh vùng x (gồm vượt) và độ dời phía trên
+ASC_LET = set('bdhklþ'); TOP_FLARE = 628.9
+
+# ---------- đường: chuỗi 'M x yL…C…Z' ↔ danh sách contour [[lệnh, [điểm…]]…] ----------
+TOK = re.compile(r'[MLCZ]|-?\d+(?:\.\d+)?(?:e-?\d+)?')
+def parse(d):
+    t = TOK.findall(d); i = 0; out = []; cur = None
+    while i < len(t):
+        c = t[i]; i += 1
+        n = {'M': 1, 'L': 1, 'C': 3, 'Z': 0}[c]
+        pts = [[float(t[i + 2*k]), float(t[i + 2*k + 1])] for k in range(n)]; i += 2*n
+        if c == 'M': cur = [['M', pts]]; out.append(cur)
+        elif c == 'Z': cur.append(['Z', []])
+        else: cur.append([c, pts])
+    return out
+def fmt(cs):
+    s = ''
+    for c in cs:
+        for cmd, pts in c: s += cmd + ' '.join(f'{x:.2f} {y:.2f}' for x, y in pts)
+    return s
+def pts_of(c): return [p for _, ps in c for p in ps]
+
+# ---------- G1 ----------
+def pwl(knots):
+    def f(y):
+        if y <= OVT: return y*S if y > 0 else y
+        for (a0, b0), (a1, b1) in zip(knots, knots[1:]):
+            if y <= a1: return b0 + (y - a0)*(b1 - b0)/(a1 - a0)
+        a, b = knots[-1]; return y + (b - a)
+    return f
+MAP_X = pwl([(OVT, OVT + D)])                                   # dời lên nguyên khối Δ
+MAP_ASC = pwl([(OVT, OVT + D), (TOP_FLARE, TOP_FLARE)])
+MAP = {'x': MAP_X, 'asc': MAP_ASC,
+       'đ': pwl([(OVT, OVT + D), (580, 593.7), (620, 633.7), (649, 649)]),
+       'f': pwl([(OVT, OVT + D), (543, 563)]),
+       'ß': pwl([(OVT, OVT + D), (712, 712)])}
+LIG = {'ﬀ': 'ff', '': 'ft', '': 'tf', '': 'tt'}
+def kind(ch):
+    b = unicodedata.normalize('NFD', ch)[0]
+    if b in ASC_LET: return 'asc'
+    if ch in MAP: return ch
+    return 'x'
+def lower_set(chars):
+    return [c for c in chars if unicodedata.category(c) in ('Ll', 'Mn') or c in LIG]
+
+def g1(d, ch):
+    cs = parse(d)
+    if ch in LIG:                                                # chữ ghép: tách hai phần theo khe lớn nhất của điểm phía trên 560
+        xs = sorted(x for c in cs for x, y in pts_of(c) if y > 560)
+        gap = max(range(len(xs) - 1), key=lambda i: xs[i + 1] - xs[i]); split = (xs[gap] + xs[gap + 1])/2
+        fa, fb = (MAP[kind(LIG[ch][0])] if kind(LIG[ch][0]) in MAP else MAP_X), (MAP[kind(LIG[ch][1])] if kind(LIG[ch][1]) in MAP else MAP_X)
+        m = lambda x, y: fa(y) if x < split else fb(y)
+    else:
+        f = MAP[kind(ch)]; m = lambda x, y: f(y)
+    for c in cs:
+        P = pts_of(c)
+        if min(y for _, y in P) > OVT + 3:                      # dấu / chấm: dời nguyên khối
+            for p in P: p[1] += D
+        else:
+            for p in P: p[1] = m(p[0], p[1])
+    return fmt(cs)
+
+# ---------- hình học chung ----------
+import math
+def bz(p0, p1, p2, p3, t):
+    u = 1 - t; return [u**3*p0[i] + 3*u*u*t*p1[i] + 3*u*t*t*p2[i] + t**3*p3[i] for i in (0, 1)]
+def segs(c):
+    """contour → danh sách đoạn [(loại, [P0, …, Pn])] (điểm là list tham chiếu: sửa tại chỗ)"""
+    out = []; cur = c[0][1][0]; start = cur
+    for cmd, ps in c[1:]:
+        if cmd == 'L': out.append(('L', [cur, ps[0]])); cur = ps[0]
+        elif cmd == 'C': out.append(('C', [cur, ps[0], ps[1], ps[2]])); cur = ps[2]
+        elif cmd == 'Z':
+            if math.dist(cur, start) > 1e-6: out.append(('Z', [cur, start]))
+    return out
+def polys(cs):
+    P = []
+    for c in cs:
+        pl = []
+        for k, q in segs(c):
+            if k == 'C': pl += [bz(*q, i/16) for i in range(16)]
+            else: pl.append(q[0])
+        P.append(pl)
+    return P
+def inside(pt, P):
+    x, y = pt; r = False
+    for pl in P:
+        n = len(pl)
+        for i in range(n):
+            (x1, y1), (x2, y2) = pl[i - 1], pl[i]
+            if (y1 > y) != (y2 > y) and x < x1 + (y - y1)*(x2 - x1)/(y2 - y1): r = not r
+    return r
+def ray(pt, d, P, tmin=0.8):
+    """khoảng cách tới mép đầu tiên theo hướng d + pháp tuyến (chưa định hướng) của mép đó"""
+    best = None
+    for pl in P:
+        n = len(pl)
+        for i in range(n):
+            (x1, y1), (x2, y2) = pl[i - 1], pl[i]; ex, ey = x2 - x1, y2 - y1
+            den = d[0]*ey - d[1]*ex
+            if abs(den) < 1e-12: continue
+            t = ((x1 - pt[0])*ey - (y1 - pt[1])*ex)/den; s_ = ((x1 - pt[0])*d[1] - (y1 - pt[1])*d[0])/den
+            if t > tmin and 0 <= s_ <= 1 and (best is None or t < best[0]):
+                L = math.hypot(ex, ey) or 1; best = (t, (ey/L, -ex/L))
+    return best
+def unit(v):
+    L = math.hypot(*v); return (v[0]/L, v[1]/L) if L > 1e-9 else None
+def tan_end(k, q, at_start):
+    """tiếp tuyến đơn vị theo chiều đi của đoạn, tại đầu / cuối"""
+    if k != 'C': return unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))
+    if at_start:
+        for h in (q[1], q[2], q[3]):
+            u = unit((h[0] - q[0][0], h[1] - q[0][1]))
+            if u: return u
+    else:
+        for h in (q[2], q[1], q[0]):
+            u = unit((q[3][0] - h[0], q[3][1] - h[1]))
+            if u: return u
+    return None
+
+# ---------- G3 chân loe ----------
+FLARE_K = 1.3
+def g3(cs):
+    n_fl = 0
+    for c in cs:
+        S_ = segs(c); n = len(S_)
+        for i in range(n):
+            k, q = S_[i]
+            if k != 'C': continue
+            for rev in (False, True):                          # loe có thể đi thân → chân hoặc chân → thân
+                stem = S_[(i - 1) % n] if not rev else S_[(i + 1) % n]
+                nx1 = S_[(i + 1) % n] if not rev else S_[(i - 1) % n]
+                nx2 = S_[(i + 2) % n] if not rev else S_[(i - 2) % n]
+                if stem[0] == 'C' or nx1[0] == 'C': continue
+                end = q[3] if not rev else q[0]                   # đầu loe phía chân
+                hor = lambda sg: abs(sg[1][0][1] - sg[1][1][1]) < 0.5 and math.dist(*sg[1]) >= 40
+                if hor(nx1): extra = []                           # loe chạm thẳng mặt chân
+                elif nx2[0] != 'C' and math.dist(*nx1[1]) <= 30 and hor(nx2):
+                    extra = [nx1[1][1] if not rev else nx1[1][0]] # đoạn ngắn rồi mới tới mặt chân
+                else: continue
+                sa, sb = stem[1]
+                if math.dist(sa, sb) < 60: continue
+                K = extra[0] if extra else end; Z = K[1]
+                Sp = q[0] if not rev else q[3]
+                if abs(Sp[1] - Z) > 140 or abs(Sp[1] - Z) < 20: continue
+                td = unit((sb[0] - sa[0], sb[1] - sa[1]))
+                tc = tan_end(k, q, not rev)
+                if not td or not tc or abs(td[0]*tc[1] - td[1]*tc[0]) > 0.03: continue   # loe liền tiếp tuyến với thân
+                if abs(td[1]) < 0.5: continue                       # thân phải đứng / chéo, không nằm ngang
+                cx = Sp[0] + (Z - Sp[1])*td[0]/td[1]; C0 = (cx, Z)    # giao đường thân × đường chân
+                for p in [q[0], q[1], q[2], q[3]] + extra:
+                    p[0] = C0[0] + (p[0] - C0[0])*FLARE_K; p[1] = C0[1] + (p[1] - C0[1])*FLARE_K
+                n_fl += 1
+    return n_fl
+
+# ---------- G2 nét mảnh ----------
+THIN_R = 0.8
+PAR = 50                       # mép đối diện lệch ≤ PAR° (vòng có lòng nghiêng: mép lòng đối diện lệch tới ~45°)
+HAIR = {'Regular': 42.0, 'Bold': 62.0}; STEM = {'Regular': 104.0, 'Bold': 140.0}
+def g2(cs, w, skip, ratio=None):
+    """ratio: thu MỌI nét (không chỉ nét mảnh) về × ratio — dùng sau khi giãn ngang (G4)"""
+    P = polys(cs); wl, wh = 1.4*HAIR[w], 0.7*STEM[w]
+    if ratio is not None: wl, wh = 1e9, 2e9
+    R_ = THIN_R if ratio is None else ratio
+    def shrink(pt, nout):
+        h = ray(pt, (-nout[0], -nout[1]), P)
+        if not h: return 0.0
+        t, nn = h
+        if abs(nn[0]*nout[0] + nn[1]*nout[1]) < math.cos(math.radians(PAR)): return 0.0   # mép đối diện không song song
+        if ratio is not None and t > 2.2*STEM[w]: return 0.0       # tia đi xuyên lòng / khoảng trắng: không phải một nét
+        f = 1.0 if t <= wl else max(0.0, (wh - t)/(wh - wl))
+        return (1 - R_)/2*t*f
+    moves = []
+    for ci, c in enumerate(cs):
+        if ci in skip: continue
+        S_ = segs(c); n = len(S_)
+        for i in range(n):
+            a, b = S_[i - 1], S_[i]                               # nút = điểm cuối a = điểm đầu b
+            node = b[1][0]
+            ta, tb = tan_end(*a, False), tan_end(*b, True)
+            if not ta or not tb: continue
+            outs = []
+            for tv in (ta, tb):
+                nv = (tv[1], -tv[0])
+                if inside((node[0] + 1.5*nv[0], node[1] + 1.5*nv[1]), P): nv = (-nv[0], -nv[1])
+                outs.append(nv)
+            # đo tại nút, lệch vào trong đoạn 2 u để tránh đúng góc
+            pa = (node[0] - 2*ta[0], node[1] - 2*ta[1]); pb = (node[0] + 2*tb[0], node[1] + 2*tb[1])
+            da, db = shrink(pa, outs[0]), shrink(pb, outs[1])
+            if da == 0 and db == 0: continue
+            n1, n2 = outs; cosang = n1[0]*n2[0] + n1[1]*n2[1]
+            if cosang > 0.985:                                    # nút trơn
+                m = unit((n1[0] + n2[0], n1[1] + n2[1])); d = (da + db)/2; D = (-m[0]*d, -m[1]*d)
+            else:                                                 # góc: D·n1 = −da, D·n2 = −db
+                det = n1[0]*n2[1] - n1[1]*n2[0]
+                if abs(det) < 0.15: continue
+                D = ((-da*n2[1] + db*n1[1])/det, (-db*n1[0] + da*n2[0])/det)
+                if math.hypot(*D) > 3*max(da, db): continue
+            hs = []
+            if a[0] == 'C': hs.append(a[1][2])
+            if b[0] == 'C': hs.append(b[1][1])
+            moves.append((node, hs, D))
+    for node, hs, D in moves:                                     # dời sau khi đo xong (đo trên hình gốc)
+        for p in [node] + hs: p[0] += D[0]; p[1] += D[1]
+    return len(moves)
+
+def split_curves(cs, mask=None, minlen=60):
+    """chia đôi (t = ½, đúng hình) mọi cubic dài ≥ minlen — thêm điểm neo ở giữa cung để luật nét mảnh đặt được tại chỗ
+    mảnh nhất nằm giữa hai điểm neo (vòng có lòng nghiêng). Cùng một phép chia cho Regular và Bold (độ dài lấy theo Regular
+    — truyền danh sách vào) để hai master giữ cùng cấu trúc."""
+    out = []; mk = []; j = 0
+    for c in cs:
+        nc = [c[0]]; cur = c[0][1][0]
+        for cmd, ps in c[1:]:
+            sp = (mask[j] if mask is not None else (cmd == 'C' and math.dist(cur, ps[2]) >= minlen)); mk.append(sp); j += 1
+            if sp:
+                p0, p1, p2, p3 = cur, ps[0], ps[1], ps[2]
+                m = lambda a, b: [(a[0] + b[0])/2, (a[1] + b[1])/2]
+                a1, b1, c1 = m(p0, p1), m(p1, p2), m(p2, p3); a2, b2 = m(a1, b1), m(b1, c1); mid = m(a2, b2)
+                nc.append(['C', [a1, a2, mid]]); nc.append(['C', [b2, c1, [p3[0], p3[1]]]])
+            else: nc.append([cmd, ps])
+            if cmd in 'LC': cur = ps[-1]
+        out.append(nc)
+    return out, mk
+
+def g23(d, ch, w, low, mask=None):
+    cs = parse(d)
+    nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
+    nt = 0
+    if unicodedata.category(ch)[0] == 'L' or ch in LIG:
+        cs, mask = split_curves(cs, mask)
+        top = (OVT + D if ch in low else 712.0) + 3
+        skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
+        nt = g2(cs, w, skip)
+    return fmt(cs), nf, nt, mask
+
+# ---------- G4 v x y rộng hơn ----------
+WIDE = {'v': 1.08, 'x': 1.08, 'y': 1.08}     # designer 20/11: "tăng bề ngang các chữ v, y, x" — × 535/495 (giữ góc chéo như AnNam Serif)
+def g4(d, ch, w):
+    b = unicodedata.normalize('NFD', ch)[0]
+    if b not in WIDE: return d
+    k = WIDE[b]; cs = parse(d)
+    body = [c for c in cs if min(y for _, y in pts_of(c)) <= OVT + D + 3]      # dấu giữ nguyên hình, chỉ dời theo tâm
+    xs = [x for c in body for x, _ in pts_of(c)]; cx = (min(xs) + max(xs))/2
+    for c in cs:
+        if c in body:
+            for p in pts_of(c): p[0] = cx + (p[0] - cx)*k
+    g2(cs, w, {i for i, c in enumerate(cs) if c not in body}, ratio=1/k)     # nét giữ bề dày như trước khi giãn
+    return fmt(cs)
+
+def lerp_d(a, b, t):
+    A, B = parse(a), parse(b)
+    for ca, cb in zip(A, B):
+        for (_, pa), (_, pb) in zip(ca, cb):
+            for p, q in zip(pa, pb): p[0] += (q[0] - p[0])*t; p[1] += (q[1] - p[1])*t
+    return fmt(A)
+
+def main():
+    O = json.load(open(os.path.join(SRC, 'outlines.json'))); SP = json.load(open(os.path.join(SRC, 'spacing.json')))
+    chars = list(SP['Regular']); low = set(lower_set(chars)); G = {}; NF = {'Regular': 0, 'Bold': 0}; NT = dict(NF)
+    for c in chars:
+        if f'{c}-Regular' not in O: continue
+        for w in ('Regular', 'Bold'):
+            d = O[f'{c}-{w}']
+            if c in low: d = g1(d, c)
+            d = g4(d, c, w)
+            d, nf, nt, mask = g23(d, c, w, low, mask if w == 'Bold' else None); NF[w] += nf; NT[w] += nt
+            G[f'{c}-{w}'] = d
+        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    os.makedirs(OUT, exist_ok=True)
+    json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
+    print('golden:', len(G), 'glyph ·', len(low), 'ký tự chữ thường nâng x-height', XH0, '→', XH1, '· loe phóng', NF, '· nút nét mảnh dời', NT)
+
+if __name__ == '__main__':
+    main()
