@@ -325,6 +325,16 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
             def at(sg, tv, out, end):
                 if sg[0] != 'C':
                     q = sg[1]
+                    ix_ = next((m for m in range(n) if S_[m][1] is q), None)          # đoạn gần thẳng hàng (≤ 10°) với đoạn kề DÀI HƠN:
+                    u0_ = unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))                 # cùng một mép nét (bị chia bởi mẩu nối / khớp)
+                    for nb in ((S_[ix_ - 1], S_[(ix_ + 1) % n]) if ix_ is not None and u0_ else ()):
+                        if nb[0] == 'C' or math.dist(*nb[1]) < max(60, math.dist(q[0], q[1])): continue
+                        u1 = unit((nb[1][1][0] - nb[1][0][0], nb[1][1][1] - nb[1][0][1]))
+                        if abs(u0_[0]*u1[0] + u0_[1]*u1[1]) < math.cos(math.radians(10)): continue
+                        mid1 = ((nb[1][0][0] + nb[1][1][0])/2, (nb[1][0][1] + nb[1][1][1])/2); o1 = (u1[1], -u1[0])
+                        if inside((mid1[0] + 1.5*o1[0], mid1[1] + 1.5*o1[1]), P): o1 = (-o1[0], -o1[1])
+                        v1 = shrink(mid1, o1, 20)
+                        if v1: return v1
                     if math.dist(q[0], q[1]) < 30:                     # đoạn ngắn nối tiếp một đoạn thẳng dài gần thẳng hàng (≤ 20°):
                         ix = next((m for m in range(n) if S_[m][1] is q), None)   # là phần của cùng nét — dời cùng nét đó, góc nối giữ nguyên
                         u0 = unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))
@@ -339,7 +349,19 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
                     if abs(q[0][1] - q[1][1]) < 0.5 and any(abs(q[0][1] - g) < 0.8 for g in GUIDES): return 0.0   # mép trên đường kẻ: đứng yên
                     h = ray(mid, (-out[0], -out[1]), P)
                     if h and math.dist(q[0], q[1]) < 1.2*h[0]: return 0.0      # đoạn ngắn hơn bề dày = mặt cắt đầu nét: giữ
-                    return shrink(mid, out, 20)                         # đoạn thẳng: mép đối diện song song ±20° (thanh, thân, chéo)
+                    own = shrink(mid, out, 20)                          # đoạn thẳng: mép đối diện song song ±20° (thanh, thân, chéo)
+                    if own == 0.0:                                      # không đo được (vd. đoạn hội tụ về đỉnh V của W) nhưng thẳng hàng
+                        ix = next((m for m in range(n) if S_[m][1] is q), None)   # (≤ 10°) với đoạn kề dài: dời cùng nét đó (không xoay)
+                        u0 = unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))
+                        for nb in ((S_[ix - 1], S_[(ix + 1) % n]) if ix is not None and u0 else ()):
+                            if nb[0] == 'C' or math.dist(*nb[1]) < 60: continue
+                            u1 = unit((nb[1][1][0] - nb[1][0][0], nb[1][1][1] - nb[1][0][1]))
+                            if abs(u0[0]*u1[0] + u0[1]*u1[1]) < math.cos(math.radians(10)): continue
+                            mid1 = ((nb[1][0][0] + nb[1][1][0])/2, (nb[1][0][1] + nb[1][1][1])/2); o1 = (u1[1], -u1[0])
+                            if inside((mid1[0] + 1.5*o1[0], mid1[1] + 1.5*o1[1]), P): o1 = (-o1[0], -o1[1])
+                            v1 = shrink(mid1, o1, 20)
+                            if v1: return v1
+                    return own
                 sgn = -1 if end else 1
                 return shrink((node[0] + sgn*2*tv[0], node[1] + sgn*2*tv[1]), out)
             da, db = at(a, ta, outs[0], True), at(b, tb, outs[1], False)
