@@ -10,9 +10,9 @@ như bản gốc (cùng cấu trúc điểm → master variable tương thích):
         đ: thanh ngang giữ dày, dời theo tâm; f: móc giữ hình, cao thêm 20; ß: phần trên co đều;
       - chữ x (a c e … t, ơ ư, ð): phần trên x-height (đầu t, sừng, …) dời lên nguyên khối Δ = 40.7;
       - contour nằm trọn trên x-height (dấu thanh, dấu mũ, chấm i j) dời lên Δ — khoảng dấu – chữ giữ nguyên.
-  G3  chân loe lớn hơn 30 %: loe = đoạn cong nối thân (đoạn thẳng dài) với đoạn thẳng ngắn chạm đường chân / đỉnh (đoạn ngang).
-      Phóng đều × 1.3 quanh giao điểm đường thân với đường chân: điểm nối thân trượt trên đường thân, hướng tiếp tuyến giữ
-      (liền tiếp tuyến), mặt chân giữ trên đường chân — loe cao hơn và rộng hơn 30 %; áp cho mọi loe (chân, đỉnh thân, chéo).
+  G3  chân loe rộng hơn 30 %, thấp hơn (× 0.85) — vuốt nhọn: loe = đoạn cong nối thân (đoạn thẳng dài) với mặt chân / đỉnh
+      (đoạn ngang). Gốc C = giao đường thân × đường chân: điểm nối thân + tay nắm của nó co × 0.85 về C (trượt trên đường thân,
+      tiếp tuyến giữ — liền mạch); phía chân: rộng × 1.3 theo đường chân, cao × 0.85; áp cho mọi loe (chân, đỉnh thân, chéo).
   G4  v x y (+ ý ỳ ỷ ỹ ỵ ÿ) rộng thêm × 1.08 (= 535/495, góc chéo như AnNam Serif) quanh tâm; mọi nét thu lại × 1/1.08 theo
       luật G2 (dời mép theo pháp tuyến) → nét giữ bề dày; dấu giữ hình.
   G2  nét mảnh còn 80 % (thanh ngang, chéo mảnh, vòng mảnh, khớp mảnh — chữ hoa và thường): mỗi mép dời vào
@@ -20,7 +20,7 @@ như bản gốc (cùng cấu trúc điểm → master variable tương thích):
       nhọn); w ≤ 1.4 × nét mảnh chuẩn: đủ 0.1·w, giảm tuyến tính về 0 ở 0.7 × thân; thân dày giữ nguyên. Điểm neo dời theo hai
       pháp tuyến của hai đoạn kề (góc: giải hai ràng buộc, trơn: theo pháp tuyến chung); tay nắm đi cùng điểm neo. Dấu, chấm giữ.
 """
-import json, os, re, sys, unicodedata
+import json, os, re, sys, unicodedata, math
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.join(HERE, '..', '..', '..')
 SRC = os.path.join(ROOT, 'out', 'construct'); OUT = os.environ.get('GOLDEN_OUT') or os.path.join(ROOT, 'out', 'golden')
 TW = {'Medium': 1/3, 'SemiBold': 2/3}
@@ -38,15 +38,26 @@ def parse(d):
         n = {'M': 1, 'L': 1, 'C': 3, 'Z': 0}[c]
         pts = [[float(t[i + 2*k]), float(t[i + 2*k + 1])] for k in range(n)]; i += 2*n
         if c == 'M': cur = [['M', pts]]; out.append(cur)
-        elif c == 'Z': cur.append(['Z', []])
+        elif c == 'Z':
+            last = cur[-1][1][-1] if len(cur) > 1 else None
+            if last is not None and last == cur[0][1][0]: cur[-1][1][-1] = cur[0][1][0]   # điểm cuối trùng điểm đầu: CÙNG một
+            cur.append(['Z', []])                                                          # đối tượng — mọi luật dời cả hai
         else: cur.append([c, pts])
     return out
 def fmt(cs):
     s = ''
     for c in cs:
+        if len(c) > 2 and c[-1][0] == 'Z' and c[-2][1]:               # điểm cuối trùng điểm đầu (contour khép bằng đoạn cong / thẳng):
+            M0, E = c[0][1][0], c[-2][1][-1]                            # luật chỉ dời điểm đầu → kéo điểm cuối theo
+            if math.dist(M0, E) < 8 and (E[0], E[1]) != (M0[0], M0[1]): E[0], E[1] = M0[0], M0[1]
         for cmd, pts in c: s += cmd + ' '.join(f'{x:.2f} {y:.2f}' for x, y in pts)
     return s
-def pts_of(c): return [p for _, ps in c for p in ps]
+def pts_of(c):
+    out, seen = [], set()
+    for _, ps in c:
+        for p in ps:
+            if id(p) not in seen: seen.add(id(p)); out.append(p)
+    return out
 
 # ---------- G1 ----------
 def pwl(knots):
@@ -147,7 +158,7 @@ def tan_end(k, q, at_start):
     return None
 
 # ---------- G3 chân loe ----------
-FLARE_K = 1.3
+FLARE_KX, FLARE_KY = 1.3, 0.85   # designer 20/11: loe rộng hơn 30 %; "giảm chiều cao của loe để cảm giác vuốt nhọn hơn" → cao × 0.85
 def g3(cs):
     n_fl = 0
     for c in cs:
@@ -176,8 +187,12 @@ def g3(cs):
                 if not td or not tc or abs(td[0]*tc[1] - td[1]*tc[0]) > 0.03: continue   # loe liền tiếp tuyến với thân
                 if abs(td[1]) < 0.5: continue                       # thân phải đứng / chéo, không nằm ngang
                 cx = Sp[0] + (Z - Sp[1])*td[0]/td[1]; C0 = (cx, Z)    # giao đường thân × đường chân
-                for p in [q[0], q[1], q[2], q[3]] + extra:
-                    p[0] = C0[0] + (p[0] - C0[0])*FLARE_K; p[1] = C0[1] + (p[1] - C0[1])*FLARE_K
+                sside = [q[0], q[1]] if not rev else [q[3], q[2]]      # điểm nối thân + tay nắm của nó: trượt trên đường thân
+                fside = [q[2], q[3]] if not rev else [q[1], q[0]]
+                for p in sside:
+                    p[0] = C0[0] + (p[0] - C0[0])*FLARE_KY; p[1] = C0[1] + (p[1] - C0[1])*FLARE_KY
+                for p in fside + extra:                                 # phía chân: rộng × KX, cao × KY
+                    p[0] = C0[0] + (p[0] - C0[0])*FLARE_KX; p[1] = Z + (p[1] - Z)*FLARE_KY
                 n_fl += 1
     return n_fl
 
@@ -208,13 +223,17 @@ def g2(cs, w, skip, ratio=None):
             ta, tb = tan_end(*a, False), tan_end(*b, True)
             if not ta or not tb: continue
             outs = []
-            for tv in (ta, tb):
-                nv = (tv[1], -tv[0])
-                if inside((node[0] + 1.5*nv[0], node[1] + 1.5*nv[1]), P): nv = (-nv[0], -nv[1])
+            for tv, sg in ((ta, -3), (tb, 3)):                         # hướng ra ngoài: thử ở điểm lùi 3 u vào trong đoạn (góc chữ T)
+                nv = (tv[1], -tv[0]); bp = (node[0] + sg*tv[0], node[1] + sg*tv[1])
+                if inside((bp[0] + 1.5*nv[0], bp[1] + 1.5*nv[1]), P): nv = (-nv[0], -nv[1])
                 outs.append(nv)
-            # đo tại nút, lệch vào trong đoạn 2 u để tránh đúng góc
-            pa = (node[0] - 2*ta[0], node[1] - 2*ta[1]); pb = (node[0] + 2*tb[0], node[1] + 2*tb[1])
-            da, db = shrink(pa, outs[0]), shrink(pb, outs[1])
+            # đoạn cong: đo tại nút (lệch vào 2 u); đoạn THẲNG: đo ở giữa đoạn, cả đoạn dời đều (thanh ngang không vát đầu)
+            def at(sg, tv, out, end):
+                if sg[0] != 'C':
+                    q = sg[1]; return shrink(((q[0][0] + q[1][0])/2, (q[0][1] + q[1][1])/2), out)
+                sgn = -1 if end else 1
+                return shrink((node[0] + sgn*2*tv[0], node[1] + sgn*2*tv[1]), out)
+            da, db = at(a, ta, outs[0], True), at(b, tb, outs[1], False)
             if da == 0 and db == 0: continue
             n1, n2 = outs; cosang = n1[0]*n2[0] + n1[1]*n2[1]
             if cosang > 0.985:                                    # nút trơn
@@ -245,7 +264,7 @@ def split_curves(cs, mask=None, minlen=60):
                 p0, p1, p2, p3 = cur, ps[0], ps[1], ps[2]
                 m = lambda a, b: [(a[0] + b[0])/2, (a[1] + b[1])/2]
                 a1, b1, c1 = m(p0, p1), m(p1, p2), m(p2, p3); a2, b2 = m(a1, b1), m(b1, c1); mid = m(a2, b2)
-                nc.append(['C', [a1, a2, mid]]); nc.append(['C', [b2, c1, [p3[0], p3[1]]]])
+                nc.append(['C', [a1, a2, mid]]); nc.append(['C', [b2, c1, p3]])
             else: nc.append([cmd, ps])
             if cmd in 'LC': cur = ps[-1]
         out.append(nc)
@@ -261,6 +280,42 @@ def g23(d, ch, w, low, mask=None):
         skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
         nt = g2(cs, w, skip)
     return fmt(cs), nf, nt, mask
+
+# ---------- G5 đầu t vát (designer 20/11, hình phác: "đầu chữ t đổi thành kiểu này cho golden") ----------
+# Đầu t = tam giác vuông: mép phải thân đi thẳng lên đỉnh; cạnh vát từ đỉnh xuống mặt trên thanh ngang, chạm thanh tại điểm cách
+# mép trái thân 0.625 × phần thanh thò trái (hình phác: 45 / 120 px tính từ đầu thanh); đỉnh cao hơn mặt thanh 1.03 × bề ngang
+# thân (185 / 180 px). Áp cho t và chữ ghép có t (ft tf tt) — sửa trực tiếp contour (giữ cấu trúc chung Regular / Bold).
+T_TOP_K, T_FOOT_K = 1.03, 0.625
+def t_head(cs, overhang):
+    n_ = 0
+    for ci, c in enumerate(cs):
+        S_ = segs(c); n = len(S_)
+        if n < 6: continue
+        bt = None
+        for i in range(n):
+            k, q = S_[i]
+            if k == 'C' or abs(q[0][1] - q[1][1]) > 0.5 or math.dist(q[0], q[1]) < 50 or q[0][1] < OVT + D + 40: continue
+            if q[0][0] < q[1][0]: continue                                  # mặt đỉnh đi ngược chiều (phải → trái) như contour gốc
+            # lùi tới đoạn bắt đầu ở mặt thanh (phía thân phải), tiến tới đoạn kết thúc ở mặt thanh (phía thân trái)
+            ir = i
+            while S_[ir % n][1][0][1] > OVT + D + 2: ir -= 1
+            il = i
+            while S_[il % n][1][-1][1] > OVT + D + 2: il += 1
+            Pr, Pl = S_[ir % n][1][0], S_[il % n][1][-1]
+            bt = (Pr[1] + Pl[1])/2; sr, sl = Pr[0], Pl[0]
+            top = bt + T_TOP_K*(sr - sl); xs = sl - T_FOOT_K*overhang
+            nxt = S_[(il + 1) % n]
+            new = [('L', [[sr, bt], [sr, top]]), ('L', [[sr, top], [xs, bt]])]
+            rest = [S_[(il + 1 + j) % n] for j in range(n - (il - ir) - 1)]
+            rest[0] = (rest[0][0], [[xs, bt]] + rest[0][1][1:])
+            seq = new + rest                                                # bắt đầu ở (sr, bt)
+            seq[-1] = (seq[-1][0], seq[-1][1][:-1] + [[sr, bt]])
+            nc = [['M', [[sr, bt]]]] + [[('C' if k_ == 'C' else 'L'), q_[1:]] for k_, q_ in seq if not (k_ == 'Z')] + [['Z', []]]
+            cs[ci] = nc; n_ += 1
+            break
+    return n_
+OVH = {'Regular': 67.9, 'Bold': 67.9}     # phần thanh t thò trái thân (AnNam Serif, cả hai weight) — chữ ghép dùng chung
+TCH = {'t', '\ue000', '\ue001', '\ue002'}
 
 # ---------- G4 v x y rộng hơn ----------
 WIDE = {'v': 1.08, 'x': 1.08, 'y': 1.08}     # designer 20/11: "tăng bề ngang các chữ v, y, x" — × 535/495 (giữ góc chéo như AnNam Serif)
@@ -291,6 +346,11 @@ def main():
         for w in ('Regular', 'Bold'):
             d = O[f'{c}-{w}']
             if c in low: d = g1(d, c)
+            if c in TCH:
+                for _ in range(2):                                          # tt: hai đầu t
+                    cs_ = parse(d)
+                    if not t_head(cs_, OVH[w]): break
+                    d = fmt(cs_)
             d = g4(d, c, w)
             d, nf, nt, mask = g23(d, c, w, low, mask if w == 'Bold' else None); NF[w] += nf; NT[w] += nt
             G[f'{c}-{w}'] = d
