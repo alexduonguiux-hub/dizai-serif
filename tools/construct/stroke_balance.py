@@ -24,8 +24,8 @@ def round_T(w): return (STEM[0] + (STEM[1] - STEM[0])*TW[w])*1.02
 def fig_T(w): return 106.0 + (140.0 - 106.0)*TW[w]
 
 # glyph → (nét mảnh, nét dày): 'h' = chuẩn nét mảnh, 'R' = chuẩn nét tròn, 'F' = chuẩn số, None = giữ của chính glyph
-#   n h m u: chỗ mảnh nhất là vai (khớp vòm–thân) — giữ; a: giữ bụng S45b (dời lòng làm bậc ở góc lòng–thân); 2: không có nét mảnh (sống chéo); 4 7: nét thẳng — giữ
-SPEC = {'o': ('h', 'R'), 'c': ('h', 'R'), 'e': ('h', 'R'), 's': ('h', 'R'), 'g': ('h', 'R'),
+#   n h m u: chỗ mảnh nhất là vai (khớp vòm–thân) — giữ; a: bụng S46c riêng (dời lòng làm bậc ở góc lòng–thân); 2: không có nét mảnh (sống chéo); e: theo bản vẽ S47 (thanh + vòng — cân lên làm e nặng hơn o); 4 7: nét thẳng — giữ
+SPEC = {'o': ('h', 'R'), 'c': ('h', 'R'), 's': ('h', 'R'), 'g': ('h', 'R'),
         'b': ('h', None), 'd': ('h', None), 'p': ('h', None), 'q': ('h', None),
         '0': ('h', 'F'), '3': ('h', 'F'), '5': (None, 'F'), '6': ('h', 'F'), '8': ('h', 'F'), '9': ('h', 'F')}
 def targets(c, w):

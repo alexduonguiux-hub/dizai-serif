@@ -564,3 +564,19 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
 - S46c (designer 20/11: "phần mỏng nhất của bụng chữ a nên dày thêm 1 chút nữa"): chỗ mảnh nhất là đáy-phải bụng, sát thân (29 u).
   Lòng co thêm × 0.965 theo trục điểm mảnh trên-trái → đáy-phải (giữ điểm trên-trái): đáy-phải 29 → 38, trên-trái 42, nét nhấn 108.
 - QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-a-net-mong.png` (v0.917 / S46b / S46c, Regular / Bold).
+
+### S46d e không cân lên (designer 20/11: "cảm giác chữ e dày hơn các chữ còn lại")
+
+- Mật độ mực (diện tích / bề rộng × x-height) sau S46: e 0.474 so với o 0.420 (Regular), 0.567 / 0.515 (Bold) — e có thêm thanh nên
+  cân nét tròn lên thân + 2 % làm e nặng hơn hẳn. Bỏ: e ra khỏi `stroke_balance.SPEC`, bỏ `E_K0`, `B_KG['e']` về 0.1396.
+
+## S47 Chữ e mới — lòng elip nghiêng (designer 20/11, Figma 2232:788 / 2245:25: "update lại chữ e. Kiểm tra lại các bụng chữ có elip nghiêng như trong này chưa")
+
+- `D_E_ARCH`, `D_E_BOWL` (src_lower.py): lòng mắt và lòng bụng e là cung elip nghiêng; vòng ngoài, thanh, vị trí giữ. Bản cũ lưu `D_E_*_OLD`.
+  Bold / Medium / SemiBold theo luật cũ (`_ell_from_pts` khớp elip xoay nên giữ góc nghiêng).
+- Mật độ mực e sau: 0.410 (o 0.420) Regular, 0.518 (o 0.515) Bold — e không còn nặng hơn.
+- Kiểm tra góc nghiêng lòng bụng (khớp elip, đo trên outline font so với bản vẽ Figma): a 27° (bản vẽ 28.5°), d b p q 15° (15°),
+  o 30° (30°), e theo bản vẽ; Bold lệch thêm 1–3° do lòng co. Tỉ lệ dài / rộng lòng d b p q: font 1.20–1.23, bản vẽ 1.37
+  (S45 co lòng hai trục để cân nét nhấn / nét mảnh — góc giữ, lòng tròn hơn bản vẽ); a 1.30 (bản vẽ 1.34).
+- Version 0.918: zip `dist/AnNamSerif-Trial-v0.918.zip`, `dist/commercial/*-v0.918.zip`.
+- QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s47-e.png`.
