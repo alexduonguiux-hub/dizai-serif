@@ -195,7 +195,7 @@ def g3(cs):
     return n_fl
 
 # ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
-ARCH = set('nmhuµ')
+ARCH = set()                   # (cũ: 'nmhuµ' dịch nguyên khối) — nay vòm / đáy u dùng G10 (dốc tuyến tính, vai cạnh thân gần đứng yên)
 ARCH_T = {'Regular': 32.0, 'Bold': 45.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
     """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
@@ -223,7 +223,19 @@ def arch_thin(cs, w):
                     if inside((pk[0], pk[1] + sg*2), P):                                       # mực ở phía ngoài cung → là lòng
                         h = ray(pk, (0, sg), P)
                         if h:
-                            dlt = h[0] - ARCH_T[w]                                  # đỉnh vòm / đáy u = đúng chuẩn nét mảnh
+                            # δ: dịch đứng cả chuỗi sao cho CHỖ MẢNH NHẤT dọc cung (đo theo pháp tuyến, gồm vai cạnh thân) = chuẩn:
+                            # bề dày pháp tuyến giảm δ·|n_y| → δ = min (dày − chuẩn)/|n_y|
+                            ds = []
+                            for _, q in chain:
+                                for t_ in range(1, 24):
+                                    a_ = bz(*q, t_/24); b_ = bz(*q, t_/24 + 0.005); u_ = unit((b_[0] - a_[0], b_[1] - a_[1]))
+                                    if not u_: continue
+                                    nv = (-u_[1], u_[0])
+                                    if not inside((a_[0] + 2*nv[0], a_[1] + 2*nv[1]), P): nv = (-nv[0], -nv[1])
+                                    if not inside((a_[0] + 2*nv[0], a_[1] + 2*nv[1]), P) or abs(nv[1]) < 0.3: continue
+                                    hh = ray(a_, nv, P)
+                                    if hh and hh[0] < 2.2*ARCH_T[w]: ds.append((hh[0] - ARCH_T[w])/abs(nv[1]))
+                            dlt = min(ds) if ds else h[0] - ARCH_T[w]
                             for p_ in pts: p_[1] += sg*dlt
                             done |= {id(p_) for p_ in pts}
                 i = j
@@ -613,7 +625,7 @@ def s_thin(d, w):
 # (nằm giữa hai góc, hoặc trọn một lòng kín toàn cung) có điểm cao nhất T / thấp nhất B. Nếu bề dày tại đó là nét mảnh (≤ 1.7 × chuẩn),
 # nửa trên chuỗi kéo lên δT tuyến tính theo độ cao từ y_giữa (affine → mép trơn), nửa dưới kéo xuống δB. Góc đầu chuỗi nằm trên đoạn
 # thẳng đứng thì trượt theo đoạn đó; góc khác (thanh ngang, đầu nét) đứng yên và làm mốc cho độ dốc. Lặp 3 lượt (đo lại).
-G10_SKIP = set('oOQsSeæœnmhuµijlfrtITı\u0237')
+G10_SKIP = set('oOQsSeæœijlfrtITı\u0237')
 def _g10_chains(cs):
     import stroke_balance as SB
     sm = {(gi, i) for gi, i, _ in SB.nodes(cs)}; out = []
@@ -632,6 +644,10 @@ def g10(d, w, tgt=None):
         cs = SB.contours(d); pr = SB.probe([d]); P = {(p[1], p[2]): p for p in pr}; moved = False
         polys_ = SB.mask_paths([d])[2]
         G_bz = lambda sg, t: bz(sg[1], sg[2], sg[3], sg[4], t)
+        def _area(g):
+            pl = [sg[-1] for sg in g]; return 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(pl, pl[1:] + pl[:1]))
+        ars = [_area(g) for g in cs]; big = max(range(len(cs)), key=lambda i: abs(ars[i])) if cs else 0
+        hole = [ars[i]*ars[big] < 0 for i in range(len(cs))]     # contour lỗ = lòng kín
         for gi, ch, e0, e1 in _g10_chains(cs):
             g = cs[gi]; n = len(g); Y = lambda m: g[m][-1][1]
             def slide(e):                                         # góc trượt được khi đoạn thẳng kề nó gần đứng
@@ -652,26 +668,29 @@ def g10(d, w, tgt=None):
                 if sg[0] != 'C': continue
                 for k in range(1, 20):
                     t_ = k/20; q = G_bz(sg, t_); q2 = G_bz(sg, t_ + 0.01)
-                    tx, ty = q2[0] - q[0], q2[1] - q[1]
-                    if abs(ty) > 0.35*math.hypot(tx, ty): continue
-                    up = SB.inside((q[0], q[1] + 3), polys_)
-                    if up == SB.inside((q[0], q[1] - 3), polys_): continue
-                    h = SB.ray(q, (0, 1 if up else -1), polys_)
+                    L_ = math.hypot(q2[0] - q[0], q2[1] - q[1])
+                    if L_ < 1e-9: continue
+                    nv = (-(q2[1] - q[1])/L_, (q2[0] - q[0])/L_)          # pháp tuyến về phía mực
+                    if not SB.inside((q[0] + 3*nv[0], q[1] + 3*nv[1]), polys_): nv = (-nv[0], -nv[1])
+                    if not SB.inside((q[0] + 3*nv[0], q[1] + 3*nv[1]), polys_) or abs(nv[1]) < 0.3: continue
+                    h = SB.ray(q, nv, polys_)
                     if not h or h > 400: continue
-                    (top if q[1] > ym_ else bot).append((h, 1 if up else -1, q[1]))
+                    (top if q[1] > ym_ else bot).append((h/abs(nv[1]), 1 if nv[1] > 0 else -1, q[1], abs(nv[1])))   # bề dày quy về độ dời đứng
             if not top and not bot: continue
-            ym = ym_; yT = max([max(yall)] + [y for _, _, y in top]); yB = min([min(yall)] + [y for _, _, y in bot])
+            ym = ym_; yT = max([max(yall)] + [x[2] for x in top]); yB = min([min(yall)] + [x[2] for x in bot])
             fixed_y = [Y(e) for e in (e0, e1) if e is not None and not slide(e)]
             lo_t = max([ym] + [y for y in fixed_y if ym <= y < yT]); hi_b = min([ym] + [y for y in fixed_y if yB < y <= ym])
             rT = lambda y: max(0.0, min(1.0, (y - lo_t)/max(1.0, yT - lo_t)))
             rB = lambda y: max(0.0, min(1.0, (hi_b - y)/max(1.0, hi_b - yB)))
             # δ lớn nhất sao cho mọi mẫu sau khi kéo (dày − δ·dốc) vẫn ≥ chuẩn; mẫu giới hạn chạm đúng chuẩn
             def delta(smp, r):
-                ds = [(h - tgt)/r(y) for h, _, y in smp if r(y) > 0.15 and h <= 1.8*tgt]
-                return max(0.0, min(ds)) if ds else 0.0
+                amin = 0.3 if hole[gi] else 0.937                 # lòng hở: chỉ mẫu tiếp tuyến gần ngang (≤ 20°) — vai / đầu nét mảnh chủ ý không giới hạn
+                ds = [(h - tgt/an)/r(y) for h, _, y, an in smp if r(y) > 0.15 and an >= amin and 0.5*tgt <= h*an <= 1.8*tgt]   # < ½ chuẩn: mũi đầu nét
+                return max(-0.4*tgt, min(ds)) if ds else 0.0                     # âm: nét đang mảnh hơn chuẩn → lòng co lại (dày lên)
             dT, dB = delta(top, rT), delta(bot, rB)
+            if not hole[gi]: dT, dB = max(0.0, dT), max(0.0, dB)  # lòng hở (C c n u J…): chỉ kéo mảnh — đầu nét / vai mảnh là chủ ý
             sT = top[0][1] if top else 1; sB = bot[0][1] if bot else -1
-            if dT < 0.5 and dB < 0.5: continue
+            if abs(dT) < 0.5 and abs(dB) < 0.5: continue
             def f(y):
                 if y > lo_t: return y + sT*dT*rT(y)
                 if y < hi_b: return y + sB*dB*rB(y)
