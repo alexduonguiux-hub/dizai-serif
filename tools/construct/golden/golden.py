@@ -156,7 +156,7 @@ def tan_end(k, q, at_start):
 
 # ---------- G3 chân loe ----------
 CAPS_AS_SERIF = True            # designer 20/11 "Golden hoa nên có độ dày y chang Serif. khác loe chân"
-FLARE_KX_CAP = 2.9             # designer 20/11 "loe chân nên rộng thêm x2" (1.45 → 2.9)              # designer 20/11 "các chữ hoa Golden đuôi chân loe dài thêm ra thêm xíu" (chữ thường giữ 1.3)
+FLARE_KX_CAP = 1.45            # designer 20/11: giữ size loe như cũ (thử ×2.9 bỏ)            # designer 20/11 "các chữ hoa Golden đuôi chân loe dài thêm ra thêm xíu" (chữ thường giữ 1.3)
 FLK = [1.3]                    # bề rộng loe đang dùng (g23 đặt theo chữ hoa / thường)
 FLARE_KX, FLARE_KY = 1.3, 0.85   # designer 20/11: loe rộng hơn 30 %; "giảm chiều cao của loe để cảm giác vuốt nhọn hơn" → cao × 0.85
 FLSEG = set()                   # (id điểm đầu, id điểm cuối) của các cung loe — luật nét mảnh không bẻ hình loe
