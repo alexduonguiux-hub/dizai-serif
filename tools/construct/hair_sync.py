@@ -30,6 +30,9 @@ def main():
     order = sorted(chars, key=lambda c: (unicodedata.normalize('NFD', c) != c or len(c) > 1 or not c.isascii(), c))   # chữ gốc trước
     for c in order:
         b = unicodedata.normalize('NFD', c)[0]
+        if b in GD.TBAR and c == b:                                 # G11 thanh T (mép dưới là cung loe chạy vào thân)
+            for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.bar_thin(O[f'{c}-{w}'], w)[0]
+            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
         if not b.isalpha() or not b.isascii() or b in GD.NOHAIR: continue
         for w in ('Regular', 'Bold'):
             d = O[f'{c}-{w}']

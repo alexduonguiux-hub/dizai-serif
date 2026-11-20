@@ -712,6 +712,30 @@ def g10(d, w, tgt=None):
         if not moved: break
     return d
 
+# ---------- G11 thanh T: mép dưới thanh là cung loe chạy vào thân (không có đoạn thẳng) — designer 20/11 "thanh ngang của T sao lại
+# dày hơn của các chữ khác". Điểm nối cung–thân (tiếp tuyến ngang, thân đứng) dời đứng δ = bề dày thanh (tia đứng tới mép trên) − chuẩn
+# nét mảnh; tay nắm kề nó dời cùng (giữ ngang → cung trơn); đầu nhọn loe đứng yên.
+TBAR = set('T')
+def bar_thin(d, w, tgt=None):
+    tgt = RING_T[w] if tgt is None else tgt
+    cs = parse(d); P = polys(cs); n_ = 0
+    for c in cs:
+        S_ = segs(c); n = len(S_)
+        for i in range(n):
+            a, b = S_[i - 1], S_[i]
+            node = b[1][0]
+            if node[1] < 500: continue
+            for cv, ln, hd in ((a, b, a[1][2] if a[0] == 'C' else None), (b, a, b[1][1] if b[0] == 'C' else None)):
+                if cv[0] != 'C' or ln[0] == 'C' or hd is None: continue
+                q = ln[1]
+                if abs(q[0][0] - q[1][0]) > 0.5 or abs(hd[1] - node[1]) > 0.5: continue      # thân đứng + tiếp tuyến ngang tại điểm nối
+                h = ray((node[0] + (3 if hd[0] < node[0] else -3)*-1, node[1]), (0, 1), P)
+                if not h or h[0] > 2*tgt + 40: continue
+                dl = h[0] - tgt
+                if abs(dl) < 0.5: continue
+                node[1] += dl; hd[1] += dl; n_ += 1
+    return fmt(cs), n_
+
 # ---------- G8 đồng bộ nét mảnh mọi chữ (designer 20/11: "kiểm tra đồng bộ hết độ dày các nét mỏng") ----------
 # Sau các luật trên, nét mảnh từng chữ gốc (Regular, Bold) đo lại; nét mảnh (≤ 1.4 × chuẩn) nhân thêm hệ số r = chuẩn / đo (lặp 3
 # lượt, giới hạn 0.7–1.4) theo đúng luật G2 (mép lòng của cung, hai mép của đoạn thẳng). Chuẩn = RING_T (32 / 45). Chữ có dấu dùng r
@@ -875,6 +899,8 @@ def main():
                 base = RING[b_]
                 if (base, w) not in RINGK: RINGK[(base, w)] = solve_ring(O[f'{base}-{w}'], G[f'{base}-{w}'], w, base == 'Q')
                 G[f'{c}-{w}'] = ring_scale(G[f'{c}-{w}'], RINGK[(base, w)], base == 'Q')
+        if c in TBAR:                                             # G11 thanh T = chuẩn nét mảnh
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = bar_thin(G[f'{c}-{w}'], w)[0]
         if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP:      # G10 nét mảnh cong (lòng kéo dãn đứng)
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = g10(G[f'{c}-{w}'], w)
         if c.isalpha() and len(c) == 1 and c.isascii() and c not in NOHAIR and c not in EFAM:   # G8 chữ gốc (e: chỉ G9 đỉnh cung)
