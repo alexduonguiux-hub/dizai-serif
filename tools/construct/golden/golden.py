@@ -159,6 +159,7 @@ def tan_end(k, q, at_start):
 
 # ---------- G3 chân loe ----------
 FLARE_KX, FLARE_KY = 1.3, 0.85   # designer 20/11: loe rộng hơn 30 %; "giảm chiều cao của loe để cảm giác vuốt nhọn hơn" → cao × 0.85
+FLSEG = set()                   # (id điểm đầu, id điểm cuối) của các cung loe — luật nét mảnh không bẻ hình loe
 def g3(cs):
     n_fl = 0
     for c in cs:
@@ -193,7 +194,7 @@ def g3(cs):
                     p[0] = C0[0] + (p[0] - C0[0])*FLARE_KY; p[1] = C0[1] + (p[1] - C0[1])*FLARE_KY
                 for p in fside + extra:                                 # phía chân: rộng × KX, cao × KY
                     p[0] = C0[0] + (p[0] - C0[0])*FLARE_KX; p[1] = Z + (p[1] - Z)*FLARE_KY
-                n_fl += 1
+                FLSEG.add((id(q[0]), id(q[3]))); n_fl += 1
     return n_fl
 
 # ---------- G2 nét mảnh ----------
@@ -247,10 +248,20 @@ def g2(cs, w, skip, ratio=None):
             if a[0] == 'C': hs.append(a[1][2])
             if b[0] == 'C': hs.append(b[1][1])
             moves.append((node, hs, D))
+    mv = {id(nd): D for nd, _, D in moves}
+    moves = [m for m in moves if id(m[0]) not in FLMID]
+    for c in cs:                                                  # điểm giữa cung loe: dời theo trung bình hai đầu (giữ hình loe)
+        for cmd, ps in c:
+            for p in ps:
+                if id(p) in FLMID:
+                    a_, b_, h1, h2 = FLMID[id(p)]; Da, Db = mv.get(id(a_), (0.0, 0.0)), mv.get(id(b_), (0.0, 0.0))
+                    D = ((Da[0] + Db[0])/2, (Da[1] + Db[1])/2)
+                    if D != (0.0, 0.0): moves.append((p, [h1, h2], D))
     for node, hs, D in moves:                                     # dời sau khi đo xong (đo trên hình gốc)
         for p in [node] + hs: p[0] += D[0]; p[1] += D[1]
     return len(moves)
 
+FLMID = {}                      # id điểm giữa cung loe (sau khi chia đôi) → hai điểm đầu cung
 def split_curves(cs, mask=None, minlen=60):
     """chia đôi (t = ½, đúng hình) mọi cubic dài ≥ minlen — thêm điểm neo ở giữa cung để luật nét mảnh đặt được tại chỗ
     mảnh nhất nằm giữa hai điểm neo (vòng có lòng nghiêng). Cùng một phép chia cho Regular và Bold (độ dài lấy theo Regular
@@ -265,6 +276,7 @@ def split_curves(cs, mask=None, minlen=60):
                 m = lambda a, b: [(a[0] + b[0])/2, (a[1] + b[1])/2]
                 a1, b1, c1 = m(p0, p1), m(p1, p2), m(p2, p3); a2, b2 = m(a1, b1), m(b1, c1); mid = m(a2, b2)
                 nc.append(['C', [a1, a2, mid]]); nc.append(['C', [b2, c1, p3]])
+                if (id(cur), id(p3)) in FLSEG: FLMID[id(mid)] = (cur, p3, a2, b2)
             else: nc.append([cmd, ps])
             if cmd in 'LC': cur = ps[-1]
         out.append(nc)
