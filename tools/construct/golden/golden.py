@@ -230,7 +230,45 @@ def arch_thin(cs, w):
             else: i += 1
     return done
 
+# ---------- G3b loe đứng đầu tay ngang dài hơn (designer 20/11: "các chân loe đứng dài hơn, ví dụ loe hai bên chữ T dài xuống hơn") ----------
+# Mẫu: mép cắt đầu tay THẲNG ĐỨNG (30–220 u) → chuỗi cung tới điểm có tiếp tuyến NẰM NGANG (mép thanh, y = Y0). Chuỗi cung (gồm đầu
+# mút loe) giãn đứng × ARM_K quanh Y0: đầu loe dài thêm 40 % theo chiều đứng, hướng tiếp tuyến ngang ở Y0 giữ (liền mạch với thanh).
+ARM_K = 1.4
+def g3b(cs):
+    n_ = 0
+    for c in cs:
+        S_ = segs(c); n = len(S_)
+        for i in range(n):
+            k, q = S_[i]
+            if k == 'C' or abs(q[0][0] - q[1][0]) > 0.5 or not (30 <= abs(q[0][1] - q[1][1]) <= 220): continue
+            for fwd in (True, False):
+                j = (i + 1) % n if fwd else (i - 1) % n; chain = []
+                while S_[j][0] == 'C' and len(chain) < 4:
+                    chain.append(S_[j])
+                    t = tan_end(*S_[j], not fwd)                     # tiếp tuyến tại đầu xa của cung (theo chiều đi)
+                    if t and abs(t[1]) < 0.06: break
+                    j = (j + 1) % n if fwd else (j - 1) % n
+                else: continue
+                if not chain: continue
+                endp = chain[-1][1][3] if fwd else chain[-1][1][0]
+                t = tan_end(*chain[-1], not fwd)
+                if not t or abs(t[1]) >= 0.06: continue
+                tip = q[1] if fwd else q[0]; Y0 = endp[1]
+                if abs(tip[1] - Y0) < 20: continue
+                mv = []
+                for _, cq in chain:
+                    for p_ in cq:
+                        if p_ is endp or any(p_ is m for m in mv): continue
+                        mv.append(p_)
+                hfar = chain[-1][1][2] if fwd else chain[-1][1][1]          # tay nắm ở đầu ngang: giữ trên đường Y0
+                for p_ in mv:
+                    if p_ is hfar: continue
+                    p_[1] = Y0 + (p_[1] - Y0)*ARM_K
+                n_ += 1
+    return n_
+
 # ---------- G2 nét mảnh ----------
+GUIDES = (0.0, 700.0, 535.0, 495.0)   # đường chân, cao chữ hoa, x-height Golden / AnNam Serif: mép thẳng nằm trên đó không dời
 THIN_R = {'Regular': 0.8, 'Bold': 0.65}   # designer 20/11: "giảm nét mảnh của các weight medium, semibold, bold" — Bold 0.65 (M / SB nội suy)
 PAR = 50                       # mép đối diện lệch ≤ PAR° (vòng có lòng nghiêng: mép lòng đối diện lệch tới ~45°)
 HAIR = {'Regular': 42.0, 'Bold': 62.0}; STEM = {'Regular': 104.0, 'Bold': 140.0}
@@ -244,9 +282,11 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
         if not h: return 0.0
         t, nn = h
         if abs(nn[0]*nout[0] + nn[1]*nout[1]) < math.cos(math.radians(par)): return 0.0   # mép đối diện không song song
+        hy = pt[1] - nout[1]*t
+        pin = 2.0 if abs(nn[0]) < 0.05 and any(abs(hy - g) < 0.8 for g in GUIDES) else 1.0   # mép đối diện nằm trên đường kẻ: mép này nhận gấp đôi
         if ratio is not None and t > 2.2*STEM[w]: return 0.0       # tia đi xuyên lòng / khoảng trắng: không phải một nét
         f = 1.0 if t <= wl else max(0.0, (wh - t)/(wh - wl))
-        return (1 - R_)/2*t*f
+        return (1 - R_)/2*t*f*pin
     moves = []
     for ci, c in enumerate(cs):
         if ci in skip: continue
@@ -257,6 +297,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             if id(node) in fixed: continue
             ta, tb = tan_end(*a, False), tan_end(*b, True)
             if not ta or not tb: continue
+            if any(abs(node[1] - g) < 0.8 for g in GUIDES) and (abs(ta[1]) < 0.05 or abs(tb[1]) < 0.05): continue   # nút trên đường kẻ, tiếp tuyến ngang
             outs = []
             for tv, sg in ((ta, -3), (tb, 3)):                         # hướng ra ngoài: thử ở điểm lùi 3 u vào trong đoạn (góc chữ T)
                 nv = (tv[1], -tv[0]); bp = (node[0] + sg*tv[0], node[1] + sg*tv[1])
@@ -266,6 +307,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
             def at(sg, tv, out, end):
                 if sg[0] != 'C':
                     q = sg[1]; mid = ((q[0][0] + q[1][0])/2, (q[0][1] + q[1][1])/2)
+                    if abs(q[0][1] - q[1][1]) < 0.5 and any(abs(q[0][1] - g) < 0.8 for g in GUIDES): return 0.0   # mép trên đường kẻ: đứng yên
                     h = ray(mid, (-out[0], -out[1]), P)
                     if h and math.dist(q[0], q[1]) < 1.2*h[0]: return 0.0      # đoạn ngắn hơn bề dày = mặt cắt đầu nét: giữ
                     return shrink(mid, out, 20)                         # đoạn thẳng: mép đối diện song song ±20° (thanh, thân, chéo)
@@ -379,6 +421,7 @@ def split_curves(cs, mask=None, minlen=60):
 def g23(d, ch, w, low, mask=None):
     cs = parse(d)
     nf = g3(cs) if unicodedata.category(ch)[0] == 'L' or ch in LIG else 0
+    if unicodedata.category(ch)[0] == 'L': nf += g3b(cs)
     nt = 0
     if unicodedata.category(ch)[0] == 'L' or ch in LIG:
         NOSPLIT[0] = unicodedata.normalize('NFD', ch)[0] in 'aªnmhurµsS$eæœ'   # e: chia cung làm gợn đuôi e (designer 20/11)      # a; vòm n m h u r: chia cung làm lòng vòm nhọn, lệch (designer 20/11)
