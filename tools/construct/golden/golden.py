@@ -300,7 +300,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
         t, nn = h
         if abs(nn[0]*nout[0] + nn[1]*nout[1]) < math.cos(math.radians(par)): return 0.0   # mép đối diện không song song
         hy = pt[1] - nout[1]*t
-        pin = 2.0 if abs(nn[0]) < 0.05 and any(abs(hy - g) < 0.8 for g in GUIDES) else 1.0   # mép đối diện nằm trên đường kẻ: mép này nhận gấp đôi
+        pin = 2.0 if abs(nn[0]) < 0.05 and any(abs(hy - g) < 2.5 for g in GUIDES) else 1.0   # mép đối diện nằm trên đường kẻ: mép này nhận gấp đôi
         if ratio is not None and t > 2.2*STEM[w]: return 0.0       # tia đi xuyên lòng / khoảng trắng: không phải một nét
         if abs_t is not None:
             at_ = abs_t*BAR_K if abs(nout[1]) > 0.97 else abs_t      # nét NGANG: hiệu chỉnh quang học (trông dày hơn nét đứng / cong)
@@ -349,7 +349,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
                             if inside((mid1[0] + 1.5*o1[0], mid1[1] + 1.5*o1[1]), P): o1 = (-o1[0], -o1[1])
                             return shrink(mid1, o1, 20)
                     mid = ((q[0][0] + q[1][0])/2, (q[0][1] + q[1][1])/2)
-                    if abs(q[0][1] - q[1][1]) < 0.5 and any(abs(q[0][1] - g) < 0.8 for g in GUIDES): return 0.0   # mép trên đường kẻ: đứng yên
+                    if any(abs(q[0][1] - g) < 2.5 and abs(q[1][1] - g) < 2.5 for g in GUIDES): return 0.0   # mép trên đường kẻ (≤ 2.5 u — Œ: nối điểm vượt O): đứng yên
                     h = ray(mid, (-out[0], -out[1]), P)
                     if h and math.dist(q[0], q[1]) < 1.2*h[0]: return 0.0      # đoạn ngắn hơn bề dày = mặt cắt đầu nét: giữ
                     own = shrink(mid, out, 20)                          # đoạn thẳng: mép đối diện song song ±20° (thanh, thân, chéo)
@@ -781,7 +781,7 @@ def arm_depth(d, w):
             k, q = S_[i]
             if k == 'C' or abs(q[0][0] - q[1][0]) > 0.5: continue
             for g_ in (700.0, 0.0):
-                ends = [p for p in q if abs(p[1] - g_) < 0.6]
+                ends = [p for p in q if abs(p[1] - g_) < 2.5]
                 if len(ends) != 1: continue
                 root = ends[0]; tip = q[1] if root is q[0] else q[0]
                 old = abs(tip[1] - g_)

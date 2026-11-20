@@ -10,7 +10,7 @@ def cuts(f, ch):
     for op, pts in pen.value:
         if op == 'lineTo' and last and abs(last[0] - pts[0][0]) < 0.6:
             lo, hi = sorted((last[1], pts[0][1]))
-            if (abs(hi - 700) < 0.6 or abs(lo) < 0.6) and 20 <= hi - lo <= 250: out.append(round(hi - lo, 1))
+            if (abs(hi - 700) < 2.5 or abs(lo) < 2.5) and 20 <= hi - lo <= 250: out.append(round(hi - lo, 1))
         if op == 'moveTo': last = pts[0]
         elif pts: last = pts[-1]
     return out
