@@ -125,8 +125,11 @@ def white(prof, side, b):
         x = R[m]; ext = np.nanmax(R[m]) if np.any(~np.isnan(x)) else 0; d = ext - x
     d = np.where(np.isnan(d), DEPTH, np.minimum(d, DEPTH)); return float(d.mean())
 
+TREF = None
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
+    global TREF
+    TREF = json.load(open(os.environ['DIZAI_TREF'])) if os.environ.get('DIZAI_TREF') else None
     spacing, kerning = {}, {}; NEED = {}
     # thứ tự: Regular, Bold trước; Medium / SemiBold lấy kern CLASS nội suy từ hai master (như variable font — QA kerning
     # 05/11: kern đo riêng từng weight nhảy bậc ở ngưỡng hình học, vd. c- −60 / −60 / −60 / 0, L» −115 / −115 / 0 / 0),
@@ -139,6 +142,11 @@ def main():
         # ---- spacing: chữ gốc ----
         T = {}
         for ref, kd in (('H', 'caps'), ('n', 'lower')):
+            if TREF:                                                   # DIZAI_TREF (Golden): chuẩn khoảng trắng của AnNam Serif —
+                PRr = profile(outline([TREF[f'{ref}-{w}']]))           # loe to hơn không nới mọi chữ ra (designer "kerning Golden rộng hơn")
+                b = (0.0, CAP) if kd == 'caps' else (0.0, 495.0)          # vùng đo của chính AnNam Serif (x-height 495)
+                T[kd] = SB_REF[w][kd] + (white(PRr, 'L', b) + white(PRr, 'R', b))/2
+                continue
             b = band(ref, PR[ref]); T[kd] = SB_REF[w][kd] + (white(PR[ref], 'L', b) + white(PR[ref], 'R', b))/2
         sp = {}
         for ch in chars:
