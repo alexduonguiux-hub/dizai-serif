@@ -451,6 +451,40 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
                     DD[id(nodes[i])] = new[i]
     allnodes = {id(p_): p_ for c in cs for sg in segs(c) for p_ in sg[1][:1]}
     moves = [(allnodes[k], HS.get(k, []), D) for k, D in DD.items() if k in allnodes and D != (0.0, 0.0)]
+    # S58 (designer "sửa luôn gợn của W"): chuỗi cung nằm giữa hai góc (mọi nút trong chuỗi trơn cung–cung, vd. cung loe đầu chéo W):
+    # độ dời mọi điểm (nút trong + tay nắm) nội suy TUYẾN TÍNH theo độ dài đa giác điều khiển giữa độ dời hai góc đầu → cung dời đều,
+    # không gợn (lối cũ: chỉ lan một phần qua bước làm trơn + chiếu tay nắm → cung gần thẳng gợn ~1 u).
+    FIX = {}
+    if ratio is None:
+        for c in cs:
+            S_ = segs(c); n = len(S_)
+            if n < 2: continue
+            sm = []
+            for i in range(n):
+                a, b = S_[i - 1], S_[i]
+                ta, tb = tan_end(*a, False), tan_end(*b, True)
+                sm.append(bool(ta and tb and a[0] == 'C' and b[0] == 'C' and ta[0]*tb[0] + ta[1]*tb[1] > 0.995))
+            if all(sm): continue
+            st = next(i for i in range(n) if not sm[i])
+            i = st
+            for _ in range(n):
+                if S_[i][0] == 'C' and not sm[i]:
+                    j = i; run = []
+                    while S_[j % n][0] == 'C' and len(run) < n:
+                        run.append(S_[j % n]); j += 1
+                        if not sm[j % n]: break
+                    if run and not sm[j % n] and len(run) >= 2:
+                        A_, B_ = run[0][1][0], run[-1][1][3]
+                        DA, DB = DD.get(id(A_), (0.0, 0.0)), DD.get(id(B_), (0.0, 0.0))
+                        if DA != (0.0, 0.0) or DB != (0.0, 0.0):
+                            pts = [run[0][1][0]]
+                            for _k, q_ in run: pts += [q_[1], q_[2], q_[3]]
+                            Ls = [0.0]
+                            for u_, v_ in zip(pts, pts[1:]): Ls.append(Ls[-1] + math.dist(u_, v_))
+                            tot = Ls[-1] or 1.0
+                            for pp, ll in zip(pts[1:-1], Ls[1:-1]):
+                                f = ll/tot; FIX[id(pp)] = (pp, (DA[0] + (DB[0] - DA[0])*f, DA[1] + (DB[1] - DA[1])*f))
+                i = (i + 1) % n
     plan = []
     for c in cs:
         for k_, q in segs(c):
@@ -466,9 +500,12 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
             D1 = ((2*D0[0] + D3[0])/3, (2*D0[1] + D3[1])/3); D2 = ((D0[0] + 2*D3[0])/3, (D0[1] + 2*D3[1])/3)
             plan.append((h1, tgt(h1, p0, D1, D0))); plan.append((h2, tgt(h2, p3, D2, D3)))
     moved = set()
+    for k, (pp, Df) in FIX.items():                                # chuỗi cung giữa hai góc: dời tuyến tính
+        pp[0] += Df[0]; pp[1] += Df[1]; moved.add(k)
     for h, t_ in plan:
         if t_ is not None and id(h) not in moved: h[0], h[1] = t_; moved.add(id(h))
     for node, hs, D in moves:
+        if id(node) in FIX: continue
         node[0] += D[0]; node[1] += D[1]
         for h in hs:
             if id(h) not in moved: h[0] += D[0]; h[1] += D[1]; moved.add(id(h))
@@ -831,6 +868,20 @@ def SB_contours(d):
 def SB_to_d(cs):
     sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB; return SB.to_d(cs)
 
+# ---------- G15 thanh t hai bên thân mảnh đều (designer 20/11 "t thường gạch ngang 2 bên không mỏng đều nhau" — Golden) ----------
+# Đầu t Golden: mép trên phần thanh bên trái là nét chéo của đầu t (không có mép song song) → G8 không làm mảnh được. Mép dưới mọi đoạn
+# thanh (đoạn ngang 430–530, dài > 20) đặt về CÙNG độ cao = mép dưới cao nhất (phần thanh bên phải, đã đúng chuẩn); góc trượt trên mép đứng.
+def tbar_eq(d):
+    cs = parse(d); ls = []
+    for c in cs:
+        for k_, q in segs(c):
+            if k_ == 'L' and abs(q[0][1] - q[1][1]) < 0.5 and 430 < q[0][1] < 530 and abs(q[0][0] - q[1][0]) > 20: ls.append(q)
+    if len(ls) < 2: return d
+    y = max(q[0][1] for q in ls)
+    for q in ls:
+        for p_ in q: p_[1] = y
+    return fmt(cs)
+
 # ---------- G8 đồng bộ nét mảnh mọi chữ (designer 20/11: "kiểm tra đồng bộ hết độ dày các nét mỏng") ----------
 # Sau các luật trên, nét mảnh từng chữ gốc (Regular, Bold) đo lại; nét mảnh (≤ 1.4 × chuẩn) nhân thêm hệ số r = chuẩn / đo (lặp 3
 # lượt, giới hạn 0.7–1.4) theo đúng luật G2 (mép lòng của cung, hai mép của đoạn thẳng). Chuẩn = RING_T (32 / 45). Chữ có dấu dùng r
@@ -996,6 +1047,8 @@ def main():
         if c.isalpha() and len(c) == 1 and c.isascii():                          # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
+        if c in TCH:                                                  # G15 thanh t hai bên mảnh đều
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = tbar_eq(G[f'{c}-{w}'])
         if c in ARMD:                                                 # G13 tay loe đầu thanh dài bằng nhau (cả Æ Œ)
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = arm_depth(G[f'{c}-{w}'], w)[0]
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
