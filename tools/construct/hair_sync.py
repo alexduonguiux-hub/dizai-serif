@@ -33,23 +33,17 @@ def main():
         if b in GD.TBAR and c == b:                                 # G11 thanh T (mép dưới là cung loe chạy vào thân)
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.bar_thin(O[f'{c}-{w}'], w)[0]
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
-        if not b.isalpha() or not b.isascii() or b in GD.NOHAIR: continue
+        if not b.isalpha() or not b.isascii() or c != b: continue    # chữ có dấu: ghép lại từ chữ gốc ở vòng sau
         for w in ('Regular', 'Bold'):
             d = O[f'{c}-{w}']
-            if b in GD.ARCH:
-                cs = GD.parse(d); GD.arch_thin(cs, w); d = GD.fmt(cs)
             if b in GD.RING:
                 tl = b == 'Q'
                 if (b, w, 'k') not in K: K[(b, w, 'k')] = GD.solve_ring(d, d, w, tl)
                 d = GD.ring_scale(d, K[(b, w, 'k')], tl)
-            elif b in GD.EFAM:
-                d = GD.e_top(d, T[w])
-            elif b in GD.SFAM:
-                d = GD.s_thin(d, w)
-            elif b not in GD.ARCH:
-                if c == b and b not in GD.G10_SKIP: d = GD.g10(d, w)          # G10 nét mảnh cong: kéo dãn lòng theo chiều đứng
-                if c == b: d, K[(b, w, 'r')] = GD.g8_solve(d, c, w, low, XTOP)
-                elif abs(K.get((b, w, 'r'), 1.0) - 1) > 0.01: d = GD.g8_apply(d, c, w, K[(b, w, 'r')], low, XTOP)
+            elif b in GD.EFAM: d = GD.e_top(d, T[w])
+            elif b in GD.SFAM: d = GD.s_thin(d, w)
+            if b not in GD.G10_SKIP: d = GD.g10(d, w)                    # G10 nét mảnh cong: kéo dãn lòng theo chiều đứng
+            d, _ = GD.g8_solve(d, c, w, low, XTOP)                      # G8 tuyệt đối: đoạn thẳng nét mảnh = chuẩn (gồm thanh e f t)
             O[f'{c}-{w}'] = d
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)

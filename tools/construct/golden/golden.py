@@ -286,8 +286,9 @@ GUIDES = (0.0, 700.0, 535.0, 495.0)   # đường chân, cao chữ hoa, x-height
 THIN_R = {'Regular': 0.8, 'Bold': 0.65}   # designer 20/11: "giảm nét mảnh của các weight medium, semibold, bold" — Bold 0.65 (M / SB nội suy)
 PAR = 50                       # mép đối diện lệch ≤ PAR° (vòng có lòng nghiêng: mép lòng đối diện lệch tới ~45°)
 HAIR = {'Regular': 42.0, 'Bold': 62.0}; STEM = {'Regular': 104.0, 'Bold': 140.0}
-def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
-    """ratio: thu MỌI nét (không chỉ nét mảnh) về × ratio — dùng sau khi giãn ngang (G4)"""
+def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
+    """ratio: thu MỌI nét (không chỉ nét mảnh) về × ratio — dùng sau khi giãn ngang (G4)
+    abs_t: mỗi đoạn thẳng nét mảnh (dày 0.5–1.6 × abs_t, đo riêng tại giữa đoạn) đưa về ĐÚNG abs_t (G8 tuyệt đối)"""
     P = polys(cs); wl, wh = 1.4*HAIR[w], 0.7*STEM[w]
     if ratio is not None: wl, wh = 1e9, 2e9
     R_ = (THIN_R[w] if thin is None else thin) if ratio is None else ratio
@@ -299,6 +300,8 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None):
         hy = pt[1] - nout[1]*t
         pin = 2.0 if abs(nn[0]) < 0.05 and any(abs(hy - g) < 0.8 for g in GUIDES) else 1.0   # mép đối diện nằm trên đường kẻ: mép này nhận gấp đôi
         if ratio is not None and t > 2.2*STEM[w]: return 0.0       # tia đi xuyên lòng / khoảng trắng: không phải một nét
+        if abs_t is not None:
+            return (t - abs_t)/2*pin if 0.5*abs_t <= t <= 1.6*abs_t else 0.0
         f = 1.0 if t <= wl else max(0.0, (wh - t)/(wh - wl))
         return (1 - R_)/2*t*f*pin
     moves = []
@@ -742,7 +745,7 @@ def bar_thin(d, w, tgt=None):
 # của chữ gốc. Bỏ qua chữ không có nét mảnh (i j l f r t I) — đo của chúng là thân.
 NOHAIR = set('ijlfrtITı\u0237')
 G8R = {}
-def g8_apply(d, ch, w, r, low, xtop=None):
+def g8_apply(d, ch, w, r, low, xtop=None, abs_t=None):
     cs = parse(d)
     top = ((OVT + D if xtop is None else xtop) if ch in low else 712.0) + 3
     skip = {i for i, c in enumerate(cs) if min(y for _, y in pts_of(c)) > top or max(y for _, y in pts_of(c)) < -150}
@@ -753,20 +756,15 @@ def g8_apply(d, ch, w, r, low, xtop=None):
             P_ = polys([c_])[0]; cx_ = sum(p[0] for p in P_)/len(P_); cy_ = sum(p[1] for p in P_)/len(P_)
             fixed = {id(p) for p in pts_of(c_) if p[0] > cx_ and p[1] < cy_ + 40}
     old = NOSPLIT[0]; NOSPLIT[0] = True
-    g2(cs, w, skip, fixed=fixed, thin=r)
+    g2(cs, w, skip, fixed=fixed, thin=r, abs_t=abs_t)
     NOSPLIT[0] = old
     return fmt(cs)
 def g8_solve(d, ch, w, low, xtop=None):
-    sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB
-    rt = 1.0; cur = d
-    for _ in range(3):
-        t = SB.measure([cur])[0]
-        if abs(t - RING_T[w]) < 1.0: break
-        r = max(0.7/rt, min(1.3/rt, RING_T[w]/t))               # tổng hệ số trong 0.7–1.3 (0.6–1.45 làm méo S, tai g, B) (đo trúng khớp / tay dày: không đẩy quá)
-        if abs(r - 1) < 0.01: break
-        rt *= r
-        cur = g8_apply(cur, ch, w, r, low, xtop)
-    return cur, rt
+    """G8 tuyệt đối (S52, designer "thanh ngang của T sao lại dày hơn"): mỗi đoạn thẳng nét mảnh tự về đúng chuẩn RING_T — không còn
+    một hệ số chung cho cả chữ (hệ số chung làm thanh P mảnh quá khi cung của nó mảnh hơn). 2 lượt (đo lại sau khi dời)."""
+    cur = d
+    for _ in range(2): cur = g8_apply(cur, ch, w, 1.0, low, xtop, abs_t=RING_T[w])
+    return cur, 1.0
 
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
@@ -903,7 +901,7 @@ def main():
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = bar_thin(G[f'{c}-{w}'], w)[0]
         if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP:      # G10 nét mảnh cong (lòng kéo dãn đứng)
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = g10(G[f'{c}-{w}'], w)
-        if c.isalpha() and len(c) == 1 and c.isascii() and c not in NOHAIR and c not in EFAM:   # G8 chữ gốc (e: chỉ G9 đỉnh cung)
+        if c.isalpha() and len(c) == 1 and c.isascii():                          # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
