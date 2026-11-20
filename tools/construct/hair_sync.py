@@ -2,7 +2,7 @@
 """S49 đồng bộ nét mảnh AnNam Serif (designer 20/11: "đồng bộ nét mảnh cho cả Serif" — cả chữ hoa, cả b d p q a: "đồng bộ tất cả").
     python3 tools/construct/hair_sync.py      (sau build.py, trước spacing.py) → ghi lại out/construct/outlines.json
 
-Chuẩn: nét mảnh 42 (Regular) / 62 (Bold) cho mọi chữ có nét mảnh; Medium / SemiBold = nội suy đúng (1/3, 2/3).
+Chuẩn: nét mảnh 42 (Regular) / 56.5 (Bold, = 42 × thân 140/104 — tương phản cố định như Golden) cho mọi chữ có nét mảnh; Medium / SemiBold = nội suy đúng (1/3, 2/3).
 Dùng lại luật của An Nam Golden (golden/golden.py), đo bằng trục giữa (stroke_balance.measure):
   - vòm n m h u: lòng vòm / lòng đáy u dịch nguyên khối tới đỉnh vòm = chuẩn (giữ dáng cung);
   - vòng o O ơ Ơ Q: lòng giãn / co theo trục dài của chính nó (Q: vùng đuôi giữ);
@@ -15,7 +15,7 @@ import json, os, sys, unicodedata
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path[:0] = [HERE, os.path.join(HERE, 'golden')]
 import golden as GD
 OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
-T = {'Regular': 42.0, 'Bold': 62.0}
+T = {'Regular': 42.0, 'Bold': 56.5}           # designer 20/11 "đồng bộ weight của serif giống golden": nét mảnh tăng theo tỉ lệ thân (42 × 140/104) — tương phản 0.40 cố định
 XTOP = 503.4
 
 def main():
