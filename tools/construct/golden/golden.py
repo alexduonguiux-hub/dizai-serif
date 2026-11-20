@@ -558,6 +558,26 @@ def e_top(d, tgt):
     for p in pts_of(eye): p[1] += dl*max(0.0, (p[1] - yb)/(yt - yb))
     return fmt(cs)
 
+# ---------- đồng nhất chữ có dấu với chữ gốc ----------
+def rebase(src_c, src_b, new_b, new_c):
+    """contour thân của chữ có dấu (khớp hình với contour chữ gốc ở bản NGUỒN, sai khác chỉ là tịnh tiến) → lấy đúng contour chữ gốc
+    đã xử lý (+ cùng tịnh tiến); dấu giữ của chính nó. Chữ có dấu luôn trùng hình thân với chữ gốc."""
+    SC, SB_, NB, NC = parse(src_c), parse(src_b), parse(new_b), parse(new_c)
+    if len(SC) != len(NC): return new_c
+    sig = lambda c: [k for k, _ in c]
+    out = []
+    for ci, (sc, nc) in enumerate(zip(SC, NC)):
+        rep = nc
+        for bi, sb in enumerate(SB_):
+            if sig(sb) != sig(sc) or bi >= len(NB) or sig(NB[bi]) != sig(nc): continue
+            P, Q = pts_of(sc), pts_of(sb)
+            if len(P) != len(Q): continue
+            dx, dy = P[0][0] - Q[0][0], P[0][1] - Q[0][1]
+            if max(abs(p[0] - q[0] - dx) + abs(p[1] - q[1] - dy) for p, q in zip(P, Q)) < 0.5:
+                rep = [[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in NB[bi]]; break
+        out.append(rep)
+    return fmt(out)
+
 def lerp_d(a, b, t):
     A, B = parse(a), parse(b)
     for ca, cb in zip(A, B):
@@ -603,6 +623,16 @@ def main():
             r = G8R[(b_, w)]
             if abs(r - 1) > 0.01: G[f'{c}-{w}'] = g8_apply(G[f'{c}-{w}'], c, w, r, low)
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    nrb = 0
+    for c in chars:                                               # thân chữ có dấu = chữ gốc (sau mọi luật)
+        b_ = unicodedata.normalize('NFD', c)[0]
+        if c == b_ or f'{c}-Regular' not in G or f'{b_}-Regular' not in G: continue
+        for w in ('Regular', 'Bold'):
+            nd = rebase(O[f'{c}-{w}'], O[f'{b_}-{w}'], G[f'{b_}-{w}'], G[f'{c}-{w}'])
+            if nd != G[f'{c}-{w}']: nrb += 1
+            G[f'{c}-{w}'] = nd
+        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    print('chữ có dấu đồng nhất thân với chữ gốc:', nrb)
     print('G8 hệ số nét mảnh:', ' '.join(f'{c}{w[0]}{r:.2f}' for (c, w), r in sorted(G8R.items()) if abs(r - 1) > 0.02))
     os.makedirs(OUT, exist_ok=True)
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))

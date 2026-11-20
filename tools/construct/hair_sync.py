@@ -19,7 +19,7 @@ XTOP = 503.4
 
 def main():
     GD.RING_T.update(T); GD.ARCH_T.update(T)
-    O = json.load(open(os.path.join(OUT, 'outlines.json'))); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
+    O = json.load(open(os.path.join(OUT, 'outlines.json'))); SRC = dict(O); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
     chars = [c for c in SP['Regular'] if f'{c}-Regular' in O]
     low = set(GD.lower_set(chars)); K = {}
     order = sorted(chars, key=lambda c: (unicodedata.normalize('NFD', c) != c or len(c) > 1 or not c.isascii(), c))   # chữ gốc trước
@@ -42,6 +42,11 @@ def main():
                 if c == b: d, K[(b, w, 'r')] = GD.g8_solve(d, c, w, low, XTOP)
                 elif abs(K.get((b, w, 'r'), 1.0) - 1) > 0.01: d = GD.g8_apply(d, c, w, K[(b, w, 'r')], low, XTOP)
             O[f'{c}-{w}'] = d
+        for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)
+        b = unicodedata.normalize('NFD', c)[0]
+        if c == b or f'{b}-Regular' not in O: continue
+        for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.rebase(SRC[f'{c}-{w}'], SRC[f'{b}-{w}'], O[f'{b}-{w}'], O[f'{c}-{w}'])
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     json.dump(O, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('hair_sync:', ' '.join(f'{b}{w[0]}{k}{v:.2f}' for (b, w, k), v in sorted(K.items()) if abs(v - 1) > 0.02))
