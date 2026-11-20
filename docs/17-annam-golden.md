@@ -46,3 +46,14 @@ Kèm: đoạn thẳng gần thẳng hàng (≤ 6°) với đoạn kề dài hơn
 QA: thanh ngang AnNam Serif 42–43 / 56–58, Golden 32–33 / 41–45, 0 lỗi; đoạn thẳng đổi hướng Golden 0, AnNam Serif 2 (x Regular 0.52°, K Bold 0.67° — ≤ 3 u trên cả đoạn); 0 lỗi outline; đơn điệu 4 weight AnNam Serif 0 lỗi.
 
 ![4 weight](img/s54-weights.png)
+
+## S55–S56 — nét ngang Golden 0.88, loe chữ hoa dài hơn, tay loe bằng nhau (20/11)
+
+- Golden: nét NGANG = 0.88 × nét mảnh (designer chọn k 0.88 — "nét ngang F L T E Z dầy hơn nét còn lại": hiệu chỉnh quang học, nét ngang trông dày hơn nét cong cùng số đo). Regular 28 / Bold 39.
+- Golden: loe chân chữ hoa rộng × 1.45 (chữ thường giữ × 1.3) — "đuôi chân loe dài thêm ra thêm xíu".
+- G13 tay loe đầu thanh (mép cắt đứng ở đầu tay E F L T Z Æ Œ) dài BẰNG NHAU: AnNam Serif 94 / 122 (bản vẽ gốc), Golden 114 / 148. Trước đó T và E lệch tới 34 u (Bold).
+- Mép thẳng trên đường kẻ: dung sai 2.5 u (phần E của Œ nối từ điểm vượt O, xiên 2 u — trước bị dời lên 4 u, rời chân / đỉnh).
+- QA mới `qa_arms.py` (độ dài tay loe bằng nhau). Kết quả: cả hai họ chênh 0.0 ở 4 weight; thanh ngang 0 lỗi; đoạn thẳng Golden 0.
+- Version 0.920.
+
+![tay loe](img/s56-arms.png)
