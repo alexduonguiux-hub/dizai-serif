@@ -115,7 +115,8 @@ D_P_BOWL_S45 = "M1119.700 190.223 C1163.443 201.944 1188.274 251.125 1175.159 30
 D_A_BOWL_S46 = "M536.145 247.828C565.931 264.017 575.927 303.177 558.472 335.294C541.015 367.410 502.719 380.321 472.933 364.132C443.147 347.943 433.151 308.785 450.606 276.668C468.061 244.552 506.358 231.639 536.145 247.828ZM543.941 283.368C531.687 260.532 507.551 249.835 490.028 259.477C472.506 269.119 468.233 295.449 480.488 318.285C492.740 341.122 516.878 351.817 534.401 342.176C551.923 332.533 556.194 306.205 543.941 283.368Z"
 
 # S46b (designer 19/11: "bụng chữ a cũ đúng hơn"): a dùng lại đúng bụng bản vẽ S44 (v0.917), không qua cân S45 / S45b
-SHAPES = {'a_stem': D_A_STEM, 'a_bowl': D_A_BOWL_S46, 'd_bowl': D_D_BOWL_S45, 'q_bowl': D_Q_BOWL_S45, 'p_bowl': D_P_BOWL_S45, 'a_stem_B': D_A_STEM_B, 'a_bowl_B': D_A_BOWL_B,
+# S48 (designer 20/11: "về đúng lòng như Figma"): d q p (b dùng bụng p) dùng lại đúng bụng bản vẽ S44 (2232:788), bỏ cân S45
+SHAPES = {'a_stem': D_A_STEM, 'a_bowl': D_A_BOWL_S46, 'd_bowl': D_D_BOWL_S44, 'q_bowl': D_Q_BOWL_S44, 'p_bowl': D_P_BOWL_S44, 'a_stem_B': D_A_STEM_B, 'a_bowl_B': D_A_BOWL_B,
           'g_bowl': D_G_BOWL, 'g_loop': D_G_LOOP, 'g_link': D_G_LINK, 'g_ear': D_G_EAR, 'e_arch': D_E_ARCH, 'e_bowl': D_E_BOWL, 'e_bar': D_E_BAR,
           'bowl': D_BOWL, 'stem': D_STEM, 'o_ring': D_O, 'c_shape': D_C,
           'r_stem': D_RECT36(176), 'r_ear': D_R_EAR, 'fl1': D_FL1, 'fl2': D_FL2, 't_stem': D_RECT36(169), 't_hook': D_T_HOOK,

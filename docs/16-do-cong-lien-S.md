@@ -580,3 +580,10 @@ QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; g
   (S45 co lòng hai trục để cân nét nhấn / nét mảnh — góc giữ, lòng tròn hơn bản vẽ); a 1.30 (bản vẽ 1.34).
 - Version 0.918: zip `dist/AnNamSerif-Trial-v0.918.zip`, `dist/commercial/*-v0.918.zip`.
 - QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s47-e.png`.
+
+## S48 Lòng d b p q đúng bản vẽ Figma (designer 20/11: "về đúng lòng như Figma")
+
+- d q p (b dùng bụng p) dùng lại đúng `D_*_BOWL_S44` (Figma 2232:788), bỏ cân S45; b d p q ra khỏi `stroke_balance.SPEC`.
+- Lòng tỉ lệ dài / rộng 1.37, nghiêng 15° như bản vẽ. Nét mảnh / nét nhấn: Regular 32–36 / 107–109, Bold 56–60 / 134–137
+  (chuẩn chung 42 / 104 và 62 / 128 — lệch theo chủ ý bản vẽ).
+- Zip 0.918 đóng lại. QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s48-bdpq.png`.
