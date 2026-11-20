@@ -82,3 +82,9 @@ QA: thanh ngang AnNam Serif 42–43 / 56–58, Golden 32–33 / 41–45, 0 lỗi
 - Đo: Golden 41–42 / 56 (m n u Bold 56–63 theo bản vẽ), thanh 37–38 / 50–51; 0 cờ độ cong / gãy mới. Version 0.923.
 
 ![nét mảnh](img/s59-hair.png)
+
+## S60 — spacing Golden theo AnNam Serif (20/11, "kerning của Golden bị rộng hơn so với serif?")
+
+Kerning hai họ gần như nhau; chỗ khác là sidebearing: spacing lấy H / n làm chuẩn khoảng trắng — loe Golden to hơn làm H "thoáng" hơn → chuẩn tăng → mọi chữ tròn / chéo nới 5–8 u mỗi bên (o 33 vs 28, O 39 vs 31, A V 28 vs 20). Nay Golden đo chuẩn khoảng trắng trên H / n của AnNam Serif (DIZAI_TREF): chữ tròn / chéo = AnNam Serif; H n Golden khít 8 u để bù loe. Version 0.924.
+
+![spacing](img/s60-spacing.png)

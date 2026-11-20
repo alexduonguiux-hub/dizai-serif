@@ -2,7 +2,7 @@
     python3 tools/release/package_golden.py   → dist/AnNamGolden-v<V>.zip"""
 import os, zipfile
 HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
-FONTS = os.path.join(ROOT, 'fonts', 'golden'); V = '0.923'
+FONTS = os.path.join(ROOT, 'fonts', 'golden'); V = '0.924'
 DIRS = ['otf', 'ttf', 'variable', 'woff2/variable', 'woff2/ttf']
 NOTE = ('AnNam Golden — review build. A separate commercial license for AnNam Golden is not yet published;\n'
         'please do not redistribute these files.\n\n')
