@@ -304,6 +304,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
         if ratio is not None and t > 2.2*STEM[w]: return 0.0       # tia đi xuyên lòng / khoảng trắng: không phải một nét
         if abs_t is not None:
             at_ = abs_t*BAR_K if abs(nout[1]) > 0.97 else abs_t      # nét NGANG: hiệu chỉnh quang học (trông dày hơn nét đứng / cong)
+            if 0.26 < abs(nout[1]) < 0.97: at_ = abs_t*DIAG_K          # nét CHÉO (15–75°): trông mảnh hơn → dày thêm DIAG_K
             return (t - at_)/2*pin if 0.5*abs_t <= t <= 1.6*abs_t else 0.0
         f = 1.0 if t <= wl else max(0.0, (wh - t)/(wh - wl))
         return (1 - R_)/2*t*f*pin
@@ -800,6 +801,7 @@ def g10(d, w, tgt=None):
 # dày hơn của các chữ khác". Điểm nối cung–thân (tiếp tuyến ngang, thân đứng) dời đứng δ = bề dày thanh (tia đứng tới mép trên) − chuẩn
 # nét mảnh; tay nắm kề nó dời cùng (giữ ngang → cung trơn); đầu nhọn loe đứng yên.
 TBAR = set('T')
+DIAG_K = 1.0                   # chuẩn nét CHÉO = DIAG_K × chuẩn nét mảnh (hiệu chỉnh quang học; designer "nét xéo của golden mỏng quá")
 BAR_K = 0.88                   # designer 20/11 chọn k 0.88 ("nét ngang F L T E Z dầy hơn nét còn lại") — chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học)
 def bar_thin(d, w, tgt=None):
     tgt = (RING_T[w] if tgt is None else tgt)*BAR_K
