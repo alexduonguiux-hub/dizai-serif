@@ -2,7 +2,7 @@
 
 `AnNamSerif-Showreel.mp4`: 1920 × 1080, 30 fps, 10 giây, H.264 + AAC. Mood theo frame Home trong Figma *Đìzai Studio – Website – NEW* (`10:1457`): nền giấy, xanh emerald, chữ hoa lớn cắt sát cap, logo con dấu; thêm ảnh phong cách Indochine.
 
-**Font:** AnNam Serif **v0.929**, file variable `AnNamSerif[XHGT,slnt,wght]` (wght 400–700 · slnt 0 → −10° · x-Height 495 Serif → 535 Golden) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự (AN NAM, tiếng việt…) đặt theo vị trí kerning thật của font, đo lại mỗi frame. Mọi chữ nằm trọn trong khung (không cắt trên dưới), không dùng chữ lật ngược.
+**Font:** AnNam Serif **v0.929**, file variable `AnNamSerif[XHGT,slnt,wght]` (wght 400–700 · slnt 0 → −10° · x-Height 495 → 535) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự (AN NAM, tiếng việt…) đặt theo vị trí kerning thật của font, đo lại mỗi frame. Mọi chữ nằm trọn trong khung (không cắt trên dưới), không dùng chữ lật ngược.
 
 ## Kịch bản (120 BPM, mỗi chuyển cảnh rơi đúng phách)
 | Thời gian | Cảnh · chuyển cảnh |
