@@ -18,6 +18,9 @@ HERE = os.path.dirname(os.path.abspath(__file__)); ROOT = os.path.abspath(os.pat
 SU = os.path.join(ROOT, 'out', 'construct', 'ufo'); GU = os.path.join(ROOT, 'out', 'golden', 'ufo')
 BUILD = os.path.join(ROOT, 'out', 'xhgt'); VF = os.path.join(ROOT, 'fonts', 'variable')
 OVT, DX = 503.4, 40.0; XH0, XH1, XSW = 495, 535, 515
+# thang TRỤC người dùng 0–100 (designer 21/11 "thanh trục vẫn còn chỉ là k kéo được" trong Figma: trục tự đặt min = mặc định = 495
+# thì Figma hiện thanh nhưng không kéo được) → 0 = AnNam Serif (x-height 495) … 100 = AnNam Golden (535), tuyến tính; t Golden từ 50
+XU0, XU1, XUSW = 0, 100, 50
 WG = {'Regular': 400, 'Medium': 500, 'SemiBold': 600, 'Bold': 700}
 TAN = math.tan(math.radians(10.0))
 
@@ -59,16 +62,16 @@ def build(tag):
         for w in ('Regular', 'Bold'): G[w].groups.clear(); G[w].groups.update(copy.deepcopy(S['Regular'].groups))
     os.makedirs(BUILD, exist_ok=True)
     ds = DesignSpaceDocument()
-    for name, t, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('x-Height', 'XHGT', XH0, XH0, XH1)):
+    for name, t, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('x-Height', 'XHGT', XU0, XU0, XU1)):
         ax = AxisDescriptor(); ax.name, ax.tag, ax.minimum, ax.default, ax.maximum = name, t, lo, df, hi; ds.addAxis(ax)
-    for fam, F, xh in (('Serif', S, XH0), ('Golden', G, XH1)):
+    for fam, F, xh in (('Serif', S, XU0), ('Golden', G, XU1)):
         for w in ('Regular', 'Bold'):
             p = os.path.join(BUILD, f'{fam}{tag}-{w}.ufo')
             if os.path.exists(p): shutil.rmtree(p)
             F[w].info.familyName = 'AnNam Serif'; F[w].save(p)
             s = SourceDescriptor(); s.path = p; s.location = {'Weight': WG[w], 'x-Height': xh}; s.familyName = 'AnNam Serif'
             s.styleName = f'{"" if fam == "Serif" else "Golden "}{w}'; ds.addSource(s)
-    for fam, xh in (('', XH0), ('Golden ', XH1)):
+    for fam, xh in (('', XU0), ('Golden ', XU1)):
         for w, v in WG.items():
             ins = InstanceDescriptor(); ins.familyName = 'AnNam Serif'
             st = (w if w != 'Regular' or fam == '' else '').strip()
@@ -76,7 +79,7 @@ def build(tag):
             if it: sty = (sty.replace('Regular', '').strip() + ' Italic').strip()
             ins.styleName = sty; ins.location = {'Weight': v, 'x-Height': xh}
             ins.postScriptFontName = 'AnNamSerif-' + sty.replace(' ', ''); ds.addInstance(ins)
-    r = RuleDescriptor(); r.name = 'golden-forms'; r.conditionSets = [[dict(name='x-Height', minimum=XSW, maximum=XH1)]]
+    r = RuleDescriptor(); r.name = 'golden-forms'; r.conditionSets = [[dict(name='x-Height', minimum=XUSW, maximum=XU1)]]
     r.subs = [(n, n + '.gold') for n in bad]; ds.addRule(r)
     ds.rulesProcessingLast = True                                      # thay chữ SAU chữ ghép (rclt): t f → t_f → t_f.gold
     dsp = os.path.join(BUILD, f'AnNamSerif{tag}-XHGT.designspace'); ds.write(dsp)
@@ -93,7 +96,7 @@ def finish(dst, it):
     from fontTools.otlLib.builder import buildStatTable
     f = TTFont(dst)
     wv = [dict(value=v, name=n) for n, v in WG.items()]; wv[0].update(flags=0x2, linkedValue=700)
-    xv = [dict(value=XH0, name='Serif', flags=0x2), dict(value=XH1, name='Golden')]
+    xv = [dict(value=XU0, name='Serif', flags=0x2), dict(value=XU1, name='Golden')]
     iv = [dict(value=1, name='Italic')] if it else [dict(value=0, name='Roman', flags=0x2, linkedValue=1)]
     buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='XHGT', name='x-Height', values=xv),
                        dict(tag='ital', name='Italic', values=iv)])
@@ -123,16 +126,16 @@ def combined3():
     from fontTools.ttLib import TTFont
     from fontTools.otlLib.builder import buildStatTable
     ds = DesignSpaceDocument()
-    for name, t, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('x-Height', 'XHGT', XH0, XH0, XH1), ('Slant', 'slnt', -10, 0, 0)):
+    for name, t, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('x-Height', 'XHGT', XU0, XU0, XU1), ('Slant', 'slnt', -10, 0, 0)):
         ax = AxisDescriptor(); ax.name, ax.tag, ax.minimum, ax.default, ax.maximum = name, t, lo, df, hi; ds.addAxis(ax)
-    for fam, xh in (('Serif', XH0), ('Golden', XH1)):
+    for fam, xh in (('Serif', XU0), ('Golden', XU1)):
         for tag, sl in (('', 0), ('-Italic', -10)):
             for w in ('Regular', 'Bold'):
                 s = SourceDescriptor(); s.path = os.path.join(BUILD, f'{fam}{tag}-{w}.ufo'); s.familyName = 'AnNam Serif'
                 s.location = {'Weight': WG[w], 'x-Height': xh, 'Slant': sl}
                 s.styleName = (f'{"" if fam == "Serif" else "Golden "}{w}' + (' Italic' if tag else '')).replace('Regular Italic', 'Italic')
                 ds.addSource(s)
-    for fam, xh in (('', XH0), ('Golden ', XH1)):
+    for fam, xh in (('', XU0), ('Golden ', XU1)):
         for tag, sl in (('', 0), (' Italic', -10)):
             for w, v in WG.items():
                 sty = f'{fam}{w}{tag}'.replace('Regular Italic', 'Italic').strip()
@@ -140,28 +143,36 @@ def combined3():
                 ins.location = {'Weight': v, 'x-Height': xh, 'Slant': sl}; ins.postScriptFontName = 'AnNamSerif-' + sty.replace(' ', '')
                 ds.addInstance(ins)
     bad = sorted({g.name[:-5] for g in ufoLib2.Font.open(os.path.join(BUILD, 'Serif-Regular.ufo')) if g.name.endswith('.gold')})
-    r = RuleDescriptor(); r.name = 'golden-forms'; r.conditionSets = [[dict(name='x-Height', minimum=XSW, maximum=XH1)]]
+    r = RuleDescriptor(); r.name = 'golden-forms'; r.conditionSets = [[dict(name='x-Height', minimum=XUSW, maximum=XU1)]]
     r.subs = [(n, n + '.gold') for n in bad]; ds.addRule(r); ds.rulesProcessingLast = True
     dsp = os.path.join(BUILD, 'AnNamSerif-XHGT-slnt.designspace'); ds.write(dsp)
     out = os.path.join(BUILD, 'vf3'); shutil.rmtree(out, ignore_errors=True)
     subprocess.run(['fontmake', '-m', dsp, '-o', 'variable', '--output-dir', out, '--flatten-components'], check=True,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     src = [f for f in os.listdir(out) if f.endswith('.ttf')][0]
-    dst = os.path.join(VF, 'AnNamSerif[XHGT,slnt,wght].ttf'); shutil.move(os.path.join(out, src), dst)
+    dst = os.path.join(VF, 'AnNamSerifVF[XHGT,slnt,wght].ttf'); shutil.move(os.path.join(out, src), dst)
+    for old_ in ('AnNamSerif[XHGT,slnt,wght].ttf',):
+        for d_ in (VF, os.path.join(ROOT, 'fonts', 'woff2', 'variable')):
+            for e_ in ('.ttf', '.woff2'):
+                q_ = os.path.join(d_, old_.replace('.ttf', e_))
+                if os.path.exists(q_): os.remove(q_)
     f = TTFont(dst)
     wv = [dict(value=v, name=n) for n, v in WG.items()]; wv[0].update(flags=0x2, linkedValue=700)
-    xv = [dict(value=XH0, name='Serif', flags=0x2), dict(value=XH1, name='Golden')]
+    xv = [dict(value=XU0, name='Serif', flags=0x2), dict(value=XU1, name='Golden')]
     sv = [dict(value=0, name='Upright', flags=0x2), dict(value=-10, name='Italic')]
     buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='XHGT', name='x-Height', values=xv),
                        dict(tag='slnt', name='Slant', values=sv)])
     nm = f['name']
+    # tên họ RIÊNG "AnNam Serif VF" (designer 21/11 "trục xheight không hoạt động trong Figma"): trùng họ "AnNam Serif" với
+    # bản tĩnh / variable chỉ có wght đang cài → Figma gộp họ, dùng file khác, mất thanh x-Height
     for rec in list(nm.names):
-        if rec.nameID == 6: rec.string = rec.toUnicode().replace('AnNamSerif-', 'AnNamSerifAll-')
-    nm.setName('AnNamSerifAll', 25, 3, 1, 0x409)
+        if rec.nameID in (1, 4, 16, 18): rec.string = rec.toUnicode().replace('AnNam Serif', 'AnNam Serif VF')
+        if rec.nameID == 6: rec.string = rec.toUnicode().replace('AnNamSerif-', 'AnNamSerifVF-')
+    nm.setName('AnNamSerifVF', 25, 3, 1, 0x409)
     for inst in f['fvar'].instances:
         if inst.postscriptNameID != 0xFFFF:
             rr = nm.getName(inst.postscriptNameID, 3, 1, 0x409)
-            if rr: nm.setName(rr.toUnicode().replace('AnNamSerif-', 'AnNamSerifAll-'), inst.postscriptNameID, 3, 1, 0x409)
+            if rr: nm.setName(rr.toUnicode().replace('AnNamSerif-', 'AnNamSerifVF-'), inst.postscriptNameID, 3, 1, 0x409)
     nm.names = [n for n in nm.names if n.platformID != 1]
     import re as _re
     V = _re.search(r'^VERSION = \((\d+), (\d+)\)', open(os.path.join(HERE, 'export_font.py')).read(), _re.M)
