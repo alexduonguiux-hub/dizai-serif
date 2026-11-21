@@ -30,6 +30,9 @@ Giai điệu liên khúc Nhã nhạc cung đình Huế **Lưu thủy – Kim ti�
 - 6,25–11,5 s: đoạn nhanh **Long hổ** — A G C A C G D C · A G C A G Xang A C G …; kết về Hò.
 - Đàn nhị + sáo chơi giai điệu (liền, có luyến), đàn nguyệt gảy từng nốt, đàn tranh vuốt vào Long hổ; phách, sênh tiền, trống bản giữ nhịp; trống đại, chuông, khánh nhấn các cú cắt hình.
 
+## Bản dùng nhạc thu sẵn (đồng bộ phách)
+Có thể dựng video theo phách của một bản thu có sẵn: dò phách bản thu (librosa `beat_track`), gắn mỗi phách video (0,5 s) vào một phách nhạc, xuất danh sách thời điểm từng khung hình ra JSON rồi render bằng `TIMES=times.json node showreel/render.js <thư-mục> 30`. Bản thử với liên khúc Lưu thủy – Long hổ (từ giây 37 của bản hòa tấu tham khảo): 15 s, nhạc nhỏ dần 2,2 s cuối. **Bản thu đó có bản quyền của người biểu diễn / kênh đăng — không đưa vào repo; cần xin phép hoặc mua quyền trước khi đăng công khai.**
+
 ## Dựng lại
 ```bash
 python3 -m http.server 8765        # chạy ở gốc repo
