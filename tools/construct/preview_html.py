@@ -91,7 +91,8 @@ html = open(os.path.join(HERE, "preview_template.html")).read().replace("/*DATA*
 import base64, io
 FF = []
 for fam, fn in (("AnNam VF", f"{PVPS}[wght].ttf"), ("AnNam VF Italic", f"{PVPS}-Italic[wght].ttf"),
-                ("AnNam VF Combined", f"{PVPS}[slnt,wght].ttf")):
+                ("AnNam VF Combined", f"{PVPS}[slnt,wght].ttf"),
+                ("AnNam VF XH", f"{PVPS}[XHGT,wght].ttf"), ("AnNam VF XH Italic", f"{PVPS}-Italic[XHGT,wght].ttf")):
     fp = os.path.join(PVF, "variable", fn)
     if not os.path.exists(fp): continue
     from fontTools.ttLib import TTFont
