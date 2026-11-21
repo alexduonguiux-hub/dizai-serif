@@ -192,8 +192,9 @@ def g3(cs):
                 fside = [q[2], q[3]] if not rev else [q[1], q[0]]
                 for p in sside:
                     p[0] = C0[0] + (p[0] - C0[0])*FLARE_KY; p[1] = C0[1] + (p[1] - C0[1])*FLARE_KY
-                for p in fside + extra:                                 # phía chân: rộng × KX, cao × KY
-                    p[0] = C0[0] + (p[0] - C0[0])*FLK[0]; p[1] = Z + (p[1] - Z)*FLARE_KY
+                for p in fside + extra:                                 # phía chân: rộng × KX, cao × KY — theo hệ trục (dọc chân, dọc THÂN):
+                    bb = (p[1] - C0[1])/td[1]; aa = (p[0] - C0[0]) - bb*td[0]  # thân chéo (K R X): cùng một phép phóng với phía thân
+                    p[0] = C0[0] + FLK[0]*aa + FLARE_KY*bb*td[0]; p[1] = C0[1] + FLARE_KY*bb*td[1]   # (trước: trục x–y → cung loe gãy khúc)
                 FLSEG.add((id(q[0]), id(q[3]))); n_fl += 1
     return n_fl
 
