@@ -183,7 +183,7 @@ def _a_hook_bold(dS, dH):
             if best is None or cost < best[0]: best = (cost, a, b)
     _, a, b = best
     new = [(93 - dS/2, 58.25 - a), (ap[0] + b, ap[1])] + P[2:]
-    return {(round(x, 3), round(y, 3)): q for (x, y), q in zip(A_HOOK_PTS, new)}
+    return {(round(x, 3), round(y, 3)): (round(float(q[0]), 4), round(float(q[1]), 4)) for (x, y), q in zip(A_HOOK_PTS, new)}
 
 def raw(ch, weight):
     spec = None   # GLYPH_BOLD (mẫu a Bold cũ, bụng đứng) không còn dùng: a Bold theo luật (bold())
