@@ -144,7 +144,7 @@ for k in range(8):
 add(kick(1.0), 3.0); add(kick(0.8), 3.5); add(sub(36, 0.5), 3.0); add(sub(38, 0.5), 3.5)
 add(pluck(A5, 1.0, bright=1.2), 3.0, 0.4, 0.5)
 
-# --- 4–6.5  drag x-Height Serif → Golden: the đàn tranh 'nhấn' glides with the slider
+# --- 4–6.5  three sliders (weight, slant, x-height): the đàn tranh 'nhấn' glides with each drag
 def smooth(x):
     x = np.clip(x, 0, 1); return np.where(x < .5, 8 * x**4, 1 - (-2 * x + 2)**4 / 2)
 
@@ -154,23 +154,27 @@ for i, m in enumerate([A4, C5, D5, E5]):
 for k in range(5):
     add(hat(60, 0.12), 4.25 + k * B, pan=0.4)
 add(kick(0.7), 5.0); add(kick(0.8), 6.0)
-add(woodblock(1400), 4.55, 0.5, 0.2)                       # grab
-# drag 4.62–5.5: one long pluck bending up a fourth (A4 → D5), following the knob
-add(pluck(A4, 1.6, curve=lambda t: 5 * smooth((t - 0.02) / 0.88), sustain=2.6), 4.6, 0.8, 0.0)
-add(sub(33, 1.0, 0.35), 4.6)
-add(noise_sweep(0.9, 300, 4000, 0.08, 'up'), 4.6)
-add(pluck(D5, 1.2), 5.5, 0.55, 0.3); add(sub(38, 0.5), 5.5); add(clap(), 5.5, 0.6)
-add(woodblock(1400), 5.66, 0.45, 0.2)                      # grab again
-# scrub 5.72–6.3: bend down and back up (535 → ~513 → 535)
-add(pluck(D5, 1.1, curve=lambda t: -2.75 * (0.5 - 0.5 * np.cos(2 * np.pi * smooth((t - 0.04) / 0.58))), sustain=2.4), 5.68, 0.7, -0.1)
-add(pluck(A5, 0.9, bright=0.7), 6.3, 0.35, 0.4)
+# three drags, one after another: weight (4.46–4.9), slant (5.02–5.42), x-height (5.56–6.0)
+add(woodblock(1400), 4.42, 0.45, 0.2)
+add(pluck(A4, 1.0, curve=lambda t: 3 * smooth((t - 0.02) / 0.44), sustain=2.2), 4.44, 0.7, -0.1)   # weight: up a third
+add(sub(33, 0.5, 0.3), 4.5)
+add(woodblock(1250), 4.99, 0.45, 0.0)
+add(pluck(C5, 0.9, curve=lambda t: -2 * smooth((t - 0.02) / 0.4), sustain=2.2), 5.0, 0.65, 0.2)   # slant: leans down
+add(kick(0.7), 5.5)
+add(woodblock(1400), 5.53, 0.45, 0.2)
+add(pluck(A4, 1.3, curve=lambda t: 5 * smooth((t - 0.02) / 0.44), sustain=2.6), 5.54, 0.8, 0.0)  # x-height: up a fourth (Golden)
+add(noise_sweep(0.45, 300, 4000, 0.08, 'up'), 5.55)
+add(pluck(D5, 1.0), 6.0, 0.5, 0.3); add(sub(38, 0.5), 6.0); add(clap(), 6.0, 0.6)
+# all three together, partway back
+for m, d in [(E4, -3), (A4, -3), (D5, -3)]:
+    add(pluck(m, 0.8, curve=lambda t, d=d: d * smooth((t - 0.02) / 0.34), sustain=1.8), 6.06, 0.35, 0.0)
 
-# --- 6.5–7.5  eight styles: a mõ on every card, then rows swap (two bends crossing)
+# --- 6.5–7.5  interior photo + named styles: a mõ on every line
 for k in range(8):
     add(woodblock(1050 if k % 2 == 0 else 760), 6.5 + k * 0.0625, 0.55, pan=-0.4 if k % 2 else 0.4)
 add(kick(1.0), 6.5); add(sub(36, 0.5), 6.5); add(kick(0.85), 7.0); add(sub(33, 0.5), 7.0)
-add(pluck(E4, 0.9, curve=lambda t: 5 * smooth((t - 0.02) / 0.4), sustain=1.8), 7.0, 0.5, -0.4)
-add(pluck(A4, 0.9, curve=lambda t: -5 * smooth((t - 0.02) / 0.4), sustain=1.8), 7.0, 0.5, 0.4)
+add(pluck(E4, 1.0, bend=2, bend_at=0.2), 7.0, 0.45, -0.4)
+add(pluck(A4, 1.0), 7.012, 0.45, 0.4)
 for k in range(4):
     add(hat(70, 0.14), 7.0 + k * 0.125, pan=0.3)
 
