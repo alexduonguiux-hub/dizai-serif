@@ -274,6 +274,17 @@ def draw(glyph, cs, dx, ang):
             else: pen.curveTo(sg[2], sg[3], sg[4])
         pen.closePath()
 
+# S69 (designer 21/11 "bụng cong dấu hỏi hơi gợn"): làm trơn ở khâu XUẤT (sau mọi bước ghép đoạn): giữ góc chủ ý, điểm neo mối nối
+# trơn dời ≤ 2 u, tiếp tuyến xoay ≤ 4°, tay nắm chọn lại — liền độ cong (fair.py). Kết quả nhớ theo (ký tự, weight, góc).
+FAIR = '?¿'
+_FAIR_CACHE = {}
+def _fair_cs(c, w, ang, cs):
+    key = (c, w, ang, json.dumps(cs))
+    if key not in _FAIR_CACHE:
+        from fair import fair_contours
+        _FAIR_CACHE[key] = fair_contours(cs, 2.0)
+    return _FAIR_CACHE[key]
+
 import ital_comp as IC
 _STEM = {}
 _PAIR = {}
@@ -389,6 +400,7 @@ def master(w, ang, FL, groups, kern):
                     else: d_ = _lerp_d(*_PAIR[c], TW[w])
                 if d_ is None: d_ = IC.compensate(O[k], ang, _STEM[w], smooth=c != '@')
             cs = parse(d_)
+            if c in FAIR: cs = _fair_cs(c, w, ang, cs)                 # S69: bụng ? ¿ (bước ghép đoạn / compat trước đó dựng lại cung)
             for j in FL.get(c, []): cs[j] = reverse(cs[j])
             draw(g, cs, SP[w][c]['dx'], ang)
     f.lib['public.glyphOrder'] = [n for n in f.lib['public.glyphOrder'] if n in f]
