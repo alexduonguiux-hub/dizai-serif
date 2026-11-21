@@ -13,7 +13,7 @@ const fs = require('fs');
   await page.goto('http://localhost:8765/showreel/showreel.html');
   await page.evaluate(() => window.ready);
   const stage = await page.$('#stage');
-  const times = only || Array.from({ length: Math.round(10 * fps) }, (_, i) => i / fps);
+  const times = only || Array.from({ length: Math.round((await page.evaluate(() => window.DUR)) * fps) }, (_, i) => i / fps);
   for (let i = 0; i < times.length; i++) {
     await page.evaluate(t => window.render(t), times[i]);
     const name = only ? `t${times[i].toFixed(2)}.png` : `f${String(i).padStart(4, '0')}.png`;

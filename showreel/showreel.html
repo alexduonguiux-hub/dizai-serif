@@ -59,7 +59,15 @@ html,body { background:#000; }
   <div class="layer" id="Cn" style="z-index:3;background:var(--paper);display:none"></div>
 
   <!-- D · frame 09: Hà Nội market photo, AN NAM, styles -->
-  <div class="layer" id="D" style="z-index:4;display:none">
+  <!-- E · Story-08b: "Sự học cũng như việc chèo thuyền ngược nước, không tiến ắt sẽ lùi" + boat -->
+  <div class="layer" id="E" style="z-index:4;background:var(--paper);display:none">
+    <img id="boat" src="img_sb/boat.png" class="abs" style="left:1295px;top:518px;width:739px;height:752px;mix-blend-mode:darken;transform-origin:40% 80%">
+    <div id="elines"></div>
+  </div>
+  <!-- F · Story-08c: "Enfin, la guerre d'Indochine se termine. Le Vietnam est devenu une nation indépendante." -->
+  <div class="layer" id="F" style="z-index:5;display:none"><div id="flines"></div></div>
+
+  <div class="layer" id="D" style="z-index:6;display:none">
     <div class="photo" id="dimg" style="background-image:url(img_sb/market.jpg)"></div>
     <div class="abs nw" id="dannam" style="color:var(--paper)"></div>
     <div class="abs" id="dinfo" style="left:0;width:100%;top:1096px;color:var(--paper);font-size:48px;text-align:center;"></div>
@@ -75,7 +83,7 @@ html,body { background:#000; }
 </div>
 
 <script>
-const W = 2034, H = 1270, FPS = 30, DUR = 10;
+const W = 2034, H = 1270, FPS = 30, DUR = 12;
 const C = { paper:'#f3f3f1', ink:'#0e0e0e' };
 const $ = id => document.getElementById(id);
 const clamp = (x,a=0,b=1) => Math.min(b, Math.max(a, x));
@@ -143,8 +151,8 @@ function ink(text, size, weight=400, italic=false) {
 }
 
 // ================= build =================
-const imgs = ['img_sb/hue.jpg','img_sb/hue_s04.jpg','img_sb/market.jpg'].map(src=>new Promise(res=>{ const i = new Image(); i.onload = i.onerror = res; i.src = src; }));
-let HUD = [], KN, AZ = [], LZ = [], KA, NM = [], KD, DI = [];
+const imgs = ['img_sb/hue.jpg','img_sb/hue_s04.jpg','img_sb/market.jpg','img_sb/boat.png'].map(src=>new Promise(res=>{ const i = new Image(); i.onload = i.onerror = res; i.src = src; }));
+let HUD = [], KN, AZ = [], LZ = [], KA, NM = [], KD, DI = [], EL = [], FL = [];
 function build() {
   // HUD (storyboard: cap 33.6 px at y 48)
   [['h1','BY ĐÌZAI STUDIO'],['h2','AN NAM SERIF'],['h3','TYPE SPECIMEN - 2026']].forEach(([id,txt])=>{ const K = kernWord($(id), txt, {padTop:.35}); fv(K.host); HUD.push(K); });
@@ -176,8 +184,25 @@ function build() {
   names.forEach(([txt,it,x0],i)=>{
     const d = document.createElement('div'); d.className='abs nw';
     d.style.cssText = `font-size:212px;line-height:1.1;top:${155 + i*228 - 40}px;left:0;${it?'font-style:italic;':''}`;
-    d.textContent = txt; fv(d); $('Cn').appendChild(d); NM.push({d, x0, dir: i%2 ? 1 : -1, i});
+    const chars = [...txt].map(ch=>{ const c = document.createElement('span'); c.textContent = ch; d.appendChild(c); return c; });
+    fv(d); $('Cn').appendChild(d); NM.push({d, x0, dir: i%2 ? 1 : -1, i, chars});
   });
+  // Story-08b / 08c: uppercase lines, each a row of kerned masked words; italic parts as their own host
+  const mkLine = (host, parts, fs, x, y, align) => {
+    const row = document.createElement('div'); row.className = 'abs'; row.style.cssText = `left:0;top:${y}px;width:${W}px;`;
+    host.appendChild(row);
+    const Ks = parts.map(([txt, it])=>{ const d = document.createElement('div'); d.className = 'abs nw';
+      d.style.cssText = `top:0;font-size:${fs}px;${it?'font-style:italic;':''}`; row.appendChild(d);
+      const K = kernWord(d, txt, {padTop:.42, padBot:.12, padX:.18}); fv(d); return K; });
+    return {row, Ks, x, align};
+  };
+  const fitE = 1660 / (ink('SỰ HỌC CŨNG NHƯ', 100).w / 100);
+  [[[['SỰ HỌC CŨNG NHƯ',0]], 48, 162, 'l'], [[['VIỆC CHÈO THUYỀN',0]], 1973, 388, 'r'], [[['NGƯỢC NƯỚC,',0]], 443, 614, 'l'],
+   [[['KHÔNG',0],['TIẾN',1]], 48, 840, 'l'], [[['ẮT SẼ',0],['LÙI',1]], 443, 1066, 'l']]
+    .forEach(([parts,x,y,al])=>EL.push(mkLine($('elines'), parts, fitE, x, y, al)));
+  const fitF = 1447 / (ink('ENFIN, LA GUERRE', 100).w / 100);
+  [['ENFIN, LA GUERRE',48,142], ["D'INDOCHINE",443,329], ['SE TERMINE.',836,516], ['LE VIETNAM EST',48,703], ['DEVENU UNE',443,890], ['NATION INDÉPENDANTE.',48,1077]]
+    .forEach(([txt,x,y])=>FL.push(mkLine($('flines'), [[txt,0]], fitF, x, y, 'l')));
   // frame 09
   KD = kernWord($('dannam'), 'AN NAM', {padTop:.12}); $('dannam').style.fontSize = $('annam').style.fontSize;
   const star = `<svg width="20" height="20" viewBox="0 0 20 20" style="display:inline-block;vertical-align:.12em;margin:0 12px"><path fill="currentColor" d="M7.33333 0H12.6667C12.4889 1.37778 12.2222 2.73333 11.8667 4.06667C11.5556 5.4 11.3333 6.68889 11.2 7.93333C12.2222 7.17778 13.2222 6.33333 14.2 5.4C15.1778 4.42222 16.2222 3.51111 17.3333 2.66667L20 7.33333C18.7556 7.86667 17.4667 8.33333 16.1333 8.73333C14.8 9.08889 13.5556 9.51111 12.4 10C13.5556 10.4889 14.8 10.9333 16.1333 11.3333C17.4667 11.6889 18.7556 12.1333 20 12.6667L17.3333 17.3333C16.2222 16.4889 15.1778 15.5778 14.2 14.6C13.2222 13.6222 12.2222 12.7778 11.2 12.0667C11.3333 13.3111 11.5556 14.6 11.8667 15.9333C12.2222 17.2667 12.4889 18.6222 12.6667 20H7.33333C7.51111 18.6222 7.75556 17.2667 8.06667 15.9333C8.42222 14.6 8.66667 13.3111 8.8 12.0667C7.82222 12.7778 6.82222 13.6222 5.8 14.6C4.82222 15.5778 3.77778 16.4889 2.66667 17.3333L0 12.6667C1.28889 12.1333 2.6 11.6889 3.93333 11.3333C5.26667 10.9333 6.48889 10.4889 7.6 10C6.48889 9.51111 5.26667 9.08889 3.93333 8.73333C2.6 8.33333 1.28889 7.86667 0 7.33333L2.66667 2.66667C3.77778 3.51111 4.82222 4.42222 5.8 5.4C6.82222 6.33333 7.82222 7.17778 8.8 7.93333C8.66667 6.68889 8.42222 5.4 8.06667 4.06667C7.75556 2.73333 7.51111 1.37778 7.33333 0Z"/></svg>`;
@@ -187,104 +212,125 @@ function build() {
   });
 }
 
-// ================= render(t) =================
+// ================= render(t) — 12 s, hard cuts on the beat (120 BPM), storyboard Story-01 … 09 =================
+const rnd = (i, s=1) => { const x = Math.sin(i*127.1 + s*311.7) * 43758.5453; return x - Math.floor(x); };
+const vis = (el, b) => { el.style.visibility = b ? 'visible' : 'hidden'; };
+const show = (id, b) => { $(id).style.display = b ? 'block' : 'none'; };
+// letters of a kerned word appear one by one, scattered (random height + weight), then all snap into the line
+function scatterSnap(K, t, t0, step, tSnap, seed, range=380, base=400, dirY=-1) {
+  let j = 0;
+  K.items.forEach(it=>{ if (!it) return; it.m.style.overflow = 'visible';
+    vis(it.s, t >= t0 + j*step);
+    const free = t < tSnap;
+    it.s.style.transform = free ? `translate(${(rnd(j,seed)-.5)*70}px, ${dirY*rnd(j,seed+7)*range}px)` : 'none';
+    fv(it.s, free ? 400 + Math.round(rnd(j,seed+3)*3)*100 : base);
+    it.s.style.filter = 'none'; it.s.style.opacity = 1;
+    j++; });
+}
+// type-on: characters switch on one by one
+function typeOn(K, t, t0, dt) { let j = 0; K.items.forEach(it=>{ if (!it) return; vis(it.s, t >= t0 + j*dt); it.s.style.transform = 'none'; j++; }); }
+function placeLine(L) {
+  let x = 0; L.Ks.forEach((K,i)=>{ layoutWord(K); if (i) x += ink(' ', parseFloat(K.host.style.fontSize)).w; K.host.style.left = x + 'px'; x += K.meas.offsetWidth; });
+  const x0 = L.align === 'r' ? L.x - x : L.x;
+  L.Ks.forEach(K=>{ K.host.style.left = (parseFloat(K.host.style.left) + x0) + 'px'; });
+}
+
 function render(t) {
-  const inA = t < 5.32, inB = t >= 4.98 && t < 7.12, inC = t >= 6.76 && t < 8.35, inD = t >= 7.92;
-  $('A').style.display = inA ? 'block' : 'none'; $('B').style.display = inB ? 'block' : 'none';
-  $('Cn').style.display = inC ? 'block' : 'none'; $('D').style.display = inD ? 'block' : 'none';
+  const sA = t < 4.5, sB = t >= 4.5 && t < 6.25, sC = t >= 6.25 && t < 7.5, sE = t >= 7.5 && t < 8.75, sF = t >= 8.75 && t < 9.75, sD = t >= 9.75;
+  show('A', sA); show('B', sB); show('Cn', sC); show('E', sE); show('F', sF); show('D', sD);
 
-  // ---------- HUD (in at 0.3; colour follows what is under it)
-  HUD.forEach((K,i)=>{ layoutWord(K); slot(K, t, .32 + i*.08, null, .018, .4); });
-  $('h2').style.transform = `translateX(-50%)`;
-  const white = (t >= 3.3 && t < 5.12) || t >= 8.12;
-  $('hud').style.color = white ? C.paper : C.ink;
-  $('hud').style.zIndex = (t >= 2.3 && t < 3.3) ? 30 : 50;   // under the lighten photo while the letters are windows
+  // ---------- HUD: typed on at 0.25; white over photos
+  HUD.forEach((K,i)=>{ layoutWord(K); typeOn(K, t, .25 + i*.06, .018); });
+  $('h2').style.transform = 'translateX(-50%)';
+  $('hud').style.color = ((t >= 3.0 && t < 4.5) || sD) ? C.paper : C.ink;
+  $('hud').style.zIndex = (t >= 2.25 && t < 3.0) ? 30 : 70;
 
-  // ---------- A: frames 02–06
-  if (inA) {
-    // symbol: arcs slide in from top / bottom, then the two pairs turn ±67.5° into the rosette (frame 03)
-    const sIn = expoOut(seg(t, .45, .95));
-    const rot = expoInOut(seg(t, 1.6, 2.15)) * 67.5;
+  // ---------- 02–04
+  const pin = $('pin');
+  pin.style.opacity = (t >= 2.25 && t < 3.0 && !(t >= 2.29 && t < 2.33)) ? 1 : 0;   // hard cut, 1-frame flicker
+  if (sA) {
+    // symbol: cuts in on the beat; 03 → turns into the rosette in four snaps
+    vis($('sym'), t >= .5); $('sym').style.color = C.ink; $('sym').style.transform = 'none'; $('sym').style.opacity = 1;
+    const rot = 67.5 * Math.floor(seg(t, 1.5, 2.0) * 4) / 4;
     $('symAi').setAttribute('transform', `rotate(${rot} 116 107.5)`);
     $('symBi').setAttribute('transform', `rotate(${-rot} 116 107.5)`);
-    $('sym').style.opacity = sIn; $('sym').style.transform = `scale(${lerp(.6, 1, sIn)}) rotate(${lerp(-30, 0, sIn)}deg)`;
-    $('sym').style.color = C.ink;
-    // AN NAM: kerned letters rise into place, cap top at y 823
+    // AN NAM: scattered letters (one per 16th) snap into the line at 1.25; 03: a weight wave runs through it
     const an = $('annam'); fv(an); layoutWord(KN);
     an.style.left = (59 - +an.dataset.inkl) + 'px'; an.style.top = '823px';
-    slot(KN, t, .55, null, .06, .55);
-    // frame 04: ink becomes a window onto the photo
-    const pin = $('pin');
-    pin.style.opacity = expoOut(seg(t, 2.4, 2.8)) * (1 - expoOut(seg(t, 3.28, 3.44)));
-    pin.style.transform = `scale(${lerp(1.06, 1.0, seg(t, 2.4, 3.3))})`;
-    // frame 05: photo opens as a circle from the rosette's centre
-    const r = expoInOut(seg(t, 3.08, 3.5)) * 2400;
-    $('pfull').style.clipPath = `circle(${r}px at 1017px 452px)`;
-    $('pfull').style.display = t >= 3.08 ? 'block' : 'none';
-    $('pfullimg').style.transform = `scale(${lerp(1.12, 1.0, expoOut(seg(t, 3.08, 5.1)))})`;
-    // A–Z rows rise in (05), each row rolls over to lower case (06)
+    scatterSnap(KN, t, .5, .125, 1.25, 1, 230);
+    if (t >= 1.25) { let j = 0; KN.items.forEach(it=>{ if (!it) return;
+      const x = (t - 1.75 - j*.07) / .3, w = x > 0 && x < 1 ? 400 + 300*Math.sin(Math.PI*x) : 400;
+      fv(it.s, w); j++; }); }
+    // 05–06: hard cut to the photo; letters come out of the depth (blur → sharp), upper → lower case
+    show('pfull', t >= 3.0); $('pfull').style.clipPath = 'none';
+    $('pfullimg').style.transform = `scale(${lerp(1.06, 1.0, seg(t, 3.0, 4.5))})`;
     AZ.forEach(({K,i})=>{ fv(K.host); layoutWord(K);
       K.host.style.left = (W - K.host.offsetWidth)/2 + 'px'; K.host.style.top = (300 + i*180) + 'px';
-      depth(K, t, 3.36 + i*.06, 4.1 + i*.04); });
+      depth(K, t, 3.05 + i*.06, 3.82 + i*.04); });
     LZ.forEach(({K,i})=>{ fv(K.host); layoutWord(K);
       K.host.style.left = (W - K.host.offsetWidth)/2 + 'px'; K.host.style.top = (300 + i*180) + 'px';
-      depth(K, t, 4.3 + i*.06, null); });
+      depth(K, t, 3.98 + i*.06, null); });
   }
 
-  // ---------- B: frame 07 — paper rises over the photo; lines draw; A, then ^, then the hook land
-  if (inB) {
-    const b = $('B');
-    b.style.clipPath = `inset(${(1 - expoInOut(seg(t, 5.0, 5.3)))*100}% 0 0 0)`;
-    b.style.transform = `translateY(${-expoInOut(seg(t, 6.78, 7.1))*H}px)`;
-    [...$('glines').children].forEach((l,i)=>{ l.style.transform = `scaleX(${quartInOut(seg(t, 5.12 + i*.05, 5.6 + i*.05))})`; });
-    const fs = 797, base = 965, k = ink('A', fs);
-    const A = $('gA'); layoutWord(KA);
-    A.style.left = (1017 - (k.r - k.l)/2 - k.l) + 'px';
-    A.style.top = (base - .71*fs) + 'px';
-    slot(KA, t, 5.26, null, 0, .4);
-    // marks: same glyph positions as Ẩ, shown only above the cap line
-    const kh = ink('Ẩ', fs), kc = ink('Â', fs);
-    [['gCirc','Â',5.44,kc],['gHook','Ẩ',5.6,kh]].forEach(([id,ch,t0,kk])=>{
+  // ---------- 07: guide lines; A breathes through the weight axis; marks snap on; glyphs cut cap → lower
+  if (sB) {
+    $('B').style.clipPath = 'none'; $('B').style.transform = 'none';
+    [...$('glines').children].forEach(l=>{ l.style.transform = 'none'; });
+    const fs = 797, base = 965, k = ink('A', fs), A = $('gA');
+    fv(A, 400 + 300*Math.sin(Math.PI*seg(t, 4.5, 4.85))); layoutWord(KA);
+    KA.items.forEach(it=>{ if (it) { it.s.style.transform = 'none'; fv(it.s, 400 + 300*Math.sin(Math.PI*seg(t, 4.5, 4.85))); } });
+    A.style.left = (1017 - (k.r - k.l)/2 - k.l) + 'px'; A.style.top = (base - .71*fs) + 'px';
+    [['gCirc', 4.875], ['gHook', 5.0]].forEach(([id,t0])=>{
       const e = $(id); e.style.left = A.style.left; e.style.top = (base - .86*fs) + 'px';
-      const capTop = base - .7*fs - 8;               // keep only what sits above the cap
-      const localTop = capTop - (base - .86*fs);
+      const localTop = (base - .7*fs - 8) - (base - .86*fs);
       e.style.clipPath = `inset(-400px -400px ${fs - localTop}px -400px)`;
-      const p = expoOut(seg(t, t0, t0 + .32));
-      e.style.transform = `translateY(${-(1-p)*220}px)`; e.style.opacity = clamp(p*3);
+      e.style.transform = 'none'; e.style.opacity = 1; vis(e, t >= t0);
     });
-    // then a run of glyphs, capitals → lower case, each one sharpening out of a blur
-    const CYC = [['Ở',0],['Ữ',0],['Đ',0],['Ặ',0],['ặ',0],['ơ',0],['đ',0],['ỹ',0]], T0 = 5.9, STEP = .11;
-    const kidx = Math.floor((t - T0) / STEP), on = t >= T0 && kidx < CYC.length;
-    $('gCyc').style.display = on ? 'block' : 'none';
-    [A, $('gCirc'), $('gHook')].forEach(e=>e.style.visibility = t >= T0 ? 'hidden' : 'visible');
-    if (t >= T0) {
-      const k2 = Math.min(kidx, CYC.length - 1), ch = CYC[k2][0], g = $('gCyc');
-      g.style.display = 'block'; g.textContent = ch; fv(g);
-      const kk = ink(ch, fs);
-      g.style.left = (1017 - (kk.r - kk.l)/2 - kk.l) + 'px'; g.style.top = (base - .86*fs) + 'px';
-      const p = expoOut(seg(t, T0 + k2*STEP, T0 + k2*STEP + .09));
-      g.style.filter = p < .98 ? `blur(${((1-p)*16).toFixed(1)}px)` : 'none';
-      g.style.opacity = clamp(.35 + p); g.style.transformOrigin = `${(kk.r - kk.l)/2 + kk.l}px ${.86*fs}px`;
-      g.style.transform = `scale(${lerp(1.05, 1, p)})`;
-    }
+    const CYC = ['Ở','Ữ','Đ','Ặ','ặ','ơ','đ','ỹ'], T0 = 5.25, STEP = .125;
+    const on = t >= T0, g = $('gCyc');
+    [A, $('gCirc'), $('gHook')].forEach(e=>{ if (on) vis(e, false); });
+    if (!on) vis(A, true);
+    show('gCyc', on);
+    if (on) { const ch = CYC[Math.min(CYC.length-1, Math.floor((t - T0)/STEP))], kk = ink(ch, fs);
+      g.textContent = ch; fv(g); g.style.filter = 'none'; g.style.opacity = 1; g.style.transform = 'none';
+      g.style.left = (1017 - (kk.r - kk.l)/2 - kk.l) + 'px'; g.style.top = (base - .86*fs) + 'px'; }
   }
 
-  // ---------- C: frame 08 — names push up from below and drift (alternate directions)
-  if (inC) {
-    const c = $('Cn');
-    c.style.transform = `translateY(${(1 - expoInOut(seg(t, 6.78, 7.1)))*H}px)`;
-    NM.forEach(({d,x0,dir,i})=>{ d.style.transform = `translateX(${x0 + dir*(t - 7.5)*140}px)`; });
+  // ---------- 08: place names — characters switch on in random order; rows drift (no gaps at either end)
+  if (sC) {
+    $('Cn').style.transform = 'none';
+    NM.forEach(({d,x0,dir,i,chars})=>{
+      d.style.transform = `translateX(${x0 + dir*(t - 6.9)*150}px)`;
+      chars.forEach((c,j)=>vis(c, t >= 6.25 + rnd(j + i*997, 5) * .34));
+    });
   }
 
-  // ---------- D: frame 09 — the market photo opens like a shutter from the middle; AN NAM drops in
-  if (inD) {
-    const o = expoInOut(seg(t, 7.94, 8.32));
-    $('D').style.clipPath = `inset(${(1-o)*50}% 0 ${(1-o)*50}% 0)`;
-    $('dimg').style.transform = `scale(${lerp(1.14, 1.0, cubicOut(seg(t, 7.94, 10)))})`;
+  // ---------- 08b: the proverb lands word by word on the beat; the boat cuts in and rocks
+  if (sE) {
+    $('E').style.transform = 'none';
+    let w = 0;
+    EL.forEach(L=>{ placeLine(L); L.Ks.forEach(K=>{ let wi = w;
+      K.items.forEach(it=>{ if (!it) { wi++; return; } vis(it.s, t >= 7.5 + wi*.0625); it.s.style.transform = 'none'; });
+      w = wi + 1; }); });
+    vis($('boat'), t >= 7.875); $('boat').style.opacity = 1;
+    $('boat').style.transform = `translateY(${Math.sin((t-7.8)*3.4)*7}px) rotate(${Math.sin((t-7.8)*2.7)*1.8}deg)`;
+  }
+
+  // ---------- 08c: the French lines type out
+  if (sF) {
+    $('F').style.background = C.paper;
+    FL.forEach((L,i)=>{ placeLine(L); L.Ks.forEach(K=>typeOn(K, t, 8.78 + i*.07, .011)); });
+  }
+
+  // ---------- 09: hard cut to the market; AN NAM gathers like the opening; the styles type on
+  if (sD) {
+    $('D').style.clipPath = 'none';
+    $('dimg').style.transform = `scale(${lerp(1.05, 1.0, seg(t, 9.75, 12))})`;
     const dn = $('dannam'); fv(dn); layoutWord(KD);
-    dn.style.left = $('annam').style.left || (59 - +$('annam').dataset.inkl) + 'px'; dn.style.top = '146px';
-    slot(KD, t, 8.22, null, .06, .55, -1);
-    DI.forEach((s,i)=>{ const p = expoOut(seg(t, 8.6 + i*.1, 9.05 + i*.1)); s.style.transform = `translateY(${(1-p)*110}%)`; });
+    dn.style.left = (59 - +$('annam').dataset.inkl) + 'px'; dn.style.top = '146px';
+    scatterSnap(KD, t, 9.875, .09, 10.5, 3, 300, 400, 1);
+    DI.forEach((s,i)=>{ const p = seg(t, 10.62 + i*.12, 10.62 + i*.12 + .3); s.style.transform = 'none';
+      s.parentNode.style.clipPath = `inset(0 ${(1 - Math.floor(p*24)/24)*100}% 0 0)`; });
   }
 }
 

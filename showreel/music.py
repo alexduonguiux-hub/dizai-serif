@@ -1,8 +1,10 @@
-"""Original 10 s score for the AnNam Serif showreel — Indochine jazz lounge (120 BPM, 5 bars of 4/4).
+"""Original 12 s score for the AnNam Serif showreel — Huế royal court music colours (Nhã nhạc cung đình).
 
-Saigon-1930s feel: felt piano with maj9 / m9 voicings, upright bass, brushes and ride; the
-three slider drags are played by a đàn bầu (monochord) voice whose pitch glides with each knob.
-Cues follow the Figma storyboard (Story-01 … 09). Pure numpy, no samples.
+Instruments (all synthesised, no samples): trống đại (great drum), trống bản (small drum),
+phách (wood clapper), sênh tiền (coin clapper), chuông (bell), khánh (stone chime),
+kèn bầu (double-reed oboe, the lead), sáo (bamboo flute), đàn nhị (two-string fiddle),
+đàn nguyệt (moon lute). Pentatonic "điệu Bắc" on D (Hò Xự Xang Xê Cống ≈ D E G A B).
+Cues follow the Figma storyboard (Story-01 … 09, 12 s cut).
 Usage: python3 music.py out.wav
 """
 import sys
@@ -11,21 +13,32 @@ import numpy as np
 from scipy.signal import butter, sosfilt, fftconvolve
 
 SR = 48000
-DUR = 10.0
+DUR = 12.0
 N = int(SR * DUR)
-rng = np.random.default_rng(11)
+rng = np.random.default_rng(23)
 mix = np.zeros((2, N))
-B = 0.5            # one beat
-SW = 0.04          # swing delay for off-beat 8ths
+B = 0.5
 
 
 def hz(n):
     return 440.0 * 2 ** ((n - 69) / 12)
 
 
+def tt(d):
+    return np.arange(int(d * SR)) / SR
+
+
+def bp(x, a, b, o=2):
+    return sosfilt(butter(o, [a, b], 'bp', fs=SR, output='sos'), x)
+
+
+def lp(x, f, o=2):
+    return sosfilt(butter(o, f, 'lp', fs=SR, output='sos'), x)
+
+
 def add(sig, t0, gain=1.0, pan=0.0):
     i = int(t0 * SR)
-    if i >= N:
+    if i >= N or i < 0:
         return
     sig = sig[: N - i]
     l, r = np.cos((pan + 1) * np.pi / 4), np.sin((pan + 1) * np.pi / 4)
@@ -33,217 +46,205 @@ def add(sig, t0, gain=1.0, pan=0.0):
     mix[1, i:i + len(sig)] += sig * gain * r * 1.414
 
 
-def tt(d):
-    return np.arange(int(d * SR)) / SR
-
-
-def lp(x, f, o=2):
-    return sosfilt(butter(o, f, 'lp', fs=SR, output='sos'), x)
-
-
-def bp(x, a, b, o=2):
-    return sosfilt(butter(o, [a, b], 'bp', fs=SR, output='sos'), x)
-
-
-# ---------------- instruments ----------------
-def piano(m, dur=2.0, vel=1.0):
-    """Felt piano: slightly inharmonic partials, two-stage decay, soft hammer."""
-    t = tt(dur); f = hz(m); out = np.zeros_like(t)
-    Bc = 0.0004
-    for k in range(1, 11):
-        fk = f * k * np.sqrt(1 + Bc * k * k)
-        if fk > SR / 2.2:
-            break
-        a = (1 / k ** 1.6) * (0.6 + 0.4 * vel) ** (k / 3)
-        d1, d2 = 2.5 + 0.9 * k, 0.6 + 0.25 * k
-        env = 0.65 * np.exp(-t * d1) + 0.35 * np.exp(-t * d2)
-        out += a * np.sin(2 * np.pi * fk * t + k) * env
-    out += 0.08 * lp(rng.standard_normal(len(t)), 2500) * np.exp(-t * 120)   # hammer felt
-    out *= np.minimum(1, t / 0.004)
-    rel = np.ones_like(t); r = int(0.12 * SR); rel[-r:] = np.linspace(1, 0, r)
-    return out * rel * 0.22 * vel
-
-
-def chord(notes, t0, dur=2.0, vel=0.8, roll=0.012, pan=0.0):
-    for i, m in enumerate(notes):
-        add(piano(m, dur, vel), t0 + i * roll, 1.0, pan + (i - len(notes) / 2) * 0.08)
-
-
-def bass(m, dur=0.5, vel=1.0):
-    t = tt(dur); f = hz(m) * (1 + 0.01 * np.exp(-t * 40))
-    ph = 2 * np.pi * np.cumsum(f) / SR
-    s = np.sin(ph) + 0.35 * np.sin(2 * ph) + 0.12 * np.sin(3 * ph)
-    env = np.minimum(1, t / 0.006) * np.exp(-t * 3.0)
-    thump = 0.3 * lp(rng.standard_normal(len(t)), 400) * np.exp(-t * 60)
-    rel = np.ones_like(t); r = int(0.05 * SR); rel[-r:] = np.linspace(1, 0, r)
-    return (s * env + thump) * rel * 0.42 * vel
-
-
-def brush_tap(gain=0.12):
-    t = tt(0.09)
-    return bp(rng.standard_normal(len(t)), 2500, 9000) * np.exp(-t * 55) * gain
-
-
-def brush_swish(dur=0.45, gain=0.10):
-    t = tt(dur); x = t / dur
-    return bp(rng.standard_normal(len(t)), 1800, 7000) * np.sin(np.pi * x) ** 1.5 * gain
-
-
-def ride(gain=0.10, dur=1.2):
-    t = tt(dur); out = np.zeros_like(t)
-    for r, a in [(1, 1), (1.47, .7), (2.09, .6), (2.56, .5), (3.42, .4), (4.11, .3)]:
-        out += a * np.sin(2 * np.pi * 410 * r * 2.3 * t + r)
-    noise = bp(rng.standard_normal(len(t)), 6000, 14000)
-    return (0.25 * out + 0.6 * noise) * np.exp(-t * 4.5) * np.minimum(1, t / 0.001) * gain
-
-
-def cymbal_swell(dur, gain=0.18):
-    t = tt(dur); x = t / dur
-    n = bp(rng.standard_normal(len(t)), 3000, 13000)
-    return n * x ** 2.5 * gain
-
-
-def crash(gain=0.22, dur=2.0):
-    t = tt(dur)
-    return bp(rng.standard_normal(len(t)), 2500, 14000) * np.exp(-t * 2.2) * gain
-
-
-def rim(gain=0.25):
-    t = tt(0.06)
-    s = np.sin(2 * np.pi * 1750 * t) * np.exp(-t * 90) + 0.6 * bp(rng.standard_normal(len(t)), 2000, 6000) * np.exp(-t * 120)
-    return s * gain
-
-
-def kick(gain=0.6):
-    t = tt(0.35); f = 48 + 60 * np.exp(-t * 30)
-    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 9) * gain
-
-
-def bell(m, gain=0.12, dur=0.9):
-    """Celesta-like tick for the style list."""
-    t = tt(dur); f = hz(m)
-    s = np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * f * 4.01 * t) * np.exp(-t * 12)
-    return s * np.exp(-t * 5) * np.minimum(1, t / 0.002) * gain
-
-
-def danbau(m, dur, curve):
-    """Đàn bầu: one string played on harmonics — flute-like tone, pitch bent by the rod.
-    curve(t) gives the bend in semitones; vibrato grows on held notes."""
-    t = tt(dur)
-    vib = 0.18 * np.sin(2 * np.pi * 5.2 * t) * np.clip((t - 0.25) / 0.25, 0, 1)
-    f = hz(m) * 2 ** ((curve(t) + vib) / 12)
-    ph = 2 * np.pi * np.cumsum(f) / SR
-    s = np.sin(ph) + 0.22 * np.sin(2 * ph) + 0.08 * np.sin(3 * ph)
-    env = (1 - np.exp(-t * 60)) * np.exp(-t * 0.9)
-    rel = np.ones_like(t); r = int(0.15 * SR); rel[-r:] = np.linspace(1, 0, r) ** 2
-    pick = 0.15 * bp(rng.standard_normal(len(t)), 1500, 5000) * np.exp(-t * 200)
-    return (s * env * rel + pick) * 0.26
-
-
 def smooth(x):
     x = np.clip(x, 0, 1)
     return np.where(x < .5, 8 * x ** 4, 1 - (-2 * x + 2) ** 4 / 2)
 
 
-# ---------------- harmony (key of D) ----------------
-D2, E2, Fs2, G2, A2, B2 = 38, 40, 42, 43, 45, 47
-Dmaj9 = [50, 54, 57, 61, 64]          # D F# A C# E
-Bm9 = [47, 50, 54, 57, 61]            # B D F# A C#
-Gmaj9 = [43, 47, 50, 54, 57]          # G B D F# A
-Em9 = [52, 55, 59, 62, 66]            # E G B D F#
-A13 = [45, 49, 55, 59, 66]            # A C# G B F#
+def release(s, r=0.08):
+    n = min(len(s), int(r * SR)); s[-n:] *= np.linspace(1, 0, n); return s
 
-# Cue sheet follows the storyboard (Figma "Đìzai Serif – WIP" · Storyboard, Story-01 … 09)
 
-# 01–02  paper → HUD, symbol, AN NAM rise letter by letter
-add(cymbal_swell(0.3, 0.06), 0.05)
-for i in range(3):                                         # HUD lines
-    add(bell(86 + 2 * i, 0.05), 0.32 + i * 0.08, pan=-0.5 + 0.5 * i)
-add(piano(74, 1.2, 0.5), 0.45, 0.6, 0.0)                    # symbol lands
-for i, m in enumerate([50, 54, 57, 61, 62, 66]):            # A N · N A M
-    add(piano(m, 1.4, 0.6 + 0.04 * i), 0.55 + i * 0.06, 0.8, -0.5 + i * 0.2)
-chord(Dmaj9, 1.0, 1.2, 0.55)
-add(bass(D2, 1.0, 0.8), 1.0)
+# ---------------- percussion ----------------
+def trong_dai(gain=1.0, dur=1.6):
+    t = tt(dur); f = 46 + 30 * np.exp(-t * 18)
+    body = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 2.6)
+    skin = lp(rng.standard_normal(len(t)), 300) * np.exp(-t * 20) * 0.6
+    return np.tanh(1.4 * (body + skin)) * 0.8 * gain
 
-# 03  the two arc pairs turn into the rosette — a đàn bầu glide
-add(danbau(69, 1.0, lambda t: 5 * smooth((t - 0.02) / 0.52)), 1.6, 0.9, 0.0)
-add(rim(0.12), 1.6, pan=0.4)
-add(bell(93, 0.07), 2.15, pan=0.2)
 
-# 04  ink becomes a window onto Huế
-chord(Bm9, 2.4, 1.0, 0.75)
-add(bass(B2 - 12, 0.6), 2.4)
-add(cymbal_swell(0.7, 0.13), 2.4)
+def trong_ban(gain=0.5):
+    t = tt(0.25); f = 190 + 60 * np.exp(-t * 40)
+    s = np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 16)
+    s += 0.4 * bp(rng.standard_normal(len(t)), 300, 1500) * np.exp(-t * 45)
+    return s * gain
 
-# 05  the photo opens from the rosette; A–Z rows rise
-add(kick(0.6), 3.08); add(crash(0.12, 1.4), 3.08, pan=0.3)
-chord(Gmaj9, 3.08, 1.3, 0.8)
-add(bass(G2, 0.9), 3.08)
-for i, m in enumerate([79, 81, 83, 86]):
-    add(bell(m, 0.08), 3.4 + i * 0.07, pan=-0.3 + 0.2 * i)
-# 06  rows roll over to lower case
-for i, m in enumerate([86, 83, 81, 79]):
-    add(bell(m, 0.07), 4.3 + i * 0.07, pan=0.3 - 0.2 * i)
-chord([54, 57, 61, 64], 4.25, 0.8, 0.55, roll=0.02)
 
-# groove under 03–06 and 08: brushes + ride + walking bass
-def groove(t0, t1, walk):
+def phach(gain=0.5):
+    t = tt(0.06)
+    s = bp(rng.standard_normal(len(t)), 1800, 4200) * np.exp(-t * 140) + 0.6 * np.sin(2 * np.pi * 2300 * t) * np.exp(-t * 110)
+    return s * gain
+
+
+def senh_tien(gain=0.25, clicks=3, gap=0.016):
+    t = tt(0.16); out = np.zeros_like(t)
+    for c in range(clicks):
+        k = t - c * gap
+        on = k >= 0
+        out[on] += bp(rng.standard_normal(on.sum()), 4500, 11000) * np.exp(-k[on] * 120) * (1 - 0.2 * c)
+    return out * gain
+
+
+def chuong(m=81, gain=0.3, dur=2.5):
+    t = tt(dur); f = hz(m); out = np.zeros_like(t)
+    for r, a, d in [(1, 1, 1.1), (2.0, .45, 1.6), (2.76, .35, 2.2), (5.4, .2, 3.4), (8.9, .1, 5.0)]:
+        out += a * np.sin(2 * np.pi * f * r * t) * np.exp(-t * d)
+    return out * np.minimum(1, t / 0.002) * gain
+
+
+def khanh(m=69, gain=0.35, dur=1.8):
+    """Stone chime: dull attack, few inharmonic partials, quick upper decay."""
+    t = tt(dur); f = hz(m); out = np.zeros_like(t)
+    for r, a, d in [(1, 1, 2.0), (2.32, .5, 4.5), (4.1, .3, 9.0), (6.8, .15, 14.0)]:
+        out += a * np.sin(2 * np.pi * f * r * t) * np.exp(-t * d)
+    out += 0.3 * bp(rng.standard_normal(len(t)), 800, 3000) * np.exp(-t * 80)
+    return out * gain
+
+
+# ---------------- melodic ----------------
+def ken_bau(notes, gain=0.32):
+    """Kèn bầu: nasal double reed. notes = [(t_rel, midi, dur, bend_curve or None)] stitched legato."""
+    end = max(a + d for a, m, d, c in notes) + 0.15
+    t = tt(end); pitch = np.full_like(t, np.nan); amp = np.zeros_like(t)
+    for a, m, d, c in notes:
+        i0, i1 = int(a * SR), int((a + d) * SR)
+        k = t[i0:i1] - a
+        p = m + (c(k) if c else 0)
+        pitch[i0:i1] = p
+        env = np.minimum(1, k / 0.03) * np.minimum(1, (d - k) / 0.04 + 0.35)
+        amp[i0:i1] = np.maximum(amp[i0:i1], env)
+    # hold pitch across tiny gaps, vibrato deepening on long notes
+    pitch = np.where(np.isnan(pitch), notes[0][1], pitch)
+    vib = 0.35 * np.sin(2 * np.pi * 6.2 * t) * np.clip((t % 1.0) / 0.4, 0, 1)
+    f = hz(pitch + vib)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    out = np.zeros_like(t)
+    for h, a in enumerate([.55, .7, 1.0, .9, .75, .55, .4, .3, .2, .14, .1], start=1):
+        out += a * np.sin(h * ph)
+    out = bp(out, 500, 5200) + 0.25 * bp(out, 1100, 1500)          # reed formant
+    out += 0.05 * bp(rng.standard_normal(len(t)), 2000, 6000)      # breath / buzz
+    return release(out * lp(amp, 40, 1), 0.1) * gain * 0.5
+
+
+def dan_nhi(m, dur, curve=None, gain=0.2):
+    t = tt(dur)
+    vib = 0.25 * np.sin(2 * np.pi * 5.4 * t) * np.clip((t - 0.15) / 0.3, 0, 1)
+    f = hz(m + (curve(t) if curve else 0) + vib)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    out = sum((1 / k) * np.sin(k * ph) for k in range(1, 12))
+    out = bp(out, 300, 4500)
+    out += 0.04 * bp(rng.standard_normal(len(t)), 2500, 7000)      # bow hair
+    env = np.minimum(1, t / 0.07) * np.minimum(1, (dur - t) / 0.12)
+    return out * env * gain
+
+
+def sao(m, dur, gain=0.16):
+    t = tt(dur)
+    f = hz(m) * 2 ** (0.12 * np.sin(2 * np.pi * 5 * t) * np.clip((t - .2) / .3, 0, 1) / 12)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    s = np.sin(ph) + 0.12 * np.sin(2 * ph) + 0.2 * bp(rng.standard_normal(len(t)), 1200, 4000) * 0.3
+    env = np.minimum(1, t / 0.05) * np.minimum(1, (dur - t) / 0.1)
+    return s * env * gain
+
+
+def dan_nguyet(m, dur=0.9, gain=0.3, bend=0.0):
+    t = tt(dur)
+    b = bend * smooth((t - 0.08) / 0.15)
+    f = hz(m) * 2 ** (b / 12)
+    ph = 2 * np.pi * np.cumsum(f) / SR
+    out = np.zeros_like(t)
+    for k in range(1, 9):
+        out += (1 / k ** 1.2) * np.sin(k * ph + k) * np.exp(-t * (3 + 2.2 * k))
+    out += 0.25 * bp(rng.standard_normal(len(t)), 2000, 7000) * np.exp(-t * 250)
+    return out * np.minimum(1, t / 0.002) * gain
+
+
+# điệu Bắc on D: D E G A B
+D4, E4, G4, A4, B4, D5, E5, G5, A5, B5 = 62, 64, 67, 69, 71, 74, 76, 79, 81, 83
+D3, A3 = 50, 57
+
+# ================= cue sheet (hard cuts on the 120 BPM grid) =================
+def groove(t0, t1, drum=(0, 3)):
     k = 0; t = t0
     while t < t1 - 1e-6:
-        add(ride(0.07), t, pan=0.45)
-        add(brush_tap(0.05), t + B / 2 + SW, pan=-0.3)
-        if k % 2 == 1:
-            add(brush_swish(0.4, 0.08), t - 0.05, pan=-0.2)
-        if walk:
-            add(bass(walk[k % len(walk)], 0.46, 0.8), t, 1.0, -0.1)
-        t += B; k += 1
-groove(1.6, 5.0, [])
-groove(6.78, 7.9, [G2, A2])
+        add(senh_tien(0.15 if k % 2 else 0.2), t, pan=0.45)
+        add(phach(0.3 if k % 2 == 0 else 0.16), t + 0.125, pan=-0.45)
+        if k % 4 in drum:
+            add(trong_ban(0.42), t, pan=-0.1)
+        t += 0.25; k += 1
 
-# 07  paper rises; A, then the circumflex, then the hook (the hỏi tone: dip and rise) — then glyphs cap → lower
-add(brush_swish(0.3, 0.13), 4.98, pan=0.2)
-add(piano(45, 1.4, 0.8), 5.26, 0.9); add(bass(A2 - 12, 0.9), 5.26)
-add(piano(76, 0.7, 0.6), 5.44, 0.7, 0.3)
-add(danbau(78, 0.5, lambda t: -2 * np.sin(np.pi * np.clip(t / 0.22, 0, 1)) + 1.5 * smooth((t - 0.15) / 0.2)), 5.6, 0.8, 0.1)
-for k, m in enumerate([74, 76, 78, 81, 83, 86, 88, 90]):        # Ở Ữ Đ Ặ · ặ ơ đ ỹ
-    add(piano(m, 0.45, 0.55), 5.9 + k * 0.11, 0.55, -0.35 + 0.1 * k)
-    add(rim(0.07), 5.9 + k * 0.11, pan=0.4)
-chord(Bm9, 5.9, 0.9, 0.45, roll=0.0)
+# 01  paper — a stone chime opens the court
+add(khanh(A4, 0.4), 0.0, pan=-0.2)
+# 02  HUD types on (tiny coin taps); symbol cuts in (bell); AN NAM letters drop one per 16th (moon lute), snap at 1.25
+for i in range(9):
+    add(senh_tien(0.05, 1), 0.25 + i * 0.04, pan=-0.6 + 0.15 * i)
+add(chuong(D5 + 12, 0.16, 1.5), 0.5, pan=0.3)
+for i, m in enumerate([D4, E4, G4, A4, B4, D5]):
+    add(dan_nguyet(m, 0.9, 0.3), 0.5 + i * 0.125, pan=-0.5 + 0.2 * i)
+add(trong_dai(1.0), 1.25); add(phach(0.5), 1.25)
+# 03  rosette turns in four snaps (stone chime steps); weight wave through AN NAM (kèn bầu swell)
+for i, m in enumerate([A4, B4, D5, E5, A5]):
+    add(khanh(m, 0.18, 0.9), 1.5 + i * 0.125, pan=-0.4 + 0.2 * i)
+add(ken_bau([(0, D5, 0.2, None), (0.2, E5, 0.45, lambda k: -1.0 * np.exp(-k * 16))]), 1.75, 0.9, 0.0)
+# 04  hard cut: ink becomes the photo (great drum + bell), one-frame flicker
+add(trong_dai(0.9), 2.25); add(chuong(A5, 0.26, 2.2), 2.25, pan=0.35)
+add(dan_nhi(A4, 0.7, lambda k: 2 * smooth((k - 0.4) / 0.2), 0.14), 2.3, pan=-0.3)
+# 05–06  cut to Huế; letters out of the depth — ensemble enters
+add(trong_dai(1.0), 3.0); add(chuong(D5, 0.2, 1.8), 3.0, pan=-0.4)
+groove(3.0, 4.5)
+for k, m in enumerate([D4, A4, G4, A4, D5, A4]):
+    add(dan_nguyet(m, 0.45, 0.2), 3.0 + k * 0.25, pan=-0.25)
+add(ken_bau([(0, D5, 0.3, None), (0.3, E5, 0.2, None), (0.5, G5, 0.3, lambda k: 0.8 * np.sin(np.pi * np.clip(k / 0.12, 0, 1))),
+             (0.8, E5, 0.2, None)]), 3.05, 0.95, 0.1)
+add(sao(A5, 0.4), 3.85, pan=0.3); add(sao(B5, 0.45), 4.0, pan=0.3)
+# 07  cut to the guide lines; A breathes through weight (fiddle swell); ^ (bell), hook (kèn hỏi tone); glyph cuts
+add(phach(0.5), 4.5); add(trong_ban(0.5), 4.5)
+add(dan_nhi(D4, 0.4, lambda k: 3 * np.sin(np.pi * np.clip(k / 0.35, 0, 1)), 0.16), 4.5, pan=-0.2)
+add(chuong(D5, 0.16, 1.0), 4.875, pan=0.3)
+add(ken_bau([(0, A4, 0.3, lambda k: -1.6 * np.sin(np.pi * np.clip(k / 0.15, 0, 1)) + 2 * smooth((k - 0.11) / 0.14))]), 5.0, 0.85, 0.1)
+for k, m in enumerate([D4, E4, G4, A4, B4, D5, E5, G5]):        # Ở Ữ Đ Ặ · ặ ơ đ ỹ
+    add(dan_nguyet(m, 0.4, 0.26), 5.25 + k * 0.125, pan=-0.35 + 0.1 * k)
+    add(phach(0.14), 5.25 + k * 0.125, pan=0.45)
+# 08  names: characters switch on in random order (coin-clapper roll), then the tutti
+add(trong_dai(0.9), 6.25)
+for i in range(10):
+    add(senh_tien(0.08, 1), 6.25 + rng.uniform(0, 0.34), pan=rng.uniform(-0.6, 0.6))
+groove(6.5, 7.5, drum=(0, 2))
+add(ken_bau([(0, A4, .25, None), (.25, D5, .25, None), (.5, E5, .2, None), (.7, D5, .2, None), (.9, B4, .3, None)]), 6.3, 0.9, 0.05)
+# 08b  the proverb lands word by word (wood clap on 8ths); the boat cuts in (fiddle + flute)
+for k in range(8):
+    add(phach(0.22 if k % 2 == 0 else 0.12), 7.5 + k * 0.125, pan=-0.3 + 0.08 * k)
+add(trong_ban(0.45), 7.875)
+add(dan_nhi(D4, 0.85, lambda k: np.interp(k, [0, .25, .45, .7, .85], [0, 2, 5, 3, 0]), 0.17), 7.875, pan=-0.3)
+add(sao(D5, 0.35), 8.0, pan=0.35); add(sao(E5, 0.3), 8.375, pan=0.35)
+# 08c  the French lines type out (a rattle of taps), great drum under, a solemn kèn line
+add(trong_dai(0.8), 8.75)
+for i in range(22):
+    add(senh_tien(0.045, 1), 8.78 + i * 0.04, pan=-0.5 + 0.045 * i)
+add(ken_bau([(0, D5, 0.4, None), (0.4, B4, 0.25, None), (0.65, A4, 0.3, lambda k: -0.8 * np.exp(-k * 6))]), 8.8, 0.75, 0.0)
+# 09  hard cut to the market; AN NAM gathers (lute), snaps at 10.5 (drum + bells); the styles type on
+add(trong_dai(1.0), 9.75); add(chuong(D5, 0.25, 2.0), 9.75, pan=-0.3)
+for i, m in enumerate([D4, E4, G4, A4, B4, D5]):
+    add(dan_nguyet(m, 0.8, 0.26), 9.875 + i * 0.09, pan=-0.5 + 0.2 * i)
+add(trong_dai(1.1), 10.5); add(khanh(D4, 0.4, 2.5), 10.5, pan=0.3); add(senh_tien(0.25, 4, 0.018), 10.5, pan=0.5)
+add(ken_bau([(0, D5, 0.2, None), (0.2, E5, 0.2, None), (0.4, G5, 0.2, None), (0.6, A5, 0.9, lambda k: -1 * np.exp(-k * 12))]), 10.5, 0.95, 0.0)
+add(dan_nhi(D5, 1.3, gain=0.12), 10.5, pan=-0.35)
+for i in range(12):
+    add(senh_tien(0.04, 1), 10.62 + i * 0.06, pan=0.3)
+add(chuong(A5, 0.22, 1.6), 11.1, pan=0.4)
 
-# 08  names push up and drift
-add(brush_swish(0.3, 0.12), 6.76, pan=-0.4)
-chord(Em9, 6.78, 0.7, 0.7)
-add(bass(E2, 0.45), 6.78)
-chord(A13, 7.4, 0.5, 0.6)
-add(cymbal_swell(0.5, 0.15), 7.44)
-
-# 09  market photo opens like a shutter; AN NAM drops; styles — resolve on Dmaj9
-add(kick(0.7), 7.94); add(crash(0.18, 2.0), 7.94, pan=0.3)
-add(bass(D2, 1.6, 1.0), 7.94)
-chord([38, 50, 54, 57, 61, 64, 69], 7.94, 2.0, 0.95, roll=0.018)
-for i, m in enumerate([74, 78, 81, 85, 86, 90]):
-    add(piano(m, 0.9, 0.45), 8.22 + i * 0.06, 0.45, -0.4 + 0.16 * i)
-for i, m in enumerate([81, 85, 88]):
-    add(bell(m, 0.08), 8.6 + i * 0.1, pan=0.3)
-add(danbau(76, 1.2, lambda t: -2 + 2 * smooth((t - 0.05) / 0.6)), 8.9, 0.45, 0.2)
-
-# ---------------- master: room, glue, fade ----------------
-ir_t = tt(1.8)
-ir = rng.standard_normal((2, len(ir_t))) * np.exp(-ir_t * 2.8)
-ir = np.array([lp(c, 4500, 1) for c in ir]); ir[:, : int(0.015 * SR)] = 0
+# ================= master =================
+ir_t = tt(2.2)
+ir = rng.standard_normal((2, len(ir_t))) * np.exp(-ir_t * 2.4)
+ir = np.array([lp(c, 5000, 1) for c in ir]); ir[:, : int(0.02 * SR)] = 0
 wet = np.array([fftconvolve(mix[c], ir[c])[:N] for c in range(2)])
 wet /= np.max(np.abs(wet)) + 1e-9
-out = mix / (np.max(np.abs(mix)) + 1e-9) + 0.28 * wet
-out = sosfilt(butter(2, 32, 'hp', fs=SR, output='sos'), out)
-# a touch of tape: gentle saturation + faint crackle
-out = np.tanh(out * 1.25) / np.tanh(1.25)
-crk = np.zeros(N); idx = rng.integers(0, N, 160); crk[idx] = rng.uniform(-1, 1, 160)
-crk = bp(crk, 1500, 6000) * 0.25
-out += crk
-fade = np.ones(N); fl = int(0.4 * SR); fade[-fl:] = np.linspace(1, 0, fl) ** 2
+out = mix / (np.max(np.abs(mix)) + 1e-9) + 0.3 * wet
+out = sosfilt(butter(2, 30, 'hp', fs=SR, output='sos'), out)
+out = np.tanh(out * 1.3) / np.tanh(1.3)
+fade = np.ones(N); fl = int(0.6 * SR); fade[-fl:] = np.linspace(1, 0, fl) ** 2
 out *= fade
 out *= 0.89 / np.max(np.abs(out))
-
 pcm = (out.T * 32767).astype('<i2')
 with wave.open(sys.argv[1] if len(sys.argv) > 1 else 'music.wav', 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
