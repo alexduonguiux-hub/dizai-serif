@@ -94,3 +94,7 @@ Kerning hai họ gần như nhau; chỗ khác là sidebearing: spacing lấy H /
 CAPS_AS_SERIF: chữ HOA Golden bỏ mọi bước nét mảnh riêng (G7 G9 G6 G10 G11 G8, nét ngang 0.88) — giữ đúng độ dày AnNam Serif; chỉ khác loe chân (× 1.45, giữ như cũ — thử × 2.9 bỏ) và tay loe đầu thanh (G13, 114 / 148). Diện tích mực chữ hoa Golden / Serif = 1.000–1.012 (phần chênh = loe). Chữ thường Golden giữ nguyên (nét ngang 0.88). Version 0.925.
 
 ![chữ hoa](img/s61-caps.png)
+
+## S62 — chân chéo K R không gãy khúc (21/11, "K hoa chân bị lỗi")
+
+G3 phóng loe: phía thân phóng dọc thân, phía chân trước đây phóng theo trục x–y → thân CHÉO (K R) hai nửa cung loe biến đổi khác nhau → cung gãy khúc. Nay phía chân phóng theo hệ trục (dọc chân, dọc thân) — một phép phóng chung cho cả cung. Version 0.926.
