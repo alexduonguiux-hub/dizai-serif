@@ -111,3 +111,24 @@ G3 phóng loe: phía thân phóng dọc thân, phía chân trước đây phóng
 ## S64 — một file chung đủ ba trục (21/11, "dựng chung 1 bản cho serif")
 
 `AnNamSerif[XHGT,slnt,wght].ttf` (+ woff2): wght 400–700 · XHGT 495–535 · slnt 0 … −10°, 8 master (Serif / Golden × R / B × đứng / nghiêng), 16 kiểu đặt tên; t / t_f / t_t → dạng Golden khi XHGT ≥ 515. Trang duyệt AnNam Serif: mục Font variable dùng file này — đủ ba thanh kéo. Version 0.929.
+
+## S65 — trục x-Height kéo được trong Figma (21/11, "trục xheight không hoạt động trong Figma" → "thanh trục vẫn còn chỉ là k kéo được")
+
+- File ba trục đổi tên họ riêng **"AnNam Serif VF"** → `AnNamSerifVF[XHGT,slnt,wght].ttf` (PS `AnNamSerifVF-…`). Trước đây trùng họ "AnNam Serif" với bản tĩnh và bản chỉ có wght → Figma gộp họ, có thể lấy nhầm file.
+- Thang trục XHGT đổi từ 495–535 sang **0–100** (cả ba file có x-Height): 0 = AnNam Serif (x-height 495), 100 = AnNam Golden (x-height 535), tuyến tính (x = 495 + 0.4 × XHGT); t / t_f / t_t đổi dạng Golden từ 50. Trục tự đặt có min = mặc định = 495 thì Figma hiện thanh nhưng không kéo được; thang 0–100 mặc định 0 như các trục tự đặt phổ biến.
+- Outline, advance không đổi: so 5994 glyph × (wght 400/550/700 × đứng/nghiêng × XHGT 495↔0, 515↔50, 535↔100) với bản 0.929 — 0 khác.
+- Version 0.930.
+
+## S66 — móc trên a trơn (21/11, "Bụng móc trên của a cả serif và golden không smooth")
+
+Bản vẽ thân a (`D_A_STEM`, lower/src_lower.py) có ba chỗ không trơn; mọi weight, Golden, a có dấu đều dựng từ đây:
+- vai ngoài: tay nắm suy biến (cp2 trùng điểm cuối ở thân) → độ cong vọt sát thân (lược: gai);
+- đỉnh trái gần thẳng → độ cong nhảy ở đỉnh (font: 2.9 → 0.4);
+- lòng móc: hai cực độ cong, giữa phẳng → u gồ gần đầu cắt.
+
+Luật: giữ MỌI điểm neo và hướng tiếp tuyến, chọn lại độ dài tay nắm (tối thiểu ∫(dκ/ds)², khớp G2 ở đỉnh, lệch bản vẽ ≤ 1 px ≈ 2.8 u) — như vai n (D_N_ARCH, 05/11). Lòng móc xoay hướng ở đầu cắt 3° (góc mũi 23.7° → 26.7°) để độ cong giảm dần về đầu cắt. Bold: lòng móc dày xuống theo B_BAR như cũ (tay nắm mới, `A_HOOK_CP`). Bản cũ giữ ở `D_A_STEM_PRE_S66`.
+
+Font (Regular, độ cong ×1000): vai 0 → 8 → 3 thành 5 → 6.9 → 3.2; đỉnh nối 3.2 / 2.4; lòng móc 9.9 → 3.6 → 14.5 → 3 thành 4.9 → 4.1 → 13.1 → 3.6. QA Serif + Golden: outline 0 lỗi, nét / thanh / tay loe / kern như trước. Version 0.931.
+
+![a Serif](img/s66-a-serif.png)
+![a Golden](img/s66-a-golden.png)
