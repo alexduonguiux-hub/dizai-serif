@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <title>AnNam Serif Showreel</title>
 <style>
-/* AnNam Serif v0.929 — one file, three axes: wght 400–700 · XHGT 495 (Serif) → 535 (Golden) · slnt 0 → −10 */
+/* AnNam Serif v0.929 — one file, three axes: wght 400–700 · XHGT 495 → 535 · slnt 0 → −10 */
 @font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif[XHGT,slnt,wght].woff2") format("woff2"); font-weight: 400 700; font-style: normal; }
 @font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif-Italic[XHGT,wght].woff2") format("woff2"); font-weight: 400 700; font-style: italic; }
-:root { --paper:#f0efee; --g9:#215028; --g5:#749674; }
+:root { --paper:#f0efee; --g9:#17503d; --g5:#6b9783; }
 * { margin:0; padding:0; box-sizing:border-box; }
 html,body { background:#000; }
 #stage { position:relative; width:1920px; height:1080px; overflow:hidden; background:var(--paper); color:var(--g9);
@@ -18,7 +18,7 @@ html,body { background:#000; }
 .m { position:absolute; top:0; overflow:hidden; line-height:.7; }
 .m > span { display:inline-block; will-change:transform; }
 .meas { position:absolute; left:0; top:0; visibility:hidden; white-space:nowrap; line-height:.7; }
-.photo { position:absolute; inset:0; background-size:cover; background-position:50% 50%; }
+.photo { position:absolute; left:0; top:0; width:1920px; height:1080px; background-size:cover; background-position:50% 50%; }
 .tint { position:absolute; inset:0; }
 .hud { position:absolute; inset:0; pointer-events:none; font-size:21px; font-weight:500; letter-spacing:.02em; line-height:1; z-index:50; }
 .hud div { position:absolute; }
@@ -29,63 +29,56 @@ svg.seal { display:block; }
 <body>
 <div id="stage">
 
-  <!-- S1 · AN NAM assembles (kerned) -->
-  <div class="scene" id="s1"><div class="abs nw" id="s1w" style="font-size:440px;"></div></div>
-
-  <!-- S2a · photo inside the letters -->
-  <div class="scene" id="s2a">
-    <div class="abs nw" id="s2aw" style="left:50%;top:50%;font-size:470px;line-height:.86;padding:.02em .04em;color:transparent;
-      background-image:url(img/facade.jpg);background-size:2100px auto;-webkit-background-clip:text;background-clip:text;">AN NAM</div>
-    <div class="abs nw lab" id="s2acap" style="left:48px;bottom:84px;color:var(--g5)">PHỐ CỔ · HÀ NỘI</div>
-  </div>
-  <!-- S2b · full-bleed áo dài photo + Sài Gòn -->
-  <div class="scene" id="s2b">
-    <div class="photo" id="s2bp" style="background-image:url(img/aodai.jpg)"></div>
-    <div class="tint" style="background:linear-gradient(180deg,rgba(20,45,24,0) 45%,rgba(20,45,24,.55) 100%)"></div>
-    <div class="abs nw" id="s2bw" style="left:44px;font-size:230px;font-style:italic;color:var(--paper);"></div>
+  <!-- S1 · AN NAM assembles, then its letters fill with the photo -->
+  <div class="scene" id="s1" style="z-index:1">
+    <div class="abs nw" id="s1w" style="font-size:440px;"></div>
+    <div class="abs nw" id="s1p" style="font-size:440px;line-height:.7;padding:.12em;color:transparent;-webkit-background-clip:text;background-clip:text;background-size:1920px 1080px;"></div>
   </div>
 
-  <!-- S3 · rolling rows (no flipped rows) -->
-  <div class="scene" id="s3" style="background:var(--g9);color:var(--paper)"></div>
-
-  <!-- S4 · Vietnamese marks, fast cuts, colour + photo cards -->
-  <div class="scene" id="s4">
-    <div class="photo" id="s4p"></div><div class="tint" id="s4t"></div>
-    <div class="abs nw" id="s4g" style="font-size:740px;line-height:1"></div>
+  <!-- S2 · photo grows out of the word, settles into a panel; editorial left column -->
+  <div class="scene" id="s2" style="z-index:2">
+    <div class="abs" id="s2pw" style="left:0;top:0;width:1920px;height:1080px;overflow:hidden;">
+      <div class="photo" id="s2ph" data-img="facade"></div>
+      <div class="photo" id="s2ph2" data-img="aodai"></div>
+    </div>
+    <div class="abs nw lab" id="s2lab1" style="left:48px;top:214px;"></div>
+    <div class="abs nw" id="s2a1" style="left:44px;top:300px;font-size:190px;"></div>
+    <div class="abs nw" id="s2a2" style="left:44px;top:520px;font-size:190px;font-style:italic;"></div>
+    <div class="abs nw" id="s2b1" style="left:44px;top:300px;font-size:190px;"></div>
+    <div class="abs nw" id="s2b2" style="left:44px;top:520px;font-size:190px;font-style:italic;"></div>
+    <div class="abs" id="s2par" style="left:48px;top:748px;font-size:28px;line-height:1.32;"></div>
   </div>
+
+  <!-- S4 · Vietnamese marks: cards pushed in on every 16th -->
+  <div class="scene" id="s4" style="z-index:3;background:transparent"></div>
 
   <!-- S5 · three sliders: weight, slant, x-height -->
-  <div class="scene" id="s5">
-    <div class="abs" id="s5band" style="left:48px;right:48px;background:rgba(116,150,116,.16);transform-origin:0 50%;"></div>
+  <div class="scene" id="s5" style="z-index:4">
+    <div class="abs" id="s5band" style="left:48px;right:48px;background:rgba(107,151,131,.16);transform-origin:0 50%;"></div>
     <div class="abs" id="s5xl" style="left:48px;right:48px;height:2px;background:var(--g5);transform-origin:0 50%;"></div>
     <div class="abs" id="s5bl" style="left:48px;right:48px;height:2px;background:var(--g5);transform-origin:0 50%;"></div>
     <div class="abs nw lab" id="s5xlab" style="left:48px;color:var(--g5);"></div>
     <div class="abs nw lab" id="s5blab" style="left:48px;color:var(--g5);">BASELINE</div>
     <div class="abs nw" id="s5w" style="font-size:330px;"></div>
-    <div class="abs" style="left:48px;top:108px;height:46px;overflow:hidden;font-size:44px;line-height:46px;font-style:italic;font-weight:500;">
-      <div id="s5namei"><div>AnNam Serif</div><div>AnNam Golden</div></div></div>
+    <div class="abs nw" id="s5name" style="left:48px;top:108px;font-size:44px;line-height:46px;font-style:italic;font-weight:500;">AnNam Serif</div>
     <div class="abs nw" id="s5style" style="right:48px;top:118px;font-size:24px;font-weight:500;letter-spacing:.03em;"></div>
     <div class="abs" id="s5ui" style="inset:0"></div>
     <div class="abs" id="s5cur" style="width:12px;height:12px;border-radius:50%;background:var(--g9);z-index:5;"></div>
   </div>
 
-  <!-- S6 · interior photo + the named styles -->
-  <div class="scene" id="s6">
-    <div class="abs" id="s6pw" style="left:0;top:0;width:960px;height:1080px;overflow:hidden;">
-      <div class="photo" id="s6p" style="background-image:url(img/interior.jpg)"></div></div>
+  <!-- S6+S7 · interior panel + named styles, panel opens to full frame, giant t -->
+  <div class="scene" id="s6" style="z-index:5;background:var(--paper)">
     <div class="abs" id="s6list" style="left:1010px;top:150px;"></div>
+    <div class="abs" id="s6pw" style="left:0;top:0;width:960px;height:1080px;overflow:hidden;">
+      <div class="photo" id="s6p" data-img="interior"></div>
+      <div class="tint" id="s6tint" style="background:rgba(15,62,47,.64);opacity:0"></div>
+    </div>
+    <div class="abs nw" id="s7g" style="font-size:980px;line-height:1;color:var(--paper)">t</div>
+    <div class="abs nw" id="s7lab" style="left:48px;top:470px;font-size:30px;font-weight:500;line-height:1.25;color:var(--paper)"></div>
   </div>
 
-  <!-- S7 · the t that changes structure, over lotus -->
-  <div class="scene" id="s7" style="color:var(--paper)">
-    <div class="photo" id="s7p" style="background-image:url(img/lotus.jpg)"></div>
-    <div class="tint" style="background:rgba(25,62,31,.62)"></div>
-    <div class="abs nw" id="s7g" style="font-size:980px;line-height:1">t</div>
-    <div class="abs nw" id="s7lab" style="left:48px;top:470px;font-size:30px;font-weight:500;line-height:1.25;"></div>
-  </div>
-
-  <!-- S8 · end card with arch photo -->
-  <div class="scene" id="s8"></div>
+  <!-- S8 · end card, slides up over the t -->
+  <div class="scene" id="s8" style="z-index:6;background:var(--paper)"></div>
 
   <div class="hud" id="hud">
     <div style="left:48px;top:40px">ĐÌZAI STUDIO</div>
@@ -98,7 +91,15 @@ svg.seal { display:block; }
 
 <script>
 const W = 1920, H = 1080, FPS = 30, DUR = 10;
-const C = { paper:'#f0efee', g9:'#215028', g5:'#749674' };
+const C = { paper:'#f0efee', g9:'#17503d', g5:'#6b9783' };
+// photos: file + framing (background-position) — swap files in img/ without touching the animation
+const PH = {
+  facade:   { src:'img/facade.jpg',   pos:'50% 40%' },
+  aodai:    { src:'img/aodai.jpg',    pos:'35% 50%' },
+  tiles:    { src:'img/tiles.jpg',    pos:'50% 50%' },
+  lotus:    { src:'img/lotus.jpg',    pos:'50% 60%' },
+  interior: { src:'img/interior.jpg', pos:'45% 50%' },
+};
 const $ = id => document.getElementById(id);
 const clamp = (x,a=0,b=1) => Math.min(b, Math.max(a, x));
 const seg = (t,a,b) => clamp((t-a)/(b-a));
@@ -107,13 +108,13 @@ const expoOut = p => p >= 1 ? 1 : 1 - Math.pow(2, -10*p);
 const expoInOut = p => p<=0?0:p>=1?1: p<.5 ? Math.pow(2,20*p-10)/2 : (2-Math.pow(2,-20*p+10))/2;
 const quartInOut = p => p<.5 ? 8*p*p*p*p : 1-Math.pow(-2*p+2,4)/2;
 const backOut = p => { const c1=1.4, c3=c1+1; return 1 + c3*Math.pow(p-1,3) + c1*Math.pow(p-1,2); };
-// variation helper: wght, XHGT, slnt
 function fv(el, w=400, x=495, s=0) {
   el.style.fontVariationSettings = `"wght" ${w.toFixed(1)}, "XHGT" ${x.toFixed(2)}, "slnt" ${s.toFixed(2)}`;
   el.style.fontWeight = Math.round(w);
 }
+function photo(el, key) { el.style.backgroundImage = `url(${PH[key].src})`; el.style.backgroundPosition = PH[key].pos; }
+const inset = (t,r,b,l) => `inset(${t}px ${r}px ${b}px ${l}px)`;
 
-// --- glyph ink via canvas (default XHGT/slnt), to centre giant glyphs optically
 const cx = document.createElement('canvas').getContext('2d');
 function ink(text, size, weight=400, italic=false) {
   cx.font = `${italic?'italic ':''}${weight} ${size}px AN`;
@@ -122,17 +123,15 @@ function ink(text, size, weight=400, italic=false) {
 }
 function centre(el, text, size, weight, italic, x=W/2, y=H/2) {
   const k = ink(text, size, weight, italic);
-  const base = 0.86*size;                         // line-height 1 → baseline at .86em (asc 960, desc 240)
   el.style.left = (x - (k.r - k.l)/2) + 'px';
-  el.style.top = (y - (k.d - k.a)/2 - base) + 'px';
+  el.style.top = (y - (k.d - k.a)/2 - 0.86*size) + 'px';
 }
 
-// --- kerned masked word: each letter sits in its own mask at the position the font's own
-// spacing + kerning gives it (measured every frame, so weight / slant / x-height changes stay kerned)
+// kerned masked word (positions from the font's own spacing + kerning, re-measured every frame)
 function kernWord(host, text, opt={}) {
   host.innerHTML = '';
   const meas = document.createElement('span'); meas.className = 'meas'; meas.textContent = text; host.appendChild(meas);
-  const padT = opt.padTop || 0, padB = opt.padBot || 0, padX = opt.padX ?? .12;
+  const padT = opt.padTop || 0, padB = Math.max(opt.padBot || 0, .08), padX = opt.padX ?? .14;
   const items = [];
   [...text].forEach((ch,i)=>{
     if (ch === ' ') { items.push(null); return; }
@@ -151,52 +150,59 @@ function layoutWord(K) {
   const fs = parseFloat(getComputedStyle(K.host).fontSize);
   K.items.forEach(it=>{ if (!it) return;
     r.setStart(tn, it.i); r.setEnd(tn, it.i+1);
-    const x = (r.getBoundingClientRect().left - hostR.left) / sc;
-    it.m.style.left = (x - K.padX*fs) + 'px';
+    it.m.style.left = ((r.getBoundingClientRect().left - hostR.left) / sc - K.padX*fs) + 'px';
   });
   K.host.style.width = K.meas.offsetWidth + 'px';
   K.host.style.height = K.meas.offsetHeight + 'px';
 }
-function rollWord(K, t, t0, stagger, dur, dir=1, dist=125) {
-  K.items.forEach((it,j)=>{ if (!it) return; const p = expoOut(seg(t, t0 + j*stagger, t0 + j*stagger + dur));
-    it.s.style.transform = `translateY(${dir*(1-p)*dist}%)`; });
+// p = 0 (below, hidden) → 1 (in place) → 2 (above, hidden)
+function slot(K, t, tin, tout, stagger=.03, dur=.36) {
+  K.items.forEach((it,j)=>{ if (!it) return;
+    const a = expoOut(seg(t, tin + j*stagger, tin + j*stagger + dur));
+    const b = tout == null ? 0 : expoInOut(seg(t, tout + j*stagger*.6, tout + j*stagger*.6 + dur*.8));
+    it.s.style.transform = `translateY(${((1-a) - b)*215}%)`; });
 }
 
 // ================= build =================
 let seal = '';
 const sealReady = fetch('dizai-studio-seal.svg').then(r=>r.text()).then(s=>{
-  seal = s.replace(/fill="#215028"/g,'fill="currentColor"').replace('<svg','<svg class="seal"').replace(/width="[^"]*" height="[^"]*"/,'');
+  seal = s.replace(/fill="#[0-9a-fA-F]{6}"/g,'fill="currentColor"').replace('<svg','<svg class="seal"').replace(/width="[^"]*" height="[^"]*"/,'');
 });
-const imgs = ['facade','aodai','tiles','lotus','interior'].map(n=>new Promise(res=>{ const i = new Image(); i.onload = i.onerror = res; i.src = `img/${n}.jpg`; }));
+const imgs = Object.values(PH).map(p=>new Promise(res=>{ const i = new Image(); i.onload = i.onerror = res; i.src = p.src; }));
 
-let K1, K2b, K5, K8, S3rows=[], S4list, S5={}, S6=[], S8={};
+let K1, K2 = {}, K5, K8, S2 = {}, S4 = [], S5 = {}, S6 = [], S8 = {};
 function build() {
+  document.querySelectorAll('[data-img]').forEach(el=>photo(el, el.dataset.img));
   K1 = kernWord($('s1w'), 'AN NAM');
-  K2b = kernWord($('s2bw'), 'Sài Gòn', {padTop:.4, padBot:.1, padX:.2});
-  // S3 rows: 5 rows, every row fully inside the frame
-  const s3 = $('s3'); const fs3 = 150, band = 168, n3 = 5, top3 = (H - n3*band)/2;
-  for (let i=0;i<n3;i++){
-    const row = document.createElement('div'); row.className='abs';
-    row.style.cssText = `left:0;top:${top3+i*band+(band-fs3*.7)/2}px;height:${fs3*.7}px;width:100%;overflow:hidden;font-size:${fs3}px;line-height:.7;`;
-    const inner = document.createElement('div'); inner.className='abs nw';
-    const txt = 'AN NAM SERIF — '.repeat(8);
-    inner.innerHTML = [0,1,2].map(()=>`<div style="height:${fs3*.7+60}px">${txt}</div>`).join('');
-    row.appendChild(inner); s3.appendChild(row); S3rows.push({row, inner});
-  }
-  // S4 cards: colour / photo alternating
-  S4list = [
-    {g:'Ắ', bg:C.paper, fg:C.g9, w:700, it:false},
-    {g:'ệ', img:'tiles', tint:'rgba(22,52,27,.55)', fg:C.paper, w:500, it:true},
-    {g:'Ộ', bg:C.g5, fg:C.paper, w:600, it:false},
-    {g:'ữ', img:'lotus', tint:'rgba(22,52,27,.5)', fg:C.paper, w:500, it:true},
-    {g:'Ợ', bg:C.g9, fg:C.paper, w:700, it:false},
-    {g:'ỹ', img:'interior', tint:'rgba(22,52,27,.55)', fg:C.paper, w:400, it:true},
-    {g:'Đ', bg:C.paper, fg:C.g9, w:700, it:false},
-    {g:'ẫ', img:'facade', tint:'rgba(22,52,27,.5)', fg:C.paper, w:600, it:true},
+  $('s1p').textContent = 'AN NAM'; photo($('s1p'), 'facade'); $('s1p').style.backgroundSize = '1920px 1080px';
+  K2.a1 = kernWord($('s2a1'), 'Phố cổ', {padTop:.45});
+  K2.a2 = kernWord($('s2a2'), 'Hà Nội', {padTop:.45, padX:.25});
+  K2.b1 = kernWord($('s2b1'), 'Áo dài', {padTop:.45});
+  K2.b2 = kernWord($('s2b2'), 'Sài Gòn', {padTop:.45, padX:.25});
+  S2.par = ['Chữ glyphic loe nét, tương phản theo bút dẹt,', 'tỉ lệ La Mã cổ điển, đủ dấu tiếng Việt —', 'từ phố cổ Hà Nội tới những con đường Sài Gòn.']
+    .map(txt=>{ const d = document.createElement('div'); d.className='nw'; d.textContent = txt; $('s2par').appendChild(d); return d; });
+  // S4 cards
+  const cards = [
+    {g:'Ắ', img:'aodai', fg:C.paper, w:700, it:false},
+    {g:'ệ', bg:C.paper, fg:C.g9, w:500, it:true},
+    {g:'Ộ', img:'tiles', fg:C.paper, w:600, it:false},
+    {g:'ữ', bg:C.g9, fg:C.paper, w:500, it:true},
+    {g:'Ợ', img:'lotus', fg:C.paper, w:700, it:false},
+    {g:'ỹ', bg:C.g5, fg:C.paper, w:400, it:true},
+    {g:'Đ', img:'facade', fg:C.paper, w:700, it:false},
+    {g:'ẫ', bg:C.paper, fg:C.g9, w:600, it:true},
   ];
-  // S5 word + three sliders
+  cards.forEach((c,k)=>{
+    const el = document.createElement('div'); el.className='abs'; el.style.cssText = `left:0;top:0;width:${W}px;height:${H}px;overflow:hidden;z-index:${k};background:${c.bg||C.g9};`;
+    if (c.img) { const p = document.createElement('div'); p.className='photo'; photo(p, c.img); el.appendChild(p); c.p = p;
+      const tn = document.createElement('div'); tn.className='tint'; tn.style.background='rgba(14,52,40,.5)'; el.appendChild(tn); }
+    const g = document.createElement('div'); g.className='abs nw'; g.textContent = c.g;
+    g.style.cssText = `font-size:700px;line-height:1;color:${c.fg};${c.it?'font-style:italic;':''}`;
+    fv(g, c.w); el.appendChild(g); $('s4').appendChild(el);
+    S4.push({...c, el, gEl:g});
+  });
+  // S5
   K5 = kernWord($('s5w'), 'tiếng việt', {padTop:.45, padBot:.32, padX:.25});
-  const ui = $('s5ui');
   S5.sl = [
     {name:'WEIGHT', y:770, fmt:v=>Math.round(400+300*v)},
     {name:'SLANT', y:850, fmt:v=>(v ? '−' : '') + (10*v).toFixed(1).replace('.0','') + '°'},
@@ -208,42 +214,38 @@ function build() {
       <div class="abs" style="left:560px;width:800px;top:${sl.y-1}px;height:2px;background:var(--g5);"></div>
       <div class="abs" data-k="fill" style="left:560px;width:800px;top:${sl.y-2}px;height:4px;background:var(--g9);transform-origin:0 50%;"></div>
       ${sl.name==='x-HEIGHT' ? `<div class="abs" style="left:959px;top:${sl.y-12}px;width:2px;height:24px;background:var(--g5);"></div>
-      <div class="abs nw" style="left:960px;top:${sl.y+18}px;transform:translateX(-50%);font-size:16px;font-weight:500;color:var(--g5);">515 · t · GOLDEN</div>` : ''}
+      <div class="abs nw" style="left:960px;top:${sl.y+18}px;transform:translateX(-50%);font-size:16px;font-weight:500;color:var(--g5);">515 · t</div>` : ''}
       <div class="abs" data-k="knob" style="top:${sl.y-13}px;width:26px;height:26px;margin-left:-13px;border-radius:50%;background:var(--g9);"></div>
       <div class="abs nw" data-k="val" style="left:1392px;top:${sl.y-13}px;font-size:28px;font-weight:600;"></div>`;
-    ui.appendChild(g);
+    $('s5ui').appendChild(g);
     return {...sl, g, fill:g.querySelector('[data-k=fill]'), knob:g.querySelector('[data-k=knob]'), val:g.querySelector('[data-k=val]')};
   });
-  // S6 named styles list
-  const list = [
-    ['Regular',400,495,0,false], ['Medium Slant',500,495,-10,false], ['SemiBold',600,495,0,false], ['Bold Italic',700,495,0,true],
-    ['Golden Regular',400,535,0,false], ['Golden Medium Slant',500,535,-10,false], ['Golden Italic',400,535,0,true], ['Golden Bold',700,535,0,false],
-  ];
-  list.forEach(([name,w,x,s,it],k)=>{
+  // S6 named styles
+  [ ['Regular',400,495,0,false], ['Medium Slant',500,495,-10,false], ['SemiBold',600,495,0,false], ['Bold Italic',700,495,0,true],
+    ['Regular · x 535',400,535,0,false], ['Medium Slant · x 535',500,535,-10,false], ['Italic · x 535',400,535,0,true], ['Bold · x 535',700,535,0,false],
+  ].forEach(([name,w,x,s,it],k)=>{
     const m = document.createElement('div'); m.className='abs nw';
-    m.style.cssText = `left:0;top:${k*98}px;height:84px;overflow:hidden;font-size:76px;line-height:84px;${it?'font-style:italic;':''}padding-right:20px;`;
+    m.style.cssText = `left:0;top:${k*98}px;height:88px;overflow:hidden;font-size:76px;line-height:84px;${it?'font-style:italic;':''}padding-right:20px;`;
     const sp = document.createElement('div'); sp.textContent = name; fv(sp, w, x, s);
     m.appendChild(sp); $('s6list').appendChild(m);
-    const tag = document.createElement('div'); tag.className='abs nw lab'; tag.style.cssText = `left:-2px;top:${k*98+80}px;font-size:15px;color:${C.g5};`;
+    const tag = document.createElement('div'); tag.className='abs nw lab'; tag.style.cssText = `left:-2px;top:${k*98+82}px;font-size:15px;color:${C.g5};`;
     tag.textContent = `wght ${w} · slnt ${s?'−10':'0'} · x ${x}${it?' · ITALIC':''}`;
-    $('s6list').appendChild(tag);
-    S6.push({sp, tag});
+    $('s6list').appendChild(tag); S6.push({sp, tag});
   });
-  // S8 end card: arch photo left, type right
+  // S8 end card
   const s8 = $('s8'); const fs8 = 320, cap = fs8*.7; S8.cap = cap;
   const T1 = 150, T2 = T1 + cap + 56, T3 = T2 + cap + 56;
   S8.arch = document.createElement('div'); S8.arch.className='abs';
   S8.arch.style.cssText = `left:48px;top:${T1}px;width:500px;height:${T3+cap-T1}px;border-radius:250px 250px 0 0;overflow:hidden;`;
-  S8.arch.innerHTML = `<div class="photo" id="s8p" style="background-image:url(img/aodai.jpg);background-position:30% 50%"></div>`;
+  S8.arch.innerHTML = `<div class="photo" id="s8p" style="left:-260px;top:-${T1}px"></div>`; photo(S8.arch.firstChild, 'aodai');
   S8.l1 = document.createElement('div'); S8.l1.className='abs nw'; S8.l1.style.cssText=`left:612px;top:${T1}px;font-size:${fs8}px;`;
   K8 = kernWord(S8.l1, 'AN NAM');
-  S8.l2 = document.createElement('div'); S8.l2.className='abs nw';
-  S8.l2.style.cssText=`right:44px;top:${T2}px;font-size:${fs8}px;line-height:.7;height:${cap}px;overflow:hidden;text-align:right;`;
-  S8.l2.innerHTML = `<div id="s8roll"><div style="height:${cap+60}px">Serif</div><div style="height:${cap}px">Golden</div></div>`;
+  S8.l2 = document.createElement('div'); S8.l2.className='abs nw'; S8.l2.style.cssText=`right:44px;top:${T2}px;font-size:${fs8}px;`;
+  S8.K2 = kernWord(S8.l2, 'Serif');
   S8.l3 = document.createElement('div'); S8.l3.className='abs nw'; S8.l3.style.cssText=`right:44px;top:${T3}px;font-size:${fs8}px;line-height:.7;color:${C.g5};`;
   S8.odo = [];
   for (let k=0;k<3;k++){
-    const m = document.createElement('span'); m.style.cssText = `display:inline-block;overflow:hidden;height:${cap}px;vertical-align:top;`;
+    const m = document.createElement('span'); m.style.cssText = `display:inline-block;overflow:hidden;height:${cap+18}px;vertical-align:top;`;
     const col = document.createElement('span'); col.style.display='inline-block';
     col.innerHTML = [0,1,2,3,4,5,6,7,8,9,0].map(n=>`<div style="height:${cap*1.2}px">${n}</div>`).join('');
     m.appendChild(col); S8.l3.appendChild(m); S8.odo.push(col);
@@ -261,82 +263,84 @@ function build() {
   S8.info2 = document.createElement('div'); S8.info2.className='abs';
   S8.info2.style.cssText = `left:840px;top:${T3+cap-3*25}px;font-size:22px;line-height:1.14;font-weight:500;letter-spacing:.02em;`;
   S8.infoLines = lines(S8.info, ['VARIABLE · 3 TRỤC','wght 400 — 700','slnt 0 — −10°','x-HEIGHT 495 — 535','ROMAN &amp; <i>ITALIC</i> · TIẾNG VIỆT'])
-    .concat(lines(S8.info2, ['TYPEFACE BY','ĐÌZAI STUDIO','<span style="color:#749674">DIZAI.STUDIO</span>']));
+    .concat(lines(S8.info2, ['TYPEFACE BY','ĐÌZAI STUDIO','<span style="color:#6b9783">DIZAI.STUDIO</span>']));
   s8.append(S8.arch, S8.l1, S8.l2, S8.xlab, S8.l3, S8.seal, S8.info, S8.info2);
 }
 
 // ================= render(t) =================
-function show(id, on) { $(id).style.display = on ? 'block' : 'none'; }
-const SCENES = [ ['s1',0,1], ['s2a',1,1.5], ['s2b',1.5,2], ['s3',2,3], ['s4',3,4], ['s5',4,6.5], ['s6',6.5,7.5], ['s7',7.5,8], ['s8',8,10.01] ];
-function hud(fg, n, op=1) { const h = $('hud'); h.style.opacity = op; h.style.color = fg; [...h.children].forEach(c=>{ c.style.color=''; c.style.opacity=''; });
-  $('hudn').textContent = String(n).padStart(2,'0') + ' / 08'; }
-const kb = (el, t, a, b, s0=1.04, s1=1.12, dx=0) => { const p = seg(t,a,b); el.style.transform = `scale(${lerp(s0,s1,p)}) translateX(${dx*p}px)`; };
+const WIN = { s1:[0,1.5], s2:[1.05,3.12], s4:[2.98,4.1], s5:[4.0,6.66], s6:[6.4,8.3], s8:[8.0,10.01] };
+const kb = (el, t, a, b, s0, s1, dx=0) => { const p = seg(t,a,b); el.style.transform = `translateX(${dx*p}px) scale(${lerp(s0,s1,p)})`; };
+const hudEl = () => [...$('hud').children];
+function hud(fg, n, left) {
+  hudEl().forEach(c=>{ c.style.color=''; c.style.opacity=''; });
+  $('hud').style.color = fg; if (left) { hudEl()[0].style.color = left; hudEl()[3].style.color = left; }
+  $('hudn').textContent = String(n).padStart(2,'0') + ' / 08';
+}
 
 function render(t) {
-  for (const [id,a,b] of SCENES) show(id, t>=a && t<b);
+  for (const [id,[a,b]] of Object.entries(WIN)) $(id).style.display = (t>=a && t<b) ? 'block' : 'none';
 
-  // ---- S1 0–1: kerned letters roll up, weight swells on the beat
-  if (t < 1) {
-    const host = $('s1w');
-    fv(host, lerp(400, 700, expoOut(seg(t, .55, .85))));
-    host.style.transform = `scale(${lerp(.97, 1.0, seg(t,0,1))})`;
-    layoutWord(K1);
-    host.style.left = (W - host.offsetWidth)/2 + 'px';
-    host.style.top = (H - host.offsetHeight)/2 + 'px';
-    rollWord(K1, t, .04, .055, .38, 1, 110);
-    hud(C.g9, 1);
+  // ---------- S1 0–1.5: kerned AN NAM; letters fill with the photo (aligned to the frame)
+  if (t < WIN.s1[1]) {
+    const host = $('s1w'), ph = $('s1p');
+    const w = lerp(400, 700, expoOut(seg(t, .45, .75)));
+    fv(host, w); fv(ph, w); layoutWord(K1);
+    const L = (W - host.offsetWidth)/2, T = (H - host.offsetHeight)/2;
+    host.style.left = L+'px'; host.style.top = T+'px';
+    const pad = .12*440; ph.style.left = (L-pad)+'px'; ph.style.top = (T-pad)+'px';
+    ph.style.backgroundPosition = `${-(L-pad)}px ${-(T-pad)}px`;
+    slot(K1, t, .04, null, .055, .38);
+    const f = expoOut(seg(t, .8, 1.0));
+    ph.style.opacity = f; host.style.opacity = 1 - f;
+    S1box = {L, T, R: L + host.offsetWidth, B: T + host.offsetHeight};
   }
-  // ---- S2a 1–1.5: facade photo inside AN NAM
-  else if (t < 1.5) {
-    const w = $('s2aw'); fv(w, 700);
-    const p = expoOut(seg(t,1,1.4));
-    w.style.transform = `translate(-50%,-50%) scale(${lerp(1.1,1,p)})`;
-    w.style.backgroundPosition = `${lerp(20,60,seg(t,1,1.5))}% ${lerp(30,45,seg(t,1,1.5))}%`;
-    $('s2acap').style.opacity = expoOut(seg(t,1.1,1.3));
-    hud(C.g9, 2);
+
+  // ---------- S2 1.05–3.1: photo grows out of the word box → panel → back to full frame
+  if (t >= WIN.s2[0] && t < WIN.s2[1]) {
+    const s2 = $('s2'), pw = $('s2pw');
+    const g = expoInOut(seg(t, 1.05, 1.45)), bx = S1box;
+    s2.style.clipPath = inset(lerp(bx.T, 0, g), lerp(W - bx.R, 0, g), lerp(H - bx.B, 0, g), lerp(bx.L, 0, g));
+    s2.style.background = t < 1.5 ? 'transparent' : C.paper;
+    // panel: shrink into the right column, later open back to full frame for the cards
+    const P = {t:130, r:48, b:130, l:1010};
+    const shrink = expoInOut(seg(t, 1.48, 1.86)), open = expoInOut(seg(t, 2.8, 3.02)), k = shrink*(1-open);
+    pw.style.clipPath = inset(P.t*k, P.r*k, P.b*k, P.l*k);
+    kb($('s2ph'), t, 1.05, 2.3, 1.0, 1.08);
+    // second photo pushes up inside the panel; framed so the subject sits in the panel, then re-centres
+    const sw = expoInOut(seg(t, 2.0, 2.3));
+    $('s2ph2').style.transform = `translateY(${(1-sw)*100}%) translateX(${lerp(520, 0, open)}px) scale(${lerp(1.1, 1.0, open)})`;
+    // left column type: set 1 (Phố cổ / Hà Nội) → set 2 (Áo dài / Sài Gòn)
+    [['a1',400],['a2',400],['b1',400],['b2',400]].forEach(([k2])=>{ const K = K2[k2]; fv(K.host, 500); layoutWord(K); });
+    slot(K2.a1, t, 1.62, 2.0); slot(K2.a2, t, 1.7, 2.04);
+    slot(K2.b1, t, 2.08, 2.78); slot(K2.b2, t, 2.14, 2.8);
+    $('s2lab1').textContent = t < 2.06 ? '01 — PHỐ CỔ' : '02 — ÁO DÀI';
+    $('s2lab1').style.opacity = expoOut(seg(t,1.62,1.8)) * (1 - expoOut(seg(t,2.75,2.85)));
+    S2.par.forEach((d,i)=>{ const p = quartInOut(seg(t, 2.3 + i*.08, 2.62 + i*.08)), q = expoOut(seg(t, 2.74, 2.86));
+      d.style.clipPath = `inset(0 ${(1-p)*100}% 0 0)`; d.style.opacity = 1 - q; });
   }
-  // ---- S2b 1.5–2: áo dài photo wipes up, "Sài Gòn" italic rolls in
-  else if (t < 2) {
-    $('s2b').style.clipPath = `inset(${(1-expoOut(seg(t,1.5,1.75)))*100}% 0 0 0)`;
-    kb($('s2bp'), t, 1.5, 2, 1.12, 1.04);
-    const w = $('s2bw'); fv(w, lerp(400,600,expoOut(seg(t,1.7,1.95))));
-    layoutWord(K2b);
-    w.style.top = (H - 150 - w.offsetHeight) + 'px';
-    rollWord(K2b, t, 1.6, .03, .35, 1, 130);
-    hud(C.paper, 2);
-  }
-  // ---- S3 2–3: rolling rows, alternate directions
-  else if (t < 3) {
-    S3rows.forEach(({inner},i)=>{
-      const dir = i%2 ? 1 : -1;
-      const x = -600 + dir*(t-2)*520 + (i*173)%300;
-      const ci = Math.abs(i-2);
-      const inP = expoOut(seg(t, 2 + ci*.06, 2.36 + ci*.06));
-      const outP = i===2 ? 0 : expoInOut(seg(t, 2.62 + (2-ci)*.04, 2.92 + (2-ci)*.04));
-      const y = (1-inP) - outP;
-      inner.style.transform = `translate(${x}px, ${(-1 - y)*(150*.7+60)}px)`;
-      const w = i===2 ? lerp(400,700,expoOut(seg(t,2.55,2.9))) : 400 + 300*Math.max(0,Math.sin((t-2)*6 - i*.9));
-      fv(inner, w);
+
+  // ---------- S4 3.0–4.1: cards pushed in from the right on every 16th (previous card parallaxes away)
+  if (t >= WIN.s4[0] && t < WIN.s4[1]) {
+    S4.forEach((c,k)=>{
+      const st = 3 + k*.125, nx = 3 + (k+1)*.125;
+      const vis = t >= st - .001 && (k === 7 || t < nx + .1);
+      c.el.style.display = vis ? 'block' : 'none'; if (!vis) return;
+      const pin = k === 0 ? 1 : expoOut(seg(t, st, st + .09));
+      const pout = k === 7 ? 0 : expoOut(seg(t, nx, nx + .09));
+      c.el.style.transform = `translateX(${(1-pin)*W - pout*W*.28}px)`;
+      if (c.p) c.p.style.transform = `scale(${lerp(1.12, 1.04, seg(t, st, nx + .1))})`;
+      centre(c.gEl, c.g, 700, c.w, c.it, W/2, H/2);
+      let gs = lerp(1.08, 1, expoOut(seg(t, st, st + .12))), gy = 0, go = 1;
+      if (k === 7) { const o = expoInOut(seg(t, 3.92, 4.08)); gs *= lerp(1, .5, o); gy = -260*o; go = 1 - o; }
+      c.gEl.style.transform = `translateY(${gy}px) scale(${gs})`; c.gEl.style.opacity = go;
     });
-    hud(C.paper, 3);
+    $('s4').style.display = 'block';
   }
-  // ---- S4 3–4: diacritic cards on 16ths
-  else if (t < 4) {
-    const k = Math.min(7, Math.floor((t-3)/0.125)); const c = S4list[k];
-    const p = seg(t, 3 + k*.125, 3 + (k+1)*.125);
-    const s4 = $('s4'), ph = $('s4p'), tn = $('s4t');
-    if (c.img) { ph.style.display='block'; ph.style.backgroundImage = `url(img/${c.img}.jpg)`; tn.style.background = c.tint; tn.style.display='block';
-      ph.style.transform = `scale(${lerp(1.15,1.08,p)})`; }
-    else { ph.style.display='none'; tn.style.display='none'; s4.style.background = c.bg; }
-    const g = $('s4g'); g.textContent = c.g; g.style.fontStyle = c.it ? 'italic':'normal'; g.style.color = c.fg;
-    fv(g, c.w); centre(g, c.g, 740, c.w, c.it, W/2, H/2);
-    g.style.transform = `scale(${lerp(1.1,1,expoOut(p))})`;
-    hud(c.img ? C.paper : c.fg, 4);
-  }
-  // ---- S5 4–6.5: three sliders — weight, slant, x-height
-  else if (t < 6.5) {
+
+  // ---------- S5 4.0–6.6: three sliders (transparent scene: sits on the paper of the last card)
+  if (t >= WIN.s5[0] && t < WIN.s5[1]) {
     const TR0 = 560, TR1 = 1360;
-    const back = quartInOut(seg(t, 6.08, 6.42));          // all three together, partway back
+    const back = quartInOut(seg(t, 6.08, 6.42));
     const vw = quartInOut(seg(t, 4.46, 4.9)) * (1 - .65*back);
     const vs = quartInOut(seg(t, 5.02, 5.42)) * (1 - .65*back);
     const vx = quartInOut(seg(t, 5.56, 6.0)) * (1 - .65*back);
@@ -348,7 +352,6 @@ function render(t) {
       const e = expoOut(seg(t, 4.12 + i*.06, 4.45 + i*.06));
       s.g.style.opacity = e; s.g.style.transform = `translateY(${(1-e)*30}px)`;
     });
-    // cursor: weight knob → slant knob → x-height knob → stays for the joint move
     const kx = i => TR0 + (TR1-TR0)*vals[i], ky = i => S5.sl[i].y;
     const a0 = expoOut(seg(t, 4.18, 4.42));
     let px = lerp(1600, kx(0), a0), py = lerp(1010, ky(0), a0);
@@ -359,74 +362,84 @@ function render(t) {
     const cur = $('s5cur'); const dd = 12 + 34*grab;
     cur.style.left = (px - dd/2)+'px'; cur.style.top = (py - dd/2)+'px'; cur.style.width = cur.style.height = dd+'px';
     cur.style.opacity = (t < 4.18 ? 0 : 1) * (1 - .6*grab);
-    // word
     const fs = 330, base = 585, host = $('s5w');
-    fv(host, w, xh, sl);
-    K5.items.forEach(it=>{ if (it) fv(it.s, w, xh, sl); });
+    fv(host, w, xh, sl); K5.items.forEach(it=>{ if (it) fv(it.s, w, xh, sl); });
     layoutWord(K5);
-    host.style.left = (W - host.offsetWidth)/2 + 'px';
-    host.style.top = (base - .71*fs) + 'px';
-    rollWord(K5, t, 4.0, .028, .38, 1, 125);
-    // guides
+    host.style.left = (W - host.offsetWidth)/2 + 'px'; host.style.top = (base - .71*fs) + 'px';
+    slot(K5, t, 4.0, null, .028, .38);
     const yx = base - xh/1000*fs, draw = expoOut(seg(t, 4.02, 4.42));
     $('s5bl').style.top = (base-1)+'px'; $('s5xl').style.top = (yx-1)+'px';
     $('s5bl').style.transform = $('s5xl').style.transform = `scaleX(${draw})`;
     const band = $('s5band'); band.style.top = yx+'px'; band.style.height = (base-yx)+'px'; band.style.transform = `scaleX(${draw})`;
     $('s5xlab').style.top = (yx-30)+'px'; $('s5xlab').textContent = `x-HEIGHT ${Math.round(xh)}`;
     $('s5blab').style.top = (base+10)+'px'; $('s5xlab').style.opacity = $('s5blab').style.opacity = draw;
-    $('s5namei').style.transform = `translateY(${-46*quartInOut(clamp((xh - 509)/12))}px)`;
+    $('s5name').style.opacity = draw;
     const wn = ['REGULAR','MEDIUM','SEMIBOLD','BOLD'][Math.round((w-400)/100)];
-    $('s5style').textContent = `${xh >= 515 ? 'GOLDEN ' : ''}${wn}${sl <= -5 ? ' SLANT' : ''}`;
-    hud(C.g9, 5);
+    $('s5style').textContent = `${wn}${sl <= -5 ? ' SLANT' : ''} · x ${Math.round(xh)}`; $('s5style').style.opacity = draw;
   }
-  // ---- S6 6.5–7.5: interior photo + named styles roll in
-  else if (t < 7.5) {
-    $('s6pw').style.clipPath = `inset(0 ${(1-expoOut(seg(t,6.5,6.8)))*100}% 0 0)`;
-    kb($('s6p'), t, 6.5, 7.5, 1.14, 1.04, -30);
+
+  // ---------- S6/S7 6.4–8.3: wipe in from the left; interior panel + styles; panel opens; giant t
+  if (t >= WIN.s6[0] && t < WIN.s6[1]) {
+    const s6 = $('s6');
+    const wipe = expoInOut(seg(t, 6.4, 6.64));
+    const up = expoOut(seg(t, 8.0, 8.28));
+    s6.style.clipPath = `inset(0 ${(1-wipe)*100}% 0 0)`;
+    s6.style.transform = `translateY(${-up*H*.25}px)`;
+    const op = expoInOut(seg(t, 7.28, 7.52));
+    $('s6pw').style.width = lerp(960, W, op) + 'px';
+    kb($('s6p'), t, 6.4, 8.3, 1.12, 1.0, -40);
+    $('s6list').style.transform = `translateX(${op*700}px)`;
     S6.forEach(({sp,tag},k)=>{
-      const p = expoOut(seg(t, 6.52 + k*.0625, 6.52 + k*.0625 + .35));
-      sp.style.transform = `translateY(${(1-p)*100}%)`; tag.style.opacity = p;
+      const p = expoOut(seg(t, 6.56 + k*.0625, 6.56 + k*.0625 + .35));
+      sp.style.transform = `translateY(${(1-p)*105}%)`; tag.style.opacity = p;
     });
-    hud(C.g9, 6);
-    $('hud').children[0].style.color = C.paper; $('hud').children[3].style.color = C.paper; $('hud').children[1].style.opacity = 0;
-  }
-  // ---- S7 7.5–8: giant t over lotus, x-height climbs, t swaps to Golden at 515
-  else if (t < 8) {
-    kb($('s7p'), t, 7.5, 8, 1.06, 1.12);
+    $('s6tint').style.opacity = expoOut(seg(t, 7.4, 7.6));
     const g = $('s7g');
+    g.style.display = t >= 7.5 ? 'block' : 'none';
     const xh = t < 7.75 ? 495 + 19*Math.pow(seg(t,7.5,7.75),2) : 515 + 20*expoOut(seg(t,7.75,7.9));
     fv(g, 600, xh); centre(g, 't', 980, 600, false, W/2 + 60, H/2 + 20);
-    const pop = t >= 7.75 ? lerp(1.07, 1, expoOut(seg(t,7.75,7.9))) : lerp(.95, 1, expoOut(seg(t,7.5,7.7)));
-    g.style.transform = `scale(${pop})`; g.style.transformOrigin = '50% 60%';
+    const pop = t >= 7.75 ? lerp(1.07, 1, expoOut(seg(t,7.75,7.9))) : lerp(.9, 1, expoOut(seg(t,7.5,7.68)));
+    g.style.transformOrigin = '50% 60%'; g.style.transform = `scale(${pop})`; g.style.opacity = expoOut(seg(t,7.5,7.6));
+    $('s7lab').style.display = t >= 7.5 ? 'block' : 'none';
     $('s7lab').innerHTML = t < 7.75 ? `t<br><span style="opacity:.7">x-HEIGHT ${Math.round(xh)}</span>`
-                                     : `t · Golden<br><span style="opacity:.7">XHGT ≥ 515 · x ${Math.round(xh)}</span>`;
-    hud(C.paper, 7);
+                                     : `t · x ≥ 515<br><span style="opacity:.7">x-HEIGHT ${Math.round(xh)}</span>`;
   }
-  // ---- S8 8–10: end card
-  else {
+
+  // ---------- S8 8.0–10: end card slides up over the t
+  if (t >= WIN.s8[0]) {
     const cap = S8.cap;
-    S8.arch.style.clipPath = `inset(${(1-expoOut(seg(t,8.0,8.45)))*100}% 0 0 0)`;
+    $('s8').style.transform = `translateY(${(1-expoOut(seg(t, 8.0, 8.28)))*H}px)`;
+    S8.arch.style.clipPath = `inset(${(1-expoOut(seg(t,8.12,8.55)))*100}% 0 0 0)`;
     kb($('s8p'), t, 8, 10, 1.14, 1.04);
     const sweep = quartInOut(seg(t, 8.62, 9.4)), xh = 495 + 40*sweep;
     fv(S8.l1, 500, xh); K8.items.forEach(it=>{ if (it) fv(it.s, 500, xh); }); layoutWord(K8);
-    fv(S8.l2, 500, xh); fv(S8.l3, 500);
-    rollWord(K8, t, 8.0, .045, .45, -1, 110);
-    const r2 = expoOut(seg(t, 8.14, 8.55)), sw = quartInOut(clamp((xh - 509)/12));
-    $('s8roll').style.transform = `translateY(${(1-r2)*cap*1.1 - sw*(cap+60)}px)`;
-    const ent = expoOut(seg(t, 8.25, 8.65)), v = xh;
+    fv(S8.l2, 500, xh); S8.K2.items.forEach(it=>{ if (it) fv(it.s, 500, xh); }); layoutWord(S8.K2);
+    fv(S8.l3, 500); S8.l3.style.opacity = expoOut(seg(t, 8.3, 8.45));
+    slot(K8, t, 8.1, null, .045, .45); slot(S8.K2, t, 8.22, null, .045, .45);
+    const ent = expoOut(seg(t, 8.3, 8.7)), v = xh;
     const ones = v % 10, tens = Math.floor(v/10) % 10 + Math.max(0, ones - 9);
     const hund = Math.floor(v/100) % 10 + Math.max(0, (v % 100) - 99);
     [hund, tens, ones].forEach((pos,k)=>{ S8.odo[k].style.transform = `translateY(${-pos*cap*1.2 + (1-ent)*cap*1.2}px)`; });
-    S8.seal.style.transform = `rotate(${lerp(-120,0,expoOut(seg(t,8.3,9.0)))}deg) scale(${clamp(backOut(seg(t, 8.3, 8.85)),0,2)})`;
-    S8.xlab.style.opacity = expoOut(seg(t, 8.45, 8.8));
-    S8.infoLines.forEach((s,i)=>{ const p = expoOut(seg(t, 8.45 + i*.06, 8.85 + i*.06)); s.style.transform = `translateY(${(1-p)*110}%)`; });
-    hud(C.g9, 8);
+    S8.seal.style.transform = `rotate(${lerp(-120,0,expoOut(seg(t,8.35,9.0)))}deg) scale(${clamp(backOut(seg(t, 8.35, 8.9)),0,2)})`;
+    S8.xlab.style.opacity = expoOut(seg(t, 8.5, 8.85));
+    S8.infoLines.forEach((s,i)=>{ const p = expoOut(seg(t, 8.5 + i*.06, 8.9 + i*.06)); s.style.transform = `translateY(${(1-p)*110}%)`; });
   }
+
+  // ---------- HUD colour follows what is under it
+  if (t < 1.05) hud(C.g9, 1);
+  else if (t < 1.5) hud(C.paper, 2);
+  else if (t < 3.0) hud(C.g9, t < 2.06 ? 2 : 3);
+  else if (t < 4.0) { const k = Math.min(7, Math.floor((t-3)/.125)); hud(S4[k].fg, 4); }
+  else if (t < 6.4) hud(C.g9, 5);
+  else if (t < 7.3) hud(C.g9, 6, C.paper);
+  else if (t < 8.1) hud(C.paper, 7);
+  else hud(C.g9, 8);
 }
+let S1box = {L:0,T:0,R:W,B:H};
 
 window.ready = (async () => {
   for (const f of ['400 100px AN','700 100px AN','italic 400 100px AN','italic 700 100px AN'])
-    await document.fonts.load(f, 'AN NAM tiếng việt Sài Gòn Ắệữ');
+    await document.fonts.load(f, 'AN NAM tiếng việt Sài Gòn Phố cổ Hà Nội Áo dài Ắệữ');
   await sealReady; await Promise.all(imgs); await document.fonts.ready;
   build(); render(0);
   return true;

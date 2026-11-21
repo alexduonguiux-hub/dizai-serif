@@ -1,23 +1,25 @@
-"""Original 10 s score for the AnNam Serif showreel (120 BPM, every cut on the grid).
+"""Original 10 s score for the AnNam Serif showreel — Indochine jazz lounge (120 BPM, 5 bars of 4/4).
 
-Đàn-tranh-like plucks (additive, with the 'nhấn' pitch bend) in a pentatonic
-scale, a mõ (wood block) on the fast-cut section, minimal kick / hat, whooshes on
-the cube turns and a gong-ish hit on the end card. Pure numpy, no samples.
-Giây 4–10: tiếng nhấn đàn tranh luyến theo thanh kéo x-Height (Serif → Golden).
+Saigon-1930s feel: felt piano with maj9 / m9 voicings, upright bass, brushes and ride; the
+three slider drags are played by a đàn bầu (monochord) voice whose pitch glides with each knob.
+Every cut in the picture lands on a piano stab, a rim click or a cymbal. Pure numpy, no samples.
 Usage: python3 music.py out.wav
 """
 import sys
+import wave
 import numpy as np
 from scipy.signal import butter, sosfilt, fftconvolve
 
 SR = 48000
 DUR = 10.0
 N = int(SR * DUR)
-rng = np.random.default_rng(7)
+rng = np.random.default_rng(11)
 mix = np.zeros((2, N))
+B = 0.5            # one beat
+SW = 0.04          # swing delay for off-beat 8ths
 
 
-def note(n):  # midi -> Hz
+def hz(n):
     return 440.0 * 2 ** ((n - 69) / 12)
 
 
@@ -31,185 +33,213 @@ def add(sig, t0, gain=1.0, pan=0.0):
     mix[1, i:i + len(sig)] += sig * gain * r * 1.414
 
 
-def pluck(midi, dur=1.6, bend=0.0, bend_at=0.12, bright=1.0, curve=None, sustain=1.0):
-    """Zither pluck: decaying harmonics, optional bend (semitones) after attack."""
-    t = np.arange(int(dur * SR)) / SR
-    b = bend * np.clip((t - bend_at) / 0.12, 0, 1) ** 1.5
-    if curve is not None:
-        b = curve(t)
-    vib = 0.12 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.3) / 0.3, 0, 1)
-    f = note(midi) * 2 ** ((b + vib) / 12)
+def tt(d):
+    return np.arange(int(d * SR)) / SR
+
+
+def lp(x, f, o=2):
+    return sosfilt(butter(o, f, 'lp', fs=SR, output='sos'), x)
+
+
+def bp(x, a, b, o=2):
+    return sosfilt(butter(o, [a, b], 'bp', fs=SR, output='sos'), x)
+
+
+# ---------------- instruments ----------------
+def piano(m, dur=2.0, vel=1.0):
+    """Felt piano: slightly inharmonic partials, two-stage decay, soft hammer."""
+    t = tt(dur); f = hz(m); out = np.zeros_like(t)
+    Bc = 0.0004
+    for k in range(1, 11):
+        fk = f * k * np.sqrt(1 + Bc * k * k)
+        if fk > SR / 2.2:
+            break
+        a = (1 / k ** 1.6) * (0.6 + 0.4 * vel) ** (k / 3)
+        d1, d2 = 2.5 + 0.9 * k, 0.6 + 0.25 * k
+        env = 0.65 * np.exp(-t * d1) + 0.35 * np.exp(-t * d2)
+        out += a * np.sin(2 * np.pi * fk * t + k) * env
+    out += 0.08 * lp(rng.standard_normal(len(t)), 2500) * np.exp(-t * 120)   # hammer felt
+    out *= np.minimum(1, t / 0.004)
+    rel = np.ones_like(t); r = int(0.12 * SR); rel[-r:] = np.linspace(1, 0, r)
+    return out * rel * 0.22 * vel
+
+
+def chord(notes, t0, dur=2.0, vel=0.8, roll=0.012, pan=0.0):
+    for i, m in enumerate(notes):
+        add(piano(m, dur, vel), t0 + i * roll, 1.0, pan + (i - len(notes) / 2) * 0.08)
+
+
+def bass(m, dur=0.5, vel=1.0):
+    t = tt(dur); f = hz(m) * (1 + 0.01 * np.exp(-t * 40))
     ph = 2 * np.pi * np.cumsum(f) / SR
-    out = np.zeros_like(t)
-    for h in range(1, 9):
-        amp = (1 / h ** 1.3) * (bright if h > 2 else 1)
-        dec = np.exp(-t * (2.2 + 1.6 * h) / sustain)
-        out += amp * np.sin(h * ph + h * 0.3) * dec
-    att = np.clip(t / 0.003, 0, 1)
-    # metallic pick transient
-    out += 0.25 * rng.standard_normal(len(t)) * np.exp(-t * 300)
-    return out * att * 0.35
+    s = np.sin(ph) + 0.35 * np.sin(2 * ph) + 0.12 * np.sin(3 * ph)
+    env = np.minimum(1, t / 0.006) * np.exp(-t * 3.0)
+    thump = 0.3 * lp(rng.standard_normal(len(t)), 400) * np.exp(-t * 60)
+    rel = np.ones_like(t); r = int(0.05 * SR); rel[-r:] = np.linspace(1, 0, r)
+    return (s * env + thump) * rel * 0.42 * vel
 
 
-def kick(gain=1.0):
-    t = np.arange(int(0.45 * SR)) / SR
-    f = 45 + 110 * np.exp(-t * 28)
+def brush_tap(gain=0.12):
+    t = tt(0.09)
+    return bp(rng.standard_normal(len(t)), 2500, 9000) * np.exp(-t * 55) * gain
+
+
+def brush_swish(dur=0.45, gain=0.10):
+    t = tt(dur); x = t / dur
+    return bp(rng.standard_normal(len(t)), 1800, 7000) * np.sin(np.pi * x) ** 1.5 * gain
+
+
+def ride(gain=0.10, dur=1.2):
+    t = tt(dur); out = np.zeros_like(t)
+    for r, a in [(1, 1), (1.47, .7), (2.09, .6), (2.56, .5), (3.42, .4), (4.11, .3)]:
+        out += a * np.sin(2 * np.pi * 410 * r * 2.3 * t + r)
+    noise = bp(rng.standard_normal(len(t)), 6000, 14000)
+    return (0.25 * out + 0.6 * noise) * np.exp(-t * 4.5) * np.minimum(1, t / 0.001) * gain
+
+
+def cymbal_swell(dur, gain=0.18):
+    t = tt(dur); x = t / dur
+    n = bp(rng.standard_normal(len(t)), 3000, 13000)
+    return n * x ** 2.5 * gain
+
+
+def crash(gain=0.22, dur=2.0):
+    t = tt(dur)
+    return bp(rng.standard_normal(len(t)), 2500, 14000) * np.exp(-t * 2.2) * gain
+
+
+def rim(gain=0.25):
+    t = tt(0.06)
+    s = np.sin(2 * np.pi * 1750 * t) * np.exp(-t * 90) + 0.6 * bp(rng.standard_normal(len(t)), 2000, 6000) * np.exp(-t * 120)
+    return s * gain
+
+
+def kick(gain=0.6):
+    t = tt(0.35); f = 48 + 60 * np.exp(-t * 30)
+    return np.sin(2 * np.pi * np.cumsum(f) / SR) * np.exp(-t * 9) * gain
+
+
+def bell(m, gain=0.12, dur=0.9):
+    """Celesta-like tick for the style list."""
+    t = tt(dur); f = hz(m)
+    s = np.sin(2 * np.pi * f * t) + 0.4 * np.sin(2 * np.pi * f * 4.01 * t) * np.exp(-t * 12)
+    return s * np.exp(-t * 5) * np.minimum(1, t / 0.002) * gain
+
+
+def danbau(m, dur, curve):
+    """Đàn bầu: one string played on harmonics — flute-like tone, pitch bent by the rod.
+    curve(t) gives the bend in semitones; vibrato grows on held notes."""
+    t = tt(dur)
+    vib = 0.18 * np.sin(2 * np.pi * 5.2 * t) * np.clip((t - 0.25) / 0.25, 0, 1)
+    f = hz(m) * 2 ** ((curve(t) + vib) / 12)
     ph = 2 * np.pi * np.cumsum(f) / SR
-    return np.tanh(1.6 * np.sin(ph) * np.exp(-t * 7.5)) * gain
+    s = np.sin(ph) + 0.22 * np.sin(2 * ph) + 0.08 * np.sin(3 * ph)
+    env = (1 - np.exp(-t * 60)) * np.exp(-t * 0.9)
+    rel = np.ones_like(t); r = int(0.15 * SR); rel[-r:] = np.linspace(1, 0, r) ** 2
+    pick = 0.15 * bp(rng.standard_normal(len(t)), 1500, 5000) * np.exp(-t * 200)
+    return (s * env * rel + pick) * 0.26
 
 
-def hat(dec=55, gain=0.18):
-    t = np.arange(int(0.12 * SR)) / SR
-    n = rng.standard_normal(len(t))
-    n = sosfilt(butter(4, 7000, 'hp', fs=SR, output='sos'), n)
-    return n * np.exp(-t * dec) * gain
-
-
-def woodblock(freq=820):
-    t = np.arange(int(0.12 * SR)) / SR
-    s = np.sin(2 * np.pi * freq * t) + 0.5 * np.sin(2 * np.pi * freq * 2.73 * t) * np.exp(-t * 60)
-    return s * np.exp(-t * 38) * 0.4
-
-
-def clap():
-    t = np.arange(int(0.3 * SR)) / SR
-    n = sosfilt(butter(2, [900, 3500], 'bp', fs=SR, output='sos'), rng.standard_normal(len(t)))
-    env = np.zeros_like(t)
-    for d in (0, 0.009, 0.019):
-        env += np.where(t >= d, np.exp(-(t - d) * 90), 0)
-    env += 0.4 * np.exp(-t * 14)
-    return n * env * 0.35
-
-
-def sub(midi, dur=0.5, gain=0.5):
-    t = np.arange(int(dur * SR)) / SR
-    s = np.sin(2 * np.pi * note(midi) * t) + 0.2 * np.sin(4 * np.pi * note(midi) * t)
-    return s * np.minimum(1, t / 0.01) * np.exp(-t * 3.2) * gain
-
-
-def noise_sweep(dur, f0, f1, gain=0.3, shape='updown'):
-    """Band-passed noise whose centre glides f0 -> f1 (whoosh / riser)."""
-    n = int(dur * SR)
-    src = rng.standard_normal(n)
-    out = np.zeros(n)
-    blocks = 64
-    edges = np.linspace(0, n, blocks + 1).astype(int)
-    for k in range(blocks):
-        a, b = edges[k], edges[k + 1]
-        fc = f0 * (f1 / f0) ** (k / (blocks - 1))
-        sos = butter(2, [fc * 0.6, min(fc * 1.6, SR / 2 - 100)], 'bp', fs=SR, output='sos')
-        seg_ = sosfilt(sos, src[max(0, a - 2048):b])[-(b - a):]
-        out[a:b] = seg_
-    x = np.linspace(0, 1, n)
-    env = np.sin(np.pi * x) ** 2 if shape == 'updown' else x ** 2.2
-    return out * env * gain
-
-
-def gong(midi=33, dur=2.2):
-    t = np.arange(int(dur * SR)) / SR
-    f = note(midi)
-    out = np.zeros_like(t)
-    for r, a, d in [(1, 1, 1.2), (2.02, .5, 1.8), (2.76, .35, 2.4), (3.9, .25, 3.0), (5.4, .15, 4.0)]:
-        out += a * np.sin(2 * np.pi * f * r * t * (1 + 0.004 * np.exp(-t * 3))) * np.exp(-t * d)
-    return out * np.minimum(1, t / 0.004) * 0.45
-
-
-# pentatonic (A minor pentatonic ~ ngũ cung): A C D E G
-A3, C4, D4, E4, G4, A4, C5, D5, E5, G5, A5 = 57, 60, 62, 64, 67, 69, 72, 74, 76, 79, 81
-B = 0.5  # beat
-
-# --- 0–1  intro: rising arpeggio as AN NAM assembles, swell into the cut
-for i, m in enumerate([A3, C4, D4, E4, G4, A4, C5, D5]):
-    add(pluck(m, 1.4, bright=0.7), i * 0.125, 0.55 + 0.05 * i, pan=-0.5 + i * 0.14)
-add(noise_sweep(0.55, 400, 6000, 0.12, 'up'), 0.45)
-
-# --- 1–2  giant glyphs
-add(kick(1.0), 1.0); add(sub(33, 0.6), 1.0)
-add(pluck(E5, 2.0, bend=2, bend_at=0.15), 1.0, 0.8, 0.2)
-add(kick(0.9), 1.5); add(sub(31, 0.5), 1.5)
-add(pluck(D5, 1.6, bend=-1, bend_at=0.2), 1.5, 0.7, -0.2)
-add(hat(), 1.25, pan=0.4); add(hat(), 1.75, pan=0.4)
-
-# --- 2–3  rolling rows
-for k in range(2):
-    add(kick(0.9), 2 + k * B); add(hat(), 2.25 + k * B, pan=0.4)
-add(sub(33, 0.5), 2.0); add(sub(36, 0.5), 2.5)
-for tt, m in [(2.0, A4), (2.25, C5), (2.5, E5), (2.75, D5)]:
-    add(pluck(m, 1.0), tt, 0.6, pan=0.3 if m > 70 else -0.3)
-add(clap(), 2.5, 0.9)
-
-# --- 3–4  diacritic flash cards: mõ on every 16th
-for k in range(8):
-    add(woodblock(980 if k % 2 == 0 else 740), 3 + k * 0.125, 0.9, pan=-0.35 if k % 2 else 0.35)
-add(kick(1.0), 3.0); add(kick(0.8), 3.5); add(sub(36, 0.5), 3.0); add(sub(38, 0.5), 3.5)
-add(pluck(A5, 1.0, bright=1.2), 3.0, 0.4, 0.5)
-
-# --- 4–6.5  three sliders (weight, slant, x-height): the đàn tranh 'nhấn' glides with each drag
 def smooth(x):
-    x = np.clip(x, 0, 1); return np.where(x < .5, 8 * x**4, 1 - (-2 * x + 2)**4 / 2)
+    x = np.clip(x, 0, 1)
+    return np.where(x < .5, 8 * x ** 4, 1 - (-2 * x + 2) ** 4 / 2)
 
-add(kick(1.0), 4.0); add(sub(33, 0.6), 4.0)
-for i, m in enumerate([A4, C5, D5, E5]):
-    add(pluck(m, 0.9, bright=0.8), 4.0 + i * 0.0625, 0.4, pan=-0.3 + 0.2 * i)
-for k in range(5):
-    add(hat(60, 0.12), 4.25 + k * B, pan=0.4)
-add(kick(0.7), 5.0); add(kick(0.8), 6.0)
-# three drags, one after another: weight (4.46–4.9), slant (5.02–5.42), x-height (5.56–6.0)
-add(woodblock(1400), 4.42, 0.45, 0.2)
-add(pluck(A4, 1.0, curve=lambda t: 3 * smooth((t - 0.02) / 0.44), sustain=2.2), 4.44, 0.7, -0.1)   # weight: up a third
-add(sub(33, 0.5, 0.3), 4.5)
-add(woodblock(1250), 4.99, 0.45, 0.0)
-add(pluck(C5, 0.9, curve=lambda t: -2 * smooth((t - 0.02) / 0.4), sustain=2.2), 5.0, 0.65, 0.2)   # slant: leans down
-add(kick(0.7), 5.5)
-add(woodblock(1400), 5.53, 0.45, 0.2)
-add(pluck(A4, 1.3, curve=lambda t: 5 * smooth((t - 0.02) / 0.44), sustain=2.6), 5.54, 0.8, 0.0)  # x-height: up a fourth (Golden)
-add(noise_sweep(0.45, 300, 4000, 0.08, 'up'), 5.55)
-add(pluck(D5, 1.0), 6.0, 0.5, 0.3); add(sub(38, 0.5), 6.0); add(clap(), 6.0, 0.6)
-# all three together, partway back
-for m, d in [(E4, -3), (A4, -3), (D5, -3)]:
-    add(pluck(m, 0.8, curve=lambda t, d=d: d * smooth((t - 0.02) / 0.34), sustain=1.8), 6.06, 0.35, 0.0)
 
-# --- 6.5–7.5  interior photo + named styles: a mõ on every line
+# ---------------- harmony (key of D) ----------------
+D2, E2, Fs2, G2, A2, B2 = 38, 40, 42, 43, 45, 47
+Dmaj9 = [50, 54, 57, 61, 64]          # D F# A C# E
+Bm9 = [47, 50, 54, 57, 61]            # B D F# A C#
+Gmaj9 = [43, 47, 50, 54, 57]          # G B D F# A
+Em9 = [52, 55, 59, 62, 66]            # E G B D F#
+A13 = [45, 49, 55, 59, 66]            # A C# G B F#
+
+# ---------------- 0–1  intro: piano arpeggio as AN NAM assembles ----------------
+for i, m in enumerate([50, 54, 57, 61, 64, 66, 69, 73]):
+    add(piano(m, 1.6, 0.55 + 0.04 * i), 0.04 + i * 0.105, 0.9, -0.4 + i * 0.11)
+add(cymbal_swell(0.55, 0.12), 0.45)
+
+# ---------------- groove 1–8: walking bass, brushes, ride ----------------
+walk = {1.0: D2, 1.5: Fs2, 2.0: B2 - 12, 2.5: D2, 3.0: Fs2, 3.5: A2, 4.0: G2, 4.5: B2 - 12,
+        5.0: D2, 5.5: E2, 6.0: G2, 6.5: E2, 7.0: G2, 7.5: A2}
+for t0, m in walk.items():
+    add(bass(m, 0.48, 1.0 if (t0 * 2) % 2 == 0 else 0.85), t0, 1.0, -0.1)
+for k in range(14):                       # beats 1.0 … 7.5
+    t0 = 1.0 + k * B
+    add(ride(0.08), t0, pan=0.45)
+    add(brush_tap(0.06), t0 + B / 2 + SW, pan=-0.3)
+    if k % 2 == 1:
+        add(brush_swish(0.4, 0.09), t0 - 0.05, pan=-0.2)
+for t0 in (1.0, 2.0, 4.0, 6.5):
+    add(kick(0.5), t0)
+
+# ---------------- stabs on the cuts ----------------
+chord(Dmaj9, 1.0, 1.0, 0.9)                           # letters fill with the photo
+add(cymbal_swell(0.42, 0.10), 1.05)                    # photo grows out of the word
+chord([54, 57, 61, 66], 1.5, 0.6, 0.7, roll=0.008)    # photo settles into the panel
+chord(Bm9, 2.0, 1.0, 0.8)                             # Phố cổ → Áo dài
+add(piano(73, 0.5, 0.6), 2.5 + SW, 0.7, 0.4); add(piano(71, 0.5, 0.6), 2.75 + SW, 0.6, 0.4)
+# 3–4  diacritic cards: a rim click + short piano note on every 16th card
+mel = [73, 71, 69, 66, 69, 71, 73, 76]
 for k in range(8):
-    add(woodblock(1050 if k % 2 == 0 else 760), 6.5 + k * 0.0625, 0.55, pan=-0.4 if k % 2 else 0.4)
-add(kick(1.0), 6.5); add(sub(36, 0.5), 6.5); add(kick(0.85), 7.0); add(sub(33, 0.5), 7.0)
-add(pluck(E4, 1.0, bend=2, bend_at=0.2), 7.0, 0.45, -0.4)
-add(pluck(A4, 1.0), 7.012, 0.45, 0.4)
-for k in range(4):
-    add(hat(70, 0.14), 7.0 + k * 0.125, pan=0.3)
+    add(rim(0.18), 3 + k * 0.125, pan=0.3 if k % 2 else -0.3)
+    add(piano(mel[k], 0.35, 0.55), 3 + k * 0.125, 0.55, 0.25)
+chord(Bm9, 3.0, 0.9, 0.6, roll=0.0)
 
-# --- 7.5–8  giant t: tension, then the snap to the Golden t at 7.75
-add(kick(0.9), 7.5); add(sub(31, 0.3), 7.5)
-add(noise_sweep(0.5, 400, 9000, 0.2, 'up'), 7.5)
-add(clap(), 7.75, 0.9); add(pluck(E5, 0.8, bend=0), 7.75, 0.55, 0.2); add(woodblock(1700), 7.75, 0.4)
-for k in range(3):
-    add(hat(80, 0.16), 7.81 + k * 0.0625, pan=-0.3)
+# ---------------- 4–6.5  three sliders: đàn bầu follows each knob ----------------
+chord(Gmaj9, 4.0, 2.0, 0.7)
+# one sustained bầu line: weight up a major third, slant down a tone, x-height up a fourth,
+# then all three back together
+def bau_curve(t):
+    T = t + 4.40
+    c = 4 * smooth((T - 4.46) / 0.44)
+    c -= 2 * smooth((T - 5.02) / 0.40)
+    c += 5 * smooth((T - 5.56) / 0.44)
+    c -= 4.5 * smooth((T - 6.08) / 0.34)
+    return c
+add(danbau(69, 2.1, bau_curve), 4.40, 1.0, 0.1)        # A4 → C#5 → B4 → E5 → ~C#5
+for t0 in (4.42, 4.98, 5.52, 6.04):                     # the cursor grabbing a knob
+    add(rim(0.09), t0, pan=0.5)
+chord([55, 59, 62, 66], 6.0, 0.6, 0.55, roll=0.006)     # lands on x-height (Em9 colour)
 
-# --- 8–10  end card: impact, Serif → Golden sweep with a rising bend, odometer ticks
-add(kick(1.2), 8.0); add(sub(33, 1.6, 0.7), 8.0); add(gong(45, 2.0), 8.0, 0.5)
-for k, m in enumerate([A3, E4, A4, C5, E5]):
-    add(pluck(m, 2.0), 8.0 + k * 0.012, 0.5, pan=-0.4 + 0.2 * k)
-add(pluck(E5, 1.6, curve=lambda t: 5 * smooth((t - 0.02) / 0.78), sustain=2.6), 8.62, 0.5, 0.1)
-for k in range(9):
-    add(woodblock(1500 + 70 * (k % 3)), 8.66 + k * 0.085, 0.2, pan=0.35)
-add(pluck(A5, 1.2), 9.4, 0.45, 0.3)
-add(pluck(E5, 1.0, bend=2, bend_at=0.15), 9.6, 0.3, -0.3)
+# ---------------- 6.5–7.5  interior + style list: a celesta tick per line ----------------
+chord(Em9, 6.42, 1.1, 0.75)
+add(brush_swish(0.26, 0.14), 6.38, pan=-0.5)                 # wipe in from the left
+for k, m in enumerate([78, 81, 83, 85, 86, 85, 83, 81]):
+    add(bell(m, 0.08), 6.56 + k * 0.0625, pan=0.5 - 0.12 * k)
+chord(A13, 7.0, 0.8, 0.7)
 
-# --- master: reverb, glue, fade
-ir_t = np.arange(int(1.6 * SR)) / SR
-ir = rng.standard_normal((2, len(ir_t))) * np.exp(-ir_t * 3.2)
-ir = np.array([sosfilt(butter(1, 5000, 'lp', fs=SR, output='sos'), c) for c in ir])
-ir[:, : int(0.012 * SR)] = 0
+# ---------------- 7.5–8  the t: tension, snap on 7.75 ----------------
+chord([57, 61, 67, 70], 7.5, 0.4, 0.6, roll=0.0)        # A7(b9) colour
+add(cymbal_swell(0.5, 0.16), 7.5)
+add(bass(A2, 0.25), 7.5); add(bass(A2 - 12, 0.25), 7.75, 0.9)
+add(piano(81, 0.4, 0.8), 7.75, 0.8, 0.3); add(rim(0.25), 7.75)
+add(piano(78, 0.3, 0.7), 7.875, 0.7, 0.2)
+
+# ---------------- 8–10  end card: resolve to Dmaj9, ring out ----------------
+add(kick(0.7), 8.0); add(crash(0.18, 2.0), 8.0, pan=0.3); add(brush_swish(0.28, 0.12), 7.96)
+add(bass(D2 - 12 + 12, 1.6, 1.0), 8.0)
+chord([38, 50, 54, 57, 61, 64, 69], 8.0, 2.0, 0.95, roll=0.018)
+add(danbau(76, 1.3, lambda t: -2 + 2 * smooth((t - 0.05) / 0.7)), 8.62, 0.6, 0.2)   # x-height sweep 495 → 535
+for k, m in enumerate([81, 85, 88]):
+    add(piano(m, 1.2, 0.5), 9.4 + k * 0.09, 0.5, 0.35)
+
+# ---------------- master: room, glue, fade ----------------
+ir_t = tt(1.8)
+ir = rng.standard_normal((2, len(ir_t))) * np.exp(-ir_t * 2.8)
+ir = np.array([lp(c, 4500, 1) for c in ir]); ir[:, : int(0.015 * SR)] = 0
 wet = np.array([fftconvolve(mix[c], ir[c])[:N] for c in range(2)])
 wet /= np.max(np.abs(wet)) + 1e-9
-out = mix / (np.max(np.abs(mix)) + 1e-9) + 0.22 * wet
-out = sosfilt(butter(2, 30, 'hp', fs=SR, output='sos'), out)
-out = np.tanh(out * 1.3) / np.tanh(1.3)
-fade = np.ones(N); fl = int(0.35 * SR); fade[-fl:] = np.linspace(1, 0, fl) ** 2
+out = mix / (np.max(np.abs(mix)) + 1e-9) + 0.28 * wet
+out = sosfilt(butter(2, 32, 'hp', fs=SR, output='sos'), out)
+# a touch of tape: gentle saturation + faint crackle
+out = np.tanh(out * 1.25) / np.tanh(1.25)
+crk = np.zeros(N); idx = rng.integers(0, N, 160); crk[idx] = rng.uniform(-1, 1, 160)
+crk = bp(crk, 1500, 6000) * 0.25
+out += crk
+fade = np.ones(N); fl = int(0.4 * SR); fade[-fl:] = np.linspace(1, 0, fl) ** 2
 out *= fade
 out *= 0.89 / np.max(np.abs(out))
 
-import wave
 pcm = (out.T * 32767).astype('<i2')
 with wave.open(sys.argv[1] if len(sys.argv) > 1 else 'music.wav', 'wb') as w:
     w.setnchannels(2); w.setsampwidth(2); w.setframerate(SR); w.writeframes(pcm.tobytes())
