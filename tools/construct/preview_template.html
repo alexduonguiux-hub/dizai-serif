@@ -372,13 +372,13 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 </script>
 <script>
 (function () {
-  const sec = document.getElementById("vf"); if (!sec || !document.querySelector("style").textContent.includes("AnNam VF")) return;
+  const sec = document.getElementById("vf"); if (!sec || ![...document.querySelectorAll("style")].some((e) => e.textContent.includes("AnNam VF"))) return;
   sec.hidden = false;
   const $ = (id) => document.getElementById(id);
   const out = $("vfout"), w = $("vfw"), wv = $("vfwv"), sz = $("vfs"), szv = $("vfsv"), br = $("vfr"), bi = $("vfi"), steps = $("vfsteps");
   const sl = $("vfn"), slv = $("vfnv");
   // S63: font gộp AnNam Golden — trục x-Height 495 (AnNam Serif) → 535 (AnNam Golden); Roman / Italic = hai file gộp
-  const XH = document.querySelector("style").textContent.includes('"AnNam VF XH"'), x = $("vfx"), xv = $("vfxv");
+  const XH = [...document.querySelectorAll("style")].some((e) => e.textContent.includes('"AnNam VF XH"')), x = $("vfx"), xv = $("vfxv");
   if (XH) { $("vfxl").style.display = ""; $("vfnl").style.display = "none"; x.addEventListener("input", () => apply()); }
   const apply = () => {
     if (XH) { const itl = +sl.value < -5; out.style.fontFamily = itl ? '"AnNam VF XH Italic", serif' : '"AnNam VF XH", serif';
