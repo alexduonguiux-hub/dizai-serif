@@ -42,7 +42,7 @@ B_K = 0.105                    # lòng co THEO TỈ LỆ bán trục −10.5 % (
 # nét tròn Bold dày thêm đúng B_STEM như thân (designer 05/11: "kiểm tra lại độ dày các chữ còn lại"): co lòng 10.5 % chung
 # cho mọi chữ làm lòng nhỏ co ít → o +17.6, g +13.4, a +13.5 (thân +22.6). Hệ số co lòng giải riêng để thành bụng xa thân
 # (đo bằng đường tròn nội tiếp) = Regular + B_STEM: o 101.2 → 123.8, g 101.1 → 123.7, a 96.6 → 119.2
-B_KG = {'o': 0.1396, 'g': 0.1955, 'a': 0.1929, 'e': 0.1396}   # e (QA độ dày 05/11): co 10.5 % chung làm thành e Bold nhẹ hơn n 12 % → như o
+B_KG = {'o': 0.1396, 'g': 0.1955, 'a': 0.1929, 'e': 0.1396}   # e (QA độ dày 05/11): co 10.5 % chung làm thành e Bold nhẹ hơn n 12 % → như o; S46d: e không cân lên thân + 2 % (làm e nặng hơn chữ khác — designer 20/11); S47: e Regular = bản vẽ mới (lòng elip nghiêng)
 B_SHIFT = 9.9                  # lòng dời về phía thân 9.9 (a: lệch tâm 10 → 13.5 px)
 B_BAR = 12.7                   # nét ngang mảnh (thanh e) dày thêm bằng phần lòng co
 B_THIN = 6.4                   # nét nối / tai g: nở đều mỗi phía (= nửa phần trên)
@@ -202,9 +202,10 @@ def bold(ch):
         bowl = V.D(V.xform(outer, st), cin)
         return V.U(bowl, V.move(stem, (k - 1)*(outer.bounds[2] - c), 0))
     if ch in 'dbqp':
-        bm, sm = G['bowl'], G['stem']
-        outer = _path(_first_contour(SHAPES['bowl']), bm); c, k, st = _stretch(outer.bounds)
-        cpts = [st(*q) for q in _samples(_path('M' + SHAPES['bowl'].split('M')[2], bm))]
+        bk = next(key for key, _ in GLYPH[ch] if 'bowl' in key)                    # S44: mảnh bụng riêng từng chữ
+        bm, sm = G[bk], G['stem']
+        outer = _path(_first_contour(SHAPES[bk]), bm); c, k, st = _stretch(outer.bounds)
+        cpts = [st(*q) for q in _samples(_path('M' + SHAPES[bk].split('M')[2], bm))]
         ctr, M = _ell_from_pts(cpts)
         stem = piece('stem', sm, 'Bold'); sx = (stem.bounds[0] + stem.bounds[2])/2; side = 1 if sx > c else -1
         x0, _, x1, _ = outer.bounds; edge = x1 if side > 0 else x0

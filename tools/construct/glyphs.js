@@ -336,7 +336,7 @@ const VNL = 'àáảãạăằắẳẵặâầấẩẫậđèéẻẽẹêề�
 // ký tự bổ sung nhóm 1 + 2 (designer 05/11) — dựng trong ref/symbols.py → designer_D.json
 const SYM = "*<>\\^_`{}|~­…•·«»‹›‚„¡¿©®™°±÷−‰§¶†‡£¥¢µ";
 const COMB = "\u0300\u0301\u0302\u0303\u0306\u0308\u0309\u030a\u030c\u031b\u0323\u0327";
-const LOWX = "ıȷ";
+const LOWX = "ıȷﬀ\ue000\ue001\ue002";   // S43 chữ ghép: ﬀ (U+FB00), ft tf tt (PUA nội bộ, xuất tên f_t t_f t_t, không cmap)
 // nhóm 3 (designer 05/11: "làm tiếp nhóm 3") — symbols.py group3()
 const LATU = "ÄÅÆÇËÎÏÐÑÖØÛÜÞŒŠŽŸ";
 const LATL = "ßäåæçëîïðñöøûüþÿœšž";

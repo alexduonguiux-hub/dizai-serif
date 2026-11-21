@@ -1,0 +1,190 @@
+<title>AnNam Serif Glyph Proof</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Bố cục: thanh điều khiển dính trên cùng, lưới ô glyph theo nhóm như bản bông kiểm chữ; đỏ = mực sửa bản in */
+:root {
+  --bg: #f3f4f6; --paper: #ffffff; --fg: #15171c; --muted: #5d6472; --line: #dcdfe5;
+  --old: #9aa0ab; --proof: #c8102e; --proof-soft: rgba(200, 16, 46, .10); --focus: #2457d6;
+  --ui: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --display: "N-Regular", Georgia, serif;
+  --cell: 132px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #111317; --paper: #1a1d23; --fg: #eceef2; --muted: #a2a9b6; --line: #2c3139;
+  --old: #6d7480; --proof: #ff5c78; --proof-soft: rgba(255, 92, 120, .14); --focus: #7aa2ff; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #111317; --paper: #1a1d23; --fg: #eceef2; --muted: #a2a9b6; --line: #2c3139;
+  --old: #6d7480; --proof: #ff5c78; --proof-soft: rgba(255, 92, 120, .14); --focus: #7aa2ff; color-scheme: dark }
+
+/*FONTFACES*/
+
+* { box-sizing: border-box }
+body { background: var(--bg); color: var(--fg); font: 14px/1.5 var(--ui);
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); padding-block: 0 48px }
+body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg) }
+header.top { max-width: 1400px; margin: 0 auto; padding-block: 28px 12px; display: flex; flex-wrap: wrap; gap: 8px 24px; align-items: baseline }
+h1 { font: 400 clamp(30px, 5vw, 46px)/1.05 var(--display); margin: 0; text-wrap: balance; letter-spacing: .005em }
+.sub { color: var(--muted); max-width: 70ch; margin: 0 }
+.sub b { color: var(--fg); font-weight: 600 }
+
+.bar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--bg); border-bottom: 1px solid var(--line);
+  max-width: 1400px; margin: 0 auto; padding-block: 10px; display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center }
+.grp { display: flex; flex-wrap: wrap; gap: 6px; align-items: center }
+.grp > .lbl { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-right: 2px }
+.seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--paper) }
+.seg button { font: 500 13px var(--ui); color: var(--muted); background: none; border: 0; padding: 6px 10px; cursor: pointer; white-space: nowrap }
+.seg button + button { border-left: 1px solid var(--line) }
+.seg button[aria-pressed="true"] { background: var(--fg); color: var(--paper) }
+.seg button:focus-visible, select:focus-visible, input:focus-visible { outline: 2px solid var(--focus); outline-offset: 1px }
+select, input[type="search"] { font: 13px var(--ui); color: var(--fg); background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; min-width: 0 }
+input[type="search"] { width: 15ch }
+input[type="range"] { width: 110px; accent-color: var(--proof) }
+.legend { display: flex; gap: 12px; flex-wrap: wrap; font-size: 12px; color: var(--muted) }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 5px; vertical-align: -1px }
+
+main { max-width: 1400px; margin: 0 auto }
+section { padding-top: 22px }
+section h2 { font: 600 12px var(--ui); text-transform: uppercase; letter-spacing: .09em; color: var(--muted); margin: 0 0 10px; display: flex; gap: 10px; align-items: baseline }
+section h2 span { font: 400 12px var(--mono); letter-spacing: 0; text-transform: none }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cell), 1fr)); gap: 8px }
+.cell { background: var(--paper); border: 1px solid var(--line); border-radius: 6px; display: flex; flex-direction: column; min-width: 0; position: relative }
+.cell.chg { border-color: var(--proof); box-shadow: inset 0 0 0 1px var(--proof-soft) }
+.cell.chg::after { content: "đổi"; position: absolute; top: 6px; right: 6px; font: 600 10px var(--ui); letter-spacing: .04em; color: var(--paper);
+  background: var(--proof); border-radius: 3px; padding: 0 5px; line-height: 16px }
+.view { height: calc(var(--cell) * .92); display: flex; align-items: center; justify-content: center; gap: 6%; overflow: hidden; padding: 4px }
+.g { font-size: calc(var(--cell) * .52); line-height: 1; white-space: pre; font-variant-ligatures: none; font-feature-settings: "liga" 0 }
+.lig .g { font-variant-ligatures: common-ligatures; font-feature-settings: "liga" 1 }
+.g.old { color: var(--old) }
+.pair { display: flex; flex-direction: column; align-items: center; gap: 2px }
+.pair small { font: 10px var(--mono); color: var(--muted) }
+.stack { display: grid; place-items: center }
+.stack > .g { grid-area: 1 / 1 }
+.stack > .g.new { color: var(--fg); opacity: .78 }
+.stack > .g.ol { color: transparent; -webkit-text-stroke: 1.2px var(--proof) }
+.meta { border-top: 1px solid var(--line); padding: 5px 7px; display: flex; justify-content: space-between; gap: 6px; font: 11px/1.3 var(--mono); color: var(--muted); min-width: 0 }
+.meta span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap }
+.meta .adv { color: var(--proof) }
+.empty { color: var(--muted); padding: 24px 0 }
+@media (max-width: 520px) { :root { --cell: 104px } input[type="range"] { width: 80px } }
+</style>
+
+<header class="top">
+  <h1 id="ttl">AnNam Serif · bảng glyph</h1>
+  <p class="sub" id="sub"></p>
+</header>
+
+<div class="bar" role="toolbar" aria-label="Điều khiển so sánh">
+  <div class="grp"><span class="lbl">Kiểu</span>
+    <select id="style" aria-label="Kiểu chữ"></select>
+  </div>
+  <div class="grp"><span class="lbl">Xem</span>
+    <div class="seg" id="mode">
+      <button type="button" data-v="side" aria-pressed="true">Cạnh nhau</button>
+      <button type="button" data-v="over" aria-pressed="false">Chồng</button>
+      <button type="button" data-v="new" aria-pressed="false">Chỉ bản mới</button>
+    </div>
+  </div>
+  <div class="grp"><span class="lbl">Lọc</span>
+    <div class="seg" id="filt">
+      <button type="button" data-v="all" aria-pressed="true">Tất cả</button>
+      <button type="button" data-v="chg" aria-pressed="false">Chỉ glyph đổi</button>
+    </div>
+  </div>
+  <div class="grp"><label class="lbl" for="q">Tìm</label><input type="search" id="q" placeholder="ký tự, U+0041, tên"></div>
+  <div class="grp"><label class="lbl" for="size">Cỡ</label><input type="range" id="size" min="96" max="240" step="4" value="132"></div>
+  <div class="legend" id="legend"></div>
+</div>
+
+<main id="main"></main>
+
+<script>
+const D = /*DATA*/null;
+const STY = ['Regular','Medium','SemiBold','Bold','Italic','MediumItalic','SemiBoldItalic','BoldItalic'];
+const STY_VN = {Regular:'Regular',Medium:'Medium',SemiBold:'SemiBold',Bold:'Bold',Italic:'Italic',MediumItalic:'Medium Italic',SemiBoldItalic:'SemiBold Italic',BoldItalic:'Bold Italic'};
+const GROUP_VN = {caps:'Chữ hoa', lower:'Chữ thường', fig:'Số', capsx:'Chữ hoa có dấu & mở rộng', lowerx:'Chữ thường có dấu & mở rộng',
+  lig:'Chữ ghép (liga)', punct:'Dấu câu & ký hiệu', mark:'Dấu tổ hợp'};
+const st = {style:'Regular', mode:'side', filt:'all', q:'', size:132};
+try { Object.assign(st, JSON.parse(localStorage.getItem('glyphproof') || '{}')) } catch (e) {}
+const save = () => { try { localStorage.setItem('glyphproof', JSON.stringify(st)) } catch (e) {} };
+const $ = s => document.querySelector(s);
+const hex = c => 'U+' + c.codePointAt(0).toString(16).toUpperCase().padStart(4, '0');
+const isPUA = c => { const u = c.codePointAt(0); return u >= 0xE000 && u <= 0xF8FF };
+const shown = c => D.lig[c] ? D.lig[c] : (D.groups.find(g => g[0] === 'mark')[1].includes(c) ? ' ' + c : c);
+
+const sel = $('#style');
+STY.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = STY_VN[s] + ' · ' + D.changed[s].length + ' đổi'; sel.appendChild(o) });
+
+function legend() {
+  const L = $('#legend');
+  L.innerHTML = st.mode === 'over'
+    ? '<span><i style="background:var(--fg);opacity:.78"></i>bản hiện tại</span><span><i style="border:1.5px solid var(--proof)"></i>' + D.old_label + ' (viền)</span>'
+    : st.mode === 'side'
+      ? '<span><i style="background:var(--old)"></i>' + D.old_label + '</span><span><i style="background:var(--fg)"></i>bản hiện tại</span>'
+      : '<span><i style="background:var(--fg)"></i>bản hiện tại</span>';
+}
+function match(c) {
+  if (!st.q) return true;
+  const q = st.q.trim(); if (!q) return true;
+  const ql = q.toLowerCase();
+  if (/^u\+[0-9a-f]+$/i.test(q)) return hex(c).toLowerCase() === ql;
+  if ((D.names[c] || '').toLowerCase().includes(ql) && q.length > 1) return true;
+  return [...q].some(x => x === c || (D.lig[c] && D.lig[c] === q));
+}
+function render() {
+  document.documentElement.style.setProperty('--cell', st.size + 'px');
+  sel.value = st.style; $('#size').value = st.size; $('#q').value = st.q;
+  for (const [id, key] of [['#mode','mode'], ['#filt','filt']])
+    document.querySelectorAll(id + ' button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === st[key])));
+  legend();
+  const chg = new Set([...D.changed[st.style]]);
+  const fN = 'N-' + st.style, fO = 'O-' + st.style;
+  const main = $('#main'); main.textContent = '';
+  let total = 0;
+  for (const [g, s] of D.groups) {
+    const list = [...s].filter(c => (st.filt === 'all' || chg.has(c)) && match(c));
+    if (!list.length) continue;
+    total += list.length;
+    const sec = document.createElement('section'); if (g === 'lig') sec.className = 'lig';
+    const n = [...s].filter(c => chg.has(c)).length;
+    sec.innerHTML = '<h2>' + GROUP_VN[g] + '<span>' + list.length + ' glyph' + (n ? ' · ' + n + ' đổi' : '') + '</span></h2>';
+    const grid = document.createElement('div'); grid.className = 'grid';
+    for (const c of list) {
+      const cell = document.createElement('div'); cell.className = 'cell' + (chg.has(c) ? ' chg' : '');
+      const t = shown(c), v = document.createElement('div'); v.className = 'view';
+      const mk = (cls, fam, txt) => { const e = document.createElement('span'); e.className = 'g ' + cls; e.style.fontFamily = '"' + fam + '", serif'; e.textContent = txt; return e };
+      if (st.mode === 'side') {
+        for (const [cls, fam, lab] of [['old', fO, 'cũ'], ['new', fN, 'mới']]) {
+          const p = document.createElement('div'); p.className = 'pair'; p.appendChild(mk(cls, fam, t));
+          const sm = document.createElement('small'); sm.textContent = lab; p.appendChild(sm); v.appendChild(p);
+        }
+      } else if (st.mode === 'over') {
+        const sk = document.createElement('div'); sk.className = 'stack';
+        sk.appendChild(mk('new', fN, t)); sk.appendChild(mk('ol', fO, t)); v.appendChild(sk);
+      } else v.appendChild(mk('new', fN, t));
+      cell.appendChild(v);
+      const m = document.createElement('div'); m.className = 'meta';
+      const nm = document.createElement('span'); nm.textContent = isPUA(c) ? (D.names[c] || '') : hex(c) + ' ' + (D.names[c] || '');
+      nm.title = nm.textContent; m.appendChild(nm);
+      const a = D.adv[st.style][c];
+      if (a) { const ad = document.createElement('span'); ad.className = 'adv'; ad.textContent = a[0] == null ? 'mới · ' + a[1] : (a[0] === a[1] ? 'rộng ' + a[1] : a[0] + '→' + a[1]); ad.title = 'độ rộng (advance)'; m.appendChild(ad) }
+      cell.appendChild(m); grid.appendChild(cell);
+    }
+    sec.appendChild(grid); main.appendChild(sec);
+  }
+  if (!total) { const p = document.createElement('p'); p.className = 'empty'; p.textContent = 'Không có glyph nào khớp bộ lọc. Bỏ ô tìm hoặc chọn "Tất cả".'; main.appendChild(p) }
+  const all = D.groups.reduce((n, g) => n + g[1].length, 0);
+  $('#sub').innerHTML = '<b>' + all + '</b> glyph × 8 kiểu. So <b>' + D.old_label + '</b> (bộ zip đã gửi) với <b>' + D.new_label +
+    '</b>. Kiểu ' + STY_VN[st.style] + ': <b>' + D.changed[st.style].length + '</b> glyph đổi (viền đỏ). Chữ ghép hiện qua tính năng liga.';
+  save();
+}
+sel.addEventListener('change', e => { st.style = e.target.value; render() });
+$('#mode').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { st.mode = b.dataset.v; render() } });
+$('#filt').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { st.filt = b.dataset.v; render() } });
+$('#q').addEventListener('input', e => { st.q = e.target.value; render() });
+$('#size').addEventListener('input', e => { st.size = +e.target.value; render() });
+render();
+document.fonts && document.fonts.ready.then(() => {});
+</script>

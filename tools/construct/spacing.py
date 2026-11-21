@@ -48,7 +48,7 @@ SIDE_ADJ = {}   # bỏ (05/11): kern cặp chữ theo trắng cặp tham chiếu
 # chỉnh tay theo designer (05/11: "ƯA hơi xa"): U / Ư + A (mọi A có dấu cùng class trái 'A') khe chân 134 — gấp đôi HA (67);
 # kéo thêm 20 ở hai master (ƯA = UA theo luật ơn = on). Medium / SemiBold nội suy theo
 KADJ = {}   # bỏ (05/11): UA ƯA AU theo trắng cặp tham chiếu   # + AU ("và AU"): A + U / Ư / Ú … (cùng class trái 'U')
-CAP, XH = 700.0, 495.0
+CAP, XH = 700.0, float(os.environ.get('DIZAI_XH', 495.0))   # DIZAI_XH: họ An Nam Golden (x-height 535)
 
 src = open(os.path.join(HERE, 'glyphs.js')).read()
 import re
@@ -75,13 +75,15 @@ def kind(ch):
     if ch in FIG: return 'fig'
     return 'punct'
 def base(ch):
-    if ch in 'Đđ₫': return {'Đ': 'D', 'đ': 'd', '₫': '₫'}[ch]
+    if ch in 'Đđ₫Øø': return {'Đ': 'D', 'đ': 'd', '₫': '₫', 'Ø': 'O', 'ø': 'o'}[ch]   # Ø ø = O o + nét gạch (spacing theo O o)
     b = unicodedata.normalize('NFD', ch)[0]; return b if b != ch or ch in CAPS + LOWER else ch
+LIG = {'ﬀ': 'ff', '\ue000': 'ft', '\ue001': 'tf', '\ue002': 'tt'}   # S43 chữ ghép: trái theo chữ đầu, phải theo chữ sau
 def rclass(ch):                       # class phía phải (chữ đứng trước)
+    if ch in LIG: return LIG[ch][1]
     nfd = unicodedata.normalize('NFD', ch)
     if '̛' in nfd: return nfd[0] + '̛'   # sừng
     return base(ch)
-def lclass(ch): return base(ch)       # class phía trái (chữ đứng sau)
+def lclass(ch): return LIG[ch][0] if ch in LIG else base(ch)       # class phía trái (chữ đứng sau)
 
 # ---------- profile ----------
 def flatten(p, n=16):
@@ -123,8 +125,11 @@ def white(prof, side, b):
         x = R[m]; ext = np.nanmax(R[m]) if np.any(~np.isnan(x)) else 0; d = ext - x
     d = np.where(np.isnan(d), DEPTH, np.minimum(d, DEPTH)); return float(d.mean())
 
+TREF = None
 def main():
     O = json.load(open(os.path.join(OUT, 'outlines.json')))
+    global TREF
+    TREF = json.load(open(os.environ['DIZAI_TREF'])) if os.environ.get('DIZAI_TREF') else None
     spacing, kerning = {}, {}; NEED = {}
     # thứ tự: Regular, Bold trước; Medium / SemiBold lấy kern CLASS nội suy từ hai master (như variable font — QA kerning
     # 05/11: kern đo riêng từng weight nhảy bậc ở ngưỡng hình học, vd. c- −60 / −60 / −60 / 0, L» −115 / −115 / 0 / 0),
@@ -137,6 +142,11 @@ def main():
         # ---- spacing: chữ gốc ----
         T = {}
         for ref, kd in (('H', 'caps'), ('n', 'lower')):
+            if TREF:                                                   # DIZAI_TREF (Golden): chuẩn khoảng trắng của AnNam Serif —
+                PRr = profile(outline([TREF[f'{ref}-{w}']]))           # loe to hơn không nới mọi chữ ra (designer "kerning Golden rộng hơn")
+                b = (0.0, CAP) if kd == 'caps' else (0.0, 495.0)          # vùng đo của chính AnNam Serif (x-height 495)
+                T[kd] = SB_REF[w][kd] + (white(PRr, 'L', b) + white(PRr, 'R', b))/2
+                continue
             b = band(ref, PR[ref]); T[kd] = SB_REF[w][kd] + (white(PR[ref], 'L', b) + white(PR[ref], 'R', b))/2
         sp = {}
         for ch in chars:

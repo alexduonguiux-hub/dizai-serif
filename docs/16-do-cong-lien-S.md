@@ -369,3 +369,231 @@ Bold 15.5 → 5.0, lòng trên 17.5 / 10.4 → 6.9, đỉnh −4.6 → −1.4). 
   (luật), 3 trên nhẹ hơn 3 dưới.
 - ? ¿ và dấu hỏi vẫn dựng từ số 2 gốc (`designer_Q`), không đổi.
 - Ảnh: `docs/img/s37-so-2-figma.png` (Figma gốc / v0.910 / S37, Regular và Bold).
+
+## S38 Số 2 liền độ cong: mép ngoài bụng, bước xuất font, Italic (designer 11/11: "cảm giác đường cong vẫn còn gợn chứ không có mượt")
+
+Đo độ cong dọc mép ngoài bụng số 2 (từ góc đầu nét trái qua đỉnh, vai, cực phải, tới chỗ vào nét chéo). Ba nguồn gây gợn:
+
+1. **Bản vẽ.** Độ cong lên, tụt, rồi lên lại: Regular −6.1 → −2.9 → −8.2 ×10⁻³, Bold −5.9 → −4.0 → −5.8. Ngay đỉnh còn nhảy −2.2 → 0.
+   `ref/fix_2_fair.py` (từ bản lưu `designer_B_pre2fair.json`, chạy SAU `fix_fig_weight.py`) làm mượt cả chuỗi:
+   - cố định: góc đầu nét, điểm vào nét chéo, đỉnh (y = 711.3, tiếp tuyến ngang), cực phải (bề ngang, tiếp tuyến đứng);
+   - được đổi: độ dài tay nắm; đỉnh và cực phải trượt trên tiếp tuyến của chúng; nút vai dời ≤ 10 u, xoay ≤ 6°;
+   - mục tiêu: Σ (dκ/ds)², phạt nhảy độ cong tại nút, phạt độ cong tụt rồi lên lại (chỉ một đỉnh), cấm đổi chiều cong;
+   - lệch so với bản vẽ ≤ 4 u (Regular) / 3 u (Bold).
+   Kết quả: độ cong tăng đều từ đỉnh (−2.4) lên vai (−5.5), giữ đều qua cực phải, rồi giảm dần; không nút nào nhảy.
+2. **Xuất font** (`export_font._snap_smooth`). Khi làm tròn toạ độ, bước này dò độ dài tay nắm ±3 u. Ở nút có tiếp tuyến đứng hoặc
+   ngang, mọi độ dài đều thẳng hàng như nhau, nên trước đây lấy độ dài dò đầu tiên, tức NGẮN nhất (2 Regular cực phải: tay 24.6 → 22 u,
+   độ cong 4.8 → 6.9). Lỗi này áp cho mọi glyph. Sửa:
+   - khi hoà, chọn độ dài gần gốc nhất;
+   - ở nút liền C–C, chọn điểm nguyên còn tính cả sai lệch độ cong ở 4 đầu hai đoạn (làm tròn tay nắm sát tiếp tuyến làm độ cong
+     đổi tới 30 %: 2 Bold cực phải 4.9 → 3.4).
+3. **Italic** (`ital_comp`).
+   - Bước bù dời điểm điều khiển không đều, lại ép hướng tay nắm về đúng hướng bản đứng → cực phải 2 Bold Italic độ cong gấp 1.8.
+     `_refit` dựng lại mỗi đoạn cong như đường song song mượt của đoạn bản đứng: độ dời pháp tuyến được làm trơn bằng spline bậc 3
+     theo độ dài cung qua cả chuỗi đoạn nối liền; neo ở nút liền đặt tại neo bản đứng cộng độ dời; tiếp tuyến ở nút liền trong chuỗi
+     xoay theo đạo hàm độ dời. Ở góc thật vẫn giữ hướng bản đứng (S28).
+   - Phép nghiêng giữ tỉ lệ độ cong hai bên mỗi nút, nên `_g2` chỉnh độ dài tay nắm cho tỉ lệ về như bản đứng. Chỉ nhận thay đổi làm
+     giảm tổng lệch ở nút đó và hai nút bên cạnh.
+   - Hai master Italic bù cùng nhau (`compensate_pair`): nút mà bản nội suy gãy thì đồng bộ tỉ lệ tay như compat_masters.
+   - Medium / SemiBold Italic tĩnh = nội suy hai master Italic đã bù (khớp bản variable).
+   - @ giữ góc cắt bụng cố ý (không khớp lại).
+
+Tỉ lệ độ cong lớn nhất ở các nút mép ngoài số 2 (trên file OTF, 1.0 = liền):
+
+| | Regular | Medium | SemiBold | Bold | Italic | Medium It. | SemiBold It. | Bold It. |
+|---|---|---|---|---|---|---|---|---|
+| bản vẽ mượt (1), bước xuất cũ | 1.43 | 1.50 | 1.48 | 1.27 | 1.65 | – | – | 2.91 |
+| + sửa hoà khi làm tròn (2a) | 1.14 | 1.27 | 1.20 | 1.41 | 1.65 | 1.94 | 3.10 | 2.91 |
+| S38 đủ (1 + 2 + 3) | 1.06 | 1.07 | 1.20 | 1.25 | 1.05 | 1.41 | 1.55 | 1.60 |
+
+QA: gãy 2–12° trên 8 file OTF còn 2 nút 2–3°, không nút nào > 3° (trước: khấc vát 5 Medium Italic 11.8°). Loe Italic: 0 gãy / 0 đổi chiều
+cong. Độ dày Italic so với bản đứng: nét chính trong khoảng ±3.5 %. qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font: 0 lỗi.
+Ảnh: `docs/img/s38-so-2-lien-do-cong.png` (lược độ cong mép ngoài 2 Regular / Bold, trước / sau).
+
+## S39 S liền độ cong theo cách S38 (designer 11/11: "kiểm tra lại đường cong chữ S theo cách này luôn")
+
+Đo độ cong dọc toàn bộ đường viền S. Kiểu gợn giống số 2: độ cong tụt rồi lên lại tại cực trị.
+- Mép ngoài bụng trên, cực trái: Regular −5.4 → −2.4 | −6.4 → −7.4 (tỉ 2.7), Bold 2.0.
+- Mép ngoài bụng dưới, cực phải: Regular −5.1 → −2.4 | −4.5 → −5.9 (1.9). Bold đã liền (1.23): giữ.
+- Lòng dưới, cực phải: Regular 4.5 | 5.3 → 7.9; Bold 7.1 | 8.0 → 14.0.
+- Lòng trên: cực trái Regular 5.3 | 8.2 → 10.7; Bold đỉnh lòng 3.2 → 10.9.
+
+`ref/fix_S_fair.py` (từ bản lưu `designer_{A,B}_preSfair.json`, chạy SAU `fix_S_g2.py`), cách `fix_2_fair` (S38):
+- 7 chuỗi: mép ngoài bụng trên (điểm uốn sống → cực trái → ĐỈNH), mép ngoài bụng dưới Regular (điểm uốn → cực phải → ĐÁY),
+  lòng trên, lòng dưới (góc đầu nét → cực trị → điểm uốn sống).
+- Cố định: điểm uốn sống, góc đầu nét (tay < 1 u giữ suy biến), đỉnh / đáy mép ngoài (chuỗi kéo cả đuôi làm độ cong rơi gắt ngay sau
+  đỉnh / đáy). Cực trị chỉ trượt trên tiếp tuyến của nó. Mọi tay đổi độ dài, giữ hướng.
+- Mục tiêu: Σ (dκ/ds)², nhảy độ cong tại nút, khớp độ cong với đoạn kế ngoài chuỗi, chỉ một đỉnh độ cong, không đổi chiều cong.
+- Lệch so với bản vẽ ≤ 3 u (2.66–3.04 u).
+
+Nút liền trong bản vẽ (tỉ lệ độ cong hai bên): Regular xấu nhất 1.2 (cực phải bụng dưới), Bold 1.3 (điểm uốn sống).
+Trên file OTF (nút xấu nhất mỗi kiểu):
+
+| | Regular | Medium | SemiBold | Bold | Italic | Medium It. | SemiBold It. | Bold It. |
+|---|---|---|---|---|---|---|---|---|
+| S trước | 2.64 | 2.43 | 2.20 | 1.95 | 2.69 | 2.21 | 2.07 | 2.00 |
+| S S39 | 1.21 | 1.50 | 1.45 | 1.30 | 1.79 | 1.88 | 1.65 | 1.65 |
+| s trước | 1.81 | 2.01 | 1.79 | 3.99 | 1.82 | 2.27 | 2.38 | 4.89 |
+| s S39 | 1.45 | 1.49 | 2.23 | 1.85 | 1.71 | 2.73 | 1.91 | 2.11 |
+| $ trước | 2.56 | 2.32 | 2.17 | 1.94 | 3.52 | 2.49 | 2.29 | 1.95 |
+| $ S39 | 1.53 | 1.62 | 1.50 | 1.41 | 1.51 | 2.24 | 1.74 | 2.36 |
+
+s, $ và § dựng lại từ S theo luật. Một vài kiểu tăng (s SemiBold, s / $ Medium Italic, $ Bold Italic). Nút xấu nhất của s nằm ở
+chỗ nối của bản dựng s (derive), không phải chuỗi đã làm mượt. § Bold Italic có một nút 13× ở chỗ hai nửa § nối nhau (đoạn
+cong gắt gặp đoạn gần thẳng, mỗi đoạn ~30 u); hình nhìn như trước.
+QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy.
+Ảnh: `docs/img/s39-S-lien-do-cong.png` (lược độ cong S Regular / Bold, trước / sau).
+
+## S40 S Regular theo bản vẽ mới + các weight suy từ Regular (designer 12/11: "Update lại đường cong bụng chữ S", "Update lại lần nữa", "Tôi có update nét bụng 1 chút", "dựa trên S regular tính lại cho các weight khác", "tính lại kerning cho chữ S và các chữ khác")
+
+- **Nguồn:** Figma 2145:1228 → vector 2179:2, bản cập nhật cuối: tay trên rộng thêm, lòng bụng dưới chỉnh ±1 đv. Quy đổi theo chiều cao
+  S (đáy −14.2, đỉnh 711.3): hệ số 3.0324 (mặt cắt đầu nét 120 u, bản cũ 119.3). S rộng 403 u (bản cũ 394).
+- **Dựng lại** (`ref/fix_S_figma2.py`). Vector mới 39 đoạn, nút gãy 1–3.1° → dựng lại đúng cấu trúc 14 đoạn của S Bold:
+  - neo ở cực trị, điểm uốn sống, góc đầu nét của bản vẽ mới;
+  - mỗi đoạn một cubic, tay khớp bình phương tối thiểu (lệch ≤ 2.2 u);
+  - làm mượt độ cong 4 chuỗi như S39 (lệch thêm ≤ 2 u). Mọi nút liền độ cong (tỉ lệ ≈ 1.0).
+  - Thay cho S34 / S35 / S39 ở S Regular (`fix_S_g2.py`, `fix_S_fair.py` giờ chỉ chạy S Bold).
+- **S Bold** (`ref/fix_S_bold_from_reg.py`) = S Regular mới + (S Bold cũ − S Regular cũ), cộng theo từng điểm điều khiển:
+  - giữ phần chênh weight designer đã duyệt (độ đậm, tương phản, đầu nét, S19), dáng bụng theo bản mới;
+  - hai tay ở mỗi nút liền đưa về chung hướng (phân giác), rồi làm mượt như S39;
+  - Medium / SemiBold = nội suy; Italic qua bước bù S38; s $ § Š dựng lại theo S.
+- **s** (`lower/derive.py` `_merge_smooth`): sau phép hợp + nét viền, gộp cặp đoạn cong nối liền nếu một cubic khớp (sai < 0.6 u). Bản
+  boolean để lại điểm ở chỗ nối khác nhau giữa Regular / Bold (s Bold thừa điểm sát cực trái) → ghép lệch nút, s Medium gãy 11°.
+- **Spacing / kerning tính lại toàn bộ** (`spacing.py`):
+  - S rộng thêm 8 u (Regular), 7 u (Bold); s +6 / +7; $ +9; § +6.
+  - Cặp đổi (Regular): AS −50 → −55, SO −15 → −10, oS −15 → −20, Sa 10 → 5, S" −10 → 0.
+  - Cặp đổi (Bold): ST −35 → −30, SV −45 → −40, SO −15 → −10, SS −10 → 0, as −15 → −10.
+- QA: qa_outline / qa_stroke / qa_cover / qa_weight / qa_kern / qa_font 0 lỗi; va chạm kerning 0; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy.
+- Ảnh: `docs/img/s40-S-figma.png` (S cũ / Figma chồng bản dựng / S mới), `docs/img/s40-S-weights.png` (S s $ qua các weight, trước / sau).
+
+## S41 W hoa rộng ra, lòng thoáng hơn (designer 12/11: "Điều chỉnh lại bề rộng chữ W hoa để spacing giữa các glyph của nó rộng ra xíu không bị nặng"; "chữ w thì ổn")
+
+`ref/widen_W.py` (từ bản lưu `designer_{A,B}_preW.json`): W = 4 nét chéo thẳng + mặt cắt phẳng + 4 cụm loe. Nới lòng mà nét KHÔNG đậm lên:
+1. mỗi mép nét giãn ngang quanh tâm chữ (× 1.061 Regular, × 1.062 Bold) → tâm nét, đỉnh, đáy giãn ra;
+2. dời mép vào phía mực e = (f·w − w·cosθ / cosθ') / 2 (w: bề ngang nét đo tới mép song song đối diện) → bề dày đo vuông góc giữ
+   nguyên (qa_stroke: Regular 102.5 → 102.5, Bold 141.8 → 141.8);
+3. neo giữa các mép, và giữa mép với đường đỉnh / đáy: giao điểm lại (mặt cắt đáy V giữ dáng);
+4. cụm loe dời + xoay cứng theo mép mang nó, rồi co dọc quanh điểm gắn cho đầu chạm đúng y = 700 (nút trong cụm vẫn liền).
+- Bề ngang thực +40 u: Regular 780 → 820, Bold 801 → 841; advance 820 → 860 / 850 → 889. Không nút gãy mới.
+- w thường giữ nguyên: w dựng từ v (`w_from_v`), không từ W.
+- Kerning tính lại: Wo / We / W. / OW / WO … chặt thêm 5 u (W rộng hơn), WA / AW giữ.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s41-W-rong.png`.
+
+## S42 Loe chân hai mặt + móc trên chữ f (designer 13/11: "Kiểm tra lại chân loe các chữ thẳng xem 2 mặt loe đã đồng bộ chưa", "Móc trên chữ f lỗi. Đường kẻ đỏ tôi kẻ là cho bạn thấy lẽ ra nó nên là như vậy")
+
+- **Quét loe chân.** Loe = đoạn cong nối mép thân đứng với đường chân. Hai mặt của cùng thân so sau khi lật gương: độ vươn, chiều cao,
+  tay nắm. Kết quả: 207 thân × 4 weight khớp ≤ 0.6 u (k 0.8 u ở tay nắm — không thấy được, giữ).
+  - Thân chỉ có loe một bên đều hợp lý (bên kia nối thanh / bụng: B D E L Þ, a d u …), trừ **1 Bold**: mép phải đi thẳng xuống chân
+    (Regular loe hai bên) → Medium / SemiBold nội suy ra vệt loe phải cao 165 / 260 u.
+  - `ref/fix_1_bold_flare.py`: thêm loe phải = ảnh gương loe trái (vươn 22.7, cao 69.8). Sau: 208 thân, 0 lệch.
+- **Móc f** (`lower/derive.py` `fix_f_hook`, mọi weight):
+  - mép ngoài: hai đoạn (đầu móc → đỉnh → thân) gãy độ cong sát đầu móc → MỘT cung (tiếp tuyến đứng ở mép thân; độ cong một đỉnh;
+    đỉnh 707.4 như cũ; lệch ≤ ~2 u so với bản cũ);
+  - mép phải thân: lõm vào ~2 u ở đoạn trên thanh → thẳng đứng tới chỗ uốn, rồi MỘT đường cong tới mặt cắt dưới đầu móc (bản thô
+    gãy 10° ở đỉnh lòng, độ cong 32 → 21 → 34). Độ cong lòng giờ một đỉnh.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s42-f-moc.png` (lược độ cong, đường đỏ = mép thân thẳng),
+  `docs/img/s42-f-1.png` (f 1 fi qua các weight, trước / sau).
+
+## S43 Chữ ghép ff ft tf tt (designer 19/11: "thêm glyph cho cặp chữ tf, ft, tt, ff")
+
+- Dựng (`ref/symbols.py`): hai chữ gốc (f đã sửa móc S42, t) đặt cạnh nhau, khoảng giữa hai thân = lòng n (nhịp thân như chữ thường);
+  hai thanh ngang nối thành MỘT thanh liền (cùng cao độ thanh f / t). Móc f / đầu t cách thân sau ≥ 70 u — không chạm.
+- Mã: ff = U+FB00 (ﬀ); ft / tf / tt dùng mã PUA nội bộ U+E000–E002 để đi qua pipeline (spacing, kerning, QA). Khi xuất: tên glyph
+  `f_f f_t t_f t_t`, PUA KHÔNG vào cmap; tính năng `liga`: f f → f_f, f t → f_t, t f → t_f, t t → t_t.
+- Kerning: mặt trái chữ ghép cùng lớp chữ đầu, mặt phải cùng lớp chữ sau (`spacing.LIG`).
+- qa_font: bỏ qua PUA khi dò theo cmap (kiểm qua liga: "offset" → o f_f s e t, "often" → o f_t e n, "matt" → m a t_t).
+- Ảnh: `docs/img/s43-chu-ghep.png`.
+
+## S44 a b d p q theo bản vẽ mới (designer 19/11, Figma 2232:788: "update lại các chữ này")
+
+- Bản vẽ trong cùng hệ toạ độ khung nguồn (`src_lower.GLYPH`). So từng mảnh: thân a d q p KHÔNG đổi; bụng đổi:
+  - d, q: lòng nâng lên 5–6 px (14–17 u) → nét trên bụng mỏng, nét dưới dày;
+  - p: bụng KHÔNG còn lật gương q — cùng chiều nghiêng (trục nhấn chung), lòng dời xuống 2 px;
+  - a: lòng bụng mới.
+- `src_lower.py`: mảnh bụng riêng `a_bowl d_bowl q_bowl p_bowl` (S44); **b** (không có trong bản vẽ) dùng bụng p — cùng chiều nghiêng —
+  đặt bên phải thân đi lên, chồng thân như p. o giữ (chỉ dùng mép ngoài bụng d — không đổi).
+- Bold / Medium / SemiBold theo luật cũ (`lower.bold`: vòng giãn, lòng elip co + dời về thân, thân dày) — luật đọc mảnh bụng riêng của
+  từng chữ. Chữ có dấu / dẫn xuất (à á ạ … đ ₫) dựng lại theo.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy; loe chân hai mặt 224 thân khớp (k 0.8 u). Ảnh: `docs/img/s44-adqp.png`
+  (xám: v0.916, đen: S44).
+
+## S45 Cân độ dày bụng a b d p q (designer 19/11: "các chữ vừa update khi nãy chưa cân bằng weight với các chữ cũ. có điểm mỏng hơn và dày hơn")
+
+- Đo vòng bụng (mỗi điểm mép ngoài → khoảng cách nhỏ nhất tới mép lòng, bỏ vùng thân), Regular:
+  bản vẽ S44 nét nhấn 107–109 u (bản đã duyệt v0.916: 96.2), nét mảnh 33–34 u (42.1); a 106 / 64 (96 / 75).
+- `lower/balance_bowls.py` → khối `D_*_S45` trong `src_lower.py`: giữ MÉP NGOÀI và HƯỚNG NGHIÊNG lòng của bản vẽ; dời + co giãn lòng
+  theo hai trục của chính nó (affine điểm điều khiển) cho nét nhấn / nét mảnh về đúng số bản đã duyệt, thay đổi nhỏ nhất
+  (dời ≤ 2 px, giãn 0.96–1.10; a thu trục dài 0.87).
+- Sau: nét nhấn 96.0–96.9 (cũ 96.3–96.5), nét mảnh 42.1; Medium 104–107 (cũ 106), SemiBold 114–115 (cũ 115), Bold 123–124 (cũ 124).
+  Dáng bản vẽ giữ: lòng d q cao (đỉnh mảnh 43–45, đáy dày 82–84), p b ngược lại.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0; loe Italic 0 gãy. Ảnh: `docs/img/s45-can-bung.png` (v0.916 / v0.917 / S45).
+
+### S45b Giữ góc bụng a (designer 19/11: "bị mất góc của bụng chữ a rồi")
+
+- S45 co lòng a theo trục dài × 0.87, giãn trục ngắn × 1.08 → lòng gần tròn, mất góc nghiêng elip của bản vẽ.
+- a: lòng giữ gần nguyên bản vẽ (co giãn đều × 1.003, dời 0.5 px, KHÔNG dời xuống — dời xuống làm đáy lòng sát chân thân, nét 19 u).
+  qa_stroke: nét chính a = 104 u = thân n (bản vẽ không nặng hơn chữ khác; a cũ 96 là nhẹ). Nét nhấn vòng 105, nét mảnh 64 (đỉnh a
+  mảnh là chủ ý bản vẽ).
+- d q p: cân như S45 (hai trục × 0.96 / × 1.07–1.10, giữ hướng nghiêng); thêm ràng buộc lòng CẮT VÀO THÂN không nông hơn bản vẽ
+  (dời lòng ra khỏi thân làm lòng chạm hờ mép thân → góc lưng chừng 13–17°, q Medium–Bold gãy). Nét nhấn 96.4, nét mảnh 42.1.
+- QA: 0 lỗi; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s45-a-goc.png`, `docs/img/s45-can-bung.png`.
+
+## S46 Cân nét mảnh / nét dày chữ thường + số (designer 19/11: "audit lại toàn bộ cân bằng weight… các nét mỏng và dày nhất luôn bằng nhau" — "không điều chỉnh chữ hoa… chữ thường và số")
+
+- Audit (trục giữa, bỏ khớp + đầu nét; `stroke_balance.measure`) trên v0.917, Regular: thân chữ thường 102 đều; nét mảnh bụng 40–44,
+  số 0 5 6 9 chỉ 29–31, 3 7 8 36; nét tròn e a s 94–98 (nhẹ hơn thân), số 0 6 7 9 107–111 (nặng). Bold: nét mảnh 48–71, e 114.
+- Chuẩn designer chọn: **một nét mảnh chung** chữ thường + số = 42 / 48.7 / 55.3 / 62 (Regular → Bold); **nét tròn = thân + 2 %** =
+  104 / 111 / 119 / 128 (o e s c g); số = 106 / 117 / 129 / 140.
+- `tools/construct/stroke_balance.py` (luật, chạy trong pipeline sau `lower.py` và `derive.py`; số: chạy một lần từ ảnh chụp
+  `ref/designer_B_preS46.json`): chỉ dời điểm neo TRƠN giữa hai đoạn cong, MÉP LÒNG (mép lõm) nhận cả độ đổi, bóng ngoài giữ nguyên
+  (không đổi bề ngang / spacing); tay nắm đi cùng điểm neo (giữ liền tiếp tuyến); độ đổi nội suy theo bề dày tại điểm, giải lặp
+  (Jacobian + Broyden) tới đúng chuẩn; chỉ nhận khi không chiều nào xấu đi.
+- e: không có điểm neo trơn để dời → luật lòng co của e áp từ Regular (`E_K0` 0.08 → Bold 0.215 trong `lower.py`).
+- Sau (nét mảnh / nét tròn), Regular: b c d g o p q 42/104, s 41/104, e 40/106; số 0 3 6 8 9 42–43 / 105–107.
+  Bold: b d p q 62/124 (thân), c g o s 60–62/128, e 56/127; số 0 3 6 9 62/140, 8 68/139.
+- Giữ nguyên có chủ ý: n h m u (chỗ mảnh nhất là vai — khớp vòm–thân, 38 / 52); a (bụng đã duyệt S45b; dời lòng làm bậc ở góc
+  lòng–thân); 5 (chỗ mảnh là khớp bụng–thân 29); 2 (không có nét mảnh); 4 7 và chéo v w x y k z (nét thẳng, 43–45 / 62–63).
+- QA: 0 lỗi outline; chéo weight 0; đơn điệu 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-can-net.png`.
+
+### S46b Bụng a về bản cũ, nét mảnh dày thêm (designer 19/11: "bụng chữ a cũ đúng hơn" — "nét mỏng bụng của chữ a cũ dày thêm xíu là được")
+
+- a dùng lại bụng bản vẽ S44 (v0.917), bỏ cân S45 / S45b.
+- Lòng a co đều × 0.984 quanh điểm đáy-phải lòng (giữ tỉ lệ + góc nghiêng elip lòng, đáy lòng sát thân không đổi):
+  nét mảnh trên-trái 37 → 42 u (= chuẩn nét mảnh), nét nhấn 106 → 107; Bold / Medium / SemiBold theo luật cũ.
+  Hằng `D_A_BOWL_S46` trong `src_lower.py`.
+- S46c (designer 20/11: "phần mỏng nhất của bụng chữ a nên dày thêm 1 chút nữa"): chỗ mảnh nhất là đáy-phải bụng, sát thân (29 u).
+  Lòng co thêm × 0.965 theo trục điểm mảnh trên-trái → đáy-phải (giữ điểm trên-trái): đáy-phải 29 → 38, trên-trái 42, nét nhấn 108.
+- QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s46-a-net-mong.png` (v0.917 / S46b / S46c, Regular / Bold).
+
+### S46d e không cân lên (designer 20/11: "cảm giác chữ e dày hơn các chữ còn lại")
+
+- Mật độ mực (diện tích / bề rộng × x-height) sau S46: e 0.474 so với o 0.420 (Regular), 0.567 / 0.515 (Bold) — e có thêm thanh nên
+  cân nét tròn lên thân + 2 % làm e nặng hơn hẳn. Bỏ: e ra khỏi `stroke_balance.SPEC`, bỏ `E_K0`, `B_KG['e']` về 0.1396.
+
+## S47 Chữ e mới — lòng elip nghiêng (designer 20/11, Figma 2232:788 / 2245:25: "update lại chữ e. Kiểm tra lại các bụng chữ có elip nghiêng như trong này chưa")
+
+- `D_E_ARCH`, `D_E_BOWL` (src_lower.py): lòng mắt và lòng bụng e là cung elip nghiêng; vòng ngoài, thanh, vị trí giữ. Bản cũ lưu `D_E_*_OLD`.
+  Bold / Medium / SemiBold theo luật cũ (`_ell_from_pts` khớp elip xoay nên giữ góc nghiêng).
+- Mật độ mực e sau: 0.410 (o 0.420) Regular, 0.518 (o 0.515) Bold — e không còn nặng hơn.
+- Kiểm tra góc nghiêng lòng bụng (khớp elip, đo trên outline font so với bản vẽ Figma): a 27° (bản vẽ 28.5°), d b p q 15° (15°),
+  o 30° (30°), e theo bản vẽ; Bold lệch thêm 1–3° do lòng co. Tỉ lệ dài / rộng lòng d b p q: font 1.20–1.23, bản vẽ 1.37
+  (S45 co lòng hai trục để cân nét nhấn / nét mảnh — góc giữ, lòng tròn hơn bản vẽ); a 1.30 (bản vẽ 1.34).
+- Version 0.918: zip `dist/AnNamSerif-Trial-v0.918.zip`, `dist/commercial/*-v0.918.zip`.
+- QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s47-e.png`.
+
+## S48 Lòng d b p q đúng bản vẽ Figma (designer 20/11: "về đúng lòng như Figma")
+
+- d q p (b dùng bụng p) dùng lại đúng `D_*_BOWL_S44` (Figma 2232:788), bỏ cân S45; b d p q ra khỏi `stroke_balance.SPEC`.
+- Lòng tỉ lệ dài / rộng 1.37, nghiêng 15° như bản vẽ. Nét mảnh / nét nhấn: Regular 32–36 / 107–109, Bold 56–60 / 134–137
+  (chuẩn chung 42 / 104 và 62 / 128 — lệch theo chủ ý bản vẽ).
+- Zip 0.918 đóng lại. QA: 0 lỗi; chéo weight 0; gãy > 3° trên 8 OTF: 0. Ảnh: `docs/img/s48-bdpq.png`.
+
+## S49 Đồng bộ nét mảnh toàn bộ chữ (designer 20/11: "đồng bộ nét mảnh cho cả Serif" — chọn "đồng bộ tất cả", kể cả b d p q a)
+
+- `tools/construct/hair_sync.py` (sau `build.py`, rồi `DIZAI_RTOL=1.5 DIZAI_CTOL=0.3 compat_masters.py` để Medium / SemiBold nội suy
+  liền tiếp tuyến): chuẩn nét mảnh 42 (Regular) / 62 (Bold) cho mọi chữ hoa + thường có nét mảnh; dùng lại luật An Nam Golden —
+  vòm n m h u dịch nguyên khối, lòng o O ơ Ơ Q và bụng b d p q co / giãn theo trục dài (Q giữ vùng đuôi, b d p q giữ mép thân),
+  s S Newton mép lòng, chữ khác hệ số nét mảnh 0.7–1.3.
+- Sau (Regular): đa số 40–43; Bold 60–64. Còn lệch: a 32 / 52 (góc bụng a vuốt nhọn — chủ ý S46c), Q 38 R, e 56 B, U 72 B, n u 66 B.
+- QA: 0 lỗi outline; gãy > 3° trên 8 OTF: 0; đơn điệu weight 0.
+- Golden đồng bộ cùng cách (chuẩn 32 / 45, G8): Regular 27–33, Bold 36–45 (còn lệch: vòm m n h u 27–29 R, e 36 B, M W 39 B).
