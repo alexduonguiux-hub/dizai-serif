@@ -15,7 +15,7 @@ Bold = luật Bold của chữ hoa (docs/08), cùng số với chữ hoa:
 import sys, re, os, json
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
 import pathops
-from src_lower import SHAPES, GLYPH, GLYPH_BOLD, S, BASE, A_HOOK_CP
+from src_lower import SHAPES, GLYPH, GLYPH_BOLD, S, BASE, A_HOOK_PTS
 # vòng dưới g (designer 05/11: "hông bụng dưới chữ g hơi nhọn cho độ cong lài hơn"): elip 144 × 88 px κ 0.552 → bán kính cong ở
 # hông b²/a ≈ 27 px. Siêu elip: tay nắm đứng ở hai hông κ 0.68, tay nắm ngang ở đỉnh / đáy κ 0.58; lòng (80 × 56) 0.62 / 0.56
 def _sell(cx, cy, a, b, ks, kt, rev=False):
@@ -189,7 +189,7 @@ def bold(ch):
         def fs(x, y):
             if x >= 128.99: x += dS/2                                           # thân chia đều hai phía
             elif 84.9 <= x <= 93.01: x -= dS/2
-            if (x, y) in (A_HOOK_CP[1], (0.0, 57.249)) or abs(y - A_HOOK_CP[0][1]) < 1e-3: y += dH   # lòng móc dày xuống (S66: tay nắm mới)
+            if any(abs(x - hx) < 1e-3 and abs(y - hy) < 1e-3 for hx, hy in A_HOOK_PTS): y += dH   # lòng móc dày xuống (S68: vòm 2 đoạn)
             return x, y
         stem = _path(_map_pts(SHAPES['a_stem'], fs), G['a_stem'])
         bm = G['a_bowl']; outer = _path(_first_contour(SHAPES['a_bowl']), bm); c, k, st = _stretch(outer.bounds)
