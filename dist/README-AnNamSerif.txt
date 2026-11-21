@@ -1,4 +1,4 @@
-AnNam Serif — Version 0.933 (21 November 2026)
+AnNam Serif — Version 0.934 (21 November 2026)
 Design: Đìzai Studio · Vendor ID: DZAI
 
 A glyphic, flared serif with broad-nib contrast and full Vietnamese support
@@ -22,6 +22,11 @@ CONTENTS
   woff2/  web fonts (Brotli-compressed, about 4× smaller than TTF)
     variable/  AnNamSerif[wght].woff2 · AnNamSerif-Italic[wght].woff2 · AnNamSerif[slnt,wght].woff2
     ttf/       8 static fonts AnNamSerif-Regular.woff2 … AnNamSerif-BoldItalic.woff2
+
+CAPITALS AND PUNCTUATION
+  Colons, semicolons, hyphens and dashes, guillemets « » ‹ ›, the middle dot, @ and ¡ ¿ rise automatically to the middle of
+  the capitals when they sit next to capitals or figures (HÀ NỘI: 10:30 «VIỆT NAM» A-Z) — contextual alternates (calt), on by
+  default in Word, Figma, Adobe apps and browsers. All Caps / "Case-sensitive forms" (case) raises them everywhere.
 
 WHICH FILES TO INSTALL
   • Print and desktop design (Adobe, Figma, Microsoft Office): install the 8 fonts in otf/ (or ttf/).
