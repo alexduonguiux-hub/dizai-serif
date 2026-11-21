@@ -107,3 +107,7 @@ G3 phóng loe: phía thân phóng dọc thân, phía chân trước đây phóng
 - Bản AnNam Golden riêng giữ nguyên ("bản golden vẫn giữ nhé"). Version 0.928.
 
 ![x-Height](img/s63-xhgt.png)
+
+## S64 — một file chung đủ ba trục (21/11, "dựng chung 1 bản cho serif")
+
+`AnNamSerif[XHGT,slnt,wght].ttf` (+ woff2): wght 400–700 · XHGT 495–535 · slnt 0 … −10°, 8 master (Serif / Golden × R / B × đứng / nghiêng), 16 kiểu đặt tên; t / t_f / t_t → dạng Golden khi XHGT ≥ 515. Trang duyệt AnNam Serif: mục Font variable dùng file này — đủ ba thanh kéo. Version 0.929.
