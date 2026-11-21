@@ -392,12 +392,39 @@ def master(w, ang, FL, groups, kern):
             for j in FL.get(c, []): cs[j] = reverse(cs[j])
             draw(g, cs, SP[w][c]['dx'], ang)
     f.lib['public.glyphOrder'] = [n for n in f.lib['public.glyphOrder'] if n in f]
+    add_case(f, ang)
+    groups = {k: list(v) + [n + '.case' for n in v if n + '.case' in f] for k, v in groups.items()}   # .case kern như glyph gốc
     f.groups.update(groups)
     f.kerning.update(kern)
     f.features.text = features()
     if ang:
         i.openTypeHheaCaretSlopeRise = 1000; i.openTypeHheaCaretSlopeRun = round(1000*math.tan(math.radians(ang)))
     return f
+
+# S70 (designer 21/11 "dấu 2 chấm khi viết hoa bị tuột xuống đáy"): tính năng case — dấu đi với chữ HOA (Figma / InDesign / trình
+# duyệt bật tự động khi chuyển chữ hoa). Dấu nằm theo chữ thường (: ; cao 0–480, « » tâm 250, gạch tâm 330) nâng về tâm thị giác
+# chữ hoa 350; ¡ ¿ treo từ đỉnh chữ hoa 700. Ngoặc ( ) [ ] { } | / \ đã căn 355 / 350 → không cần.
+CASE_MID = 350.0
+CASE_CENTER = '-‐–—«»‹›·@'                      # tâm hộp → 350
+CASE_COLON = ':;'                               # theo hai chấm của : (; cùng độ nâng)
+CASE_TOP = '¡¿'                                 # đỉnh → 700
+def add_case(f, ang):
+    from fontTools.pens.transformPen import TransformPointPen
+    def bb(n): return f[n].getBounds(f)
+    t = math.tan(math.radians(ang)) if ang else 0.0
+    col = gname(':')
+    for c in CASE_CENTER + CASE_COLON + CASE_TOP:
+        n = gname(c)
+        if n not in f or bb(n) is None: continue
+        b = bb(n)
+        if c in CASE_COLON:
+            cb = bb(col); dy = CASE_MID - (cb.yMin + cb.yMax)/2
+        elif c in CASE_TOP: dy = 700.0 - b.yMax
+        else: dy = CASE_MID - (b.yMin + b.yMax)/2
+        dy = round(dy)
+        g = f.newGlyph(n + '.case'); g.width = f[n].width
+        f[n].drawPoints(TransformPointPen(g.getPointPen(), (1, 0, 0, 1, round(dy*t), dy)))
+        f.lib['public.glyphOrder'].append(n + '.case')
 
 def features():
     L = []
@@ -409,7 +436,9 @@ def features():
     lg = '\n'.join('    sub ' + ' '.join(gname(x) for x in v) + ' by ' + gname(k) + ';' for k, v in
                    (('ﬀ', 'ff'), ('\ue000', 'ft'), ('\ue001', 'tf'), ('\ue002', 'tt')) if k in SP['Regular'])
     return ('languagesystem DFLT dflt;\nlanguagesystem latn dflt;\n\nfeature ccmp {\n' + '\n'.join(sorted(L, key=lambda s: -s.count(' ')))
-            + '\n} ccmp;\n\nfeature liga {\n' + lg + '\n} liga;\n')
+            + '\n} ccmp;\n\nfeature liga {\n' + lg + '\n} liga;\n'
+            + '\nfeature case {\n' + '\n'.join(f'    sub {gname(c)} by {gname(c)}.case;' for c in CASE_CENTER + CASE_COLON + CASE_TOP
+                                                 if c in SP['Regular']) + '\n} case;\n')
 
 def kerning_data():
     rc = {}; lc = {}
