@@ -2,7 +2,7 @@
 
 Saigon-1930s feel: felt piano with maj9 / m9 voicings, upright bass, brushes and ride; the
 three slider drags are played by a đàn bầu (monochord) voice whose pitch glides with each knob.
-Every cut in the picture lands on a piano stab, a rim click or a cymbal. Pure numpy, no samples.
+Cues follow the Figma storyboard (Story-01 … 09). Pure numpy, no samples.
 Usage: python3 music.py out.wav
 """
 import sys
@@ -153,75 +153,74 @@ Gmaj9 = [43, 47, 50, 54, 57]          # G B D F# A
 Em9 = [52, 55, 59, 62, 66]            # E G B D F#
 A13 = [45, 49, 55, 59, 66]            # A C# G B F#
 
-# ---------------- 0–1  intro: piano arpeggio as AN NAM assembles ----------------
-for i, m in enumerate([50, 54, 57, 61, 64, 66, 69, 73]):
-    add(piano(m, 1.6, 0.55 + 0.04 * i), 0.04 + i * 0.105, 0.9, -0.4 + i * 0.11)
-add(cymbal_swell(0.55, 0.12), 0.45)
+# Cue sheet follows the storyboard (Figma "Đìzai Serif – WIP" · Storyboard, Story-01 … 09)
 
-# ---------------- groove 1–8: walking bass, brushes, ride ----------------
-walk = {1.0: D2, 1.5: Fs2, 2.0: B2 - 12, 2.5: D2, 3.0: Fs2, 3.5: A2, 4.0: G2, 4.5: B2 - 12,
-        5.0: D2, 5.5: E2, 6.0: G2, 6.5: E2, 7.0: G2, 7.5: A2}
-for t0, m in walk.items():
-    add(bass(m, 0.48, 1.0 if (t0 * 2) % 2 == 0 else 0.85), t0, 1.0, -0.1)
-for k in range(14):                       # beats 1.0 … 7.5
-    t0 = 1.0 + k * B
-    add(ride(0.08), t0, pan=0.45)
-    add(brush_tap(0.06), t0 + B / 2 + SW, pan=-0.3)
-    if k % 2 == 1:
-        add(brush_swish(0.4, 0.09), t0 - 0.05, pan=-0.2)
-for t0 in (1.0, 2.0, 4.0, 6.5):
-    add(kick(0.5), t0)
+# 01–02  paper → HUD, symbol, AN NAM rise letter by letter
+add(cymbal_swell(0.3, 0.06), 0.05)
+for i in range(3):                                         # HUD lines
+    add(bell(86 + 2 * i, 0.05), 0.32 + i * 0.08, pan=-0.5 + 0.5 * i)
+add(piano(74, 1.2, 0.5), 0.45, 0.6, 0.0)                    # symbol lands
+for i, m in enumerate([50, 54, 57, 61, 62, 66]):            # A N · N A M
+    add(piano(m, 1.4, 0.6 + 0.04 * i), 0.55 + i * 0.06, 0.8, -0.5 + i * 0.2)
+chord(Dmaj9, 1.0, 1.2, 0.55)
+add(bass(D2, 1.0, 0.8), 1.0)
 
-# ---------------- stabs on the cuts ----------------
-chord(Dmaj9, 1.0, 1.0, 0.9)                           # letters fill with the photo
-add(cymbal_swell(0.42, 0.10), 1.05)                    # photo grows out of the word
-chord([54, 57, 61, 66], 1.5, 0.6, 0.7, roll=0.008)    # photo settles into the panel
-chord(Bm9, 2.0, 1.0, 0.8)                             # Phố cổ → Áo dài
-add(piano(73, 0.5, 0.6), 2.5 + SW, 0.7, 0.4); add(piano(71, 0.5, 0.6), 2.75 + SW, 0.6, 0.4)
-# 3–4  diacritic cards: a rim click + short piano note on every 16th card
-mel = [73, 71, 69, 66, 69, 71, 73, 76]
-for k in range(8):
-    add(rim(0.18), 3 + k * 0.125, pan=0.3 if k % 2 else -0.3)
-    add(piano(mel[k], 0.35, 0.55), 3 + k * 0.125, 0.55, 0.25)
-chord(Bm9, 3.0, 0.9, 0.6, roll=0.0)
+# 03  the two arc pairs turn into the rosette — a đàn bầu glide
+add(danbau(69, 1.0, lambda t: 5 * smooth((t - 0.02) / 0.52)), 1.6, 0.9, 0.0)
+add(rim(0.12), 1.6, pan=0.4)
+add(bell(93, 0.07), 2.15, pan=0.2)
 
-# ---------------- 4–6.5  three sliders: đàn bầu follows each knob ----------------
-chord(Gmaj9, 4.0, 2.0, 0.7)
-# one sustained bầu line: weight up a major third, slant down a tone, x-height up a fourth,
-# then all three back together
-def bau_curve(t):
-    T = t + 4.40
-    c = 4 * smooth((T - 4.46) / 0.44)
-    c -= 2 * smooth((T - 5.02) / 0.40)
-    c += 5 * smooth((T - 5.56) / 0.44)
-    c -= 4.5 * smooth((T - 6.08) / 0.34)
-    return c
-add(danbau(69, 2.1, bau_curve), 4.40, 1.0, 0.1)        # A4 → C#5 → B4 → E5 → ~C#5
-for t0 in (4.42, 4.98, 5.52, 6.04):                     # the cursor grabbing a knob
-    add(rim(0.09), t0, pan=0.5)
-chord([55, 59, 62, 66], 6.0, 0.6, 0.55, roll=0.006)     # lands on x-height (Em9 colour)
+# 04  ink becomes a window onto Huế
+chord(Bm9, 2.4, 1.0, 0.75)
+add(bass(B2 - 12, 0.6), 2.4)
+add(cymbal_swell(0.7, 0.13), 2.4)
 
-# ---------------- 6.5–7.5  interior + style list: a celesta tick per line ----------------
-chord(Em9, 6.42, 1.1, 0.75)
-add(brush_swish(0.26, 0.14), 6.38, pan=-0.5)                 # wipe in from the left
-for k, m in enumerate([78, 81, 83, 85, 86, 85, 83, 81]):
-    add(bell(m, 0.08), 6.56 + k * 0.0625, pan=0.5 - 0.12 * k)
-chord(A13, 7.0, 0.8, 0.7)
+# 05  the photo opens from the rosette; A–Z rows rise
+add(kick(0.6), 3.08); add(crash(0.12, 1.4), 3.08, pan=0.3)
+chord(Gmaj9, 3.08, 1.3, 0.8)
+add(bass(G2, 0.9), 3.08)
+for i, m in enumerate([79, 81, 83, 86]):
+    add(bell(m, 0.08), 3.4 + i * 0.07, pan=-0.3 + 0.2 * i)
+# 06  rows roll over to lower case
+for i, m in enumerate([86, 83, 81, 79]):
+    add(bell(m, 0.07), 4.3 + i * 0.07, pan=0.3 - 0.2 * i)
+chord([54, 57, 61, 64], 4.25, 0.8, 0.55, roll=0.02)
 
-# ---------------- 7.5–8  the t: tension, snap on 7.75 ----------------
-chord([57, 61, 67, 70], 7.5, 0.4, 0.6, roll=0.0)        # A7(b9) colour
-add(cymbal_swell(0.5, 0.16), 7.5)
-add(bass(A2, 0.25), 7.5); add(bass(A2 - 12, 0.25), 7.75, 0.9)
-add(piano(81, 0.4, 0.8), 7.75, 0.8, 0.3); add(rim(0.25), 7.75)
-add(piano(78, 0.3, 0.7), 7.875, 0.7, 0.2)
+# groove under 03–06 and 08: brushes + ride + walking bass
+def groove(t0, t1, walk):
+    k = 0; t = t0
+    while t < t1 - 1e-6:
+        add(ride(0.07), t, pan=0.45)
+        add(brush_tap(0.05), t + B / 2 + SW, pan=-0.3)
+        if k % 2 == 1:
+            add(brush_swish(0.4, 0.08), t - 0.05, pan=-0.2)
+        if walk:
+            add(bass(walk[k % len(walk)], 0.46, 0.8), t, 1.0, -0.1)
+        t += B; k += 1
+groove(1.6, 5.0, [])
+groove(6.4, 7.9, [E2, G2, A2])
 
-# ---------------- 8–10  end card: resolve to Dmaj9, ring out ----------------
-add(kick(0.7), 8.0); add(crash(0.18, 2.0), 8.0, pan=0.3); add(brush_swish(0.28, 0.12), 7.96)
-add(bass(D2 - 12 + 12, 1.6, 1.0), 8.0)
-chord([38, 50, 54, 57, 61, 64, 69], 8.0, 2.0, 0.95, roll=0.018)
-add(danbau(76, 1.3, lambda t: -2 + 2 * smooth((t - 0.05) / 0.7)), 8.62, 0.6, 0.2)   # x-height sweep 495 → 535
-for k, m in enumerate([81, 85, 88]):
-    add(piano(m, 1.2, 0.5), 9.4 + k * 0.09, 0.5, 0.35)
+# 07  paper rises; A, then the circumflex, then the hook (the hỏi tone: dip and rise)
+add(brush_swish(0.3, 0.13), 4.98, pan=0.2)
+add(piano(45, 1.6, 0.8), 5.3, 0.9); add(bass(A2 - 12, 1.0), 5.3)
+add(piano(76, 0.9, 0.6), 5.62, 0.7, 0.3)
+add(danbau(78, 0.7, lambda t: -2 * np.sin(np.pi * np.clip(t / 0.3, 0, 1)) + 1.5 * smooth((t - 0.2) / 0.25)), 5.86, 0.8, 0.1)
+
+# 08  names push up and drift
+add(brush_swish(0.3, 0.12), 6.38, pan=-0.4)
+chord(Em9, 6.4, 1.0, 0.7)
+chord(A13, 7.4, 0.5, 0.6)
+add(cymbal_swell(0.5, 0.15), 7.44)
+
+# 09  market photo opens like a shutter; AN NAM drops; styles — resolve on Dmaj9
+add(kick(0.7), 7.94); add(crash(0.18, 2.0), 7.94, pan=0.3)
+add(bass(D2, 1.6, 1.0), 7.94)
+chord([38, 50, 54, 57, 61, 64, 69], 7.94, 2.0, 0.95, roll=0.018)
+for i, m in enumerate([74, 78, 81, 85, 86, 90]):
+    add(piano(m, 0.9, 0.45), 8.22 + i * 0.06, 0.45, -0.4 + 0.16 * i)
+for i, m in enumerate([81, 85, 88]):
+    add(bell(m, 0.08), 8.6 + i * 0.1, pan=0.3)
+add(danbau(76, 1.2, lambda t: -2 + 2 * smooth((t - 0.05) / 0.6)), 8.9, 0.45, 0.2)
 
 # ---------------- master: room, glue, fade ----------------
 ir_t = tt(1.8)

@@ -9,7 +9,7 @@ const fs = require('fs');
   const only = process.argv[4] ? process.argv[4].split(',').map(Number) : null;
   fs.mkdirSync(out, { recursive: true });
   const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+  const page = await browser.newPage({ viewport: { width: 2034, height: 1270 }, deviceScaleFactor: 1 });
   await page.goto('http://localhost:8765/showreel/showreel.html');
   await page.evaluate(() => window.ready);
   const stage = await page.$('#stage');
