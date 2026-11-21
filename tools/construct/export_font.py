@@ -438,6 +438,20 @@ def add_case(f, ang):
         f[n].drawPoints(TransformPointPen(g.getPointPen(), (1, 0, 0, 1, round(dy*t), dy)))
         f.lib['public.glyphOrder'].append(n + '.case')
 
+def calt():
+    """S71 (designer 21/11 "gõ Shift hay Caps Lock có tự nhảy case không?" → "vậy thêm đi"): case chỉ bật khi ứng dụng bật (All Caps);
+    calt (bật sẵn ở Word / Figma / trình duyệt) tự đổi dấu → .case theo NGỮ CẢNH chữ hoa: sau chữ hoa / số (NỘI: 10:30 NAM»),
+    trước chữ hoa / số («VIỆT -A), giữa hai cụm hoa cách khoảng trắng (HÀ NỘI — ĐÀ NẴNG); dấu ngay sau dấu đã nâng nâng theo (NAM:»)."""
+    cs = [c for c in CASE_CENTER + CASE_COLON + CASE_TOP if c in SP['Regular']]
+    uc = [gname(c) for c in CHARS if not 0xE000 <= ord(c) <= 0xF8FF and (c.isupper() or c.isdigit())]
+    base = ' '.join(gname(c) for c in cs); cased = ' '.join(gname(c) + '.case' for c in cs)
+    return ('\n@CASE_UC = [' + ' '.join(uc) + '];\n@CASE_B = [' + base + '];\n@CASE_C = [' + cased + '];\n'
+            '@CASE_L = [@CASE_UC @CASE_C];\n\nfeature calt {\n'
+            '    sub @CASE_L @CASE_B\' by @CASE_C;\n'
+            '    sub @CASE_B\' @CASE_UC by @CASE_C;\n'
+            '    sub @CASE_L space @CASE_B\' space @CASE_UC by @CASE_C;\n'
+            '} calt;\n')
+
 def features():
     L = []
     for c in CHARS:
@@ -449,6 +463,7 @@ def features():
                    (('ﬀ', 'ff'), ('\ue000', 'ft'), ('\ue001', 'tf'), ('\ue002', 'tt')) if k in SP['Regular'])
     return ('languagesystem DFLT dflt;\nlanguagesystem latn dflt;\n\nfeature ccmp {\n' + '\n'.join(sorted(L, key=lambda s: -s.count(' ')))
             + '\n} ccmp;\n\nfeature liga {\n' + lg + '\n} liga;\n'
+            + calt()
             + '\nfeature case {\n' + '\n'.join(f'    sub {gname(c)} by {gname(c)}.case;' for c in CASE_CENTER + CASE_COLON + CASE_TOP
                                                  if c in SP['Regular']) + '\n} case;\n')
 
