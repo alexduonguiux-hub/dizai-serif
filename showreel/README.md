@@ -6,21 +6,21 @@ Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 �
 
 **Font:** AnNam Serif **v0.933** — `AnNamSerif[XHGT,slnt,wght]` (XHGT 0 = AnNam Serif) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự theo kerning thật của font.
 
-**Chuyển động:** theo hướng các mẫu tham khảo (Pinterest 409053578674372562, 957366833301398698): cắt cứng đúng phách 120 BPM, chữ rải rác rồi "khớp" vào hàng, gõ chữ / hiện ký tự ngẫu nhiên, sóng trục variable, xoay theo bước. Không dùng trượt mượt, màn quét, mở tròn, cửa chớp.
+**Chuyển động:** theo hướng các mẫu tham khảo (Pinterest 409053578674372562, 957366833301398698): cắt cứng đúng phách 120 BPM, zoom giật nấc, vòng quay glyph, gõ chữ / hiện ký tự ngẫu nhiên, echo, sóng trục variable, xoay theo bước. Không dùng trượt mượt, màn quét, mở tròn, cửa chớp.
 
 ## Kịch bản
 | Thời gian | Storyboard | Chuyển động |
 |---|---|---|
 | 0–0,25 s | 01 | Giấy trống |
-| 0,25–1,5 s | 02 | Dòng chữ trên cùng gõ ra; symbol cắt vào; AN NAM hiện từng chữ (lệch cao, lệch weight) rồi khớp vào hàng ở 1,25 s |
-| 1,5–2,25 s | 03 | Hai cặp cung xoay thành bông hoa theo 4 nấc; sóng weight chạy qua AN NAM |
+| 0,25–1,5 s | 02 | Dòng chữ trên cùng gõ ra; cắt vào cận cảnh chữ A khổng lồ, zoom lùi giật nấc theo nhịp 1/16 ra toàn AN NAM; symbol cắt vào |
+| 1,5–2,25 s | 03 | Hai cặp cung xoay thành bông hoa theo 4 nấc (có bóng echo của nấc trước); sóng weight chạy qua AN NAM |
 | 2,25–3 s | 04 | Cắt cứng: mọi nét thành cửa sổ nhìn ra ảnh Huế (nháy 1 khung hình) |
 | 3–4,5 s | 05–06 | Cắt sang ảnh; A–Z hiện từ chiều sâu (mờ → rõ), rồi lùi về nhường a–z |
 | 4,5–6,25 s | 07 | Đường kẻ; A đẩy weight 400 → 700 → 400; dấu mũ, dấu hỏi bật vào → Ẩ; cắt qua Ở Ữ Đ Ặ ặ ơ đ ỹ |
 | 6,25–7,5 s | 08 | Địa danh xưa của An Nam hiện từng ký tự ngẫu nhiên, các dòng trôi ngang (kín hai đầu) |
-| 7,5–8,75 s | 08b | "Sự học cũng như việc chèo thuyền ngược nước, không *tiến* ắt sẽ *lùi*" hiện từng chữ theo nhịp; thuyền cắt vào, bập bềnh |
-| 8,75–9,75 s | 08c | "Enfin, la guerre d'Indochine se termine. Le Vietnam est devenu une nation indépendante." gõ ra từng ký tự |
-| 9,75–12 s | 09 | Cắt sang ảnh Nhà hát Lớn Hà Nội; AN NAM / SERIF gom lại như mở đầu; VARIABLE · ITALIC · REGULAR ✱ MEDIUM ✱ SEMIBOLD ✱ BOLD gõ ra |
+| 7,5–8,75 s | 08b | "Sự học cũng như việc chèo thuyền ngược nước, không *tiến* ắt sẽ *lùi*" hiện từng chữ theo nhịp (chữ bật vào ở Bold rồi lắng về Regular); thuyền cắt vào, bập bềnh |
+| 8,75–9,75 s | 08c | "Enfin, la guerre d'Indochine se termine. Le Vietnam est devenu une nation indépendante." — vòng quay glyph: mỗi ký tự lướt qua các chữ hoa tiếng Việt cùng độ rộng rồi khóa vào chữ thật |
+| 9,75–12 s | 09 | Cắt sang ảnh Nhà hát Lớn Hà Nội (đã xoá chữ ký trên ảnh); AN NAM / SERIF hiện bằng vòng quay glyph, khóa từ trái sang; VARIABLE · ITALIC · REGULAR ✱ MEDIUM ✱ SEMIBOLD ✱ BOLD gõ ra |
 
 ## Nhạc
 Giai điệu liên khúc Nhã nhạc cung đình Huế **Lưu thủy – Kim tiền – Xuân phong – Long hổ** (nhạc cổ truyền), ký âm lại từ một bản hòa tấu tham khảo (dò cao độ + nghe), rồi chơi lại bằng nhạc cụ tổng hợp trong `music.py`. Không dùng âm thanh của bản thu gốc; file tham khảo không lưu trong repo.

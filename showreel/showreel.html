@@ -35,6 +35,8 @@ html,body { background:#000; }
         <mask id="arcmask" maskUnits="userSpaceOnUse" x="-50" y="-50" width="332" height="315"><use href="#arcs" fill="white" fill-rule="evenodd"/></mask>
       </defs>
       <!-- two identical arc pairs (outline = inner half of a 22 stroke, as in Figma); they turn ±67.5° into the rosette -->
+      <g opacity=".22"><g id="symAe"><use href="#arcs" fill="none" stroke="currentColor" stroke-width="22" mask="url(#arcmask)"/></g></g>
+      <g opacity=".22"><g id="symBe"><use href="#arcs" fill="none" stroke="currentColor" stroke-width="22" mask="url(#arcmask)"/></g></g>
       <g id="symA"><g id="symAi"><use href="#arcs" fill="none" stroke="currentColor" stroke-width="22" mask="url(#arcmask)"/></g></g>
       <g id="symB"><g id="symBi"><use href="#arcs" fill="none" stroke="currentColor" stroke-width="22" mask="url(#arcmask)"/></g></g>
     </svg>
@@ -205,8 +207,8 @@ function build() {
   [['ENFIN, LA GUERRE',48,142], ["D'INDOCHINE",443,329], ['SE TERMINE.',836,516], ['LE VIETNAM EST',48,703], ['DEVENU UNE',443,890], ['NATION INDÉPENDANTE.',48,1077]]
     .forEach(([txt,x,y])=>FL.push(mkLine($('flines'), [[txt,0]], fitF, x, y, 'l')));
   // frame 09
-  KD = kernWord($('dannam'), 'AN NAM', {padTop:.12}); $('dannam').style.fontSize = $('annam').style.fontSize;
-  KS = kernWord($('dserif'), 'SERIF', {padTop:.12}); $('dserif').style.fontSize = $('annam').style.fontSize;
+  KD = kernWord($('dannam'), 'AN NAM', {padTop:.45}); $('dannam').style.fontSize = $('annam').style.fontSize;
+  KS = kernWord($('dserif'), 'SERIF', {padTop:.45}); $('dserif').style.fontSize = $('annam').style.fontSize;
   const star = `<svg width="20" height="20" viewBox="0 0 20 20" style="display:inline-block;vertical-align:.12em;margin:0 12px"><path fill="currentColor" d="M7.33333 0H12.6667C12.4889 1.37778 12.2222 2.73333 11.8667 4.06667C11.5556 5.4 11.3333 6.68889 11.2 7.93333C12.2222 7.17778 13.2222 6.33333 14.2 5.4C15.1778 4.42222 16.2222 3.51111 17.3333 2.66667L20 7.33333C18.7556 7.86667 17.4667 8.33333 16.1333 8.73333C14.8 9.08889 13.5556 9.51111 12.4 10C13.5556 10.4889 14.8 10.9333 16.1333 11.3333C17.4667 11.6889 18.7556 12.1333 20 12.6667L17.3333 17.3333C16.2222 16.4889 15.1778 15.5778 14.2 14.6C13.2222 13.6222 12.2222 12.7778 11.2 12.0667C11.3333 13.3111 11.5556 14.6 11.8667 15.9333C12.2222 17.2667 12.4889 18.6222 12.6667 20H7.33333C7.51111 18.6222 7.75556 17.2667 8.06667 15.9333C8.42222 14.6 8.66667 13.3111 8.8 12.0667C7.82222 12.7778 6.82222 13.6222 5.8 14.6C4.82222 15.5778 3.77778 16.4889 2.66667 17.3333L0 12.6667C1.28889 12.1333 2.6 11.6889 3.93333 11.3333C5.26667 10.9333 6.48889 10.4889 7.6 10C6.48889 9.51111 5.26667 9.08889 3.93333 8.73333C2.6 8.33333 1.28889 7.86667 0 7.33333L2.66667 2.66667C3.77778 3.51111 4.82222 4.42222 5.8 5.4C6.82222 6.33333 7.82222 7.17778 8.8 7.93333C8.66667 6.68889 8.42222 5.4 8.06667 4.06667C7.75556 2.73333 7.51111 1.37778 7.33333 0Z"/></svg>`;
   ['VARIABLE', '<i>ITALIC</i>', `REGULAR${star}MEDIUM${star}SEMIBOLD${star}BOLD`].forEach((h,i)=>{
     const m = document.createElement('div'); m.style.cssText = `height:46px;overflow:hidden;line-height:34px;padding-top:2px;`;
@@ -230,6 +232,22 @@ function scatterSnap(K, t, t0, step, tSnap, seed, range=380, base=400, dirY=-1) 
     j++; });
 }
 // type-on: characters switch on one by one
+// glyph roulette: each letter flicks through Vietnamese capitals of the face, then locks to its own letter (left → right)
+const POOL = [...'ĂÂĐÊÔƠƯẮẰẲẴẶẤẦẨẪẬẾỀỂỄỆỐỒỔỖỘỚỜỞỠỢỨỪỬỮỰÁÀẢÃẠÉÈẺẼẸÍÌỈĨỊÓÒỎÕỌÚÙỦŨỤÝỲỶỸỴ'];
+function roulette(K, t, t0, lock0, lockStep, seed) {
+  let j = 0;
+  K.items.forEach(it=>{ if (!it) return;
+    if (it.ch == null) {
+      it.ch = it.s.textContent;
+      const w0 = ink(it.ch, 100).w, byW = POOL.map(g=>[g, Math.abs(ink(g, 100).w - w0)]).sort((a,b)=>a[1]-b[1]);
+      it.pool = byW.filter(([g,d])=>d < .12*w0).map(([g])=>g); if (it.pool.length < 6) it.pool = byW.slice(0, 6).map(([g])=>g);
+    }
+    vis(it.s, t >= t0); it.s.style.transform = 'none'; it.s.style.opacity = 1; it.s.style.filter = 'none';
+    const locked = t >= lock0 + j*lockStep || !/\p{L}/u.test(it.ch);
+    const c = locked ? it.ch : it.pool[Math.floor(rnd(Math.floor(t*20) + j*13, seed) * it.pool.length)];
+    if (it.s.textContent !== c) it.s.textContent = c;
+    j++; });
+}
 function typeOn(K, t, t0, dt) { let j = 0; K.items.forEach(it=>{ if (!it) return; vis(it.s, t >= t0 + j*dt); it.s.style.transform = 'none'; j++; }); }
 function placeLine(L) {
   let x = 0; L.Ks.forEach((K,i)=>{ layoutWord(K); if (i) x += ink(' ', parseFloat(K.host.style.fontSize)).w; K.host.style.left = x + 'px'; x += K.meas.offsetWidth; });
@@ -252,14 +270,24 @@ function render(t) {
   pin.style.opacity = (t >= 2.25 && t < 3.0 && !(t >= 2.29 && t < 2.33)) ? 1 : 0;   // hard cut, 1-frame flicker
   if (sA) {
     // symbol: cuts in on the beat; 03 → turns into the rosette in four snaps
-    vis($('sym'), t >= .5); $('sym').style.color = C.ink; $('sym').style.transform = 'none'; $('sym').style.opacity = 1;
-    const rot = 67.5 * Math.floor(seg(t, 1.5, 2.0) * 4) / 4;
+    vis($('sym'), t >= 1.25); $('sym').style.color = C.ink; $('sym').style.transform = 'none'; $('sym').style.opacity = 1;
+    const st = Math.floor(seg(t, 1.5, 2.0) * 4), rot = 67.5 * st / 4, prev = 67.5 * Math.max(0, st - 1) / 4;
+    const echo = st > 0 && st < 4 || (t >= 2.0 && t < 2.08);
     $('symAi').setAttribute('transform', `rotate(${rot} 116 107.5)`);
     $('symBi').setAttribute('transform', `rotate(${-rot} 116 107.5)`);
+    $('symAe').setAttribute('transform', `rotate(${prev} 116 107.5)`);
+    $('symBe').setAttribute('transform', `rotate(${-prev} 116 107.5)`);
+    $('symAe').parentNode.style.display = $('symBe').parentNode.style.display = echo ? 'inline' : 'none';
     // AN NAM: scattered letters (one per 16th) snap into the line at 1.25; 03: a weight wave runs through it
     const an = $('annam'); fv(an); layoutWord(KN);
     an.style.left = (59 - +an.dataset.inkl) + 'px'; an.style.top = '823px';
-    scatterSnap(KN, t, .5, .125, 1.25, 1, 230);
+    // stepped zoom: from a giant, cropped A (on the cut at 0.5) back to the full word in 16th-note snaps
+    const ZS = [7.5, 4.6, 2.9, 1.9, 1.35, 1.0], zi = Math.min(ZS.length - 1, Math.max(0, Math.floor((t - .5) / .125)));
+    const firstA = KN.items[0];
+    const ox = parseFloat(firstA.m.style.left) + firstA.m.offsetWidth/2, oy = an.offsetHeight * .45;
+    an.style.transformOrigin = `${ox}px ${oy}px`; an.style.transform = `scale(${t < .5 ? 1 : ZS[zi]})`;
+    vis(an, t >= .5);
+    KN.items.forEach(it=>{ if (it) { vis(it.s, t >= .5); it.s.style.transform = 'none'; it.s.style.filter = 'none'; it.s.style.opacity = 1; fv(it.s, 400); } });
     if (t >= 1.25) { let j = 0; KN.items.forEach(it=>{ if (!it) return;
       const x = (t - 1.75 - j*.07) / .3, w = x > 0 && x < 1 ? 400 + 300*Math.sin(Math.PI*x) : 400;
       fv(it.s, w); j++; }); }
@@ -312,7 +340,8 @@ function render(t) {
     $('E').style.transform = 'none';
     let w = 0;
     EL.forEach(L=>{ placeLine(L); L.Ks.forEach(K=>{ let wi = w;
-      K.items.forEach(it=>{ if (!it) { wi++; return; } vis(it.s, t >= 7.5 + wi*.0625); it.s.style.transform = 'none'; });
+      K.items.forEach(it=>{ if (!it) { wi++; return; } const ta = 7.5 + wi*.0625; vis(it.s, t >= ta); it.s.style.transform = 'none';
+        fv(it.s, t < ta + .0625 ? 700 : t < ta + .125 ? 550 : 400); });
       w = wi + 1; }); });
     vis($('boat'), t >= 7.875); $('boat').style.opacity = 1;
     $('boat').style.transform = `translateY(${Math.sin((t-7.8)*3.4)*7}px) rotate(${Math.sin((t-7.8)*2.7)*1.8}deg)`;
@@ -321,7 +350,7 @@ function render(t) {
   // ---------- 08c: the French lines type out
   if (sF) {
     $('F').style.background = C.paper;
-    FL.forEach((L,i)=>{ placeLine(L); L.Ks.forEach(K=>typeOn(K, t, 8.78 + i*.07, .011)); });
+    FL.forEach((L,i)=>{ placeLine(L); L.Ks.forEach(K=>roulette(K, t, 8.76 + i*.05, 8.9 + i*.05, .012, 11 + i)); });
   }
 
   // ---------- 09: hard cut to the Opera House; AN NAM / SERIF gather like the opening; the styles type on
@@ -330,10 +359,10 @@ function render(t) {
     $('dimg').style.transform = `scale(${lerp(1.05, 1.0, seg(t, 9.75, 12))})`;
     const dn = $('dannam'); fv(dn); layoutWord(KD);
     dn.style.left = (59 - +$('annam').dataset.inkl) + 'px'; dn.style.top = '146px';
-    scatterSnap(KD, t, 9.875, .09, 10.5, 3, 300, 400, 1);
+    roulette(KD, t, 9.75, 10.05, .06, 3);
     const ds = $('dserif'); fv(ds); layoutWord(KS);
     ds.style.left = (W - ds.offsetWidth)/2 + 'px'; ds.style.top = '603px';
-    scatterSnap(KS, t, 10.0, .09, 10.5, 5, 260, 400, 1);
+    roulette(KS, t, 9.875, 10.3, .06, 5);
     DI.forEach((s,i)=>{ const p = seg(t, 10.62 + i*.12, 10.62 + i*.12 + .3); s.style.transform = 'none';
       s.parentNode.style.clipPath = `inset(0 ${(1 - Math.floor(p*24)/24)*100}% 0 0)`; });
   }
