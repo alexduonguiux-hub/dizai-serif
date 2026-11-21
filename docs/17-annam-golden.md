@@ -132,3 +132,7 @@ Font (Regular, độ cong ×1000): vai 0 → 8 → 3 thành 5 → 6.9 → 3.2; �
 
 ![a Serif](img/s66-a-serif.png)
 ![a Golden](img/s66-a-golden.png)
+
+## S67 — file ba trục về họ "AnNam Serif" (21/11, "giữ An Nam Serif thôi")
+
+Bỏ họ riêng "AnNam Serif VF" (S65): `AnNamSerif[XHGT,slnt,wght].ttf`, họ "AnNam Serif", PostScript riêng `AnNamSerifAll-…` (không trùng bản tĩnh). Trục x-Height giữ thang 0–100. Vì cùng họ với mọi file khác, máy dùng file này cài MỘT MÌNH nó (gỡ otf / ttf / variable khác) rồi mở lại Figma — ghi trong README. Version 0.932.
