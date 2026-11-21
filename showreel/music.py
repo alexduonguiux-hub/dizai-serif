@@ -3,6 +3,7 @@
 Đàn-tranh-like plucks (additive, with the 'nhấn' pitch bend) in a pentatonic
 scale, a mõ (wood block) on the fast-cut section, minimal kick / hat, whooshes on
 the cube turns and a gong-ish hit on the end card. Pure numpy, no samples.
+Giây 4–10: tiếng nhấn đàn tranh luyến theo thanh kéo x-Height (Serif → Golden).
 Usage: python3 music.py out.wav
 """
 import sys
@@ -30,17 +31,19 @@ def add(sig, t0, gain=1.0, pan=0.0):
     mix[1, i:i + len(sig)] += sig * gain * r * 1.414
 
 
-def pluck(midi, dur=1.6, bend=0.0, bend_at=0.12, bright=1.0):
+def pluck(midi, dur=1.6, bend=0.0, bend_at=0.12, bright=1.0, curve=None, sustain=1.0):
     """Zither pluck: decaying harmonics, optional bend (semitones) after attack."""
     t = np.arange(int(dur * SR)) / SR
     b = bend * np.clip((t - bend_at) / 0.12, 0, 1) ** 1.5
+    if curve is not None:
+        b = curve(t)
     vib = 0.12 * np.sin(2 * np.pi * 5.5 * t) * np.clip((t - 0.3) / 0.3, 0, 1)
     f = note(midi) * 2 ** ((b + vib) / 12)
     ph = 2 * np.pi * np.cumsum(f) / SR
     out = np.zeros_like(t)
     for h in range(1, 9):
         amp = (1 / h ** 1.3) * (bright if h > 2 else 1)
-        dec = np.exp(-t * (2.2 + 1.6 * h))
+        dec = np.exp(-t * (2.2 + 1.6 * h) / sustain)
         out += amp * np.sin(h * ph + h * 0.3) * dec
     att = np.clip(t / 0.003, 0, 1)
     # metallic pick transient
@@ -141,40 +144,52 @@ for k in range(8):
 add(kick(1.0), 3.0); add(kick(0.8), 3.5); add(sub(36, 0.5), 3.0); add(sub(38, 0.5), 3.5)
 add(pluck(A5, 1.0, bright=1.2), 3.0, 0.4, 0.5)
 
-# --- 4–5.5  Sài Gòn weight stack: folk-ish phrase with bends
-for k in range(3):
-    add(kick(0.9), 4 + k * B); add(hat(), 4.25 + k * B, pan=0.4)
-add(clap(), 4.5); add(clap(), 5.0, 0.7)
-add(sub(33, 0.5), 4.0); add(sub(31, 0.5), 4.5); add(sub(28, 0.5), 5.0)
-for tt, m, bd in [(4.0, E5, 0), (4.25, D5, 0), (4.5, C5, 2), (5.0, A4, 0), (5.25, G4, 2)]:
-    add(pluck(m, 1.4, bend=bd, bend_at=0.1), tt, 0.65, pan=-0.2)
+# --- 4–6.5  drag x-Height Serif → Golden: the đàn tranh 'nhấn' glides with the slider
+def smooth(x):
+    x = np.clip(x, 0, 1); return np.where(x < .5, 8 * x**4, 1 - (-2 * x + 2)**4 / 2)
 
-# --- 5.5–7  poster cube: whooshes on the turns, plucks on the landings
-for tt in (5.5, 6.0, 6.5):
-    add(kick(0.85), tt); add(hat(), tt + 0.25, pan=0.4)
-add(sub(33, 0.5), 5.5)
-add(noise_sweep(0.42, 300, 5000, 0.35), 5.74, pan=-0.4)
-add(noise_sweep(0.42, 300, 5000, 0.35), 6.38, pan=0.4)
-add(pluck(A4, 1.2), 6.12, 0.7, -0.2); add(sub(33, 0.4), 6.12)
-add(pluck(E5, 1.2, bend=1), 6.76, 0.7, 0.2); add(sub(40, 0.4), 6.76)
+add(kick(1.0), 4.0); add(sub(33, 0.6), 4.0)
+for i, m in enumerate([A4, C5, D5, E5]):
+    add(pluck(m, 0.9, bright=0.8), 4.0 + i * 0.0625, 0.4, pan=-0.3 + 0.2 * i)
+for k in range(5):
+    add(hat(60, 0.12), 4.25 + k * B, pan=0.4)
+add(kick(0.7), 5.0); add(kick(0.8), 6.0)
+add(woodblock(1400), 4.55, 0.5, 0.2)                       # grab
+# drag 4.62–5.5: one long pluck bending up a fourth (A4 → D5), following the knob
+add(pluck(A4, 1.6, curve=lambda t: 5 * smooth((t - 0.02) / 0.88), sustain=2.6), 4.6, 0.8, 0.0)
+add(sub(33, 1.0, 0.35), 4.6)
+add(noise_sweep(0.9, 300, 4000, 0.08, 'up'), 4.6)
+add(pluck(D5, 1.2), 5.5, 0.55, 0.3); add(sub(38, 0.5), 5.5); add(clap(), 5.5, 0.6)
+add(woodblock(1400), 5.66, 0.45, 0.2)                      # grab again
+# scrub 5.72–6.3: bend down and back up (535 → ~513 → 535)
+add(pluck(D5, 1.1, curve=lambda t: -2.75 * (0.5 - 0.5 * np.cos(2 * np.pi * smooth((t - 0.04) / 0.58))), sustain=2.4), 5.68, 0.7, -0.1)
+add(pluck(A5, 0.9, bright=0.7), 6.3, 0.35, 0.4)
 
-# --- 7–8  ampersand tiles: 16th hats, riser into the end card
-add(kick(0.9), 7.0); add(kick(0.9), 7.5); add(sub(36, 0.5), 7.0); add(sub(38, 0.5), 7.5)
+# --- 6.5–7.5  eight styles: a mõ on every card, then rows swap (two bends crossing)
 for k in range(8):
-    add(hat(70, 0.12 + 0.012 * k), 7 + k * 0.125, pan=0.4 if k % 2 else -0.4)
-for k, m in enumerate([A4, C5, D5, E5, G5, A5, C5 + 12, D5 + 12]):
-    add(pluck(m, 0.6, bright=0.8), 7.5 + k * 0.0625, 0.25 + 0.03 * k, pan=-0.6 + 0.17 * k)
-add(noise_sweep(0.95, 300, 9000, 0.22, 'up'), 7.05)
+    add(woodblock(1050 if k % 2 == 0 else 760), 6.5 + k * 0.0625, 0.55, pan=-0.4 if k % 2 else 0.4)
+add(kick(1.0), 6.5); add(sub(36, 0.5), 6.5); add(kick(0.85), 7.0); add(sub(33, 0.5), 7.0)
+add(pluck(E4, 0.9, curve=lambda t: 5 * smooth((t - 0.02) / 0.4), sustain=1.8), 7.0, 0.5, -0.4)
+add(pluck(A4, 0.9, curve=lambda t: -5 * smooth((t - 0.02) / 0.4), sustain=1.8), 7.0, 0.5, 0.4)
+for k in range(4):
+    add(hat(70, 0.14), 7.0 + k * 0.125, pan=0.3)
 
-# --- 8–10  end card: impact, digit-roll ticks, ring out
+# --- 7.5–8  giant t: tension, then the snap to the Golden t at 7.75
+add(kick(0.9), 7.5); add(sub(31, 0.3), 7.5)
+add(noise_sweep(0.5, 400, 9000, 0.2, 'up'), 7.5)
+add(clap(), 7.75, 0.9); add(pluck(E5, 0.8, bend=0), 7.75, 0.55, 0.2); add(woodblock(1700), 7.75, 0.4)
+for k in range(3):
+    add(hat(80, 0.16), 7.81 + k * 0.0625, pan=-0.3)
+
+# --- 8–10  end card: impact, Serif → Golden sweep with a rising bend, odometer ticks
 add(kick(1.2), 8.0); add(sub(33, 1.6, 0.7), 8.0); add(gong(45, 2.0), 8.0, 0.5)
 for k, m in enumerate([A3, E4, A4, C5, E5]):
-    add(pluck(m, 2.0, bend=(1 if m == C5 else 0), bend_at=0.3), 8.0 + k * 0.012, 0.5, pan=-0.4 + 0.2 * k)
-for k in range(14):
-    tt = 8.25 + k * 0.055 * (1 + k * 0.06)
-    add(woodblock(1500 + 60 * (k % 3)), tt, 0.22 * (1 - k / 16), pan=0.3)
-add(pluck(A5, 1.0, bend=0), 9.0, 0.45, 0.3)
-add(pluck(E5, 1.0, bend=2, bend_at=0.15), 9.25, 0.35, -0.3)
+    add(pluck(m, 2.0), 8.0 + k * 0.012, 0.5, pan=-0.4 + 0.2 * k)
+add(pluck(E5, 1.6, curve=lambda t: 5 * smooth((t - 0.02) / 0.78), sustain=2.6), 8.62, 0.5, 0.1)
+for k in range(9):
+    add(woodblock(1500 + 70 * (k % 3)), 8.66 + k * 0.085, 0.2, pan=0.35)
+add(pluck(A5, 1.2), 9.4, 0.45, 0.3)
+add(pluck(E5, 1.0, bend=2, bend_at=0.15), 9.6, 0.3, -0.3)
 
 # --- master: reverb, glue, fade
 ir_t = np.arange(int(1.6 * SR)) / SR
