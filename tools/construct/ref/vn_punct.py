@@ -511,6 +511,26 @@ def wedge(xc, ytop, ybot, wt, wb, conc=0.18, flat=False):
               foot,
               ('C', (c[0], c[1] + (d[1]-c[1])*0.3), (d[0] - k, d[1] - (d[1]-c[1])*0.35), d), ('Z',)])
 
+def _fair(p, maxdev=2.0):
+    """S69 (designer 21/11 "bụng cong dấu hỏi hơi gợn"): nối thân Hermite ở y_cut + uốn hẹp smoothstep làm độ cong nhảy ở mối nối
+    (eo 9.3 → 3.4, bụng 5.4 → 9.4, đỉnh 0 → 8.7). Giữ điểm neo + hướng tiếp tuyến, chọn lại độ dài tay nắm cho liền độ cong (fair.py)."""
+    sys.path.insert(0, os.path.join(HERE, '..')); from fair import fair_contours
+    conts = []; cur = None
+    for v, pts in p.segments:
+        if v == 'moveTo': cur = [('M', pts[0])]
+        elif v == 'lineTo': cur.append(('L', pts[0]))
+        elif v == 'curveTo': cur.append(('C', *pts))
+        elif v == 'qCurveTo': raise ValueError('qCurveTo')
+        elif v in ('closePath', 'endPath'): conts.append(cur)
+    q = pathops.Path()
+    for c in fair_contours(conts, maxdev):
+        q.moveTo(*c[0][1])
+        for it in c[1:]:
+            if it[0] == 'L': q.lineTo(*it[1])
+            else: q.cubicTo(*it[1], *it[2], *it[3])
+        q.close()
+    return q
+
 def punct(S, w):
     t = T[w]; d = t['dot']; r = d/2; V, H = t['V'], t['H']; nib = (t['N'], t['m']); G = {}
     bold = w != 'Regular'; Bw = lambda a, b: _B(w, a, b)
@@ -545,7 +565,7 @@ def punct(S, w):
     qx0, qx1, qd = Q_NARROW
     def qw(x, y):
         u = min(1, max(0, (qx1 - x)/(qx1 - qx0))); return (x + qd*u*u*(3 - 2*u), y)
-    G['?'] = U(xform(U(top2, qs), qw), dot((sx, r - 3), d))
+    G['?'] = U(_fair(xform(U(top2, qs), qw)), dot((sx, r - 3), d))      # S69: làm trơn bụng (fair.py)
     # nháy thẳng ' "
     # (designer 06/11 "thử" làm nháy thẳng gần dáng nháy cong): đầu rộng bằng đầu giọt nháy cong (= chấm câu), cao bằng nháy
     # cong, thon nhanh như giọt (lõm 0.45), chân cắt ngang 0.30 V; " cùng nhịp với ” (khe 0.6 V). Bản cũ: đầu 0.86 V, cao 256 cố định
