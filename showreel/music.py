@@ -198,17 +198,22 @@ def groove(t0, t1, walk):
             add(bass(walk[k % len(walk)], 0.46, 0.8), t, 1.0, -0.1)
         t += B; k += 1
 groove(1.6, 5.0, [])
-groove(6.4, 7.9, [E2, G2, A2])
+groove(6.78, 7.9, [G2, A2])
 
-# 07  paper rises; A, then the circumflex, then the hook (the hỏi tone: dip and rise)
+# 07  paper rises; A, then the circumflex, then the hook (the hỏi tone: dip and rise) — then glyphs cap → lower
 add(brush_swish(0.3, 0.13), 4.98, pan=0.2)
-add(piano(45, 1.6, 0.8), 5.3, 0.9); add(bass(A2 - 12, 1.0), 5.3)
-add(piano(76, 0.9, 0.6), 5.62, 0.7, 0.3)
-add(danbau(78, 0.7, lambda t: -2 * np.sin(np.pi * np.clip(t / 0.3, 0, 1)) + 1.5 * smooth((t - 0.2) / 0.25)), 5.86, 0.8, 0.1)
+add(piano(45, 1.4, 0.8), 5.26, 0.9); add(bass(A2 - 12, 0.9), 5.26)
+add(piano(76, 0.7, 0.6), 5.44, 0.7, 0.3)
+add(danbau(78, 0.5, lambda t: -2 * np.sin(np.pi * np.clip(t / 0.22, 0, 1)) + 1.5 * smooth((t - 0.15) / 0.2)), 5.6, 0.8, 0.1)
+for k, m in enumerate([74, 76, 78, 81, 83, 86, 88, 90]):        # Ở Ữ Đ Ặ · ặ ơ đ ỹ
+    add(piano(m, 0.45, 0.55), 5.9 + k * 0.11, 0.55, -0.35 + 0.1 * k)
+    add(rim(0.07), 5.9 + k * 0.11, pan=0.4)
+chord(Bm9, 5.9, 0.9, 0.45, roll=0.0)
 
 # 08  names push up and drift
-add(brush_swish(0.3, 0.12), 6.38, pan=-0.4)
-chord(Em9, 6.4, 1.0, 0.7)
+add(brush_swish(0.3, 0.12), 6.76, pan=-0.4)
+chord(Em9, 6.78, 0.7, 0.7)
+add(bass(E2, 0.45), 6.78)
 chord(A13, 7.4, 0.5, 0.6)
 add(cymbal_swell(0.5, 0.15), 7.44)
 

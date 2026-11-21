@@ -4,7 +4,7 @@
 
 Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 … 09): nền giấy `#f3f3f1`, chữ đen `#0e0e0e`, ảnh sepia. Ảnh lấy từ chính file Figma (đã chỉnh màu, xuất đúng khung): `img_sb/hue.jpg`, `img_sb/hue_s04.jpg` (Huế), `img_sb/market.jpg` (chợ Đồng Xuân xưa).
 
-**Font:** AnNam Serif **v0.931**, file `AnNamSerifVF[XHGT,slnt,wght]` (họ "AnNam Serif VF", XHGT 0 = AnNam Serif) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự đặt theo kerning thật của font.
+**Font:** AnNam Serif **v0.933**, file `AnNamSerif[XHGT,slnt,wght]` (XHGT 0 = AnNam Serif) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự đặt theo kerning thật của font.
 
 ## Kịch bản
 | Thời gian | Storyboard | Chuyển động |
@@ -15,8 +15,8 @@ Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 �
 | 2,4–3,1 s | 04 | Mọi nét chữ + symbol thành cửa sổ nhìn ra ảnh Huế |
 | 3,1–4,2 s | 05 | Ảnh mở tròn từ tâm bông hoa; bảng A–Z trắng **hiện từ chiều sâu: mờ → rõ** (lan từ giữa dòng) |
 | 4,2–5 s | 06 | Chữ hoa lùi về sau, mờ đi; chữ thường a–z tiến lên rõ dần |
-| 5–6,4 s | 07 | Giấy kéo lên; đường kẻ chạy ra; A, rồi dấu mũ, rồi dấu hỏi rơi vào → Ẩ |
-| 6,4–8 s | 08 | Đẩy lên: 5 dòng địa danh đứng / nghiêng, trôi ngang ngược chiều |
+| 5–6,8 s | 07 | Giấy kéo lên; đường kẻ chạy ra (x-height theo font); A, dấu mũ, dấu hỏi rơi vào → Ẩ; rồi chạy Ở Ữ Đ Ặ → ặ ơ đ ỹ (hoa → thường), mỗi glyph mờ → rõ |
+| 6,8–8 s | 08 | Đẩy lên: 5 dòng địa danh xưa của An Nam (Thăng Long, Phú Xuân, Gia Định, Định Tường, Kinh Bắc, Sơn Nam, Hà Tiên, Bình Định…), đứng / nghiêng, trôi ngang ngược chiều, kín hai đầu dòng |
 | 8–10 s | 09 | Ảnh chợ mở như cửa chớp từ giữa; AN NAM trắng hạ xuống; VARIABLE · ITALIC · REGULAR ✱ MEDIUM ✱ SEMIBOLD ✱ BOLD |
 
 ## Nhạc

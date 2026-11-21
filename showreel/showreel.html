@@ -4,8 +4,8 @@
 <meta charset="utf-8">
 <title>AnNam Serif Showreel</title>
 <style>
-/* AnNam Serif v0.931 — "AnNam Serif VF": wght 400–700 · XHGT 0–100 · slnt 0 → −10 (default = AnNam Serif Regular) */
-@font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerifVF[XHGT,slnt,wght].woff2") format("woff2"); font-weight: 400 700; font-style: normal; }
+/* AnNam Serif v0.933 — AnNamSerif[XHGT,slnt,wght]: wght 400–700 · XHGT 0–100 · slnt 0 → −10 (default = AnNam Serif Regular) */
+@font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif[XHGT,slnt,wght].woff2") format("woff2"); font-weight: 400 700; font-style: normal; }
 @font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif-Italic[XHGT,wght].woff2") format("woff2"); font-weight: 400 700; font-style: italic; }
 :root { --paper:#f3f3f1; --ink:#0e0e0e; }
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -52,6 +52,7 @@ html,body { background:#000; }
     <div class="abs nw" id="gA" style="font-size:797px;"></div>
     <div class="abs nw" id="gHook" style="font-size:797px;line-height:1;z-index:1"><span>Ẩ</span><span class="abs" style="left:0;top:0;color:var(--paper);-webkit-text-stroke:5px var(--paper)">Â</span></div>
     <div class="abs nw" id="gCirc" style="font-size:797px;line-height:1;z-index:2"></div>
+    <div class="abs nw" id="gCyc" style="font-size:797px;line-height:1;z-index:3;display:none"></div>
   </div>
 
   <!-- C · frame 08: place names, roman / italic, drifting -->
@@ -157,17 +158,21 @@ function build() {
     const d = document.createElement('div'); d.className='abs nw'; d.style.fontSize = '196px'; $('az').appendChild(d);
     const K = kernWord(d, txt, {padTop:.35, padBot:.3}); fv(d); K.items.forEach(it=>{ if (it) it.m.style.overflow = 'visible'; }); arr.push({K, i});
   }));
-  // Ẩ on the guide lines (storyboard: 397 · 407 · 538 · 965 · 1127)
-  [397, 407, 538, 965, 1127].forEach((y,i)=>{ const l = document.createElement('div'); l.className='abs';
+  // guide lines: 397 · cap 407 · x-height (font: 495 → 570) · baseline 965 · descender 1127
+  [397, 407, 570, 965, 1127].forEach((y,i)=>{ const l = document.createElement('div'); l.className='abs';
     l.style.cssText = `left:0;top:${y}px;width:${W}px;height:1.5px;background:#c9c9c5;transform-origin:0 50%;`; $('glines').appendChild(l); });
   KA = kernWord($('gA'), 'A', {padTop:.05}); fv($('gA'));
   $('gCirc').textContent = 'Â'; fv($('gCirc')); fv($('gHook'));
   // place names (storyboard lines: pitch 228, roman / italic alternating)
-  const names = [['Huế - Hội An - Hà Nội - Sài Gòn - Huế - Hội An - Hà Nội', false, -265],
-                 ['Định Tường - Vĩnh Long - Định Tường - Vĩnh Long', true, 62],
-                 ['Hoa Lư - Thăng Long - Hoa Lư - Thăng Long', false, 62],
-                 ['Gia Định - Bến Thành - Gia Định - Bến Thành', true, 62],
-                 ['Khánh Hội - Bình Định - Khánh Hội - Bình Định', false, 62]];
+  // old place names of An Nam (kinh đô, trấn, dinh, tỉnh thời xưa); each row far longer than the frame
+  const rows = [
+    ['Thăng Long','Phú Xuân','Gia Định','Hội An','Hoa Lư','Cổ Loa','Bến Nghé','Chợ Lớn','Huế','Đà Nẵng'],
+    ['Định Tường','Vĩnh Long','An Giang','Hà Tiên','Biên Hòa','Phiên An','Trấn Biên','Vĩnh Thanh','Sa Đéc','Châu Đốc'],
+    ['Kinh Bắc','Sơn Nam','Hải Dương','Sơn Tây','Thanh Hoa','Nghệ An','Hà Tĩnh','Quảng Bình','Quảng Trị','Thừa Thiên'],
+    ['Quảng Nam','Quảng Ngãi','Bình Định','Phú Yên','Khánh Hòa','Bình Thuận','Đồng Nai','Mỹ Tho','Bà Rịa','Tây Ninh'],
+    ['Cao Bằng','Lạng Sơn','Tuyên Quang','Hưng Hóa','Thái Nguyên','Nam Định','Hưng Yên','Bắc Ninh','Ninh Bình','Hải Phòng'],
+  ];
+  const names = rows.map((r,i)=>[(r.join(' - ') + ' - ').repeat(2), i%2===1, -700 - (i*317)%900]);
   names.forEach(([txt,it,x0],i)=>{
     const d = document.createElement('div'); d.className='abs nw';
     d.style.cssText = `font-size:212px;line-height:1.1;top:${155 + i*228 - 40}px;left:0;${it?'font-style:italic;':''}`;
@@ -184,7 +189,7 @@ function build() {
 
 // ================= render(t) =================
 function render(t) {
-  const inA = t < 5.32, inB = t >= 4.98 && t < 6.75, inC = t >= 6.38 && t < 8.35, inD = t >= 7.92;
+  const inA = t < 5.32, inB = t >= 4.98 && t < 7.12, inC = t >= 6.76 && t < 8.35, inD = t >= 7.92;
   $('A').style.display = inA ? 'block' : 'none'; $('B').style.display = inB ? 'block' : 'none';
   $('Cn').style.display = inC ? 'block' : 'none'; $('D').style.display = inD ? 'block' : 'none';
 
@@ -230,16 +235,16 @@ function render(t) {
   if (inB) {
     const b = $('B');
     b.style.clipPath = `inset(${(1 - expoInOut(seg(t, 5.0, 5.3)))*100}% 0 0 0)`;
-    b.style.transform = `translateY(${-expoInOut(seg(t, 6.4, 6.72))*H}px)`;
+    b.style.transform = `translateY(${-expoInOut(seg(t, 6.78, 7.1))*H}px)`;
     [...$('glines').children].forEach((l,i)=>{ l.style.transform = `scaleX(${quartInOut(seg(t, 5.12 + i*.05, 5.6 + i*.05))})`; });
     const fs = 797, base = 965, k = ink('A', fs);
     const A = $('gA'); layoutWord(KA);
     A.style.left = (1017 - (k.r - k.l)/2 - k.l) + 'px';
     A.style.top = (base - .71*fs) + 'px';
-    slot(KA, t, 5.3, null, 0, .45);
+    slot(KA, t, 5.26, null, 0, .4);
     // marks: same glyph positions as Ẩ, shown only above the cap line
     const kh = ink('Ẩ', fs), kc = ink('Â', fs);
-    [['gCirc','Â',5.62,kc],['gHook','Ẩ',5.86,kh]].forEach(([id,ch,t0,kk])=>{
+    [['gCirc','Â',5.44,kc],['gHook','Ẩ',5.6,kh]].forEach(([id,ch,t0,kk])=>{
       const e = $(id); e.style.left = A.style.left; e.style.top = (base - .86*fs) + 'px';
       const capTop = base - .7*fs - 8;               // keep only what sits above the cap
       const localTop = capTop - (base - .86*fs);
@@ -247,13 +252,28 @@ function render(t) {
       const p = expoOut(seg(t, t0, t0 + .32));
       e.style.transform = `translateY(${-(1-p)*220}px)`; e.style.opacity = clamp(p*3);
     });
+    // then a run of glyphs, capitals → lower case, each one sharpening out of a blur
+    const CYC = [['Ở',0],['Ữ',0],['Đ',0],['Ặ',0],['ặ',0],['ơ',0],['đ',0],['ỹ',0]], T0 = 5.9, STEP = .11;
+    const kidx = Math.floor((t - T0) / STEP), on = t >= T0 && kidx < CYC.length;
+    $('gCyc').style.display = on ? 'block' : 'none';
+    [A, $('gCirc'), $('gHook')].forEach(e=>e.style.visibility = t >= T0 ? 'hidden' : 'visible');
+    if (t >= T0) {
+      const k2 = Math.min(kidx, CYC.length - 1), ch = CYC[k2][0], g = $('gCyc');
+      g.style.display = 'block'; g.textContent = ch; fv(g);
+      const kk = ink(ch, fs);
+      g.style.left = (1017 - (kk.r - kk.l)/2 - kk.l) + 'px'; g.style.top = (base - .86*fs) + 'px';
+      const p = expoOut(seg(t, T0 + k2*STEP, T0 + k2*STEP + .09));
+      g.style.filter = p < .98 ? `blur(${((1-p)*16).toFixed(1)}px)` : 'none';
+      g.style.opacity = clamp(.35 + p); g.style.transformOrigin = `${(kk.r - kk.l)/2 + kk.l}px ${.86*fs}px`;
+      g.style.transform = `scale(${lerp(1.05, 1, p)})`;
+    }
   }
 
   // ---------- C: frame 08 — names push up from below and drift (alternate directions)
   if (inC) {
     const c = $('Cn');
-    c.style.transform = `translateY(${(1 - expoInOut(seg(t, 6.4, 6.72)))*H}px)`;
-    NM.forEach(({d,x0,dir,i})=>{ d.style.transform = `translateX(${x0 + dir*(t - 7.2)*110}px)`; });
+    c.style.transform = `translateY(${(1 - expoInOut(seg(t, 6.78, 7.1)))*H}px)`;
+    NM.forEach(({d,x0,dir,i})=>{ d.style.transform = `translateX(${x0 + dir*(t - 7.5)*140}px)`; });
   }
 
   // ---------- D: frame 09 — the market photo opens like a shutter from the middle; AN NAM drops in
@@ -270,7 +290,7 @@ function render(t) {
 
 window.ready = (async () => {
   for (const f of ['400 100px AN','italic 400 100px AN'])
-    await document.fonts.load(f, 'AN NAM ĐÌZAI Ẩ Huế Hội Định Tường Vĩnh Lư Thăng Bến Thành Khánh Bình abcdefg');
+    await document.fonts.load(f, 'AN NAM ĐÌZAI Ẩ Ở Ữ Đ Ặ ặ ơ đ ỹ Huế Hội Định Tường Vĩnh Lư Thăng Bến Thành Khánh Bình abcdefg');
   await Promise.all(imgs); await document.fonts.ready;
   build(); render(0);
   return true;
