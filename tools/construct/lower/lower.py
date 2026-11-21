@@ -15,7 +15,7 @@ Bold = luật Bold của chữ hoa (docs/08), cùng số với chữ hoa:
 import sys, re, os, json
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE); sys.path.insert(0, os.path.join(HERE, '..', 'ref'))
 import pathops
-from src_lower import SHAPES, GLYPH, GLYPH_BOLD, S, BASE, A_HOOK_CP
+from src_lower import SHAPES, GLYPH, GLYPH_BOLD, S, BASE, A_HOOK_PTS
 # vòng dưới g (designer 05/11: "hông bụng dưới chữ g hơi nhọn cho độ cong lài hơn"): elip 144 × 88 px κ 0.552 → bán kính cong ở
 # hông b²/a ≈ 27 px. Siêu elip: tay nắm đứng ở hai hông κ 0.68, tay nắm ngang ở đỉnh / đáy κ 0.58; lòng (80 × 56) 0.62 / 0.56
 def _sell(cx, cy, a, b, ks, kt, rev=False):
@@ -164,6 +164,27 @@ def _a_open(o):
     big = V.I(big, V.rect(-5000, -5000, min(cnt.bounds[2], sx0), 5000))   # không vượt mép trong thân (thân giữ đúng 102)
     return V.D(o, big)
 
+def _a_hook_bold(dS, dH):
+    """S68: lòng móc a ở weight > Regular — mọi điểm móc dày xuống dH, thân trong dời trái dS/2; đoạn phải (thân → đỉnh) giải lại độ dài
+    hai tay nắm (giữ hướng: đứng ở thân, ngang ở đỉnh) cho khớp G2 với đoạn trái ở đỉnh và |κ| tăng đều — dời thân làm đoạn phải
+    hẹp lại, giữ tay nắm cũ thì đỉnh gãy độ cong (9.3 / 7.1) và đoạn phải phình (11.7)."""
+    P = [(x, y + dH) for x, y in A_HOOK_PTS]                    # (93 31.9) (73.9 14.1) ĐỈNH (30.4 14.1) (11.3 34.7) đầu cắt
+    it = np.array((93 - dS/2, 58.25)); ap = np.array(P[2]); L = [ap, np.array(P[3]), np.array(P[4]), np.array(P[5])]
+    def kap(Q, t):
+        Q = [np.asarray(q, float) for q in Q]
+        d1 = 3*((1-t)**2*(Q[1]-Q[0]) + 2*(1-t)*t*(Q[2]-Q[1]) + t*t*(Q[3]-Q[2])); d2 = 6*((1-t)*(Q[2]-2*Q[1]+Q[0]) + t*(Q[3]-2*Q[2]+Q[1]))
+        return (d1[0]*d2[1] - d1[1]*d2[0])/max(math.hypot(*d1), 1e-9)**3
+    kL = kap(L, 0.0); best = None
+    for a in np.arange(8, 45, 0.25):
+        for b in np.arange(8, 45, 0.25):
+            R = [it, it + (0, -a), ap + (b, 0), ap]; ks = [abs(kap(R, t)) for t in np.linspace(0, 1, 21)]
+            mono = sum(max(0, ks[i] - ks[i + 1]) for i in range(20))
+            cost = (abs(kap(R, 1.0)) - abs(kL))**2*1e6 + mono*1e4 + sum((ks[i + 1] - ks[i])**2 for i in range(20))*1e3
+            if best is None or cost < best[0]: best = (cost, a, b)
+    _, a, b = best
+    new = [(93 - dS/2, 58.25 - a), (ap[0] + b, ap[1])] + P[2:]
+    return {(round(x, 3), round(y, 3)): (round(float(q[0]), 4), round(float(q[1]), 4)) for (x, y), q in zip(A_HOOK_PTS, new)}
+
 def raw(ch, weight):
     spec = None   # GLYPH_BOLD (mẫu a Bold cũ, bụng đứng) không còn dùng: a Bold theo luật (bold())
     if spec:                                                   # bản vẽ Bold của designer
@@ -186,10 +207,11 @@ def bold(ch):
         # a Bold (bản a 05/11 bụng xoay; mẫu a Bold cũ bụng đứng không còn khớp): cùng luật — thân + B_STEM ra phía ngoài (phải,
         # cả loe chân), vai dày xuống B_BAR (đầu cắt dày theo); bụng: mép ngoài giãn +B_WIDE, lòng elip co B_K, dời về thân B_SHIFT
         dS, dH = B_STEM/S, B_BAR/S
+        HK = _a_hook_bold(dS, dH)
         def fs(x, y):
+            if (round(x, 3), round(y, 3)) in HK: return HK[(round(x, 3), round(y, 3))]   # lòng móc (S68)
             if x >= 128.99: x += dS/2                                           # thân chia đều hai phía
             elif 84.9 <= x <= 93.01: x -= dS/2
-            if (x, y) in (A_HOOK_CP[1], (0.0, 57.249)) or abs(y - A_HOOK_CP[0][1]) < 1e-3: y += dH   # lòng móc dày xuống (S66: tay nắm mới)
             return x, y
         stem = _path(_map_pts(SHAPES['a_stem'], fs), G['a_stem'])
         bm = G['a_bowl']; outer = _path(_first_contour(SHAPES['a_bowl']), bm); c, k, st = _stretch(outer.bounds)

@@ -150,8 +150,8 @@ def combined3():
     subprocess.run(['fontmake', '-m', dsp, '-o', 'variable', '--output-dir', out, '--flatten-components'], check=True,
                    stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     src = [f for f in os.listdir(out) if f.endswith('.ttf')][0]
-    dst = os.path.join(VF, 'AnNamSerifVF[XHGT,slnt,wght].ttf'); shutil.move(os.path.join(out, src), dst)
-    for old_ in ('AnNamSerif[XHGT,slnt,wght].ttf',):
+    dst = os.path.join(VF, 'AnNamSerif[XHGT,slnt,wght].ttf'); shutil.move(os.path.join(out, src), dst)
+    for old_ in ('AnNamSerifVF[XHGT,slnt,wght].ttf',):
         for d_ in (VF, os.path.join(ROOT, 'fonts', 'woff2', 'variable')):
             for e_ in ('.ttf', '.woff2'):
                 q_ = os.path.join(d_, old_.replace('.ttf', e_))
@@ -163,16 +163,15 @@ def combined3():
     buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='XHGT', name='x-Height', values=xv),
                        dict(tag='slnt', name='Slant', values=sv)])
     nm = f['name']
-    # tên họ RIÊNG "AnNam Serif VF" (designer 21/11 "trục xheight không hoạt động trong Figma"): trùng họ "AnNam Serif" với
-    # bản tĩnh / variable chỉ có wght đang cài → Figma gộp họ, dùng file khác, mất thanh x-Height
+    # tên họ "AnNam Serif" (designer 21/11 "giữ An Nam Serif thôi" — bỏ họ riêng "AnNam Serif VF" của 0.930); chỉ tên PostScript
+    # riêng AnNamSerifAll-… để không trùng bản tĩnh. Máy dùng file này nên cài MỘT MÌNH nó (README).
     for rec in list(nm.names):
-        if rec.nameID in (1, 4, 16, 18): rec.string = rec.toUnicode().replace('AnNam Serif', 'AnNam Serif VF')
-        if rec.nameID == 6: rec.string = rec.toUnicode().replace('AnNamSerif-', 'AnNamSerifVF-')
-    nm.setName('AnNamSerifVF', 25, 3, 1, 0x409)
+        if rec.nameID == 6: rec.string = rec.toUnicode().replace('AnNamSerif-', 'AnNamSerifAll-')
+    nm.setName('AnNamSerifAll', 25, 3, 1, 0x409)
     for inst in f['fvar'].instances:
         if inst.postscriptNameID != 0xFFFF:
             rr = nm.getName(inst.postscriptNameID, 3, 1, 0x409)
-            if rr: nm.setName(rr.toUnicode().replace('AnNamSerif-', 'AnNamSerifVF-'), inst.postscriptNameID, 3, 1, 0x409)
+            if rr: nm.setName(rr.toUnicode().replace('AnNamSerif-', 'AnNamSerifAll-'), inst.postscriptNameID, 3, 1, 0x409)
     nm.names = [n for n in nm.names if n.platformID != 1]
     import re as _re
     V = _re.search(r'^VERSION = \((\d+), (\d+)\)', open(os.path.join(HERE, 'export_font.py')).read(), _re.M)

@@ -1,4 +1,4 @@
-AnNam Serif — Version 0.931 (21 November 2026)
+AnNam Serif — Version 0.933 (21 November 2026)
 Design: Đìzai Studio · Vendor ID: DZAI
 
 A glyphic, flared serif with broad-nib contrast and full Vietnamese support
@@ -10,7 +10,7 @@ CONTENTS
     AnNamSerif[wght].ttf            Roman, weight axis wght 400–700
     AnNamSerif-Italic[wght].ttf     Italic, weight axis wght 400–700
     AnNamSerif[slnt,wght].ttf       Roman + Italic in one file: wght 400–700 + slant slnt 0 to −10°
-    AnNamSerifVF[XHGT,slnt,wght].ttf  ALL IN ONE, family name "AnNam Serif VF": weight wght 400–700
+    AnNamSerif[XHGT,slnt,wght].ttf  ALL IN ONE: weight wght 400–700
                                     + x-Height XHGT 0 (AnNam Serif, x-height 495) → 100 (AnNam Golden, x-height 535)
                                     + slant slnt 0 to −10°. 16 named styles (Regular … Bold Italic, Golden Regular … Golden Bold Italic).
                                     Install this ONE file for apps that support variable fonts (Figma, Adobe CC, web).
@@ -26,8 +26,9 @@ CONTENTS
 WHICH FILES TO INSTALL
   • Print and desktop design (Adobe, Figma, Microsoft Office): install the 8 fonts in otf/ (or ttf/).
     Do not install otf/ and ttf/ on the same computer — they share names and will conflict.
-  • Apps that support variable fonts: use variable/. Simplest: the single file AnNamSerifVF[XHGT,slnt,wght].ttf (all three axes,
-    its own family "AnNam Serif VF"; in Figma, quit and reopen Figma after installing so it reloads the font).
+  • Apps that support variable fonts: use variable/. Simplest: the single file AnNamSerif[XHGT,slnt,wght].ttf (all three axes).
+    Install it ON ITS OWN: it shares the family name "AnNam Serif" with every other file, so first uninstall any other
+    AnNam Serif fonts (otf/, ttf/ and the other variable files), then quit and reopen Figma so it reloads the font.
     Otherwise choose ONE option:
       – the pair AnNamSerif[wght].ttf + AnNamSerif-Italic[wght].ttf (needed for the Italic button in Word / Office), or
       – the single file AnNamSerif[slnt,wght].ttf (web, Figma and apps that support a slant axis).

@@ -132,3 +132,22 @@ Font (Regular, độ cong ×1000): vai 0 → 8 → 3 thành 5 → 6.9 → 3.2; �
 
 ![a Serif](img/s66-a-serif.png)
 ![a Golden](img/s66-a-golden.png)
+
+## S67 — file ba trục về họ "AnNam Serif" (21/11, "giữ An Nam Serif thôi")
+
+Bỏ họ riêng "AnNam Serif VF" (S65): `AnNamSerif[XHGT,slnt,wght].ttf`, họ "AnNam Serif", PostScript riêng `AnNamSerifAll-…` (không trùng bản tĩnh). Trục x-Height giữ thang 0–100. Vì cùng họ với mọi file khác, máy dùng file này cài MỘT MÌNH nó (gỡ otf / ttf / variable khác) rồi mở lại Figma — ghi trong README. Version 0.932.
+
+## S68 — lòng móc a thành vòm tròn đều (21/11, "Bụng móc trên thấy vẫn chưa smooth"; "làm trơn luôn m, u và bụng dưới a")
+
+S66 mới làm trơn từng đoạn; lòng móc vẫn LỆCH: bên trái gần như đường chéo thẳng dài, gập gấp ở vai phải (|κ| dồn 13 ở t 0.7). Dựng lại như lòng vòm n:
+- lòng móc HAI đoạn, có điểm đỉnh (tiếp tuyến ngang); |κ| tăng đều từ thân lên đỉnh, giảm đều về đầu cắt; khớp G2 ở đỉnh. Đỉnh dời trái 7.6 px bản vẽ (lòng cân hơn); góc mũi đầu cắt giữ 26.7°; lệch S66 ≤ 3 px (≈ 8 u). `A_HOOK_PTS` (src_lower.py).
+- weight > Regular (`_a_hook_bold`, lower.py): mọi điểm móc dày xuống B_BAR, thân trong dời trái ½ B_STEM, rồi GIẢI LẠI độ dài hai tay nắm đoạn phải (giữ hướng) cho khớp G2 ở đỉnh, |κ| tăng đều. Sửa lỗi cũ: so khớp điểm móc phải làm trên toạ độ GỐC (trước khi dời thân).
+- Font (Regular, |κ| ×1000): lòng móc 2.9 → 9.6 (đỉnh) | 9.3 → 6.7 (thân); cực đại 13.1 → 9.6. Bold 3.0 → 9.3 | 9.7 → 6.7. Golden Regular 2.6 → 10.1 | 10.3 → 5.6.
+
+m, u, bụng dưới a: lược độ cong liền, không gai / bậc; chỉ dao động ≤ 6 % trên cung gần tròn / elip (tự nhiên của elip, không thấy được) — chỗ lược "đứt" là nơi cung gặp thân thẳng / khấc nách (góc chủ ý, như n). Không đổi hình.
+
+QA Serif + Golden: outline 0 lỗi; nét, weight, kern, thanh, tay loe như trước. Version 0.933.
+
+![a Serif](img/s68-a-serif.png)
+![a Golden](img/s68-a-golden.png)
+![m u a](img/s68-m-u-a.png)
