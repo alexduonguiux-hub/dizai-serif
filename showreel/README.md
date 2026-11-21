@@ -23,7 +23,12 @@ Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 �
 | 9,75–12 s | 09 | Cắt sang ảnh chợ; AN NAM gom lại như mở đầu; VARIABLE · ITALIC · REGULAR ✱ MEDIUM ✱ SEMIBOLD ✱ BOLD gõ ra |
 
 ## Nhạc
-Tự soạn bằng code (`music.py`), không dùng sample, theo màu Nhã nhạc cung đình Huế: trống đại, trống bản, phách, sênh tiền, chuông, khánh, kèn bầu (giai điệu chính), sáo, đàn nhị, đàn nguyệt; điệu Bắc (Hò Xự Xang Xê Cống ≈ D E G A B). Mỗi cú cắt có một tiếng trống / phách / khánh; dấu hỏi của Ẩ là kèn bầu luyến kiểu thanh hỏi.
+Giai điệu liên khúc Nhã nhạc cung đình Huế **Lưu thủy – Kim tiền – Xuân phong – Long hổ** (nhạc cổ truyền), ký âm lại từ một bản hòa tấu tham khảo (dò cao độ + nghe), rồi chơi lại bằng nhạc cụ tổng hợp trong `music.py`. Không dùng âm thanh của bản thu gốc; file tham khảo không lưu trong repo.
+
+- Thang: điệu Bắc, Hò = C (Hò C · Xự D · Xang ≈ F♯ (lên dây cao) · Xê G · Cống A).
+- 0,25–6,4 s: câu mở **Lưu thủy** — C A C D Xang · G G · C B A C D Xang G.
+- 6,25–11,5 s: đoạn nhanh **Long hổ** — A G C A C G D C · A G C A G Xang A C G …; kết về Hò.
+- Đàn nhị + sáo chơi giai điệu (liền, có luyến), đàn nguyệt gảy từng nốt, đàn tranh vuốt vào Long hổ; phách, sênh tiền, trống bản giữ nhịp; trống đại, chuông, khánh nhấn các cú cắt hình.
 
 ## Dựng lại
 ```bash

@@ -1,4 +1,6 @@
-"""Original 12 s score for the AnNam Serif showreel — Huế royal court music colours (Nhã nhạc cung đình).
+"""12 s score for the AnNam Serif showreel — melody of the traditional Huế court suite
+"Lưu thủy – Kim tiền – Xuân phong – Long hổ" (public-domain tradition), transcribed from a reference
+recording and re-played with synthesised instruments (no audio from the recording is used).
 
 Instruments (all synthesised, no samples): trống đại (great drum), trống bản (small drum),
 phách (wood clapper), sênh tiền (coin clapper), chuông (bell), khánh (stone chime),
@@ -159,79 +161,95 @@ def dan_nguyet(m, dur=0.9, gain=0.3, bend=0.0):
     return out * np.minimum(1, t / 0.002) * gain
 
 
-# điệu Bắc on D: D E G A B
-D4, E4, G4, A4, B4, D5, E5, G5, A5, B5 = 62, 64, 67, 69, 71, 74, 76, 79, 81, 83
-D3, A3 = 50, 57
+# ---------------- melody transcribed from the Huế court ensemble recording ----------------
+# (Lưu thủy – Kim tiền – Xuân phong – Long hổ, traditional; transcribed by ear/pitch-tracking, played here by synths)
+# Scale: điệu Bắc on Hò = C → Hò C · Xự D · Xang F (tuned high, ≈ F♯) · Xê G · Cống A
+C3, D3, G3, A3, C4, D4, F4, G4, A4, C5, D5 = 48, 50, 55, 57, 60, 62, 65, 67, 69, 72, 74
+XANG = 54.4            # Xang below Xê, tuned high as in the recording
+B3, Bb3, Gs3 = 59, 58, 56
+R = None
+STEP = 0.125           # one 16th at 120 BPM
 
-# ================= cue sheet (hard cuts on the 120 BPM grid) =================
-def groove(t0, t1, drum=(0, 3)):
-    k = 0; t = t0
-    while t < t1 - 1e-6:
-        add(senh_tien(0.15 if k % 2 else 0.2), t, pan=0.45)
-        add(phach(0.3 if k % 2 == 0 else 0.16), t + 0.125, pan=-0.45)
-        if k % 4 in drum:
-            add(trong_ban(0.42), t, pan=-0.1)
-        t += 0.25; k += 1
+LUU_THUY = [(C4,4),(A3,5),(C4,3),(D4,5),(XANG,4),(R,3),(G3,3),(R,1),(G3,3),
+            (R,1),(C4,4),(B3,1),(A3,4),(C4,4),(D4,4),(XANG,4),(G3,2)]
+LONG_HO = [(A3,1),(G3,3),(C4,1),(A3,1),(C4,2),(R,1),(G3,4),(R,1),(D4,1),(C4,3),(R,2),
+           (A3,2),(G3,2),(C4,1),(A3,1),(G3,2),(XANG,2),(R,1),(A3,1),(C4,3),(G3,2),(XANG,1),(G3,2),
+           (A3,1),(R,1),(A3,2),(G3,1),(A3,1),(R,1),(A3,2),(G3,1),(A3,1),(G3,2),(XANG,1),(G3,1),(XANG,3),(C4,4)]
 
-# 01  paper — a stone chime opens the court
-add(khanh(A4, 0.4), 0.0, pan=-0.2)
-# 02  HUD types on (tiny coin taps); symbol cuts in (bell); AN NAM letters drop one per 16th (moon lute), snap at 1.25
-for i in range(9):
-    add(senh_tien(0.05, 1), 0.25 + i * 0.04, pan=-0.6 + 0.15 * i)
-add(chuong(D5 + 12, 0.16, 1.5), 0.5, pan=0.3)
-for i, m in enumerate([D4, E4, G4, A4, B4, D5]):
-    add(dan_nguyet(m, 0.9, 0.3), 0.5 + i * 0.125, pan=-0.5 + 0.2 * i)
-add(trong_dai(1.0), 1.25); add(phach(0.5), 1.25)
-# 03  rosette turns in four snaps (stone chime steps); weight wave through AN NAM (kèn bầu swell)
-for i, m in enumerate([A4, B4, D5, E5, A5]):
-    add(khanh(m, 0.18, 0.9), 1.5 + i * 0.125, pan=-0.4 + 0.2 * i)
-add(ken_bau([(0, D5, 0.2, None), (0.2, E5, 0.45, lambda k: -1.0 * np.exp(-k * 16))]), 1.75, 0.9, 0.0)
-# 04  hard cut: ink becomes the photo (great drum + bell), one-frame flicker
-add(trong_dai(0.9), 2.25); add(chuong(A5, 0.26, 2.2), 2.25, pan=0.35)
-add(dan_nhi(A4, 0.7, lambda k: 2 * smooth((k - 0.4) / 0.2), 0.14), 2.3, pan=-0.3)
-# 05–06  cut to Huế; letters out of the depth — ensemble enters
-add(trong_dai(1.0), 3.0); add(chuong(D5, 0.2, 1.8), 3.0, pan=-0.4)
-groove(3.0, 4.5)
-for k, m in enumerate([D4, A4, G4, A4, D5, A4]):
-    add(dan_nguyet(m, 0.45, 0.2), 3.0 + k * 0.25, pan=-0.25)
-add(ken_bau([(0, D5, 0.3, None), (0.3, E5, 0.2, None), (0.5, G5, 0.3, lambda k: 0.8 * np.sin(np.pi * np.clip(k / 0.12, 0, 1))),
-             (0.8, E5, 0.2, None)]), 3.05, 0.95, 0.1)
-add(sao(A5, 0.4), 3.85, pan=0.3); add(sao(B5, 0.45), 4.0, pan=0.3)
-# 07  cut to the guide lines; A breathes through weight (fiddle swell); ^ (bell), hook (kèn hỏi tone); glyph cuts
-add(phach(0.5), 4.5); add(trong_ban(0.5), 4.5)
-add(dan_nhi(D4, 0.4, lambda k: 3 * np.sin(np.pi * np.clip(k / 0.35, 0, 1)), 0.16), 4.5, pan=-0.2)
-add(chuong(D5, 0.16, 1.0), 4.875, pan=0.3)
-add(ken_bau([(0, A4, 0.3, lambda k: -1.6 * np.sin(np.pi * np.clip(k / 0.15, 0, 1)) + 2 * smooth((k - 0.11) / 0.14))]), 5.0, 0.85, 0.1)
-for k, m in enumerate([D4, E4, G4, A4, B4, D5, E5, G5]):        # Ở Ữ Đ Ặ · ặ ơ đ ỹ
-    add(dan_nguyet(m, 0.4, 0.26), 5.25 + k * 0.125, pan=-0.35 + 0.1 * k)
-    add(phach(0.14), 5.25 + k * 0.125, pan=0.45)
-# 08  names: characters switch on in random order (coin-clapper roll), then the tutti
-add(trong_dai(0.9), 6.25)
-for i in range(10):
-    add(senh_tien(0.08, 1), 6.25 + rng.uniform(0, 0.34), pan=rng.uniform(-0.6, 0.6))
-groove(6.5, 7.5, drum=(0, 2))
-add(ken_bau([(0, A4, .25, None), (.25, D5, .25, None), (.5, E5, .2, None), (.7, D5, .2, None), (.9, B4, .3, None)]), 6.3, 0.9, 0.05)
-# 08b  the proverb lands word by word (wood clap on 8ths); the boat cuts in (fiddle + flute)
-for k in range(8):
-    add(phach(0.22 if k % 2 == 0 else 0.12), 7.5 + k * 0.125, pan=-0.3 + 0.08 * k)
-add(trong_ban(0.45), 7.875)
-add(dan_nhi(D4, 0.85, lambda k: np.interp(k, [0, .25, .45, .7, .85], [0, 2, 5, 3, 0]), 0.17), 7.875, pan=-0.3)
-add(sao(D5, 0.35), 8.0, pan=0.35); add(sao(E5, 0.3), 8.375, pan=0.35)
-# 08c  the French lines type out (a rattle of taps), great drum under, a solemn kèn line
-add(trong_dai(0.8), 8.75)
-for i in range(22):
-    add(senh_tien(0.045, 1), 8.78 + i * 0.04, pan=-0.5 + 0.045 * i)
-add(ken_bau([(0, D5, 0.4, None), (0.4, B4, 0.25, None), (0.65, A4, 0.3, lambda k: -0.8 * np.exp(-k * 6))]), 8.8, 0.75, 0.0)
-# 09  hard cut to the market; AN NAM gathers (lute), snaps at 10.5 (drum + bells); the styles type on
-add(trong_dai(1.0), 9.75); add(chuong(D5, 0.25, 2.0), 9.75, pan=-0.3)
-for i, m in enumerate([D4, E4, G4, A4, B4, D5]):
-    add(dan_nguyet(m, 0.8, 0.26), 9.875 + i * 0.09, pan=-0.5 + 0.2 * i)
-add(trong_dai(1.1), 10.5); add(khanh(D4, 0.4, 2.5), 10.5, pan=0.3); add(senh_tien(0.25, 4, 0.018), 10.5, pan=0.5)
-add(ken_bau([(0, D5, 0.2, None), (0.2, E5, 0.2, None), (0.4, G5, 0.2, None), (0.6, A5, 0.9, lambda k: -1 * np.exp(-k * 12))]), 10.5, 0.95, 0.0)
-add(dan_nhi(D5, 1.3, gain=0.12), 10.5, pan=-0.35)
-for i in range(12):
-    add(senh_tien(0.04, 1), 10.62 + i * 0.06, pan=0.3)
-add(chuong(A5, 0.22, 1.6), 11.1, pan=0.4)
+
+def notes_at(seq, t0, step=STEP):
+    out, t = [], t0
+    for m, n in seq:
+        if m is not None:
+            out.append((t, m, n * step))
+        t += n * step
+    return out, t
+
+
+def line(notes, kind, gain):
+    """Legato line (đàn nhị / sáo): one continuous voice with glides between notes."""
+    t_end = max(a + d for a, m, d in notes) + 0.2
+    t0 = notes[0][0]
+    t = tt(t_end - t0); pitch = np.full_like(t, notes[0][1], dtype=float); amp = np.zeros_like(t)
+    for i, (a, m, d) in enumerate(notes):
+        i0, i1 = int((a - t0) * SR), int((a - t0 + d) * SR)
+        prev = notes[i - 1][1] if i else m
+        k = t[i0:i1] - (a - t0)
+        pitch[i0:i1] = m + (prev - m) * np.exp(-k * 45)          # quick slide into each note (luyến)
+        amp[i0:i1] = np.minimum(1, k / 0.02) * (0.85 + 0.15 * np.exp(-k * 8))
+    vib = (0.22 if kind == 'nhi' else 0.12) * np.sin(2 * np.pi * (5.3 if kind == 'nhi' else 5.0) * t)
+    f = hz(pitch + vib); ph = 2 * np.pi * np.cumsum(f) / SR
+    if kind == 'nhi':
+        s = sum((1 / k) * np.sin(k * ph) for k in range(1, 12)); s = bp(s, 300, 4500)
+        s += 0.04 * bp(rng.standard_normal(len(t)), 2500, 7000)
+    else:
+        s = np.sin(ph) + 0.15 * np.sin(2 * ph) + 0.06 * bp(rng.standard_normal(len(t)), 1500, 5000)
+    return release(s * lp(amp, 30, 1), 0.12) * gain, t0
+
+
+def play_melody(seq, t0, octave=0):
+    notes, t_end = notes_at(seq, t0)
+    notes = [(a, m + octave, d) for a, m, d in notes]
+    s, s0 = line(notes, 'nhi', 0.22); add(s, s0, 1.0, -0.3)
+    s, s0 = line([(a, m + 12, d) for a, m, d in notes], 'sao', 0.12); add(s, s0, 1.0, 0.35)
+    for a, m, d in notes:                                         # đàn nguyệt plucks each note
+        add(dan_nguyet(m, max(0.35, d + 0.2), 0.24), a, pan=0.05)
+    return t_end
+
+
+# ================= cue sheet =================
+# Lưu thủy (0.25 – 6.4 s), then Long hổ (6.25 – 11.5 s), ending on Hò (C)
+add(khanh(C4, 0.4), 0.0, pan=-0.2)
+play_melody(LUU_THUY, 0.25)
+lh_end = play_melody(LONG_HO, 6.25)
+for k in range(5):                                               # đàn tranh glissando into Long hổ
+    add(dan_nguyet([C4, D4, F4, G4, A4][k] + 12, 0.6, 0.12), 6.0 + k * 0.045, pan=0.5)
+
+# beat keepers: phách on the beat from 0.5; sênh tiền on the off-beats from 3.0; trống bản every bar
+t = 0.5
+while t < 11.6:
+    add(phach(0.26), t, pan=-0.45)
+    if t >= 3.0:
+        add(senh_tien(0.14), t + 0.25, pan=0.45)
+    if abs((t - 0.5) % 2.0) < 1e-6:
+        add(trong_ban(0.38), t, pan=-0.1)
+    t += 0.5 if t < 6.25 else 0.25 if t >= 9.75 else 0.5
+
+# accents on the picture cuts
+for tc in (1.25, 2.25, 3.0, 4.5, 6.25, 7.5, 8.75, 9.75, 10.5):
+    add(trong_dai(0.75 if tc not in (6.25, 9.75) else 1.0), tc)
+add(chuong(C5, 0.16, 1.5), 0.5, pan=0.3)                         # symbol cuts in
+add(chuong(G4 + 12, 0.18, 1.8), 2.25, pan=0.35)                  # ink → photo
+for i in range(9):                                               # HUD types on
+    add(senh_tien(0.04, 1), 0.25 + i * 0.04, pan=-0.6 + 0.15 * i)
+for i in range(22):                                              # French lines type out
+    add(senh_tien(0.035, 1), 8.78 + i * 0.04, pan=-0.5 + 0.045 * i)
+
+# ending: Hò (C) held by fiddle + flute, great drum, bell and stone chime
+add(trong_dai(1.1), 11.0); add(khanh(C3 + 12, 0.4, 2.0), 11.0, pan=0.3); add(chuong(C5, 0.25, 1.8), 11.0, pan=-0.3)
+s, s0 = line([(11.0, C4, 0.95)], 'nhi', 0.2); add(s, s0, 1.0, -0.3)
+s, s0 = line([(11.0, C4 + 12, 0.95)], 'sao', 0.1); add(s, s0, 1.0, 0.35)
+add(dan_nguyet(C4, 1.0, 0.3), 11.0)
 
 # ================= master =================
 ir_t = tt(2.2)
