@@ -514,7 +514,7 @@ def wedge(xc, ytop, ybot, wt, wb, conc=0.18, flat=False):
 def _fair(p, maxdev=2.0):
     """S69 (designer 21/11 "bụng cong dấu hỏi hơi gợn"): nối thân Hermite ở y_cut + uốn hẹp smoothstep làm độ cong nhảy ở mối nối
     (eo 9.3 → 3.4, bụng 5.4 → 9.4, đỉnh 0 → 8.7). Giữ điểm neo + hướng tiếp tuyến, chọn lại độ dài tay nắm cho liền độ cong (fair.py)."""
-    sys.path.insert(0, os.path.join(HERE, '..')); from fair import fair_contours
+    sys.path.insert(0, os.path.join(HERE, '..')); from curve_fair import fair_contours
     conts = []; cur = None
     for v, pts in p.segments:
         if v == 'moveTo': cur = [('M', pts[0])]

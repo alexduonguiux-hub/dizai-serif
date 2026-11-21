@@ -281,7 +281,7 @@ _FAIR_CACHE = {}
 def _fair_cs(c, w, ang, cs):
     key = (c, w, ang, json.dumps(cs))
     if key not in _FAIR_CACHE:
-        from fair import fair_contours
+        from curve_fair import fair_contours
         _FAIR_CACHE[key] = fair_contours(cs, 2.0)
     return _FAIR_CACHE[key]
 
