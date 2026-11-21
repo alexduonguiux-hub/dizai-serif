@@ -1,4 +1,4 @@
-AnNam Serif — Version 0.928 (20 November 2026)
+AnNam Serif — Version 0.929 (20 November 2026)
 Design: Đìzai Studio · Vendor ID: DZAI
 
 A glyphic, flared serif with broad-nib contrast and full Vietnamese support
@@ -10,6 +10,9 @@ CONTENTS
     AnNamSerif[wght].ttf            Roman, weight axis wght 400–700
     AnNamSerif-Italic[wght].ttf     Italic, weight axis wght 400–700
     AnNamSerif[slnt,wght].ttf       Roman + Italic in one file: wght 400–700 + slant slnt 0 to −10°
+    AnNamSerif[XHGT,slnt,wght].ttf  ALL IN ONE: weight wght 400–700 + x-Height XHGT 495 (AnNam Serif) → 535 (AnNam Golden)
+                                    + slant slnt 0 to −10°. 16 named styles (Regular … Bold Italic, Golden Regular … Golden Bold Italic).
+                                    Install this ONE file for apps that support variable fonts (Figma, Adobe CC, web).
     AnNamSerif[XHGT,wght].ttf       Roman with an x-Height axis: XHGT 495 (AnNam Serif) → 535 (AnNam Golden), smooth,
     AnNamSerif-Italic[XHGT,wght].ttf  + wght 400–700. Named styles: Regular … Bold and Golden Regular … Golden Bold.
                                     (t switches to its Golden form from x-Height 515.)
@@ -22,7 +25,8 @@ CONTENTS
 WHICH FILES TO INSTALL
   • Print and desktop design (Adobe, Figma, Microsoft Office): install the 8 fonts in otf/ (or ttf/).
     Do not install otf/ and ttf/ on the same computer — they share names and will conflict.
-  • Apps that support variable fonts: use variable/. Choose ONE option:
+  • Apps that support variable fonts: use variable/. Simplest: the single file AnNamSerif[XHGT,slnt,wght].ttf (all three axes).
+    Otherwise choose ONE option:
       – the pair AnNamSerif[wght].ttf + AnNamSerif-Italic[wght].ttf (needed for the Italic button in Word / Office), or
       – the single file AnNamSerif[slnt,wght].ttf (web, Figma and apps that support a slant axis).
     Installing both options shows "AnNam Serif Regular" twice in the Windows font menu.

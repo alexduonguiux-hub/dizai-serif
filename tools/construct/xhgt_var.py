@@ -117,5 +117,63 @@ def finish(dst, it):
     w2 = os.path.join(ROOT, 'fonts', 'woff2', 'variable'); os.makedirs(w2, exist_ok=True)
     f.flavor = 'woff2'; f.save(os.path.join(w2, os.path.basename(dst).replace('.ttf', '.woff2')))
 
+def combined3():
+    """designer 21/11 "dựng chung 1 bản cho serif": MỘT file đủ ba trục — wght 400–700 · XHGT 495–535 · slnt 0 … −10° (Italic = Roman
+    nghiêng 10° nên 8 master cùng cấu trúc). → AnNamSerif[XHGT,slnt,wght].ttf (+ woff2)"""
+    from fontTools.ttLib import TTFont
+    from fontTools.otlLib.builder import buildStatTable
+    ds = DesignSpaceDocument()
+    for name, t, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('x-Height', 'XHGT', XH0, XH0, XH1), ('Slant', 'slnt', -10, 0, 0)):
+        ax = AxisDescriptor(); ax.name, ax.tag, ax.minimum, ax.default, ax.maximum = name, t, lo, df, hi; ds.addAxis(ax)
+    for fam, xh in (('Serif', XH0), ('Golden', XH1)):
+        for tag, sl in (('', 0), ('-Italic', -10)):
+            for w in ('Regular', 'Bold'):
+                s = SourceDescriptor(); s.path = os.path.join(BUILD, f'{fam}{tag}-{w}.ufo'); s.familyName = 'AnNam Serif'
+                s.location = {'Weight': WG[w], 'x-Height': xh, 'Slant': sl}
+                s.styleName = (f'{"" if fam == "Serif" else "Golden "}{w}' + (' Italic' if tag else '')).replace('Regular Italic', 'Italic')
+                ds.addSource(s)
+    for fam, xh in (('', XH0), ('Golden ', XH1)):
+        for tag, sl in (('', 0), (' Italic', -10)):
+            for w, v in WG.items():
+                sty = f'{fam}{w}{tag}'.replace('Regular Italic', 'Italic').strip()
+                ins = InstanceDescriptor(); ins.familyName = 'AnNam Serif'; ins.styleName = sty
+                ins.location = {'Weight': v, 'x-Height': xh, 'Slant': sl}; ins.postScriptFontName = 'AnNamSerif-' + sty.replace(' ', '')
+                ds.addInstance(ins)
+    bad = sorted({g.name[:-5] for g in ufoLib2.Font.open(os.path.join(BUILD, 'Serif-Regular.ufo')) if g.name.endswith('.gold')})
+    r = RuleDescriptor(); r.name = 'golden-forms'; r.conditionSets = [[dict(name='x-Height', minimum=XSW, maximum=XH1)]]
+    r.subs = [(n, n + '.gold') for n in bad]; ds.addRule(r); ds.rulesProcessingLast = True
+    dsp = os.path.join(BUILD, 'AnNamSerif-XHGT-slnt.designspace'); ds.write(dsp)
+    out = os.path.join(BUILD, 'vf3'); shutil.rmtree(out, ignore_errors=True)
+    subprocess.run(['fontmake', '-m', dsp, '-o', 'variable', '--output-dir', out, '--flatten-components'], check=True,
+                   stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    src = [f for f in os.listdir(out) if f.endswith('.ttf')][0]
+    dst = os.path.join(VF, 'AnNamSerif[XHGT,slnt,wght].ttf'); shutil.move(os.path.join(out, src), dst)
+    f = TTFont(dst)
+    wv = [dict(value=v, name=n) for n, v in WG.items()]; wv[0].update(flags=0x2, linkedValue=700)
+    xv = [dict(value=XH0, name='Serif', flags=0x2), dict(value=XH1, name='Golden')]
+    sv = [dict(value=0, name='Upright', flags=0x2), dict(value=-10, name='Italic')]
+    buildStatTable(f, [dict(tag='wght', name='Weight', values=wv), dict(tag='XHGT', name='x-Height', values=xv),
+                       dict(tag='slnt', name='Slant', values=sv)])
+    nm = f['name']
+    for rec in list(nm.names):
+        if rec.nameID == 6: rec.string = rec.toUnicode().replace('AnNamSerif-', 'AnNamSerifAll-')
+    nm.setName('AnNamSerifAll', 25, 3, 1, 0x409)
+    for inst in f['fvar'].instances:
+        if inst.postscriptNameID != 0xFFFF:
+            rr = nm.getName(inst.postscriptNameID, 3, 1, 0x409)
+            if rr: nm.setName(rr.toUnicode().replace('AnNamSerif-', 'AnNamSerifAll-'), inst.postscriptNameID, 3, 1, 0x409)
+    nm.names = [n for n in nm.names if n.platformID != 1]
+    import re as _re
+    V = _re.search(r'^VERSION = \((\d+), (\d+)\)', open(os.path.join(HERE, 'export_font.py')).read(), _re.M)
+    ver = f'{int(V.group(1))}.{int(V.group(2)):03d}'; f['head'].fontRevision = float(ver)
+    for rec in list(nm.names):
+        if rec.nameID == 5: rec.string = _re.sub(r'\d+\.\d{3}', ver, rec.toUnicode(), count=1)
+        if rec.nameID == 3: rec.string = f"{ver};{f['OS/2'].achVendID.strip() or 'NONE'};{nm.getDebugName(6)}-VF"
+    sys.path.insert(0, os.path.join(ROOT, 'tools', 'release')); import license_meta as LM; LM.apply(f)
+    f.save(dst)
+    w2 = os.path.join(ROOT, 'fonts', 'woff2', 'variable'); f.flavor = 'woff2'; f.save(os.path.join(w2, os.path.basename(dst).replace('.ttf', '.woff2')))
+    return dst
+
 if __name__ == '__main__':
     for tag in ('', '-Italic'): print('→', build(tag))
+    print('→', combined3())

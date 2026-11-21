@@ -129,7 +129,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
 
   <section class="vf" aria-labelledby="h-vf" id="vf" hidden>
     <h2 id="h-vf">Font variable</h2>
-    <p class="note">Có file gộp AnNam Golden <code>AnNamSerif[XHGT,wght].ttf</code> (trục x-Height 495 AnNam Serif → 535 AnNam Golden, kéo mượt; t đổi dạng Golden từ 515) thì thanh x-Height hiện thay cho thanh nghiêng. File font thật: gộp <code>fonts/variable/AnNamSerif[slnt,wght].ttf</code> (trục wght 400–700 + slnt 0 … −10°) và hai file riêng <code>AnNamSerif[wght].ttf</code>, <code>AnNamSerif-Italic[wght].ttf</code>, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
+    <p class="note">Có file gộp AnNam Golden <code>AnNamSerif[XHGT,wght].ttf</code> (trục x-Height 495 AnNam Serif → 535 AnNam Golden, kéo mượt; t đổi dạng Golden từ 515) thì có thanh x-Height; file chung <code>AnNamSerif[XHGT,slnt,wght].ttf</code> có đủ ba trục wght · x-Height · nghiêng. File font thật: gộp <code>fonts/variable/AnNamSerif[slnt,wght].ttf</code> (trục wght 400–700 + slnt 0 … −10°) và hai file riêng <code>AnNamSerif[wght].ttf</code>, <code>AnNamSerif-Italic[wght].ttf</code>, có kerning và ghép dấu NFD. Italic: glyph Roman giữ nguyên, nghiêng 10° (designer 06/11 "giữ lại glyph gốc").</p>
     <div class="ctrl">
       <label class="chk">wght <input type="range" id="vfw" min="400" max="700" step="1" value="400" aria-label="Độ đậm"> <span id="vfwv">400</span></label>
       <div class="seg" role="group" aria-label="Kiểu"><button id="vfr" aria-pressed="true">Roman</button><button id="vfi" aria-pressed="false">Italic</button></div>
@@ -379,9 +379,13 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   const sl = $("vfn"), slv = $("vfnv");
   // S63: font gộp AnNam Golden — trục x-Height 495 (AnNam Serif) → 535 (AnNam Golden); Roman / Italic = hai file gộp
   const XH = [...document.querySelectorAll("style")].some((e) => e.textContent.includes('"AnNam VF XH"')), x = $("vfx"), xv = $("vfxv");
-  if (XH) { $("vfxl").style.display = ""; $("vfnl").style.display = "none"; x.addEventListener("input", () => apply()); }
+  const ALL = [...document.querySelectorAll("style")].some((e) => e.textContent.includes('"AnNam VF All"'));   // 1 file đủ 3 trục
+  if (XH) { $("vfxl").style.display = ""; $("vfnl").style.display = ALL ? "" : "none"; x.addEventListener("input", () => apply()); }
   const apply = () => {
-    if (XH) { const itl = +sl.value < -5; out.style.fontFamily = itl ? '"AnNam VF XH Italic", serif' : '"AnNam VF XH", serif';
+    if (ALL) { out.style.fontFamily = '"AnNam VF All", serif';
+      out.style.fontVariationSettings = `"wght" ${w.value}, "XHGT" ${x.value}, "slnt" ${sl.value}`;
+      xv.textContent = x.value + (+x.value === 495 ? " · Serif" : +x.value === 535 ? " · Golden" : ""); }
+    else if (XH) { const itl = +sl.value < -5; out.style.fontFamily = itl ? '"AnNam VF XH Italic", serif' : '"AnNam VF XH", serif';
       out.style.fontVariationSettings = `"wght" ${w.value}, "XHGT" ${x.value}`;
       xv.textContent = x.value + (+x.value === 495 ? " · Serif" : +x.value === 535 ? " · Golden" : ""); }
     else { out.style.fontFamily = '"AnNam VF Combined", serif'; out.style.fontVariationSettings = `"wght" ${w.value}, "slnt" ${sl.value}`; }
