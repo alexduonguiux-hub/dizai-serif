@@ -98,3 +98,12 @@ CAPS_AS_SERIF: chữ HOA Golden bỏ mọi bước nét mảnh riêng (G7 G9 G6 
 ## S62 — chân chéo K R không gãy khúc (21/11, "K hoa chân bị lỗi")
 
 G3 phóng loe: phía thân phóng dọc thân, phía chân trước đây phóng theo trục x–y → thân CHÉO (K R) hai nửa cung loe biến đổi khác nhau → cung gãy khúc. Nay phía chân phóng theo hệ trục (dọc chân, dọc thân) — một phép phóng chung cho cả cung. Version 0.926.
+
+## S63 — AnNam Serif variable gộp Golden: trục x-Height (21/11, "gộp 2 cái thành variable … Dùng An Nam Serif. Trục x-Height … kéo mượt")
+
+- `tools/construct/xhgt_var.py` (chạy cuối golden/run.sh): `AnNamSerif[XHGT,wght].ttf` + `AnNamSerif-Italic[XHGT,wght].ttf` (+ woff2). Trục wght 400–700 · XHGT "x-Height" 495 (AnNam Serif) → 535 (AnNam Golden), nội suy mượt (x-height, loe, nét mảnh, spacing, kerning). 4 master (Serif / Golden × Regular / Bold); 8 kiểu đặt tên: Regular … Bold, Golden Regular … Golden Bold. STAT: wght, XHGT (Serif / Golden), ital.
+- Chữ khác cấu trúc (đầu t Golden): t, t_f, t_t → `.gold` qua rvrn/rclt khi XHGT ≥ 515 (thay SAU chữ ghép).
+- Designer "chân chữ l và t đưa về cùng chiều như golden cho serif": G14 áp cho AnNam Serif (hair_sync) — l mang chân móc t ở cả hai họ → l tương thích, không cần chữ thay.
+- Bản AnNam Golden riêng giữ nguyên ("bản golden vẫn giữ nhé"). Version 0.928.
+
+![x-Height](img/s63-xhgt.png)
