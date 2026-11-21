@@ -2,7 +2,7 @@
 
 `AnNamSerif-Showreel.mp4`: 2034 × 1270 (khung storyboard), 30 fps, 12 giây, H.264 + AAC.
 
-Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 … 09, gồm hai khung mới: câu tục ngữ "Sự học…" + ảnh thuyền, và đoạn tiếng Pháp "Enfin, la guerre d'Indochine…"). Nền giấy `#f3f3f1`, chữ `#0e0e0e`, ảnh sepia xuất từ chính file Figma (`img_sb/`); ảnh thuyền được chuyển về cùng bảng màu sepia của ảnh nền.
+Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 … 09, gồm hai khung mới: câu tục ngữ "Sự học…" + ảnh thuyền, và đoạn tiếng Pháp "Enfin, la guerre d'Indochine…"). Nền giấy `#eae9e6`, chữ `#0e0e0e`, ảnh sepia xuất từ chính file Figma (`img_sb/`); ảnh thuyền được chuyển về cùng bảng màu sepia của ảnh nền.
 
 **Font:** AnNam Serif **v0.933** — `AnNamSerif[XHGT,slnt,wght]` (XHGT 0 = AnNam Serif) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự theo kerning thật của font.
 
@@ -20,7 +20,7 @@ Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 �
 | 6,25–7,5 s | 08 | Địa danh xưa của An Nam hiện từng ký tự ngẫu nhiên, các dòng trôi ngang (kín hai đầu) |
 | 7,5–8,75 s | 08b | "Sự học cũng như việc chèo thuyền ngược nước, không *tiến* ắt sẽ *lùi*" hiện từng chữ theo nhịp; thuyền cắt vào, bập bềnh |
 | 8,75–9,75 s | 08c | "Enfin, la guerre d'Indochine se termine. Le Vietnam est devenu une nation indépendante." gõ ra từng ký tự |
-| 9,75–12 s | 09 | Cắt sang ảnh chợ; AN NAM gom lại như mở đầu; VARIABLE · ITALIC · REGULAR ✱ MEDIUM ✱ SEMIBOLD ✱ BOLD gõ ra |
+| 9,75–12 s | 09 | Cắt sang ảnh Nhà hát Lớn Hà Nội; AN NAM / SERIF gom lại như mở đầu; VARIABLE · ITALIC · REGULAR ✱ MEDIUM ✱ SEMIBOLD ✱ BOLD gõ ra |
 
 ## Nhạc
 Giai điệu liên khúc Nhã nhạc cung đình Huế **Lưu thủy – Kim tiền – Xuân phong – Long hổ** (nhạc cổ truyền), ký âm lại từ một bản hòa tấu tham khảo (dò cao độ + nghe), rồi chơi lại bằng nhạc cụ tổng hợp trong `music.py`. Không dùng âm thanh của bản thu gốc; file tham khảo không lưu trong repo.

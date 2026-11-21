@@ -7,7 +7,7 @@
 /* AnNam Serif v0.933 — AnNamSerif[XHGT,slnt,wght]: wght 400–700 · XHGT 0–100 · slnt 0 → −10 (default = AnNam Serif Regular) */
 @font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif[XHGT,slnt,wght].woff2") format("woff2"); font-weight: 400 700; font-style: normal; }
 @font-face { font-family: "AN"; src: url("../fonts/woff2/variable/AnNamSerif-Italic[XHGT,wght].woff2") format("woff2"); font-weight: 400 700; font-style: italic; }
-:root { --paper:#f3f3f1; --ink:#0e0e0e; }
+:root { --paper:#eae9e6; --ink:#0e0e0e; }
 * { margin:0; padding:0; box-sizing:border-box; }
 html,body { background:#000; }
 /* storyboard frame: 2034 × 1270 (Figma Đìzai Serif – WIP · Storyboard) */
@@ -58,7 +58,7 @@ html,body { background:#000; }
   <!-- C · frame 08: place names, roman / italic, drifting -->
   <div class="layer" id="Cn" style="z-index:3;background:var(--paper);display:none"></div>
 
-  <!-- D · frame 09: Hà Nội market photo, AN NAM, styles -->
+  <!-- D · frame 09: Hà Nội Opera House photo, AN NAM / SERIF, styles -->
   <!-- E · Story-08b: "Sự học cũng như việc chèo thuyền ngược nước, không tiến ắt sẽ lùi" + boat -->
   <div class="layer" id="E" style="z-index:4;background:var(--paper);display:none">
     <img id="boat" src="img_sb/boat.png" class="abs" style="left:1295px;top:518px;width:739px;height:752px;mix-blend-mode:darken;transform-origin:40% 80%">
@@ -68,8 +68,9 @@ html,body { background:#000; }
   <div class="layer" id="F" style="z-index:5;display:none"><div id="flines"></div></div>
 
   <div class="layer" id="D" style="z-index:6;display:none">
-    <div class="photo" id="dimg" style="background-image:url(img_sb/market.jpg)"></div>
+    <div class="photo" id="dimg" style="background-image:url(img_sb/opera.jpg)"></div>
     <div class="abs nw" id="dannam" style="color:var(--paper)"></div>
+    <div class="abs nw" id="dserif" style="color:var(--paper)"></div>
     <div class="abs" id="dinfo" style="left:0;width:100%;top:1096px;color:var(--paper);font-size:48px;text-align:center;"></div>
   </div>
 
@@ -84,7 +85,7 @@ html,body { background:#000; }
 
 <script>
 const W = 2034, H = 1270, FPS = 30, DUR = 12;
-const C = { paper:'#f3f3f1', ink:'#0e0e0e' };
+const C = { paper:'#eae9e6', ink:'#0e0e0e' };
 const $ = id => document.getElementById(id);
 const clamp = (x,a=0,b=1) => Math.min(b, Math.max(a, x));
 const seg = (t,a,b) => clamp((t-a)/(b-a));
@@ -151,8 +152,8 @@ function ink(text, size, weight=400, italic=false) {
 }
 
 // ================= build =================
-const imgs = ['img_sb/hue.jpg','img_sb/hue_s04.jpg','img_sb/market.jpg','img_sb/boat.png'].map(src=>new Promise(res=>{ const i = new Image(); i.onload = i.onerror = res; i.src = src; }));
-let HUD = [], KN, AZ = [], LZ = [], KA, NM = [], KD, DI = [], EL = [], FL = [];
+const imgs = ['img_sb/hue.jpg','img_sb/hue_s04.jpg','img_sb/opera.jpg','img_sb/boat.png'].map(src=>new Promise(res=>{ const i = new Image(); i.onload = i.onerror = res; i.src = src; }));
+let KS, HUD = [], KN, AZ = [], LZ = [], KA, NM = [], KD, DI = [], EL = [], FL = [];
 function build() {
   // HUD (storyboard: cap 33.6 px at y 48)
   [['h1','BY ĐÌZAI STUDIO'],['h2','AN NAM SERIF'],['h3','TYPE SPECIMEN - 2026']].forEach(([id,txt])=>{ const K = kernWord($(id), txt, {padTop:.35}); fv(K.host); HUD.push(K); });
@@ -205,6 +206,7 @@ function build() {
     .forEach(([txt,x,y])=>FL.push(mkLine($('flines'), [[txt,0]], fitF, x, y, 'l')));
   // frame 09
   KD = kernWord($('dannam'), 'AN NAM', {padTop:.12}); $('dannam').style.fontSize = $('annam').style.fontSize;
+  KS = kernWord($('dserif'), 'SERIF', {padTop:.12}); $('dserif').style.fontSize = $('annam').style.fontSize;
   const star = `<svg width="20" height="20" viewBox="0 0 20 20" style="display:inline-block;vertical-align:.12em;margin:0 12px"><path fill="currentColor" d="M7.33333 0H12.6667C12.4889 1.37778 12.2222 2.73333 11.8667 4.06667C11.5556 5.4 11.3333 6.68889 11.2 7.93333C12.2222 7.17778 13.2222 6.33333 14.2 5.4C15.1778 4.42222 16.2222 3.51111 17.3333 2.66667L20 7.33333C18.7556 7.86667 17.4667 8.33333 16.1333 8.73333C14.8 9.08889 13.5556 9.51111 12.4 10C13.5556 10.4889 14.8 10.9333 16.1333 11.3333C17.4667 11.6889 18.7556 12.1333 20 12.6667L17.3333 17.3333C16.2222 16.4889 15.1778 15.5778 14.2 14.6C13.2222 13.6222 12.2222 12.7778 11.2 12.0667C11.3333 13.3111 11.5556 14.6 11.8667 15.9333C12.2222 17.2667 12.4889 18.6222 12.6667 20H7.33333C7.51111 18.6222 7.75556 17.2667 8.06667 15.9333C8.42222 14.6 8.66667 13.3111 8.8 12.0667C7.82222 12.7778 6.82222 13.6222 5.8 14.6C4.82222 15.5778 3.77778 16.4889 2.66667 17.3333L0 12.6667C1.28889 12.1333 2.6 11.6889 3.93333 11.3333C5.26667 10.9333 6.48889 10.4889 7.6 10C6.48889 9.51111 5.26667 9.08889 3.93333 8.73333C2.6 8.33333 1.28889 7.86667 0 7.33333L2.66667 2.66667C3.77778 3.51111 4.82222 4.42222 5.8 5.4C6.82222 6.33333 7.82222 7.17778 8.8 7.93333C8.66667 6.68889 8.42222 5.4 8.06667 4.06667C7.75556 2.73333 7.51111 1.37778 7.33333 0Z"/></svg>`;
   ['VARIABLE', '<i>ITALIC</i>', `REGULAR${star}MEDIUM${star}SEMIBOLD${star}BOLD`].forEach((h,i)=>{
     const m = document.createElement('div'); m.style.cssText = `height:46px;overflow:hidden;line-height:34px;padding-top:2px;`;
@@ -322,13 +324,16 @@ function render(t) {
     FL.forEach((L,i)=>{ placeLine(L); L.Ks.forEach(K=>typeOn(K, t, 8.78 + i*.07, .011)); });
   }
 
-  // ---------- 09: hard cut to the market; AN NAM gathers like the opening; the styles type on
+  // ---------- 09: hard cut to the Opera House; AN NAM / SERIF gather like the opening; the styles type on
   if (sD) {
     $('D').style.clipPath = 'none';
     $('dimg').style.transform = `scale(${lerp(1.05, 1.0, seg(t, 9.75, 12))})`;
     const dn = $('dannam'); fv(dn); layoutWord(KD);
     dn.style.left = (59 - +$('annam').dataset.inkl) + 'px'; dn.style.top = '146px';
     scatterSnap(KD, t, 9.875, .09, 10.5, 3, 300, 400, 1);
+    const ds = $('dserif'); fv(ds); layoutWord(KS);
+    ds.style.left = (W - ds.offsetWidth)/2 + 'px'; ds.style.top = '603px';
+    scatterSnap(KS, t, 10.0, .09, 10.5, 5, 260, 400, 1);
     DI.forEach((s,i)=>{ const p = seg(t, 10.62 + i*.12, 10.62 + i*.12 + .3); s.style.transform = 'none';
       s.parentNode.style.clipPath = `inset(0 ${(1 - Math.floor(p*24)/24)*100}% 0 0)`; });
   }
