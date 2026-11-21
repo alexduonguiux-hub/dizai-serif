@@ -2,7 +2,7 @@
 
 `AnNamSerif-Showreel.mp4`: 2034 × 1270 (khung storyboard), 30 fps, 12 giây, H.264 + AAC.
 
-Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 … 09, gồm hai khung mới: câu tục ngữ "Sự học…" + ảnh thuyền, và đoạn tiếng Pháp "Enfin, la guerre d'Indochine…"). Nền giấy `#f3f3f1`, chữ `#0e0e0e`, ảnh sepia xuất từ chính file Figma (`img_sb/`).
+Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 … 09, gồm hai khung mới: câu tục ngữ "Sự học…" + ảnh thuyền, và đoạn tiếng Pháp "Enfin, la guerre d'Indochine…"). Nền giấy `#f3f3f1`, chữ `#0e0e0e`, ảnh sepia xuất từ chính file Figma (`img_sb/`); ảnh thuyền được chuyển về cùng bảng màu sepia của ảnh nền.
 
 **Font:** AnNam Serif **v0.933** — `AnNamSerif[XHGT,slnt,wght]` (XHGT 0 = AnNam Serif) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự theo kerning thật của font.
 
@@ -31,7 +31,7 @@ Giai điệu liên khúc Nhã nhạc cung đình Huế **Lưu thủy – Kim ti�
 - Đàn nhị + sáo chơi giai điệu (liền, có luyến), đàn nguyệt gảy từng nốt, đàn tranh vuốt vào Long hổ; phách, sênh tiền, trống bản giữ nhịp; trống đại, chuông, khánh nhấn các cú cắt hình.
 
 ## Bản dùng nhạc thu sẵn (đồng bộ phách)
-Có thể dựng video theo phách của một bản thu có sẵn: dò phách bản thu (librosa `beat_track`), gắn mỗi phách video (0,5 s) vào một phách nhạc, xuất danh sách thời điểm từng khung hình ra JSON rồi render bằng `TIMES=times.json node showreel/render.js <thư-mục> 30`. Bản thử với liên khúc Lưu thủy – Long hổ (từ giây 37 của bản hòa tấu tham khảo): 15 s, nhạc nhỏ dần 2,2 s cuối. **Bản thu đó có bản quyền của người biểu diễn / kênh đăng — không đưa vào repo; cần xin phép hoặc mua quyền trước khi đăng công khai.**
+`beatmap.py` dò phách bản thu, cho hiệu ứng mỗi màn chạy một phách video (0,5 s) trên một phách nhạc, giữ màn ≥ 2 phách (~1,2 s) rồi cắt ở phách mạnh kế tiếp, và xuất thời điểm từng khung hình: `python3 showreel/beatmap.py nhac.wav 37 times.json` rồi `TIMES=times.json node showreel/render.js <thư-mục> 30`. Bản dùng liên khúc Lưu thủy – Long hổ (từ giây 37 của bản hòa tấu tham khảo): ~30 s, nhạc nhỏ dần 2,6 s cuối. **Bản thu đó có bản quyền của người biểu diễn / kênh đăng — không đưa vào repo; cần xin phép hoặc mua quyền trước khi đăng công khai.**
 
 ## Dựng lại
 ```bash
