@@ -1,4 +1,4 @@
-AnNam Serif — Version 0.926 (20 November 2026)
+AnNam Serif — Version 0.927 (20 November 2026)
 Design: Đìzai Studio · Vendor ID: DZAI
 
 A glyphic, flared serif with broad-nib contrast and full Vietnamese support
@@ -10,6 +10,9 @@ CONTENTS
     AnNamSerif[wght].ttf            Roman, weight axis wght 400–700
     AnNamSerif-Italic[wght].ttf     Italic, weight axis wght 400–700
     AnNamSerif[slnt,wght].ttf       Roman + Italic in one file: wght 400–700 + slant slnt 0 to −10°
+    AnNamSerif[XHGT,wght].ttf       Roman with an x-Height axis: XHGT 495 (AnNam Serif) → 535 (AnNam Golden), smooth,
+    AnNamSerif-Italic[XHGT,wght].ttf  + wght 400–700. Named styles: Regular … Bold and Golden Regular … Golden Bold.
+                                    (t and l switch to their Golden forms from x-Height 515.)
   otf/    8 static OpenType (CFF) fonts: AnNamSerif-Regular … AnNamSerif-BoldItalic
   ttf/    8 static TrueType fonts:       AnNamSerif-Regular … AnNamSerif-BoldItalic
   woff2/  web fonts (Brotli-compressed, about 4× smaller than TTF)

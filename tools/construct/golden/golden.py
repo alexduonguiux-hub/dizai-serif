@@ -872,14 +872,19 @@ def arm_depth(d, w):
 # mép trái thân l + mép phải đi thẳng lên loe đỉnh l. Cấu trúc như nhau ở Regular / Bold → nội suy được.
 def l_from_t(dl, dt):
     L = SB_contours(dl)[0]; T = SB_contours(dt)[0]
-    # l: [0]L đáy [1]C loe phải dưới [2]L thân phải [3]C loe phải trên [4]L đỉnh [5]C loe trái trên [6]L thân trái [7]C loe trái dưới
-    # t: [5]L thân trái xuống tới y0 · [6..10] móc chân · [11]C mép phải lên tới thanh
-    xl = L[6][1][0]; dx = xl - T[5][1][0]; y0 = T[5][2][1]
+    if len(L) != 8: return dl                                    # l đã mang chân t (AnNam Serif đã ghép) — giữ nguyên
+    vert = lambda sg: sg[0] == 'L' and abs(sg[1][0] - sg[2][0]) < 0.5
+    r = next(i for i, sg in enumerate(L) if vert(sg) and sg[1][1] < 250 and sg[2][1] > 500)      # mép phải thân l (đi lên)
+    k = next(i for i, sg in enumerate(L) if vert(sg) and sg[1][1] > 500 and sg[2][1] < 250)      # mép trái thân l (đi xuống)
+    i0 = next(i for i, sg in enumerate(T) if vert(sg) and sg[1][1] > 300 and sg[2][1] < 250)     # mép trái thân t xuống tới móc
+    j = i0 + 1
+    while T[j][-1][1] < 300: j += 1                                # móc chân + mép phải thân t lên tới mặt dưới thanh
+    xl = L[k][1][0]; dx = xl - T[i0][1][0]; y0 = T[i0][2][1]
     sh = lambda p: [p[0] + dx, p[1]]
-    out = [L[3], L[4], L[5], ['L', list(L[6][1]), [xl, y0]]]
-    for sg in T[6:12]: out.append([sg[0]] + [sh(p) for p in sg[1:]])
-    top_r = L[3][1]
-    out.append(['L', list(out[-1][-1]), list(top_r)])
+    out = [list(map(lambda v: v if isinstance(v, str) else list(v), sg)) for sg in L[r + 1:k]]
+    out.append(['L', list(L[k][1]), [xl, y0]])
+    for sg in T[i0 + 1:j + 1]: out.append([sg[0]] + [sh(p) for p in sg[1:]])
+    out.append(['L', list(out[-1][-1]), list(L[r + 1][1])])
     return SB_to_d([out])
 def SB_contours(d):
     sys.path.insert(0, os.path.join(HERE, '..')); import stroke_balance as SB; return SB.contours(d)

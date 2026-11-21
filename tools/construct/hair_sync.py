@@ -47,6 +47,9 @@ def main():
             d, _ = GD.g8_solve(d, c, w, low, XTOP)                      # G8 tuyệt đối: đoạn thẳng nét mảnh = chuẩn (gồm thanh e f t)
             O[f'{c}-{w}'] = d
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    if 'l-Regular' in O and 't-Regular' in O:                     # G14 chân l = chân t (designer 21/11: "chân chữ l và t … như golden cho serif")
+        for w in ('Regular', 'Bold'): O[f'l-{w}'] = GD.l_from_t(O[f'l-{w}'], O[f't-{w}'])
+        for w, t in GD.TW.items(): O[f'l-{w}'] = GD.lerp_d(O['l-Regular'], O['l-Bold'], t)
     for c in order:                                               # G13 tay loe đầu thanh dài bằng nhau (E F L T Z Æ Œ)
         if c in GD.ARMD and f'{c}-Regular' in O:
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.arm_depth(O[f'{c}-{w}'], w)[0]
