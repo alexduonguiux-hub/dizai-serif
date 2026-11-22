@@ -194,3 +194,9 @@ Version 0.934.
 Làm mảnh nét trái A (42 → 34) dời mép ngoài song song → mặt cắt đỉnh hẹp (Regular 23 → 19 u; Bold 5.4 u → hai mép chéo nhau, nhọn). G16 (`apex_keep`, A Æ): mép NGOÀI nét mảnh về đúng chỗ AnNam Serif (mặt cắt 23.3 / 5.4 u), mép TRONG (lòng + chân dưới thanh) dời thêm cùng lượng → nét mảnh đều đúng chuẩn (Bold 42 suốt nét; Regular 34 trên thanh, 36.5 chân như trước); đỉnh trong lòng = giao mép mới với mép trong nét dày. Lòng A rộng ra ~4 u.
 
 ![A](img/s75-A-apex.png)
+
+## S76 — bản 0.935 chốt (23/11, "v0.934 weight đang đồng bộ. Chỉ làm các nét mỏng mỏng hơn đồng loạt kèm theo các chỉnh sửa thêm móc chữ N")
+
+Gốc 0.934, chỉ thêm: Golden nét mảnh 34 / 42 (cả hoa, số 4 7); N theo bản vẽ (đỉnh / chân phẳng, loe thân, chéo 108 / 121 / 134 / 148); G16 đỉnh A mặt cắt đều 23.3 u mọi weight (Serif + Golden; nét mảnh xoay quanh chân, mép trong dựng lại song song — A Bold nghiêng 1.2°); chân trái A Bold một cung trơn (bỏ tay nắm suy biến); dấu trên E ở tâm. Ơ / Ư: giữ như 0.934 (G17 thử chưa ổn — Ơ Bold nét 16, Ư không ghép). QA Serif + Golden: outline 0 lỗi, gãy > 3° 0, kern khớp, thanh / tay loe chuẩn; qa_thin Golden còn thanh 4 Regular 37.
+
+![tổng hợp](img/s76-tonghop.png)
