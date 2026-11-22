@@ -271,8 +271,7 @@ function render(t) {
   if (sA) {
     // symbol: cuts in on the beat; 03 → turns into the rosette in four snaps
     vis($('sym'), t >= 1.25); $('sym').style.color = C.ink; $('sym').style.transform = 'none'; $('sym').style.opacity = 1;
-    const st = Math.floor(seg(t, 1.5, 2.0) * 4), rot = 67.5 * st / 4, prev = 67.5 * Math.max(0, st - 1) / 4;
-    const echo = st > 0 && st < 4 || (t >= 2.0 && t < 2.08);
+    const rot = 67.5 * quartInOut(seg(t, 1.5, 2.1)), prev = rot, echo = false;
     $('symAi').setAttribute('transform', `rotate(${rot} 116 107.5)`);
     $('symBi').setAttribute('transform', `rotate(${-rot} 116 107.5)`);
     $('symAe').setAttribute('transform', `rotate(${prev} 116 107.5)`);
@@ -281,11 +280,11 @@ function render(t) {
     // AN NAM: scattered letters (one per 16th) snap into the line at 1.25; 03: a weight wave runs through it
     const an = $('annam'); fv(an); layoutWord(KN);
     an.style.left = (59 - +an.dataset.inkl) + 'px'; an.style.top = '823px';
-    // stepped zoom: from a giant, cropped A (on the cut at 0.5) back to the full word in 16th-note snaps
-    const ZS = [7.5, 4.6, 2.9, 1.9, 1.35, 1.0], zi = Math.min(ZS.length - 1, Math.max(0, Math.floor((t - .5) / .125)));
+    // smooth zoom: from a giant, cropped A (on the cut at 0.5) back to the full word
+    const zp = expoOut(seg(t, .5, 1.25)), zoom = Math.exp(Math.log(7.5) * (1 - zp));   // smooth pull-back, log-scale
     const firstA = KN.items[0];
     const ox = parseFloat(firstA.m.style.left) + firstA.m.offsetWidth/2, oy = an.offsetHeight * .45;
-    an.style.transformOrigin = `${ox}px ${oy}px`; an.style.transform = `scale(${t < .5 ? 1 : ZS[zi]})`;
+    an.style.transformOrigin = `${ox}px ${oy}px`; an.style.transform = `scale(${t < .5 ? 1 : zoom})`;
     vis(an, t >= .5);
     KN.items.forEach(it=>{ if (it) { vis(it.s, t >= .5); it.s.style.transform = 'none'; it.s.style.filter = 'none'; it.s.style.opacity = 1; fv(it.s, 400); } });
     if (t >= 1.25) { let j = 0; KN.items.forEach(it=>{ if (!it) return;

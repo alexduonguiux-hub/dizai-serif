@@ -12,8 +12,8 @@ Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 �
 | Thời gian | Storyboard | Chuyển động |
 |---|---|---|
 | 0–0,25 s | 01 | Giấy trống |
-| 0,25–1,5 s | 02 | Dòng chữ trên cùng gõ ra; cắt vào cận cảnh chữ A khổng lồ, zoom lùi giật nấc theo nhịp 1/16 ra toàn AN NAM; symbol cắt vào |
-| 1,5–2,25 s | 03 | Hai cặp cung xoay thành bông hoa theo 4 nấc (có bóng echo của nấc trước); sóng weight chạy qua AN NAM |
+| 0,25–1,5 s | 02 | Dòng chữ trên cùng gõ ra; cắt vào cận cảnh chữ A khổng lồ, zoom lùi mượt (nhanh rồi chậm dần) ra toàn AN NAM; symbol cắt vào |
+| 1,5–2,25 s | 03 | Hai cặp cung xoay mượt thành bông hoa; sóng weight chạy qua AN NAM |
 | 2,25–3 s | 04 | Cắt cứng: mọi nét thành cửa sổ nhìn ra ảnh Huế (nháy 1 khung hình) |
 | 3–4,5 s | 05–06 | Cắt sang ảnh; A–Z hiện từ chiều sâu (mờ → rõ), rồi lùi về nhường a–z |
 | 4,5–6,25 s | 07 | Đường kẻ; A đẩy weight 400 → 700 → 400; dấu mũ, dấu hỏi bật vào → Ẩ; cắt qua Ở Ữ Đ Ặ ặ ơ đ ỹ |
