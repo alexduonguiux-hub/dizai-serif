@@ -200,6 +200,7 @@ def g3(cs):
 
 # ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
 ARCH = set()                   # (cũ: 'nmhuµ' dịch nguyên khối) — nay vòm / đáy u dùng G10 (dốc tuyến tính, vai cạnh thân gần đứng yên)
+SER_T = {'Regular': 42.0, 'Bold': 56.5}        # S72: chuẩn nét mảnh AnNam Serif — chỉ dùng NHẬN DIỆN nét mảnh (ngưỡng), đích là RING_T / ARCH_T
 ARCH_T = {'Regular': 34.0, 'Bold': 42.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
     """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
@@ -238,7 +239,7 @@ def arch_thin(cs, w):
                                     if not inside((a_[0] + 2*nv[0], a_[1] + 2*nv[1]), P): nv = (-nv[0], -nv[1])
                                     if not inside((a_[0] + 2*nv[0], a_[1] + 2*nv[1]), P) or abs(nv[1]) < 0.3: continue
                                     hh = ray(a_, nv, P)
-                                    if hh and hh[0] < 2.2*ARCH_T[w]: ds.append((hh[0] - ARCH_T[w])/abs(nv[1]))
+                                    if hh and hh[0] < 2.2*max(ARCH_T[w], SER_T[w]): ds.append((hh[0] - ARCH_T[w])/abs(nv[1]))
                             dlt = min(ds) if ds else h[0] - ARCH_T[w]
                             for p_ in pts: p_[1] += sg*dlt
                             done |= {id(p_) for p_ in pts}
@@ -307,7 +308,7 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
         if abs_t is not None:
             at_ = abs_t*BAR_K if abs(nout[1]) > 0.97 else abs_t      # nét NGANG: hiệu chỉnh quang học (trông dày hơn nét đứng / cong)
             if 0.26 < abs(nout[1]) < 0.97: at_ = abs_t*DIAG_K          # nét CHÉO (15–75°): trông mảnh hơn → dày thêm DIAG_K
-            return (t - at_)/2*pin if 0.5*abs_t <= t <= 1.6*abs_t else 0.0
+            return (t - at_)/2*pin if 0.5*abs_t <= t <= 1.6*max(abs_t, SER_T[w]) else 0.0   # S72: nhận diện nét mảnh theo chuẩn Serif (chuẩn Golden 34 làm ngưỡng 1.6× bỏ sót bụng B D P R)
         f = 1.0 if t <= wl else max(0.0, (wh - t)/(wh - wl))
         return (1 - R_)/2*t*f*pin
     moves = []
