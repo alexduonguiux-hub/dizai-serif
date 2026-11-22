@@ -249,6 +249,8 @@ function roulette(K, t, t0, lock0, lockStep, seed) {
     j++; });
 }
 function typeOn(K, t, t0, dt) { let j = 0; K.items.forEach(it=>{ if (!it) return; vis(it.s, t >= t0 + j*dt); it.s.style.transform = 'none'; j++; }); }
+// centre a word on its actual ink (not its advance box)
+function inkCentre(host, text) { const fs = parseFloat(host.style.fontSize), k = ink(text, fs); host.style.left = (W/2 - (k.r - k.l)/2) + 'px'; }
 function placeLine(L) {
   let x = 0; L.Ks.forEach((K,i)=>{ layoutWord(K); if (i) x += ink(' ', parseFloat(K.host.style.fontSize)).w; K.host.style.left = x + 'px'; x += K.meas.offsetWidth; });
   const x0 = L.align === 'r' ? L.x - x : L.x;
@@ -279,7 +281,7 @@ function render(t) {
     $('symAe').parentNode.style.display = $('symBe').parentNode.style.display = echo ? 'inline' : 'none';
     // AN NAM: scattered letters (one per 16th) snap into the line at 1.25; 03: a weight wave runs through it
     const an = $('annam'); fv(an); layoutWord(KN);
-    an.style.left = (59 - +an.dataset.inkl) + 'px'; an.style.top = '823px';
+    inkCentre(an, 'AN NAM'); an.style.top = '823px';
     // smooth zoom: from a giant, cropped A (on the cut at 0.5) back to the full word
     const zp = expoOut(seg(t, .5, 1.25)), zoom = Math.exp(Math.log(7.5) * (1 - zp));   // smooth pull-back, log-scale
     const firstA = KN.items[0];
@@ -357,10 +359,10 @@ function render(t) {
     $('D').style.clipPath = 'none';
     $('dimg').style.transform = `scale(${lerp(1.05, 1.0, seg(t, 9.75, 12))})`;
     const dn = $('dannam'); fv(dn); layoutWord(KD);
-    dn.style.left = (59 - +$('annam').dataset.inkl) + 'px'; dn.style.top = '146px';
+    inkCentre(dn, 'AN NAM'); dn.style.top = '146px';
     roulette(KD, t, 9.75, 10.05, .06, 3);
     const ds = $('dserif'); fv(ds); layoutWord(KS);
-    ds.style.left = (W - ds.offsetWidth)/2 + 'px'; ds.style.top = '603px';
+    inkCentre(ds, 'SERIF'); ds.style.top = '603px';
     roulette(KS, t, 9.875, 10.3, .06, 5);
     DI.forEach((s,i)=>{ const p = seg(t, 10.62 + i*.12, 10.62 + i*.12 + .3); s.style.transform = 'none';
       s.parentNode.style.clipPath = `inset(0 ${(1 - Math.floor(p*24)/24)*100}% 0 0)`; });
