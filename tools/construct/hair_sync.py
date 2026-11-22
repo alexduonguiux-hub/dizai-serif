@@ -54,6 +54,10 @@ def main():
         if c in GD.ARMD and f'{c}-Regular' in O:
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.arm_depth(O[f'{c}-{w}'], w)[0]
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    for c in order:                                               # S76 G16 mặt cắt đỉnh A mọi weight = APEX_W (designer 23/11)
+        if c in GD.APEX_KEEP and f'{c}-Regular' in O:
+            for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.apex_set(O[f'{c}-{w}'], GD.APEX_W)
+            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)
         b = unicodedata.normalize('NFD', c)[0]
         if c == b or f'{b}-Regular' not in O: continue

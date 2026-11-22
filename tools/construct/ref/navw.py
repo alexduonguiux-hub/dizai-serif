@@ -171,6 +171,10 @@ def main():
         src = json.load(open(keep)); out = json.load(open(fp))
         for ch in OLD:                                                       # designer 23/11 "bỏ móc trên A để A, V, W về phiên bản cũ"
             out[f'{ch}-{w}'] = src[f'{ch}-{w}']
+        if w == 'Bold':                                                      # S76 (designer 23/11 "A lỗi chân các weight"): chân trái
+            o_ = 'L135.2 81.7C134.1 79.2 133.3 71.4 133.3 71.3C126 47.3 124.8 21.7 137.4 0'   # A Bold: tay nắm suy biến (71.4 → 71.3)
+            n_ = 'L135.2 81.7C122.5 54.5 124.8 21.7 137.4 0'                  # → một cung, tiếp tuyến theo mép chân (hướng 171.2,158.7 → 135.2,81.7)
+            assert o_ in out['A-Bold'][0]; out['A-Bold'] = [out['A-Bold'][0].replace(o_, n_)]
         for ch, fn in (('N', do_N), ('A', do_A), ('V', lambda d, w: do_VW(d, w, 'V')), ('W', lambda d, w: do_VW(d, w, 'W'))):
             if ch in OLD: continue
             k = f'{ch}-{w}'; p = fn(src[k], w); p.simplify()

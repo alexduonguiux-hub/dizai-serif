@@ -1127,61 +1127,143 @@ def main():
 # Làm mảnh nét trái A (42 → 34) dời mép ngoài song song → đầu mép trượt trên đường cap, mặt cắt đỉnh hẹp lại (Regular 23 → 19 u,
 # Bold 5.4 u → chéo nhau thành nhọn). Đặt lại: điểm trái mặt cắt = điểm phải − bề rộng mặt cắt AnNam Serif (mép mảnh xoay < 1°).
 APEX_KEEP = set('AÆ')
-def apex_keep(d, d_serif):
-    """mép NGOÀI nét mảnh trái về đúng chỗ AnNam Serif (song song, dời ngang dx) → mặt cắt đỉnh như Serif; mép TRONG (lòng) dời thêm
-    cùng dx → nét mảnh vẫn đúng chuẩn Golden, đều suốt chiều dài (lòng rộng ra); đỉnh trong lòng = giao mép trong mới với mép trong nét dày"""
-    cs = parse(d); cs0 = parse(d_serif)
-    def tops(cs_, ys):
-        out = []
-        for c in cs_:
-            for cmd, pts in c:
-                if pts and abs(pts[-1][1] - ys) < 0.6 and all(q is not pts[-1] for q in out): out.append(pts[-1])
-        return out
-    ys = max((pts[-1][1] for c in cs0 for cmd, pts in c if pts), default=0)
-    s0 = sorted(tops(cs0, ys), key=lambda p: p[0]); top = tops(cs, ys)
-    if len(s0) != 2 or len(top) != 2: return d
-    w0 = s0[1][0] - s0[0][0]
-    R_ = min(top, key=lambda q: abs(q[0] - s0[1][0])); L_ = top[0] if R_ is top[1] else top[1]
-    dx = (R_[0] - w0) - L_[0]
-    if abs(dx) < 0.05: return d
-    # mép ngoài: đoạn L kết thúc tại L_ — dời cả đoạn (và tay nắm vào điểm đầu đoạn) theo dx
-    for c in cs:
+APEX_W = 23.3                    # S76 (designer 23/11 "kích thước cắt các weight của A không đều"): mặt cắt đỉnh A mọi weight = Regular
+
+def _isect(p, u, q, v):
+    """giao đường (p, hướng u) × (q, hướng v)"""
+    den = u[0]*v[1] - u[1]*v[0]
+    if abs(den) < 1e-12: return None
+    t = ((q[0] - p[0])*v[1] - (q[1] - p[1])*v[0])/den
+    return (p[0] + u[0]*t, p[1] + u[1]*t)
+
+def apex_set(d, W):
+    """đỉnh A: mặt cắt rộng đúng W. Mép ngoài nét mảnh XOAY quanh điểm chân B (đầu trên = điểm phải − W); mép trong dựng lại song song,
+    cách đúng bề dày hiện tại (góc thanh ngang, đỉnh lòng, đoạn chân dưới thanh = giao điểm) → chân loe giữ, nét mảnh đều"""
+    cs = parse(d)
+    ys = max((pts[-1][1] for c in cs for cmd, pts in c if pts), default=0)
+    for c in cs:                                                    # mép ngoài: đoạn L tới điểm đỉnh từ dưới-trái
         for k, (cmd, pts) in enumerate(c):
-            if cmd == 'L' and pts[-1] is L_:
-                prev = c[k - 1]; B = prev[1][-1]
-                B[0] += dx
-                if prev[0] == 'C': prev[1][1][0] += dx                 # tay nắm vào B (giữ tiếp tuyến loe chân)
-                L_[0] += dx
-    u = (L_[0] - B[0], L_[1] - B[1]); un = math.hypot(*u); u = (u[0]/un, u[1]/un)
-    # mép trong chân dưới thanh ngang (trên contour ngoài): đoạn L song song mép ngoài, khác mép ngoài → dời dx (+ tay nắm kề)
+            if cmd == 'L' and abs(pts[-1][1] - ys) < 0.6 and k > 0 and c[k - 1][1] and c[k - 1][1][-1][1] < ys - 300 and c[k - 1][1][-1][0] < pts[-1][0] + 1:
+                L_ = pts[-1]; B = c[k - 1][1][-1]; outer = c; break
+        else: continue
+        break
+    else: return d
+    R_ = next((pts[-1] for cmd, pts in outer if pts and abs(pts[-1][1] - ys) < 0.6 and pts[-1] is not L_), None)
+    if R_ is None: return d
+    u0 = (L_[0] - B[0], L_[1] - B[1]); n0 = math.hypot(*u0); u0 = (u0[0]/n0, u0[1]/n0)
+    # lòng: contour không chứa điểm đỉnh; mép trong = đoạn song song u0
+    inner = None
     for c in cs:
-        if not any(pts and pts[-1] is L_ for cmd, pts in c): continue              # chỉ contour NGOÀI (chứa đỉnh)
-        for k, (cmd, pts) in enumerate(c):
-            if cmd != 'L' or pts[-1] is L_ or k == 0: continue
-            a_ = c[k - 1][1][-1]; b_ = pts[-1]; v = (b_[0] - a_[0], b_[1] - a_[1]); vn = math.hypot(*v)
-            if vn < 30 or abs(v[0]/vn*u[1] - v[1]/vn*u[0]) > 0.02 or max(a_[1], b_[1]) > ys - 100: continue
-            a_[0] += dx; b_[0] += dx
-            if k + 1 < len(c) and c[k + 1][0] == 'C': c[k + 1][1][0][0] += dx
-            if c[k - 1][0] == 'C': c[k - 1][1][1][0] += dx
-    # mép trong (lòng): contour lòng (không chứa điểm trên đường cap); đoạn song song mép ngoài, dời cùng dx
-    for c in cs:
-        P = [pts[-1] for cmd, pts in c if pts]
-        if any(abs(q[1] - ys) < 0.6 for q in P) or len(P) < 3: continue
-        n = len(P)
+        if c is outer: continue
+        P = [pts[-1] for cmd, pts in c if pts]; n = len(P)
         for i in range(n):
-            p1, p2 = P[i], P[(i + 1) % n]
-            v = (p2[0] - p1[0], p2[1] - p1[1]); vn = math.hypot(*v)
-            if vn < 50 or abs(v[0]/vn*u[1] - v[1]/vn*u[0]) > 0.02: continue          # song song mép ngoài
-            lo, hi = (p1, p2) if p1[1] < p2[1] else (p2, p1)                          # lo: góc trên thanh ngang, hi: đỉnh trong
-            other = next(P[j] for j in range(n) if P[j] is not lo and P[j] is not hi)   # góc thanh phía nét dày
-            lo[0] += dx                                                               # trượt trên mặt thanh ngang
-            # hi = giao (đường qua lo song song u) × (đường other → hi cũ)
-            ex, ey = hi[0] - other[0], hi[1] - other[1]; den = u[0]*ey - u[1]*ex
-            if abs(den) > 1e-9:
-                t = ((other[0] - lo[0])*ey - (other[1] - lo[1])*ex)/den
-                hi[0], hi[1] = lo[0] + u[0]*t, lo[1] + u[1]*t
-            return fmt(cs)
+            p1, p2 = P[i], P[(i + 1) % n]; v = (p2[0] - p1[0], p2[1] - p1[1]); vn = math.hypot(*v)
+            if vn > 50 and abs(v[0]/vn*u0[1] - v[1]/vn*u0[0]) < 0.03:
+                lo, hi = (p1, p2) if p1[1] < p2[1] else (p2, p1)
+                other = next(P[j] for j in range(n) if P[j] is not lo and P[j] is not hi)
+                inner = (lo, hi, other); break
+        if inner: break
+    if not inner: return d
+    lo, hi, other = inner
+    t = abs((lo[0] - B[0])*u0[1] - (lo[1] - B[1])*u0[0])                 # bề dày nét mảnh hiện tại
+    Lnew = (R_[0] - W, ys); u = (Lnew[0] - B[0], Lnew[1] - B[1]); nu = math.hypot(*u); u = (u[0]/nu, u[1]/nu)
+    nrm = (u[1], -u[0])
+    if (lo[0] - B[0])*nrm[0] + (lo[1] - B[1])*nrm[1] < 0: nrm = (-nrm[0], -nrm[1])
+    Q = (B[0] + nrm[0]*t, B[1] + nrm[1]*t)                              # một điểm trên mép trong mới
+    L_[0], L_[1] = Lnew
+    hx = (hi[0] - other[0], hi[1] - other[1])
+    lo_n = _isect(Q, u, lo, (1, 0)); hi_n = _isect(Q, u, other, hx)
+    if lo_n is None or hi_n is None: return d
+    lo[0], lo[1] = lo_n; hi[0], hi[1] = hi_n
+    for k, (cmd, pts) in enumerate(outer):                          # đoạn chân dưới thanh (song song cũ, không phải mép ngoài)
+        if cmd != 'L' or pts[-1] is L_ or k == 0 or not outer[k - 1][1]: continue
+        a_ = outer[k - 1][1][-1]; b_ = pts[-1]; v = (b_[0] - a_[0], b_[1] - a_[1]); vn = math.hypot(*v)
+        if vn < 30 or abs(v[0]/vn*u0[1] - v[1]/vn*u0[0]) > 0.03 or max(a_[1], b_[1]) > ys - 100: continue
+        for q_ in (a_, b_):
+            r = _isect(Q, u, q_, (1, 0)); dxq = r[0] - q_[0]; q_[0] = r[0]
+            if q_ is b_ and k + 1 < len(outer) and outer[k + 1][0] == 'C': outer[k + 1][1][0][0] += dxq
+            if q_ is a_ and outer[k - 1][0] == 'C': outer[k - 1][1][1][0] += dxq
     return fmt(cs)
+
+def apex_keep(d, d_serif):
+    """Golden: mặt cắt đỉnh = AnNam Serif (= APEX_W)"""
+    return apex_set(d, APEX_W)
+
+# ---------- G17 chữ có sừng = chữ không sừng đã đồng bộ + mảnh sừng (designer 23/11 "nét mỏng chữ Ở bị mảnh hơn các chữ O còn lại",
+# "các nét mảnh của golden vẫn không đều nhau"): sừng dính liền thân → rebase không khớp contour → Ơ Ư xử lý riêng, vòng / thân lệch O U
+# (Serif Ơ Bold 68 / O 57; Golden ư 41 / u 34). Thân + dấu = Ó Ò … đã đồng bộ (tịnh tiến như ở nguồn); sừng = phần nguồn ngoài thân
+# (thành phần chạm thân), kèm dải chồng 6 u vào thân.
+import pathops
+HORN = '\u031b'
+def _pp(d):
+    p = pathops.Path()
+    for c in parse(d):
+        for cmd, pts in c:
+            if cmd == 'M': p.moveTo(*pts[0])
+            elif cmd == 'L': p.lineTo(*pts[0])
+            elif cmd == 'C': p.cubicTo(*pts[0], *pts[1], *pts[2])
+            elif cmd == 'Z': p.close()
+    return p
+def _pd(p):
+    s_ = ''; last_ = None; first_ = None
+    for v, pts in p.segments:
+        if pts: last_n = tuple(pts[-1])
+        if v == 'moveTo': s_ += 'M%.2f %.2f' % tuple(pts[0]); first_ = tuple(pts[0])
+        elif v == 'lineTo': s_ += 'L%.2f %.2f' % tuple(pts[0])
+        elif v == 'curveTo': s_ += 'C' + ' '.join('%.2f %.2f' % tuple(q) for q in pts)
+        elif v == 'qCurveTo':
+            q0 = last_
+            for k in range(len(pts) - 1):
+                c_ = pts[k]; e_ = pts[k + 1] if k == len(pts) - 2 else ((pts[k][0] + pts[k + 1][0])/2, (pts[k][1] + pts[k + 1][1])/2)
+                c1 = (q0[0] + 2/3*(c_[0] - q0[0]), q0[1] + 2/3*(c_[1] - q0[1])); c2 = (e_[0] + 2/3*(c_[0] - e_[0]), e_[1] + 2/3*(c_[1] - e_[1]))
+                s_ += 'C%.2f %.2f %.2f %.2f %.2f %.2f' % (*c1, *c2, *e_); q0 = e_
+        elif v in ('closePath', 'endPath'): s_ += 'Z'
+        if v in ('closePath', 'endPath'): last_ = first_
+        elif pts: last_ = tuple(pts[-1])
+    return s_
+def _op(a, b, op): return pathops.op(a, b, op)
+def no_horn(c):
+    n = unicodedata.normalize('NFD', c)
+    return unicodedata.normalize('NFC', n.replace(HORN, '')) if HORN in n else None
+def horn_compose(src_c, src_b, new_b):
+    SC, SB_ = parse(src_c), parse(src_b)
+    dx = dy = None                                                 # tịnh tiến thân: contour lòng khớp hình (nguồn)
+    for sb in SB_:
+        for sc in SC:
+            P, Q = pts_of(sc), pts_of(sb)
+            if [k for k, _ in sc] != [k for k, _ in sb] or len(P) != len(Q): continue
+            ddx, ddy = P[0][0] - Q[0][0], P[0][1] - Q[0][1]
+            if max(abs(p[0] - q[0] - ddx) + abs(p[1] - q[1] - ddy) for p, q in zip(P, Q)) < 0.5: dx, dy = ddx, ddy; break
+        if dx is not None: break
+    if dx is None:                                                 # dự phòng: căn trọng tâm lòng (contour ngược chiều lớn nhất)
+        def cen(cs_):
+            best = None
+            for c in cs_:
+                P = pts_of(c)
+                if len(P) < 3: continue
+                a = 0.5*sum(P[i-1][0]*P[i][1] - P[i][0]*P[i-1][1] for i in range(len(P)))
+                if best is None or abs(a) > abs(best[0]): best = (a, c)
+            outer_sign = best[0] > 0 if best else True
+            hs = [c for c in cs_ if len(pts_of(c)) >= 3 and (0.5*sum(pts_of(c)[i-1][0]*pts_of(c)[i][1] - pts_of(c)[i][0]*pts_of(c)[i-1][1] for i in range(len(pts_of(c)))) > 0) != outer_sign]
+            if not hs: return None
+            h = max(hs, key=lambda c: (max(p[0] for p in pts_of(c)) - min(p[0] for p in pts_of(c)))*(max(p[1] for p in pts_of(c)) - min(p[1] for p in pts_of(c))))
+            P = pts_of(h); return ((min(p[0] for p in P) + max(p[0] for p in P))/2, (min(p[1] for p in P) + max(p[1] for p in P))/2)
+        a_, b_ = cen(SC), cen(SB_)
+        if a_ is None or b_ is None: return None
+        dx, dy = a_[0] - b_[0], a_[1] - b_[1]
+    mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
+    srcC = _pp(src_c); srcB = _pp(mv(src_b)); newB = _pp(mv(new_b))
+    diff = _op(srcC, srcB, pathops.PathOp.DIFFERENCE)
+    band = pathops.Path(); band.addPath(srcB); band.stroke(12, pathops.LineCap.BUTT_CAP, pathops.LineJoin.ROUND_JOIN, 4); band.convertConicsToQuads()
+    horn = pathops.Path()
+    for cont in diff.contours:                                     # thành phần chạm thân = sừng (dấu là thành phần rời)
+        q = pathops.Path(); q.addPath(cont)
+        if list(_op(q, band, pathops.PathOp.INTERSECTION).segments): horn = _op(horn, q, pathops.PathOp.UNION)
+    if not list(horn.segments): return None
+    hb = pathops.Path(); hb.addPath(horn); hb.stroke(12, pathops.LineCap.BUTT_CAP, pathops.LineJoin.ROUND_JOIN, 4); hb.convertConicsToQuads()
+    hb = _op(_op(hb, horn, pathops.PathOp.UNION), srcC, pathops.PathOp.INTERSECTION)   # sừng + dải 6 u (trong nét nguồn)
+    out = _op(newB, hb, pathops.PathOp.UNION); out.convertConicsToQuads()
+    return _pd(out)
 
 if __name__ == '__main__':
     main()
