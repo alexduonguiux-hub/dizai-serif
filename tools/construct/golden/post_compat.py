@@ -13,5 +13,12 @@ for k in [k for k in O if k.endswith('-Regular')]:
         O[f'{c}-Regular'], O[f'{c}-Bold'] = r, b
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(r, b, t)
         fixed.append(c)
+hn = []
+for k in [k for k in O if k.endswith('-Regular')]:                   # chữ có sừng: Medium / SemiBold = nội suy đúng R / B
+    c = k[:-8]
+    if GD.no_horn(c) and f'{c}-Bold' in O and GD.horn_compat(O[k], O[f'{c}-Bold']):
+        for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[k], O[f'{c}-Bold'], t)
+        hn.append(c)
+print('post_compat: chữ có sừng nội suy lại:', len(hn))
 json.dump(O, open(p, 'w'))
 print('post_compat: bỏ đoạn siêu ngắn ở cả hai master:', ''.join(fixed))

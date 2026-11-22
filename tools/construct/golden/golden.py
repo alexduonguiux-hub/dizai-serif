@@ -1034,10 +1034,12 @@ def drop_tiny(dR, dB, lim=2.0):
             j += 1
     return (fmt(R), fmt(B), n) if n else (dR, dB, 0)
 def lerp_d(a, b, t):
-    A, B = parse(a), parse(b)
+    A, B = parse(a), parse(b); done = set()                       # parse dùng chung đối tượng điểm (điểm khép = điểm M): nội suy MỖI điểm một lần
     for ca, cb in zip(A, B):
         for (_, pa), (_, pb) in zip(ca, cb):
-            for p, q in zip(pa, pb): p[0] += (q[0] - p[0])*t; p[1] += (q[1] - p[1])*t
+            for p, q in zip(pa, pb):
+                if id(p) in done: continue
+                done.add(id(p)); p[0] += (q[0] - p[0])*t; p[1] += (q[1] - p[1])*t
     return fmt(A)
 
 def main():
@@ -1115,12 +1117,12 @@ def main():
     for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
         b2 = no_horn(c)
         if not b2 or f'{c}-Regular' not in G or f'{b2}-Regular' not in G: continue
-        if c in G17_SKIP: continue
-        WS_ = [w for w in ('Regular', 'Medium', 'SemiBold', 'Bold') if f'{c}-{w}' in O and f'{b2}-{w}' in O and f'{b2}-{w}' in G]
-        rr = {w: horn_compose(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in WS_}   # từng weight; compat_masters ghép R / B
-        if rr and all(rr.values()):
-            for w in WS_: G[f'{c}-{w}'] = rr[w]
+        rr = {w: horn_splice(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in ('Regular', 'Bold')}   # ghép sừng không boolean → R / B cùng cấu trúc
+        if all(rr.values()) and horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
             nh += 1
+        else: print('G17 không ghép được (giữ cách cũ):', c)
     print('G17 chữ có sừng = chữ gốc + sừng:', nh)
     ntiny = []
     for c in chars:
@@ -1209,7 +1211,7 @@ def apex_keep(d, d_serif):
 # (thành phần chạm thân), kèm dải chồng 6 u vào thân.
 import pathops
 HORN = '\u031b'
-G17_SKIP = set('ỡữ')        # Golden: ghép sừng ra R / B khác cấu trúc mà compat_masters không ghép được — giữ cách cũ (vốn đúng nét)
+G17_SKIP = set()           # (S77: horn_splice thay boolean — không còn chữ phải bỏ qua)
 def _pp(d):
     p = pathops.Path()
     for c in parse(d):
@@ -1245,6 +1247,11 @@ def horn_compat(a, b):
     return sig(a) == sig(b)
 def horn_compose(src_c, src_b, new_b):
     SC, SB_ = parse(src_c), parse(src_b)
+    dx, dy = horn_align(SC, SB_)
+    mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
+    srcC = _pp(src_c); srcB = _pp(mv(src_b)); newB = _pp(mv(new_b))
+    return _horn_bool(srcC, srcB, newB)
+def horn_align(SC, SB_):
     dx = dy = None                                                 # tịnh tiến thân: contour lòng khớp hình (nguồn)
     for sb in SB_:
         for sc in SC:
@@ -1271,8 +1278,8 @@ def horn_compose(src_c, src_b, new_b):
         else:                                                      # không có lòng kín (U): căn mép trái + mép dưới thân (sừng ở trên-phải)
             allc = [p for c in SC for p in pts_of(c)]; allb = [p for c in SB_ for p in pts_of(c)]
             dx = min(p[0] for p in allc) - min(p[0] for p in allb); dy = min(p[1] for p in allc) - min(p[1] for p in allb)
-    mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
-    srcC = _pp(src_c); srcB = _pp(mv(src_b)); newB = _pp(mv(new_b))
+    return dx, dy
+def _horn_bool(srcC, srcB, newB):
     diff = _op(srcC, srcB, pathops.PathOp.DIFFERENCE)
     band = pathops.Path(); band.addPath(srcB); band.stroke(12, pathops.LineCap.BUTT_CAP, pathops.LineJoin.ROUND_JOIN, 4); band.convertConicsToQuads()
     horn = pathops.Path()
@@ -1284,6 +1291,143 @@ def horn_compose(src_c, src_b, new_b):
     hb = _op(_op(hb, horn, pathops.PathOp.UNION), srcC, pathops.PathOp.INTERSECTION)   # sừng + dải 6 u (trong nét nguồn)
     out = _op(newB, hb, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
+
+def _bz(seg, t):
+    """điểm trên đoạn (p0, cmd, pts) tại t"""
+    p0, k, ps = seg
+    if k == 'L': return (p0[0] + (ps[0][0] - p0[0])*t, p0[1] + (ps[0][1] - p0[1])*t)
+    a, b, c_, d_ = p0, ps[0], ps[1], ps[2]; u = 1 - t
+    return tuple(u**3*a[i] + 3*u*u*t*b[i] + 3*u*t*t*c_[i] + t**3*d_[i] for i in (0, 1))
+def _cut(seg, t0, t1):
+    """phần [t0, t1] của đoạn → (cmd, pts)"""
+    p0, k, ps = seg
+    if k == 'L': return ('L', [list(_bz(seg, t1))])
+    P = [p0, ps[0], ps[1], ps[2]]
+    def sub(P, t):                                                  # de Casteljau: (trái, phải)
+        a = [[P[i][j] + (P[i+1][j] - P[i][j])*t for j in (0, 1)] for i in range(3)]
+        b = [[a[i][j] + (a[i+1][j] - a[i][j])*t for j in (0, 1)] for i in range(2)]
+        c_ = [b[0][j] + (b[1][j] - b[0][j])*t for j in (0, 1)]
+        return [P[0], a[0], b[0], c_], [c_, b[1], a[2], P[3]]
+    R = sub(P, t0)[1] if t0 > 0 else P
+    tt = (t1 - t0)/(1 - t0) if t0 < 1 else 1
+    L = sub(R, tt)[0] if tt < 1 else R
+    return ('C', [list(L[1]), list(L[2]), list(L[3])])
+def _segs(c):
+    out, cur = [], None
+    for k, ps in c:
+        if k == 'M': cur = ps[0]
+        elif k in 'LC': out.append((tuple(cur), k, ps)); cur = ps[-1]
+    if out and (abs(out[-1][2][-1][0] - out[0][0][0]) > 1e-6 or abs(out[-1][2][-1][1] - out[0][0][1]) > 1e-6):
+        out.append((tuple(cur), 'L', [list(out[0][0])]))
+    return out
+def _near(segs, q):
+    best = None
+    for i, sg in enumerate(segs):
+        for n in range(0, 201):
+            t = n/200; p = _bz(sg, t); dd = (p[0] - q[0])**2 + (p[1] - q[1])**2
+            if best is None or dd < best[0]: best = (dd, i, t)
+    dd, i, t = best; h = 1/200                                     # tinh chỉnh quanh t
+    for _ in range(40):
+        for t_ in (max(0.0, t - h), min(1.0, t + h)):
+            p = _bz(segs[i], t_); d2 = (p[0] - q[0])**2 + (p[1] - q[1])**2
+            if d2 < dd: dd, t = d2, t_
+        h *= 0.6
+    return (dd, i, t)
+HORN_CUT = [None]
+def horn_splice(src_c, src_b, new_b, tol=2.5):
+    """G17 (bản tương thích R / B): sừng = chuỗi đoạn của contour nguồn chữ có sừng nằm NGOÀI chữ gốc nguồn (J1 → J2);
+    cắt contour chữ gốc mới tại điểm gần J1 / J2 nhất và chèn chuỗi sừng vào (nối bằng đoạn thẳng ngắn). Không dùng boolean →
+    cấu trúc điểm của Regular / Bold giống nhau (nội suy / variable đúng)."""
+    SC, SB_ = parse(src_c), parse(src_b)
+    dx, dy = horn_align(SC, SB_)
+    NB = [[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(new_b)]
+    SBm = [[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in SB_]
+    sb_segs = [_segs(c) for c in SBm]
+    def on_b(q):
+        return min(_near(ss, q)[0] for ss in sb_segs if ss) <= tol*tol
+    run = None
+    for c in SC:
+        sg = _segs(c); n = len(sg)
+        off = [not on_b(sg[i][2][-1]) for i in range(n)]            # điểm cuối đoạn i nằm ngoài chữ gốc
+        if not any(off) or all(off): continue
+        i0 = next(i for i in range(n) if off[i] and not off[i - 1])   # đoạn đầu tiên đi ra khỏi chữ gốc
+        j = i0
+        while off[j % n]: j += 1
+        if sum(1 for i in range(n) if off[i] and not off[i - 1]) != 1: return None   # một sừng / contour
+        run = [sg[k % n] for k in range(i0, j + 1)]; src_cont = c; break
+    if not run: return None
+    PL = polys(NB)                                                  # cắt chuỗi sừng tại chỗ ra / vào thân MỚI (thân Golden cao hơn nguồn)
+    def inside(q):
+        k = 0
+        for P in PL:
+            for i in range(len(P)):
+                (x1, y1), (x2, y2) = P[i - 1], P[i]
+                if (y1 > q[1]) != (y2 > q[1]) and q[0] < x1 + (q[1] - y1)*(x2 - x1)/(y2 - y1): k += 1
+        return k % 2 == 1
+    def bis(sg, a, b):                                              # inside(a) != inside(b) → t biên
+        ia = inside(_bz(sg, a))
+        for _ in range(30):
+            m = (a + b)/2
+            if inside(_bz(sg, m)) == ia: a = m
+            else: b = m
+        return (a + b)/2
+    samp = [(i, n/40) for i in range(len(run)) for n in range(0, 41)]
+    ins = [inside(_bz(run[i], t)) for i, t in samp]
+    if all(ins): return None
+    if not any(ins): ins = [True] + [False]*(len(samp) - 2) + [True]   # hai đầu nằm đúng trên biên thân mới
+    e = next(k for k in range(1, len(samp)) if ins[k - 1] and not ins[k]) if ins[0] else 0
+    f = next(k for k in range(len(samp) - 1, 0, -1) if ins[k] and not ins[k - 1]) if ins[-1] else len(samp) - 1
+    (ia, ta), (ib, tb) = samp[e], samp[f]
+    if e == 1 and not inside(_bz(run[0], 0.0)): ta = 0.0
+    elif ins[0]: ta = bis(run[ia], samp[e - 1][1] if samp[e - 1][0] == ia else 0.0, ta)
+    if f == len(samp) - 1 and not inside(_bz(run[-1], 1.0)): tb = 1.0
+    elif ins[-1]: tb = bis(run[ib], samp[f - 1][1] if samp[f - 1][0] == ib else 0.0, tb)
+    new_run = []
+    for i in range(ia, ib + 1):
+        t0 = ta if i == ia else 0.0; t1 = tb if i == ib else 1.0
+        if t1 - t0 < 1e-4: continue
+        st = _bz(run[i], t0); k_, ps_ = _cut(run[i], t0, t1); new_run.append((st, k_, ps_))
+    if not new_run: return None
+    run = new_run
+    J1, J2 = run[0][0], run[-1][2][-1]
+    area = lambda sg: sum(a_[0]*b_[1] - b_[0]*a_[1] for a_, b_ in zip([x[0] for x in sg], [x[0] for x in sg[1:] + sg[:1]]))
+    s_src = area(_segs(src_cont))
+    for ci, c in enumerate(NB):
+        sg = _segs(c)
+        if not sg: continue
+        if (area(sg) > 0) != (s_src > 0):                               # thân mới ngược chiều contour nguồn → đảo
+            sg = [(tuple(ps[-1]), k, ([[p0[0], p0[1]]] if k == 'L' else [ps[1], ps[0], [p0[0], p0[1]]])) for p0, k, ps in reversed(sg)]
+        a, b = _near(sg, J1), _near(sg, J2)
+        if a[0] > 40**2 or b[0] > 40**2: continue
+        (_, i1, t1), (_, i2, t2) = a, b
+        snap = lambda i, t: (i, 0.0) if t < 0.03 else (((i + 1) % len(sg), 0.0) if t > 0.97 else (i, t))   # bám điểm neo: R / B cắt cùng đoạn
+        (i1, t1), (i2, t2) = snap(i1, t1), snap(i2, t2)
+        HORN_CUT[0] = (ci, i1, i2)
+        if (i1, t1) == (i2, t2): return None
+        n = len(sg); out = []
+        p1 = _bz(sg[i1], t1); p2 = _bz(sg[i2], t2)
+        # J2' → … → J1' (phần thân giữ lại), rồi J1' → J1 → sừng → J2 → J2'
+        segs_keep = []
+        if i2 == i1 and t2 < t1: return None
+        k = i2; tstart = t2
+        while True:
+            if k % n == i1 and (k != i2 or t1 > tstart):
+                if t1 > tstart: segs_keep.append(_cut(sg[i1], tstart, t1))
+                break
+            if tstart < 1: segs_keep.append(_cut(sg[k % n], tstart, 1.0))
+            k += 1; tstart = 0.0
+            if k - i2 > n + 1: return None
+        cont = [['M', [list(p2)]]] + [[kk, ps] for kk, ps in segs_keep]
+        hr = [[kk, [list(p) for p in ps]] for _, kk, ps in run]
+        d1 = (p1[0] - J1[0])**2 + (p1[1] - J1[1])**2; d2 = (p2[0] - J2[0])**2 + (p2[1] - J2[1])**2
+        if d1 > 15**2 or d2 > 15**2: return None
+        if d1 > 1.0: hr = [['L', [list(J1)]]] + hr                       # đầu sừng nguồn nằm ngoài thân mới (thân Golden hẹp hơn): nối thẳng vào thân
+        if d2 > 1.0: hr = hr + [['L', [list(p2)]]]
+        else: hr[-1][1][-1] = list(p2)                                 # J ≈ p: trùng điểm, không đoạn suy biến
+        cont += hr + [['Z', []]]
+        NB[ci] = cont
+        return fmt(NB)
+    return None
 
 # ---------- G18 eo B = chuẩn nét mảnh (designer 23/11 "sửa luôn Ơ Ư, D, B các cho đều nét mảnh"): eo giữa hai bụng là hai CUNG
 # (đáy lòng trên, đỉnh lòng dưới) → G8 (đoạn thẳng) bỏ sót: Serif Bold 44 / 56.5, Golden Regular 27 / 30. Đo khe hẹp nhất giữa hai lòng
