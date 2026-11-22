@@ -18,6 +18,7 @@ import vn_punct as V
 
 PX = 700/247
 N_DIAG = {'Regular': 108.0, 'Bold': 148.0}
+VW_FLARE = False     # designer 23/11 "bỏ móc mới của V và W" (giữ đáy phẳng)
 FL_K = {'Regular': 1.0, 'Bold': 56.5/42.0}   # designer 23/11 "bold lên thì móc đỉnh A bị nhỏ lại": vạt loe phóng theo tỉ lệ nét mảnh (Bold 1.345)
 
 def parse(d):
@@ -33,20 +34,29 @@ def parse(d):
 
 def straighten(cmds, deg=6.0, minlen=60.0):
     """nắn thẳng mép gồm hai đoạn L lệch nhau < deg (W Bold: mép ngoài nét dày gãy 5° ở y 81 — trước nằm trong mũi vượt đáy, cắt đáy phẳng
-    làm lộ ra) — bỏ điểm giữa"""
-    out = list(cmds); changed = True
-    while changed:
-        changed = False
-        for i in range(1, len(out) - 1):
-            a, b, c = out[i - 1], out[i], out[i + 1]
-            if b[0] != 'L' or c[0] != 'L' or a[0] not in 'ML': continue
-            p0, p1, p2 = a[-1] if a[0] == 'L' else a[1], b[1], c[1]
+    làm lộ ra) — bỏ điểm giữa; đường viền xét VÒNG KÍN (điểm gãy có thể là điểm M)"""
+    pts = []; kinds = []
+    for c in cmds:
+        if c[0] == 'M': pts.append(c[1]); kinds.append('L')
+        elif c[0] == 'L': pts.append(c[1]); kinds.append('L')
+        elif c[0] == 'C': pts.append(c[3]); kinds.append(('C', c[1], c[2]))
+    if len(pts) > 1 and math.dist(pts[-1], pts[0]) < 1e-6: pts.pop(); k0 = kinds.pop(); kinds[0] = k0   # đoạn khép tường minh
+    changed = True
+    while changed and len(pts) > 3:
+        changed = False; n = len(pts)
+        for i in range(n):
+            p0, p1, p2 = pts[i - 1], pts[i], pts[(i + 1) % n]
+            if kinds[i] != 'L' or kinds[(i + 1) % n] != 'L': continue        # cả hai đoạn kề điểm i là đoạn thẳng
             if math.dist(p0, p1) < minlen and math.dist(p1, p2) < minlen: continue
             u = (p1[0] - p0[0], p1[1] - p0[1]); v = (p2[0] - p1[0], p2[1] - p1[1])
             if math.hypot(*u) < 1e-6 or math.hypot(*v) < 1e-6: continue
             ang = math.degrees(math.acos(max(-1, min(1, (u[0]*v[0] + u[1]*v[1])/math.hypot(*u)/math.hypot(*v)))))
-            if ang < deg: del out[i]; changed = True; break
-    return out
+            if ang < deg: del pts[i]; del kinds[i]; changed = True; break
+    out = [('M', pts[0])]
+    for i in range(1, len(pts) + 1):
+        q = pts[i % len(pts)]; k = kinds[i % len(pts)]
+        out.append(('L', q) if k == 'L' else ('C', k[1], k[2], q))
+    return out + [('Z',)]
 
 def path(ds, straight=False): return V.U(*[V.P(straighten(parse(d)) if straight else parse(d)) for d in ds])
 
@@ -68,22 +78,26 @@ def lines(ds, minlen=200):
                 if math.dist(cur, start) >= minlen: out.append((cur, start))
     return out
 
+# Vạt loe đo trên Figma theo KHOẢNG CÁCH NGANG TỪ MÉP NÉT ở từng độ cao (px; dương = ra ngoài nét) — mép font dốc khác bản vẽ
+# (V 0.448, W 0.372 px/px) nên đặt theo toạ độ tuyệt đối thì đường cong cắt vào mép trước điểm nối (W Bold gãy 10–14°).
+# (độ cao từ đường kẻ, khoảng cách ra ngoài): A đỉnh (đo xuống), V W đáy (đo lên). Điểm cuối nằm ĐÚNG trên mép, tay nắm kề dọc mép.
+A_FL = [(0, 15.65), (4.009, 12.37), (14.37, 3.887), (25.86, 0.0), (35.75, 0.0)]          # T P1 C1 C2 P2 — rồi P3 trên mép ở 38 px
+V_FL = [(0, 17.56), (1.334, 16.30), (11.756, 6.43), (23.926, 0.0), (34.664, 0.0)]        # Q3 Q2 C2 C1 Q1 — rồi Q0 trên mép ở 38 px
+W_FL = [(0, 15.43), (2.25, 13.47), (12.14, 4.87), (23.63, 0.0), (33.99, 0.0)]
+
 def flare_top(E0x, y_top, edge, side, D, k=1.0):
-    """vạt loe ở đỉnh (A): E0x = mép nét tại y_top; side +1 nhô sang phải; D: bảng toạ độ tương đối (u) [T, P1, C1, C2, P2], P3 trên mép"""
-    T, P1, C1, C2, P2 = [(E0x + side*dx*k, y_top + dy*k) for dx, dy in D]
-    y3 = y_top - 107.7*k; P3 = (x_at(*edge, y3), y3)
+    """vạt loe ở đỉnh (A): side −1 nhô sang trái (ra ngoài mép nét mảnh trái)"""
+    pts = [(x_at(*edge, y_top - h*PX*k) + side*o*PX*k, y_top - h*PX*k) for h, o in D]
+    T, P1, C1, C2, P2 = pts
+    y3 = y_top - 38*PX*k; P3 = (x_at(*edge, y3), y3)
     inner = (P3[0] - side*20, y3); inner2 = (E0x - side*20, y_top)
     return V.P([('M', inner2), ('L', T), ('L', P1), ('C', C1, C2, P2), ('L', P3), ('L', inner), ('Z',)])
 
-# Figma (px, đo từ mép nét tại đường kẻ) → u. A: đỉnh (y xuống trong Figma → âm ở đây)
-A_FL = [(15.65*PX, 0), (14.165*PX, -4.009*PX), (10.327*PX, -14.37*PX), (10.947*PX, -25.86*PX), (15.878*PX, -35.75*PX)]   # 23/11: móc đỉnh A sang TRÁI (phía nét mảnh)
-V_FL = [(17.56*PX, 0), (16.90*PX, 1.334*PX), (11.70*PX, 11.756*PX), (11.30*PX, 23.93*PX), (15.81*PX, 34.66*PX)]   # đáy V (y lên)
-W_FL = [(15.43*PX, 0), (14.31*PX, 2.25*PX), (9.38*PX, 12.14*PX), (8.76*PX, 23.63*PX), (12.60*PX, 33.99*PX)]
-
 def flare_bot(E0x, edge, D, side=1, k=1.0):
-    """vạt loe ở đáy (V, W): E0x = mép nét mảnh phải tại y 0"""
-    Q3, Q2, C2, C1, Q1 = [(E0x + side*dx*k, dy*k) for dx, dy in D]
-    y0 = 107.7*k; Q0 = (x_at(*edge, y0), y0)
+    """vạt loe ở đáy (V, W): nhô sang phải ra ngoài mép nét mảnh phải"""
+    pts = [(x_at(*edge, h*PX*k) + side*o*PX*k, h*PX*k) for h, o in D]
+    Q3, Q2, C2, C1, Q1 = pts
+    y0 = 38*PX*k; Q0 = (x_at(*edge, y0), y0)
     return V.P([('M', (E0x - side*25, 0)), ('L', Q3), ('L', Q2), ('C', C2, C1, Q1), ('L', Q0), ('L', (Q0[0] - side*28, y0)), ('Z',)])
 
 BAND = V.rect(-200, 0, 1200, 700)
@@ -132,6 +146,7 @@ def do_A(ds, w):
 
 def do_VW(ds, w, ch):
     p = V.I(path(ds, straight=True), BAND)
+    if not VW_FLARE: return p                                                     # designer 23/11 "bỏ móc mới của V và W": chỉ đáy phẳng
     pts = [c[1] if c[0] in 'ML' else c[3] for d in ds for c in parse(d) if c[0] != 'Z']
     bots = sorted({round(q[0], 2) for q in pts if q[1] < -5})
     # mỗi đáy: cặp điểm đáy (trái, phải); mép mảnh phải = đoạn từ điểm đáy phải đi lên
