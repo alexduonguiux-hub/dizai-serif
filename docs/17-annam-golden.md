@@ -151,3 +151,20 @@ QA Serif + Golden: outline 0 lỗi; nét, weight, kern, thanh, tay loe như trư
 ![a Serif](img/s68-a-serif.png)
 ![a Golden](img/s68-a-golden.png)
 ![m u a](img/s68-m-u-a.png)
+
+## S69 — dấu ? trơn (21/11, "Bụng cong dấu hỏi hơi gợn")
+
+? dựng từ đầu số 2 của designer + thân Hermite nối ở y 400 (chỉ G1) + uốn hẹp smoothstep → độ cong nhảy ở mối nối (Regular: đỉnh 0 → 8.7, eo 9.3 → 3.4, bụng 5.4 → 9.4). `curve_fair.py`: trên mỗi chuỗi cung nối trơn, điểm neo dời theo pháp tuyến ≤ 2 u, tiếp tuyến xoay ≤ 4°, tay nắm chọn lại — tối thiểu biến thiên độ cong (cả bậc ở mối nối); góc chủ ý và đầu chuỗi giữ. Chạy ở KHÂU XUẤT (export_font, ? ¿) vì bước ghép đoạn trước đó dựng lại cung. Chỉ đổi tay nắm (giữ chặt điểm neo) làm bụng phải nhọn (κ 15) — loại.
+Kết quả Regular: đỉnh 4.6 / 5.6, eo 6.7 / 5.8, bụng 5.2 / 4.7 (liền). Đuôi dấu phẩy giữ (designer "khoan k cần giảm").
+
+![?](img/s69-question.png)
+
+## S70 / S71 — dấu theo chữ hoa: case + calt (21/11, "dấu 2 chấm khi viết hoa bị tuột xuống đáy"; "gõ Shift hay Caps Lock có tự nhảy case không?" → "vậy thêm đi")
+
+- `.case`: `: ;` nâng +112 (hai chấm cách đều tâm chữ hoa 350; ; cùng độ nâng), `- ‐ – —` +20, `« » ‹ ›` +100, `· @` +50 (tâm hộp → 350), `¡ ¿` treo từ 700. Ngoặc / | / \ đã căn 350–355 → giữ. Italic dịch theo góc nghiêng; .case kern như glyph gốc.
+- `case`: bật khi ứng dụng bật All Caps / Case-sensitive forms.
+- `calt` (bật sẵn ở Word / Figma / trình duyệt): tự đổi theo ngữ cảnh — sau chữ hoa / số, trước chữ hoa / số, giữa hai cụm hoa cách khoảng trắng; dấu sau dấu đã nâng nâng theo. Thử 14 chuỗi (HÀ NỘI: 10:30 «VIỆT NAM» HÀ NỘI — ĐÀ NẴNG NAM:» A-Z ¿QUÉ? EMAIL@DIZAI / bản chữ thường giữ) — đúng ở Serif, Golden, variable.
+
+Version 0.934.
+
+![case](img/s70-case.png)

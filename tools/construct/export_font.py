@@ -27,7 +27,7 @@ BUILD = os.path.join(OUT, 'ufo')
 FAMILY, PS = os.environ.get('DIZAI_FAMILY', 'AnNam Serif'), os.environ.get('DIZAI_PS', 'AnNamSerif')   # designer 06/11: AnNam → thêm chữ phân biệt với BT Annam Neue (BeauType)
 VENDOR = 'DZAI'                                # Đìzai Studio (4 ký tự theo chuẩn OpenType — 'DIZAI' 5 ký tự không dùng được) — nên đăng ký với Microsoft (mstwsite@microsoft.com)
 #          # designer 06/11 "Đổi tên Font thành AnNam" (trước: Dizai Serif / DizaiSerif)
-VERSION = (0, 933)
+VERSION = (0, 934)
 ITALIC_ANGLE = 10.0
 WGHT = {'Regular': 400, 'Medium': 500, 'SemiBold': 600, 'Bold': 700}
 
@@ -274,6 +274,17 @@ def draw(glyph, cs, dx, ang):
             else: pen.curveTo(sg[2], sg[3], sg[4])
         pen.closePath()
 
+# S69 (designer 21/11 "bụng cong dấu hỏi hơi gợn"): làm trơn ở khâu XUẤT (sau mọi bước ghép đoạn): giữ góc chủ ý, điểm neo mối nối
+# trơn dời ≤ 2 u, tiếp tuyến xoay ≤ 4°, tay nắm chọn lại — liền độ cong (fair.py). Kết quả nhớ theo (ký tự, weight, góc).
+FAIR = '?¿'
+_FAIR_CACHE = {}
+def _fair_cs(c, w, ang, cs):
+    key = (c, w, ang, json.dumps(cs))
+    if key not in _FAIR_CACHE:
+        from curve_fair import fair_contours
+        _FAIR_CACHE[key] = fair_contours(cs, 2.0)
+    return _FAIR_CACHE[key]
+
 import ital_comp as IC
 _STEM = {}
 _PAIR = {}
@@ -389,15 +400,57 @@ def master(w, ang, FL, groups, kern):
                     else: d_ = _lerp_d(*_PAIR[c], TW[w])
                 if d_ is None: d_ = IC.compensate(O[k], ang, _STEM[w], smooth=c != '@')
             cs = parse(d_)
+            if c in FAIR: cs = _fair_cs(c, w, ang, cs)                 # S69: bụng ? ¿ (bước ghép đoạn / compat trước đó dựng lại cung)
             for j in FL.get(c, []): cs[j] = reverse(cs[j])
             draw(g, cs, SP[w][c]['dx'], ang)
     f.lib['public.glyphOrder'] = [n for n in f.lib['public.glyphOrder'] if n in f]
+    add_case(f, ang)
+    groups = {k: list(v) + [n + '.case' for n in v if n + '.case' in f] for k, v in groups.items()}   # .case kern như glyph gốc
     f.groups.update(groups)
     f.kerning.update(kern)
     f.features.text = features()
     if ang:
         i.openTypeHheaCaretSlopeRise = 1000; i.openTypeHheaCaretSlopeRun = round(1000*math.tan(math.radians(ang)))
     return f
+
+# S70 (designer 21/11 "dấu 2 chấm khi viết hoa bị tuột xuống đáy"): tính năng case — dấu đi với chữ HOA (Figma / InDesign / trình
+# duyệt bật tự động khi chuyển chữ hoa). Dấu nằm theo chữ thường (: ; cao 0–480, « » tâm 250, gạch tâm 330) nâng về tâm thị giác
+# chữ hoa 350; ¡ ¿ treo từ đỉnh chữ hoa 700. Ngoặc ( ) [ ] { } | / \ đã căn 355 / 350 → không cần.
+CASE_MID = 350.0
+CASE_CENTER = '-‐–—«»‹›·@'                      # tâm hộp → 350
+CASE_COLON = ':;'                               # theo hai chấm của : (; cùng độ nâng)
+CASE_TOP = '¡¿'                                 # đỉnh → 700
+def add_case(f, ang):
+    from fontTools.pens.transformPen import TransformPointPen
+    def bb(n): return f[n].getBounds(f)
+    t = math.tan(math.radians(ang)) if ang else 0.0
+    col = gname(':')
+    for c in CASE_CENTER + CASE_COLON + CASE_TOP:
+        n = gname(c)
+        if n not in f or bb(n) is None: continue
+        b = bb(n)
+        if c in CASE_COLON:
+            cb = bb(col); dy = CASE_MID - (cb.yMin + cb.yMax)/2
+        elif c in CASE_TOP: dy = 700.0 - b.yMax
+        else: dy = CASE_MID - (b.yMin + b.yMax)/2
+        dy = round(dy)
+        g = f.newGlyph(n + '.case'); g.width = f[n].width
+        f[n].drawPoints(TransformPointPen(g.getPointPen(), (1, 0, 0, 1, round(dy*t), dy)))
+        f.lib['public.glyphOrder'].append(n + '.case')
+
+def calt():
+    """S71 (designer 21/11 "gõ Shift hay Caps Lock có tự nhảy case không?" → "vậy thêm đi"): case chỉ bật khi ứng dụng bật (All Caps);
+    calt (bật sẵn ở Word / Figma / trình duyệt) tự đổi dấu → .case theo NGỮ CẢNH chữ hoa: sau chữ hoa / số (NỘI: 10:30 NAM»),
+    trước chữ hoa / số («VIỆT -A), giữa hai cụm hoa cách khoảng trắng (HÀ NỘI — ĐÀ NẴNG); dấu ngay sau dấu đã nâng nâng theo (NAM:»)."""
+    cs = [c for c in CASE_CENTER + CASE_COLON + CASE_TOP if c in SP['Regular']]
+    uc = [gname(c) for c in CHARS if not 0xE000 <= ord(c) <= 0xF8FF and (c.isupper() or c.isdigit())]
+    base = ' '.join(gname(c) for c in cs); cased = ' '.join(gname(c) + '.case' for c in cs)
+    return ('\n@CASE_UC = [' + ' '.join(uc) + '];\n@CASE_B = [' + base + '];\n@CASE_C = [' + cased + '];\n'
+            '@CASE_L = [@CASE_UC @CASE_C];\n\nfeature calt {\n'
+            '    sub @CASE_L @CASE_B\' by @CASE_C;\n'
+            '    sub @CASE_B\' @CASE_UC by @CASE_C;\n'
+            '    sub @CASE_L space @CASE_B\' space @CASE_UC by @CASE_C;\n'
+            '} calt;\n')
 
 def features():
     L = []
@@ -409,7 +462,10 @@ def features():
     lg = '\n'.join('    sub ' + ' '.join(gname(x) for x in v) + ' by ' + gname(k) + ';' for k, v in
                    (('ﬀ', 'ff'), ('\ue000', 'ft'), ('\ue001', 'tf'), ('\ue002', 'tt')) if k in SP['Regular'])
     return ('languagesystem DFLT dflt;\nlanguagesystem latn dflt;\n\nfeature ccmp {\n' + '\n'.join(sorted(L, key=lambda s: -s.count(' ')))
-            + '\n} ccmp;\n\nfeature liga {\n' + lg + '\n} liga;\n')
+            + '\n} ccmp;\n\nfeature liga {\n' + lg + '\n} liga;\n'
+            + calt()
+            + '\nfeature case {\n' + '\n'.join(f'    sub {gname(c)} by {gname(c)}.case;' for c in CASE_CENTER + CASE_COLON + CASE_TOP
+                                                 if c in SP['Regular']) + '\n} case;\n')
 
 def kerning_data():
     rc = {}; lc = {}
