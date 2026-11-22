@@ -178,3 +178,13 @@ Version 0.934.
 - Đo (qa_thin.py, mới): N đứng 34.0 / 42.0, O chỗ mỏng nhất 33.5 / 42, B D P R ngang 33.8 / 29–30, V chéo 33.5 / 42. Còn: A Regular 37; số 4 7 chưa qua luật (chờ designer).
 
 ![nét mảnh](img/s72-golden-thin.png)
+
+## S73 / S74 — N theo bản vẽ mới, dấu Ê ở tâm (23/11)
+
+- N (Figma 2272:822, "chỉ tham khảo glyph. Độ dày giữ như hiện tại. chỉ đổi độ dày thanh chéo N cho dày hơn một chút"): đỉnh trái / chân phải phẳng trên đường kẻ (bỏ nhọn vượt 711 / −11), loe đầu thân trái + chân thân phải (đối xứng dọc loe sẵn có), thanh chéo 99.7 → 108 (Regular), 136.8 → 148 (Bold), M / SB nội suy 121 / 134. `ref/navw.py`, nguồn cũ `designer_*_preNAVW.json`.
+- A V W: thử đỉnh / đáy phẳng + vạt loe rồi bỏ (designer "bỏ móc trên A để A, V, W về phiên bản cũ") — giữ như 0.934, độ dày đồng bộ theo luật chung. v w y k thường dựng từ V W bản trước (`lower/caps_lc_src.json`).
+- Dấu trên E (É È … Ê Ế Ề Ể Ễ Ệ) đặt ở tâm hộp (trước 0.44 bề ngang, lệch trái 22 u — designer "dấu ô bị lệch trên chữ Ê").
+- Đo Serif: nét chéo dày N 108 / 121 / 134 / 148, A 99.6 → 137, V 101 → 140, W 102 → 141 (đều theo weight); nét mảnh 42 / 56.5. Golden: nét mảnh 34 / 42, số 4 7 vào G8 (còn thanh 4 Regular 37 ≠ 30, A chéo Regular 37 ≠ 34).
+- Version 0.935.
+
+![N A V W Ê](img/s73-N.png)

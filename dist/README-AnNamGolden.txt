@@ -1,4 +1,4 @@
-AnNam Golden — Version 0.934 (21 November 2026)
+AnNam Golden — Version 0.935 (23 November 2026)
 Design: Đìzai Studio · Vendor ID: DZAI
 
 A display companion to AnNam Serif: taller x-height (535), larger flares,
