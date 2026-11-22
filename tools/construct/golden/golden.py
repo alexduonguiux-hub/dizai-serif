@@ -359,6 +359,11 @@ def g2(cs, w, skip, ratio=None, fixed=frozenset(), thin=None, abs_t=None):
                     h = ray(mid, (-out[0], -out[1]), P)
                     if h and math.dist(q[0], q[1]) < 1.2*h[0]: return 0.0      # đoạn ngắn hơn bề dày = mặt cắt đầu nét: giữ
                     own = shrink(mid, out, 20)                          # đoạn thẳng: mép đối diện song song ±20° (thanh, thân, chéo)
+                    if own == 0.0 and abs_t is not None:                # S72 (designer 22/11 "đồng bộ hết … nét mỏng"): điểm giữa sát đỉnh
+                        for tt in (0.7, 0.85, 0.3, 0.15):               # (V Bold: mép ngoài tách đôi ở y 344, tia giữa đoạn trúng nét kia)
+                            p_ = (q[0][0] + (q[1][0] - q[0][0])*tt, q[0][1] + (q[1][1] - q[0][1])*tt)   # → thử dọc đoạn
+                            own = shrink(p_, out, 20)
+                            if own: break
                     if own == 0.0:                                      # không đo được (vd. đoạn hội tụ về đỉnh V của W) nhưng thẳng hàng
                         ix = next((m for m in range(n) if S_[m][1] is q), None)   # (≤ 6°) với đoạn kề dài: dời cùng nét đó (không xoay)
                         u0 = unit((q[1][0] - q[0][0], q[1][1] - q[0][1]))
