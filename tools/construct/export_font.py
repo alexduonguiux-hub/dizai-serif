@@ -278,12 +278,21 @@ def draw(glyph, cs, dx, ang):
 # trơn dời ≤ 2 u, tiếp tuyến xoay ≤ 4°, tay nắm chọn lại — liền độ cong (fair.py). Kết quả nhớ theo (ký tự, weight, góc).
 FAIR = '?¿'
 _FAIR_CACHE = {}
+_FAIR_DISK = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'out', 'fair_cache.json')
 def _fair_cs(c, w, ang, cs):
-    key = (c, w, ang, json.dumps(cs))
+    """kết quả làm trơn nhớ theo băm outline đầu vào — trong lượt và trên đĩa (out/fair_cache.json): lần dựng sau, Golden cùng hình ? → dùng lại"""
+    import hashlib
+    key = hashlib.sha1(json.dumps([c, round(ang, 3), cs]).encode()).hexdigest()
+    if not _FAIR_CACHE:
+        try: _FAIR_CACHE.update(json.load(open(_FAIR_DISK)))
+        except Exception: pass
     if key not in _FAIR_CACHE:
         from curve_fair import fair_contours
-        _FAIR_CACHE[key] = fair_contours(cs, 2.0)
-    return _FAIR_CACHE[key]
+        _FAIR_CACHE[key] = [[list(it[:1]) + [list(map(float, q)) for q in it[1:]] for it in cont] for cont in fair_contours(cs, 2.0)]
+        try:
+            os.makedirs(os.path.dirname(_FAIR_DISK), exist_ok=True); json.dump(_FAIR_CACHE, open(_FAIR_DISK, 'w'))
+        except Exception: pass
+    return [[(it[0],) + tuple(tuple(q) for q in it[1:]) for it in cont] for cont in _FAIR_CACHE[key]]
 
 import ital_comp as IC
 _STEM = {}
