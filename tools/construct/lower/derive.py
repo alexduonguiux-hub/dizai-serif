@@ -477,8 +477,15 @@ def thicken(p, delta, ylo=90.0, yhi=400.0, fs=False):
             a = b
     xat = lambda l, y: l[0][0] + (y - l[0][1])*(l[1][0] - l[0][0])/(l[1][1] - l[0][1])
     oth = [l for l in lines if not l[2] and abs(l[1][1] - l[0][1]) > 1]; E = []
+    def same(l, m):                                          # S73: cùng một mép = gần song song (≤ 2°) và thẳng hàng (≤ 3 u) — đáy V phẳng
+        u = (l[1][0] - l[0][0], l[1][1] - l[0][1]); v = (m[1][0] - m[0][0], m[1][1] - m[0][1])   # có vạt loe tách mép thành 2 đoạn
+        c = abs(u[0]*v[1] - u[1]*v[0])/math.hypot(*u)/math.hypot(*v)
+        mid = ((l[0][0] + l[1][0])/2, (l[0][1] + l[1][1])/2)
+        dd = abs((mid[0] - m[0][0])*v[1] - (mid[1] - m[0][1])*v[0])/math.hypot(*v)
+        return c < math.sin(math.radians(2)) and dd < 3
     for l in sorted([l for l in lines if l[2]], key=lambda l: xat(l, 250)):
-        if E and abs(xat(l, 250) - xat(E[-1][0], 250)) < 3: E[-1].append(l)
+        g = next((e for e in E if same(l, e[0]) or abs(xat(l, 250) - xat(e[-1], 250)) < 3), None)
+        if g is not None: g.append(l)
         else: E.append([l])
     assert len(E) in (2, 4), len(E)                          # v x z k: một nét \ (2 mép); w: hai nét \ (4 mép)
     SH = tuple(-delta/2 if k % 2 == 0 else delta/2 for k in range(len(E)))
