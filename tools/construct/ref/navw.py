@@ -18,6 +18,7 @@ import vn_punct as V
 
 PX = 700/247
 N_DIAG = {'Regular': 108.0, 'Bold': 148.0}
+FL_K = {'Regular': 1.0, 'Bold': 56.5/42.0}   # designer 23/11 "bold lên thì móc đỉnh A bị nhỏ lại": vạt loe phóng theo tỉ lệ nét mảnh (Bold 1.345)
 
 def parse(d):
     import re
@@ -50,10 +51,10 @@ def lines(ds, minlen=200):
                 if math.dist(cur, start) >= minlen: out.append((cur, start))
     return out
 
-def flare_top(E0x, y_top, edge, side, D):
+def flare_top(E0x, y_top, edge, side, D, k=1.0):
     """vạt loe ở đỉnh (A): E0x = mép nét tại y_top; side +1 nhô sang phải; D: bảng toạ độ tương đối (u) [T, P1, C1, C2, P2], P3 trên mép"""
-    T, P1, C1, C2, P2 = [(E0x + side*dx, y_top + dy) for dx, dy in D]
-    y3 = y_top - 107.7; P3 = (x_at(*edge, y3), y3)
+    T, P1, C1, C2, P2 = [(E0x + side*dx*k, y_top + dy*k) for dx, dy in D]
+    y3 = y_top - 107.7*k; P3 = (x_at(*edge, y3), y3)
     inner = (P3[0] - side*20, y3); inner2 = (E0x - side*20, y_top)
     return V.P([('M', inner2), ('L', T), ('L', P1), ('C', C1, C2, P2), ('L', P3), ('L', inner), ('Z',)])
 
@@ -62,10 +63,10 @@ A_FL = [(15.65*PX, 0), (14.165*PX, -4.009*PX), (10.327*PX, -14.37*PX), (10.947*P
 V_FL = [(17.56*PX, 0), (16.90*PX, 1.334*PX), (11.70*PX, 11.756*PX), (11.30*PX, 23.93*PX), (15.81*PX, 34.66*PX)]   # đáy V (y lên)
 W_FL = [(15.43*PX, 0), (14.31*PX, 2.25*PX), (9.38*PX, 12.14*PX), (8.76*PX, 23.63*PX), (12.60*PX, 33.99*PX)]
 
-def flare_bot(E0x, edge, D, side=1):
+def flare_bot(E0x, edge, D, side=1, k=1.0):
     """vạt loe ở đáy (V, W): E0x = mép nét mảnh phải tại y 0"""
-    Q3, Q2, C2, C1, Q1 = [(E0x + side*dx, dy) for dx, dy in D]
-    y0 = 107.7; Q0 = (x_at(*edge, y0), y0)
+    Q3, Q2, C2, C1, Q1 = [(E0x + side*dx*k, dy*k) for dx, dy in D]
+    y0 = 107.7*k; Q0 = (x_at(*edge, y0), y0)
     return V.P([('M', (E0x - side*25, 0)), ('L', Q3), ('L', Q2), ('C', C2, C1, Q1), ('L', Q0), ('L', (Q0[0] - side*28, y0)), ('Z',)])
 
 BAND = V.rect(-200, 0, 1200, 700)
@@ -110,7 +111,7 @@ def do_A(ds, w):
     L = [l for l in lines(ds, 300) if abs(l[0][0] - l[1][0]) > 100]
     thin = min(L, key=lambda l: min(l[0][0], l[1][0]))                            # mép ngoài nét MẢNH (trái) — designer 23/11 "update lại móc đỉnh A"
     E0x = x_at(*thin, 700.0)
-    return V.U(p, flare_top(E0x, 700.0, thin, -1, A_FL))
+    return V.U(p, flare_top(E0x, 700.0, thin, -1, A_FL, FL_K[w]))
 
 def do_VW(ds, w, ch):
     p = V.I(path(ds), BAND)
@@ -127,7 +128,7 @@ def do_VW(ds, w, ch):
             up_ = [r for r in nb if r[1] > 0]
             if other and q[0] > other[0][0] and up_:
                 e = (q, up_[0]); E0x = x_at(*e, 0.0)
-                pieces.append(flare_bot(E0x, e, V_FL if ch == 'V' else W_FL))
+                pieces.append(flare_bot(E0x, e, V_FL if ch == 'V' else W_FL, k=FL_K[w]))
     return V.U(p, *pieces)
 
 def main():
