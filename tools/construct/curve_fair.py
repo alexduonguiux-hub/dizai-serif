@@ -6,7 +6,7 @@ import math
 import numpy as np
 from scipy.optimize import minimize
 
-T = np.linspace(0, 1, 21)[:, None]
+T = np.linspace(0, 1, 13)[:, None]
 def _bez(P, t=T): return (1-t)**3*P[0] + 3*(1-t)**2*t*P[1] + 3*(1-t)*t*t*P[2] + t**3*P[3]
 def _kap(P, t=T):
     d1 = 3*((1-t)**2*(P[1]-P[0]) + 2*(1-t)*t*(P[2]-P[1]) + t*t*(P[3]-P[2])); d2 = 6*((1-t)*(P[2]-2*P[1]+P[0]) + t*(P[3]-2*P[2]+P[1]))
@@ -46,7 +46,7 @@ def fair_contours(contours, maxdev=2.0, min_len=30.0):
         dirs = {i: (_tan(segs[i], False), _tan(segs[i], True)) for i in idx}
         L0 = [v for i in idx for v in (math.hypot(*(old[i][1]-old[i][0])), math.hypot(*(old[i][3]-old[i][2])))]
         x0 = np.array(L0 + [0.0]*(2*len(J)))
-        samp = np.vstack([_bez(old[i], np.linspace(0, 1, 201)[:, None]) for i in idx])
+        samp = np.vstack([_bez(old[i], np.linspace(0, 1, 61)[:, None]) for i in idx])
         def rot(u, a): c, s_ = math.cos(a), math.sin(a); return np.array([u[0]*c - u[1]*s_, u[0]*s_ + u[1]*c])
         def build(x):
             nL = 2*len(idx); P0 = {i: old[i][0] for i in idx}; P3 = {i: old[i][3] for i in idx}
@@ -59,7 +59,7 @@ def fair_contours(contours, maxdev=2.0, min_len=30.0):
             S = build(x); c = 0.0; K = {}; SP = {}
             allb = []
             for i in idx:
-                k, sp = _kap(S[i]); K[i] = k; SP[i] = sp; ds = sp/20; c += float(np.sum(np.diff(k)**2/np.maximum(ds[1:], 1e-6)))*1e3
+                k, sp = _kap(S[i]); K[i] = k; SP[i] = sp; ds = sp/12; c += float(np.sum(np.diff(k)**2/np.maximum(ds[1:], 1e-6)))*1e3
                 allb.append(_bez(S[i]))
             for i in J:
                 j = (i + 1) % n; c += 1e3*(K[i][-1] - K[j][0])**2/2.0          # bậc độ cong ở mối nối = như trên 2 u cung
