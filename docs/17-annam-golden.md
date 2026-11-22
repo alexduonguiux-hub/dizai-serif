@@ -168,3 +168,13 @@ Kết quả Regular: đỉnh 4.6 / 5.6, eo 6.7 / 5.8, bụng 5.2 / 4.7 (liền).
 Version 0.934.
 
 ![case](img/s70-case.png)
+
+## S72 — Golden nét mảnh 34 / 42 (22/11, "làm mỏng các nét mỏng của golden đồng loạt … khi bold lên thì nét mỏng tăng ít thôi"; "nét mỏng đứng N dày hơn nét mỏng của O" → "đưa về mỏng như nét đứng"; "đồng bộ hết cho các ký tự khác")
+
+- RING_T = ARCH_T = 34 / 42 (trước 42 / 56.5 = Serif): Regular → Bold nét mảnh chỉ tăng 8 (Serif 14.5). Nét ngang × BAR_K 0.88 = 29.9 / 37.
+- CAPS_AS_SERIF = False: chữ hoa Golden theo cùng chuẩn (bỏ luật 20/11 "hoa dày y chang Serif").
+- Nhận diện nét mảnh theo chuẩn Serif (SER_T 42 / 56.5): ngưỡng 1.6 × 34 bỏ sót bụng B D P R, vòm n u.
+- G8 đo thử dọc đoạn khi tia giữa đoạn không gặp mép song song (V v w y Bold: 46–47 → 42).
+- Đo (qa_thin.py, mới): N đứng 34.0 / 42.0, O chỗ mỏng nhất 33.5 / 42, B D P R ngang 33.8 / 29–30, V chéo 33.5 / 42. Còn: A Regular 37; số 4 7 chưa qua luật (chờ designer).
+
+![nét mảnh](img/s72-golden-thin.png)
