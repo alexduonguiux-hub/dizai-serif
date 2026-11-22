@@ -450,6 +450,8 @@ def runs_at(p, y):
     return sorted((c.bounds[0], c.bounds[2]) for c in r.contours)
 def _caps(ch, w):
     ref = json.load(open(os.path.join(HERE, '..', 'ref_glyphs.json')))
+    if ch.islower() and ch.upper() in 'VW':                  # S73: v w y k dựng từ V W hoa BẢN TRƯỚC (đáy nhọn, không vạt loe) —
+        ref = json.load(open(os.path.join(HERE, 'caps_lc_src.json')))   # bản vẽ 23/11 chỉ cho chữ hoa; giữ chữ thường như 0.934
     return N(V.P([(c[0], *[tuple(p) for p in c[1:]]) if c[0] != 'Z' else ('Z',) for c in ref[f'{ch.upper()}-{w}']['cmds']]))
 def _embolden(p, d):
     stp = pathops.Path(); stp.addPath(p); stp.stroke(2*d, pathops.LineCap.BUTT_CAP, pathops.LineJoin.MITER_JOIN, 8)   # miter 4 vát cụt mũi loe nhọn (designer 05/11: 'đỉnh loe không nhọn'); 40 kéo mũi thành kim
@@ -484,7 +486,7 @@ def thicken(p, delta, ylo=90.0, yhi=400.0, fs=False):
         dd = abs((mid[0] - m[0][0])*v[1] - (mid[1] - m[0][1])*v[0])/math.hypot(*v)
         return c < math.sin(math.radians(3)) and dd < 6       # SemiBold nội suy: mép gãy nhẹ (1.6°, 3.7 u)
     for l in sorted([l for l in lines if l[2]], key=lambda l: xat(l, 250)):
-        g = next((e for e in E if same(l, e[0]) or abs(xat(l, 250) - xat(e[-1], 250)) < 3), None)
+        g = next((e for e in E if same(l, e[0]) or abs(xat(l, 250) - xat(e[0], 250)) < 3), None)
         if g is not None: g.append(l)
         else: E.append([l])
     assert len(E) in (2, 4), len(E)                          # v x z k: một nét \ (2 mép); w: hai nét \ (4 mép)

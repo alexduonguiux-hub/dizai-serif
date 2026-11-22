@@ -31,7 +31,24 @@ def parse(d):
         elif t == 'Z': out.append(('Z',)); i += 1
     return out
 
-def path(ds): return V.U(*[V.P(parse(d)) for d in ds])
+def straighten(cmds, deg=6.0, minlen=60.0):
+    """nắn thẳng mép gồm hai đoạn L lệch nhau < deg (W Bold: mép ngoài nét dày gãy 5° ở y 81 — trước nằm trong mũi vượt đáy, cắt đáy phẳng
+    làm lộ ra) — bỏ điểm giữa"""
+    out = list(cmds); changed = True
+    while changed:
+        changed = False
+        for i in range(1, len(out) - 1):
+            a, b, c = out[i - 1], out[i], out[i + 1]
+            if b[0] != 'L' or c[0] != 'L' or a[0] not in 'ML': continue
+            p0, p1, p2 = a[-1] if a[0] == 'L' else a[1], b[1], c[1]
+            if math.dist(p0, p1) < minlen and math.dist(p1, p2) < minlen: continue
+            u = (p1[0] - p0[0], p1[1] - p0[1]); v = (p2[0] - p1[0], p2[1] - p1[1])
+            if math.hypot(*u) < 1e-6 or math.hypot(*v) < 1e-6: continue
+            ang = math.degrees(math.acos(max(-1, min(1, (u[0]*v[0] + u[1]*v[1])/math.hypot(*u)/math.hypot(*v)))))
+            if ang < deg: del out[i]; changed = True; break
+    return out
+
+def path(ds, straight=False): return V.U(*[V.P(straighten(parse(d)) if straight else parse(d)) for d in ds])
 
 def x_at(a, b, y):
     return a[0] + (b[0] - a[0])*(y - a[1])/(b[1] - a[1])
@@ -114,7 +131,7 @@ def do_A(ds, w):
     return V.U(p, flare_top(E0x, 700.0, thin, -1, A_FL, FL_K[w]))
 
 def do_VW(ds, w, ch):
-    p = V.I(path(ds), BAND)
+    p = V.I(path(ds, straight=True), BAND)
     pts = [c[1] if c[0] in 'ML' else c[3] for d in ds for c in parse(d) if c[0] != 'Z']
     bots = sorted({round(q[0], 2) for q in pts if q[1] < -5})
     # mỗi đáy: cặp điểm đáy (trái, phải); mép mảnh phải = đoạn từ điểm đáy phải đi lên
