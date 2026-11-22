@@ -188,3 +188,9 @@ Version 0.934.
 - Version 0.935.
 
 ![N A V W Ê](img/s73-N.png)
+
+## S75 — G16 đỉnh A Golden cắt như Serif (23/11, "đầu A golden bị nhọn chứ không phải cắt như Serif")
+
+Làm mảnh nét trái A (42 → 34) dời mép ngoài song song → mặt cắt đỉnh hẹp (Regular 23 → 19 u; Bold 5.4 u → hai mép chéo nhau, nhọn). G16 (`apex_keep`, A Æ): mép NGOÀI nét mảnh về đúng chỗ AnNam Serif (mặt cắt 23.3 / 5.4 u), mép TRONG (lòng + chân dưới thanh) dời thêm cùng lượng → nét mảnh đều đúng chuẩn (Bold 42 suốt nét; Regular 34 trên thanh, 36.5 chân như trước); đỉnh trong lòng = giao mép mới với mép trong nét dày. Lòng A rộng ra ~4 u.
+
+![A](img/s75-A-apex.png)
