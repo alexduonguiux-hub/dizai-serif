@@ -8,6 +8,7 @@ export DIZAI_OUT=$R/out/golden DIZAI_OUTI=$R/out/golden_italic DIZAI_FONTS=$R/fo
 export DIZAI_FAMILY="AnNam Golden" DIZAI_PS=AnNamGolden DIZAI_XH=535
 python3 golden/golden.py
 DIZAI_RTOL=1.5 DIZAI_CTOL=0.3 python3 compat_masters.py | grep '^compat'   # ghép cấu trúc R / B + liền tiếp tuyến khi nội suy (S18, S25…)
+python3 golden/post_compat.py
 cp $R/out/construct/ref_ratios.json $DIZAI_OUT/
 DIZAI_TREF=../../out/construct/outlines.json python3 spacing.py | tail -3
 echo "== QA"
