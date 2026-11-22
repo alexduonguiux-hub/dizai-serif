@@ -200,3 +200,14 @@ Làm mảnh nét trái A (42 → 34) dời mép ngoài song song → mặt cắt
 Gốc 0.934, chỉ thêm: Golden nét mảnh 34 / 42 (cả hoa, số 4 7); N theo bản vẽ (đỉnh / chân phẳng, loe thân, chéo 108 / 121 / 134 / 148); G16 đỉnh A mặt cắt đều 23.3 u mọi weight (Serif + Golden; nét mảnh xoay quanh chân, mép trong dựng lại song song — A Bold nghiêng 1.2°); chân trái A Bold một cung trơn (bỏ tay nắm suy biến); dấu trên E ở tâm. Ơ / Ư: giữ như 0.934 (G17 thử chưa ổn — Ơ Bold nét 16, Ư không ghép). QA Serif + Golden: outline 0 lỗi, gãy > 3° 0, kern khớp, thanh / tay loe chuẩn; qa_thin Golden còn thanh 4 Regular 37.
 
 ![tổng hợp](img/s76-tonghop.png)
+
+## S77 — Ơ Ư, B, D đều nét mảnh (23/11, "sửa luôn Ơ Ư, D, B các cho đều nét mảnh. Kiểm tra lại hết")
+
+- **G17 chữ có sừng** (Ơ Ư ơ ư + 20 chữ có dấu): thân = chữ không sừng đã đồng bộ (O U o u ò …) + sừng tách từ bản vẽ nguồn.
+  Serif: `horn_compose` (boolean). Golden: `horn_splice` — lấy chuỗi đoạn của contour nguồn nằm ngoài chữ gốc nguồn (J1 → J2), cắt tại chỗ ra / vào thân Golden (thân cao hơn), chèn vào contour thân mới (điểm cắt bám điểm neo khi t < 0.03 / > 0.97; thân ngược chiều → đảo). Không boolean → Regular / Bold cùng cấu trúc, Medium / SemiBold / variable nội suy đúng (bản boolean làm Ơ Medium phình mép phải + khấc). ỡ ữ hết phải bỏ qua.
+- **G18 eo B** = chuẩn nét mảnh (khe hẹp nhất giữa hai lòng ở 35–80 % bề ngang).
+- **post_compat** (Golden): đoạn < 1 u ở một master bỏ ở cả hai (Ơ Regular có cung suy biến → fontmake lệch số điểm).
+- Sửa `lerp_d`: điểm khép contour (cùng đối tượng với điểm M) bị nội suy hai lần → khấc ở điểm đầu contour của Medium / SemiBold cho chữ nội suy sau compat_masters.
+- QA Golden: compat 328/328, outline 0 lỗi, qa_family còn Ç ç (đo trúng móc cedilla — chủ ý) và ü Bold 42.8 / u 48.1; đỉnh A 23.3 mọi weight.
+
+![Golden 4 weight](img/s77-golden-horn.png)
