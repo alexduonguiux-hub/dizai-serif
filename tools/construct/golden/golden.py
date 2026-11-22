@@ -200,6 +200,7 @@ def g3(cs):
 
 # ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
 ARCH = set()                   # (cũ: 'nmhuµ' dịch nguyên khối) — nay vòm / đáy u dùng G10 (dốc tuyến tính, vai cạnh thân gần đứng yên)
+DIGIT_G8 = set('47')            # S72 (designer 22/11 "có, làm luôn số 4 7"): số theo bản vẽ riêng; chỉ 4 7 vào G8
 SER_T = {'Regular': 42.0, 'Bold': 56.5}        # S72: chuẩn nét mảnh AnNam Serif — chỉ dùng NHẬN DIỆN nét mảnh (ngưỡng), đích là RING_T / ARCH_T
 ARCH_T = {'Regular': 34.0, 'Bold': 42.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
@@ -1074,7 +1075,7 @@ def main():
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = bar_thin(G[f'{c}-{w}'], w)[0]
         if c.isalpha() and len(c) == 1 and c.isascii() and c not in G10_SKIP and not CAP_:      # G10 nét mảnh cong (lòng kéo dãn đứng)
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = g10(G[f'{c}-{w}'], w)
-        if c.isalpha() and len(c) == 1 and c.isascii() and not CAP_:             # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t)
+        if ((c.isalpha() and len(c) == 1 and c.isascii()) or c in DIGIT_G8) and not CAP_:   # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t); S72: + số 4 7
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
         if c in TCH:                                                  # G15 thanh t hai bên mảnh đều
