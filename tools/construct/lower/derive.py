@@ -482,7 +482,7 @@ def thicken(p, delta, ylo=90.0, yhi=400.0, fs=False):
         c = abs(u[0]*v[1] - u[1]*v[0])/math.hypot(*u)/math.hypot(*v)
         mid = ((l[0][0] + l[1][0])/2, (l[0][1] + l[1][1])/2)
         dd = abs((mid[0] - m[0][0])*v[1] - (mid[1] - m[0][1])*v[0])/math.hypot(*v)
-        return c < math.sin(math.radians(2)) and dd < 3
+        return c < math.sin(math.radians(3)) and dd < 6       # SemiBold nội suy: mép gãy nhẹ (1.6°, 3.7 u)
     for l in sorted([l for l in lines if l[2]], key=lambda l: xat(l, 250)):
         g = next((e for e in E if same(l, e[0]) or abs(xat(l, 250) - xat(e[-1], 250)) < 3), None)
         if g is not None: g.append(l)
