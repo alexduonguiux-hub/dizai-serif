@@ -1083,6 +1083,10 @@ def main():
         if c in ARMD:                                                 # G13 tay loe đầu thanh dài bằng nhau (cả Æ Œ)
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = arm_depth(G[f'{c}-{w}'], w)[0]
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    for c in APEX_KEEP:                                            # G16 đỉnh A cắt như AnNam Serif
+        if f'{c}-Regular' not in G: continue
+        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = apex_keep(G[f'{c}-{w}'], O[f'{c}-{w}'])
+        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'l-Regular' in G and 't-Regular' in G:                     # G14 chân l = chân t
         for w in ('Regular', 'Bold'): G[f'l-{w}'] = l_from_t(G[f'l-{w}'], G[f't-{w}'])
         for w, t in TW.items(): G[f'l-{w}'] = lerp_d(G['l-Regular'], G['l-Bold'], t)
@@ -1118,6 +1122,30 @@ def main():
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('G6 lòng giãn:', {f'{b}-{w}': round(k, 3) for (b, w), k in RINGK.items()})
     print('golden:', len(G), 'glyph ·', len(low), 'ký tự chữ thường nâng x-height', XH0, '→', XH1, '· loe phóng', NF, '· nút nét mảnh dời', NT)
+
+# ---------- G16 đỉnh A giữ mặt cắt (designer 23/11 "đầu A golden bị nhọn chứ không phải cắt như Serif") ----------
+# Làm mảnh nét trái A (42 → 34) dời mép ngoài song song → đầu mép trượt trên đường cap, mặt cắt đỉnh hẹp lại (Regular 23 → 19 u,
+# Bold 5.4 u → chéo nhau thành nhọn). Đặt lại: điểm trái mặt cắt = điểm phải − bề rộng mặt cắt AnNam Serif (mép mảnh xoay < 1°).
+APEX_KEEP = set('AÆ')
+def apex_keep(d, d_serif):
+    cs = parse(d); cs0 = parse(d_serif)
+    def tops(cs_, ys=None):
+        out = []
+        for c in cs_:
+            for cmd, pts in c:
+                if pts and pts[-1][1] > 690 and (ys is None or abs(pts[-1][1] - ys) < 0.6) and all(q is not pts[-1] for q in out): out.append(pts[-1])
+        return out
+    T0 = tops(cs0)
+    if len(T0) < 2: return d
+    ys = max(p[1] for p in T0); s0 = sorted(tops(cs0, ys), key=lambda p: p[0])
+    if len(s0) != 2: return d
+    w0 = s0[1][0] - s0[0][0]
+    top = tops(cs, ys)
+    if len(top) != 2: return d
+    R_ = min(top, key=lambda q: abs(q[0] - s0[1][0])); L_ = top[0] if R_ is top[1] else top[1]   # R = phía nét DÀY (giữ nguyên)
+    if R_[0] - L_[0] >= w0 - 0.05: return d
+    L_[0] = R_[0] - w0                                                     # mặt cắt rộng đúng như AnNam Serif
+    return fmt(cs)
 
 if __name__ == '__main__':
     main()
