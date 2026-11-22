@@ -311,15 +311,30 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     return K.c[a.rc + '|' + b.lc] || 0;
   }
   // chữ mẫu xếp bằng chính outline: mỗi từ là một SVG, dòng tự xuống theo khung
-  function wordSVG(word, w, px) {
+  // S71: luật calt của font (dấu → .case khi kề chữ hoa / số) — áp trên cả dòng, trả mảng "nâng" theo từng ký tự
+  function caseMarks(chars, w) {
+    const CD = (D.caseDy || {})[w] || {}, up = [];
+    const UC = (c) => !!c && (/\p{Nd}/u.test(c) || (c !== c.toLocaleLowerCase('vi') && c === c.toLocaleUpperCase('vi')));
+    for (let i = 0; i < chars.length; i++) {
+      const c = chars[i]; up[i] = false; if (!(c in CD)) continue;
+      const L = UC(chars[i - 1]) || !!up[i - 1], R = UC(chars[i + 1]);
+      const M = chars[i - 1] === ' ' && chars[i + 1] === ' ' && (UC(chars[i - 2]) || !!up[i - 2]) && UC(chars[i + 2]);
+      up[i] = L || R || M;
+    }
+    return up;
+  }
+  function wordSVG(word, w, px, upArr) {
     // khung SVG mở theo mực thật: sừng Ư/Ơ và dấu được phép tràn ra ngoài bề ngang chữ, không bị cắt ở mép từ
-    let x = 0, lo = 0, hi = 0, prev = null; const parts = [];
+    let x = 0, lo = 0, hi = 0, prev = null, ci = -1; const parts = [];
+    const CD = (D.caseDy || {})[w] || {}, IT = / ?Italic$|^Italic$/.test(w) ? (D.caseT || 0) : 0;
     for (const ch of word) {
+      ci++;
       const g = byC[w][ch] || byC[w][ch.toLocaleUpperCase('vi')];   // chữ thường chưa vẽ: tạm hiện chữ hoa
       if (g) {
         if (prev) x += kernOf(w, prev, g);                                   // kerning (class + ngoại lệ chống va)
         const dx = g.dx ?? SB;
-        parts.push(`<path class="ink" transform="translate(${x + dx} 0)" d="${g.p}"/>`); lo = Math.min(lo, x + dx + g.bx[0]); hi = Math.max(hi, x + dx + g.bx[1]); x += g.a; prev = g; }
+        const cy = upArr && upArr[ci] ? (CD[ch] || 0) : 0;
+        parts.push(`<path class="ink" transform="translate(${x + dx + cy * IT} ${cy})" d="${g.p}"/>`); lo = Math.min(lo, x + dx + g.bx[0]); hi = Math.max(hi, x + dx + g.bx[1]); x += g.a; prev = g; }
       else { parts.push(`<rect class="miss" x="${x + 30}" y="0" width="420" height="700"/>`); x += 480; prev = null; }
     }
     const top = 1080, bot = -240, k = px / 1000, x0 = Math.min(0, lo - 10), x1 = Math.max(x, hi + 10);
@@ -329,9 +344,11 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   function renderLines() {
     const t = document.getElementById('txt').value.normalize('NFC'), sz = +document.getElementById('tsize').value;
     document.getElementById('tsizev').textContent = sz + ' px';
-    const words = t.split(/(\s+)/);
+    const words = t.split(/(\s+)/), chars = [...t];
     document.getElementById('lines').innerHTML = WS().map(w => {
-      const html = words.map(s => /^\s+$/.test(s) ? (s.includes('\n') ? '<span style="flex-basis:100%;height:0"></span>' : `<span style="width:${(SPACE * sz / 1000).toFixed(1)}px"></span>`) : (s ? wordSVG(s, w, sz) : '')).join('');
+      const up = caseMarks(chars, w); let pos = 0;
+      const html = words.map(s => { const n = [...s].length, st = pos; pos += n;
+        return /^\s+$/.test(s) ? (s.includes('\n') ? '<span style="flex-basis:100%;height:0"></span>' : `<span style="width:${(SPACE * sz / 1000).toFixed(1)}px"></span>`) : (s ? wordSVG(s, w, sz, up.slice(st, st + n)) : ''); }).join('');
       return `<div class="line"><div class="w">${w} · ${sz} px</div><div class="set" aria-label="${esc(t)}">${html}</div></div>`;
     }).join('');
   }

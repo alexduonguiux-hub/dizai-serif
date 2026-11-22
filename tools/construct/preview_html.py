@@ -84,6 +84,24 @@ for w in ("Regular", "Medium", "SemiBold", "Bold"):
         xs = [float(v) for v in re.findall(r"-?\d+\.?\d*", p)[0::2]]
         L.append(dict(e, p=p, gd=[], bx=[round(min(xs)), round(max(xs))] if xs else [0, 0]))
     data["weights"][wi] = L; data["kern"][wi] = data["kern"][w]
+# S71 (designer 22/11 "Trên preview nó vẫn k đổi"): Chữ mẫu vẽ bằng path SVG (không qua OpenType) → mang độ nâng .case THẬT từ font
+# tĩnh (yMin .case − yMin glyph gốc) để trang áp luật calt như font (chữ hoa / số kề bên)
+data["caseDy"] = {}
+try:
+    from fontTools.ttLib import TTFont as _TT
+    from fontTools.pens.boundsPen import BoundsPen as _BP
+    for w in ("Regular", "Medium", "SemiBold", "Bold"):
+        fp = os.path.join(PVF, "otf", f"{PVPS}-{w}.otf")
+        if not os.path.exists(fp): continue
+        f_ = _TT(fp); gs_ = f_.getGlyphSet(); cm_ = f_.getBestCmap(); D_ = {}
+        for u, gn in cm_.items():
+            if gn + ".case" in gs_:
+                b0 = _BP(gs_); gs_[gn].draw(b0); b1 = _BP(gs_); gs_[gn + ".case"].draw(b1)
+                if b0.bounds and b1.bounds: D_[chr(u)] = round(b1.bounds[1] - b0.bounds[1], 1)
+        data["caseDy"][w] = D_; data["caseDy"]["Italic" if w == "Regular" else f"{w} Italic"] = D_
+except Exception as e_:
+    print("caseDy:", e_)
+data["caseT"] = _T
 js = json.dumps(data, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
 
 html = open(os.path.join(HERE, "preview_template.html")).read().replace("/*DATA*/{}", js)
