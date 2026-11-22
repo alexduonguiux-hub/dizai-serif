@@ -4,7 +4,7 @@
 
 Dựng theo storyboard Figma **Đìzai Serif – WIP · Storyboard** (Story-01 … 09, gồm hai khung mới: câu tục ngữ "Sự học…" + ảnh thuyền, và đoạn tiếng Pháp "Enfin, la guerre d'Indochine…"). Nền giấy `#eae9e6`, chữ `#0e0e0e`, ảnh sepia xuất từ chính file Figma (`img_sb/`); ảnh thuyền được chuyển về cùng bảng màu sepia của ảnh nền.
 
-**Font:** AnNam Serif **v0.933** — `AnNamSerif[XHGT,slnt,wght]` (XHGT 0 = AnNam Serif) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự theo kerning thật của font.
+**Font:** AnNam Serif **v0.934** — `AnNamSerif[XHGT,slnt,wght]` (XHGT 0 = AnNam Serif) + `AnNamSerif-Italic[XHGT,wght]`. Chữ ghép từng ký tự theo kerning thật của font.
 
 **Chuyển động:** theo hướng các mẫu tham khảo (Pinterest 409053578674372562, 957366833301398698): cắt cứng đúng phách 120 BPM, zoom giật nấc, vòng quay glyph, gõ chữ / hiện ký tự ngẫu nhiên, echo, sóng trục variable, xoay theo bước. Không dùng trượt mượt, màn quét, mở tròn, cửa chớp.
 
