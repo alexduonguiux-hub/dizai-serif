@@ -65,6 +65,24 @@ def main():
             O[f'{c}-{w}'] = (GD.compose(O[f'{b}-{w}'], O[f'{c}-{w}']) if GD.composable(c)          # chữ có dấu = chữ gốc + dấu
                              else GD.rebase(SRC[f'{c}-{w}'], SRC[f'{b}-{w}'], O[f'{b}-{w}'], O[f'{c}-{w}']))
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    if 'B-Regular' in O:                                          # G18 eo B = chuẩn nét mảnh (designer 23/11)
+        for w in ('Regular', 'Bold'): O[f'B-{w}'] = GD.b_waist(O[f'B-{w}'], T[w])
+        for w, t in GD.TW.items(): O[f'B-{w}'] = GD.lerp_d(O['B-Regular'], O['B-Bold'], t)
+        for c in order:                                           # chữ có dấu gốc B (nếu có): dựng lại theo B
+            b = unicodedata.normalize('NFD', c)[0]
+            if c != b and b == 'B' and f'{c}-Regular' in O and GD.composable(c):
+                for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.compose(O[f'B-{w}'], O[f'{c}-{w}'])
+                for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    nh = 0
+    for c in order:                                               # G17 chữ có sừng = chữ không sừng đã đồng bộ + sừng (designer 23/11)
+        b2 = GD.no_horn(c)
+        if not b2 or f'{c}-Regular' not in O or f'{b2}-Regular' not in O: continue
+        WS_ = [w for w in ('Regular', 'Medium', 'SemiBold', 'Bold') if f'{c}-{w}' in SRC and f'{b2}-{w}' in SRC]
+        rr = {w: GD.horn_compose(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}']) for w in WS_}
+        if rr and all(rr.values()):
+            for w in WS_: O[f'{c}-{w}'] = rr[w]
+            nh += 1
+    print('G17 chữ có sừng:', nh)
     json.dump(O, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('hair_sync:', ' '.join(f'{b}{w[0]}{k}{v:.2f}' for (b, w, k), v in sorted(K.items()) if abs(v - 1) > 0.02))
 

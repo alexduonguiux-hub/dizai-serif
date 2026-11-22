@@ -1087,6 +1087,9 @@ def main():
         if f'{c}-Regular' not in G: continue
         for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = apex_keep(G[f'{c}-{w}'], O[f'{c}-{w}'])
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
+        for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
+        for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
     if 'l-Regular' in G and 't-Regular' in G:                     # G14 chân l = chân t
         for w in ('Regular', 'Bold'): G[f'l-{w}'] = l_from_t(G[f'l-{w}'], G[f't-{w}'])
         for w, t in TW.items(): G[f'l-{w}'] = lerp_d(G['l-Regular'], G['l-Bold'], t)
@@ -1108,6 +1111,16 @@ def main():
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rebase(O[f'{c}-{w}'], O[f'{b_}-{w}'], G[f'{b_}-{w}'], G[f'{c}-{w}'])
         else: continue
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    nh = 0
+    for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
+        b2 = no_horn(c)
+        if not b2 or f'{c}-Regular' not in G or f'{b2}-Regular' not in G: continue
+        WS_ = [w for w in ('Regular', 'Medium', 'SemiBold', 'Bold') if f'{c}-{w}' in O and f'{b2}-{w}' in O and f'{b2}-{w}' in G]
+        rr = {w: horn_compose(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in WS_}
+        if rr and all(rr.values()):
+            for w in WS_: G[f'{c}-{w}'] = rr[w]
+            nh += 1
+    print('G17 chữ có sừng = chữ gốc + sừng:', nh)
     ntiny = []
     for c in chars:
         if f'{c}-Regular' not in G: continue
@@ -1249,8 +1262,10 @@ def horn_compose(src_c, src_b, new_b):
             h = max(hs, key=lambda c: (max(p[0] for p in pts_of(c)) - min(p[0] for p in pts_of(c)))*(max(p[1] for p in pts_of(c)) - min(p[1] for p in pts_of(c))))
             P = pts_of(h); return ((min(p[0] for p in P) + max(p[0] for p in P))/2, (min(p[1] for p in P) + max(p[1] for p in P))/2)
         a_, b_ = cen(SC), cen(SB_)
-        if a_ is None or b_ is None: return None
-        dx, dy = a_[0] - b_[0], a_[1] - b_[1]
+        if a_ is not None and b_ is not None: dx, dy = a_[0] - b_[0], a_[1] - b_[1]
+        else:                                                      # không có lòng kín (U): căn mép trái + mép dưới thân (sừng ở trên-phải)
+            allc = [p for c in SC for p in pts_of(c)]; allb = [p for c in SB_ for p in pts_of(c)]
+            dx = min(p[0] for p in allc) - min(p[0] for p in allb); dy = min(p[1] for p in allc) - min(p[1] for p in allb)
     mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
     srcC = _pp(src_c); srcB = _pp(mv(src_b)); newB = _pp(mv(new_b))
     diff = _op(srcC, srcB, pathops.PathOp.DIFFERENCE)
@@ -1264,6 +1279,54 @@ def horn_compose(src_c, src_b, new_b):
     hb = _op(_op(hb, horn, pathops.PathOp.UNION), srcC, pathops.PathOp.INTERSECTION)   # sừng + dải 6 u (trong nét nguồn)
     out = _op(newB, hb, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
+
+# ---------- G18 eo B = chuẩn nét mảnh (designer 23/11 "sửa luôn Ơ Ư, D, B các cho đều nét mảnh"): eo giữa hai bụng là hai CUNG
+# (đáy lòng trên, đỉnh lòng dưới) → G8 (đoạn thẳng) bỏ sót: Serif Bold 44 / 56.5, Golden Regular 27 / 30. Đo khe hẹp nhất giữa hai lòng
+# (dọc), dời đáy lòng trên lên và đỉnh lòng dưới xuống mỗi bên ½ phần thiếu / thừa (điểm cực + tay nắm kề).
+def _holes(cs):
+    out = []
+    for c in cs:
+        P = pts_of(c)
+        if len(P) < 3: continue
+        a = 0.5*sum(P[i-1][0]*P[i][1] - P[i][0]*P[i-1][1] for i in range(len(P)))
+        out.append((a, c))
+    big = max(out, key=lambda t: abs(t[0]))[0]
+    return [c for a, c in out if (a > 0) != (big > 0)]
+def b_waist(d, tgt):
+    cs = parse(d); H = _holes(cs)
+    if len(H) != 2: return d
+    sm = lambda c, k: sum(p[1] for p in pts_of(c))/len(pts_of(c))
+    up, lo = sorted(H, key=lambda c: -sm(c, 0))
+    def sample(c, n=60):
+        out = []
+        for cmd, pts in c:
+            pass
+        P = polys([c])[0]; return P
+    PU, PL = polys([up])[0], polys([lo])[0]
+    allx = [p[0] for c in cs for p in pts_of(c)]; gx0, gx1 = min(allx), max(allx)
+    xs0 = max(min(p[0] for p in PU), min(p[0] for p in PL), gx0 + 0.35*(gx1 - gx0))      # đo ở 35–80 % bề ngang (giữa eo, xa thân)
+    xs1 = min(max(p[0] for p in PU), max(p[0] for p in PL), gx0 + 0.80*(gx1 - gx0))
+    if xs1 - xs0 < 20: return d
+    def yat(P, x, low):
+        ys = []
+        for i in range(len(P)):
+            (x1, y1), (x2, y2) = P[i - 1], P[i]
+            if (x1 - x) * (x2 - x) <= 0 and x1 != x2: ys.append(y1 + (y2 - y1)*(x - x1)/(x2 - x1))
+        return (min(ys) if low else max(ys)) if ys else None
+    gaps = []
+    for k in range(0, 41):
+        x = xs0 + (xs1 - xs0)*k/40; a = yat(PU, x, True); b = yat(PL, x, False)
+        if a is not None and b is not None: gaps.append(a - b)
+    if not gaps: return d
+    g = min(gaps); dl = (tgt - g)/2
+    if abs(dl) < 0.3: return d
+    ymin_u = min(p[1] for p in pts_of(up)); ymax_l = max(p[1] for p in pts_of(lo))
+    def shift(c, yref, dy):
+        for cmd, pts in c:
+            for q in pts:
+                if abs(q[1] - yref) < 1.5: q[1] += dy
+    shift(up, ymin_u, dl); shift(lo, ymax_l, -dl)
+    return fmt(cs)
 
 if __name__ == '__main__':
     main()
