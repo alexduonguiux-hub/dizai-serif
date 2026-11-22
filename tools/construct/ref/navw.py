@@ -3,7 +3,7 @@ chỉ đổi độ dày thanh chéo N cho dày hơn một chút"): dựng lại 
 
   - Đỉnh / đáy PHẲNG trên đường kẻ (bỏ nhọn vượt 711.3 / −11.3): cắt theo dải 0 … 700.
   - Vạt loe cong (đúng hình Figma, 1 px = 700/247 u):
-      A  đỉnh, phía nét DÀY (phải): nhô 40.1 u ngoài mép nét dày, cong về mép đó ở 107.7 u dưới đỉnh
+      A  đỉnh, phía nét MẢNH (trái; designer 23/11 "update lại móc đỉnh A", trước ở phía nét dày): nhô 44.4 u ngoài mép nét mảnh, cong về mép đó ở 107.7 u dưới đỉnh
       V  đáy, phía nét MẢNH (phải): nhô 49.8 u ngoài mép nét mảnh, cong về mép đó ở 107.7 u trên đáy
       W  hai đáy, phía phải: như A lật dọc (nhô 43.7 u)
       N  đầu trên thân trái (loe ra trái) + chân thân phải (loe ra phải) = đối xứng dọc của loe sẵn có ở hai thân
@@ -54,11 +54,11 @@ def flare_top(E0x, y_top, edge, side, D):
     """vạt loe ở đỉnh (A): E0x = mép nét tại y_top; side +1 nhô sang phải; D: bảng toạ độ tương đối (u) [T, P1, C1, C2, P2], P3 trên mép"""
     T, P1, C1, C2, P2 = [(E0x + side*dx, y_top + dy) for dx, dy in D]
     y3 = y_top - 107.7; P3 = (x_at(*edge, y3), y3)
-    inner = (P3[0] - side*45, y3); inner2 = (E0x - side*45, y_top)
+    inner = (P3[0] - side*20, y3); inner2 = (E0x - side*20, y_top)
     return V.P([('M', inner2), ('L', T), ('L', P1), ('C', C1, C2, P2), ('L', P3), ('L', inner), ('Z',)])
 
 # Figma (px, đo từ mép nét tại đường kẻ) → u. A: đỉnh (y xuống trong Figma → âm ở đây)
-A_FL = [(14.15*PX, 0), (12.665*PX, -4.009*PX), (8.827*PX, -14.37*PX), (9.447*PX, -25.86*PX), (14.378*PX, -35.75*PX)]
+A_FL = [(15.65*PX, 0), (14.165*PX, -4.009*PX), (10.327*PX, -14.37*PX), (10.947*PX, -25.86*PX), (15.878*PX, -35.75*PX)]   # 23/11: móc đỉnh A sang TRÁI (phía nét mảnh)
 V_FL = [(17.56*PX, 0), (16.90*PX, 1.334*PX), (11.70*PX, 11.756*PX), (11.30*PX, 23.93*PX), (15.81*PX, 34.66*PX)]   # đáy V (y lên)
 W_FL = [(15.43*PX, 0), (14.31*PX, 2.25*PX), (9.38*PX, 12.14*PX), (8.76*PX, 23.63*PX), (12.60*PX, 33.99*PX)]
 
@@ -107,10 +107,10 @@ def do_N(ds, w):
 
 def do_A(ds, w):
     p = V.I(path(ds), BAND)
-    L = lines(ds, 300)
-    thick = max(L, key=lambda l: max(l[0][0], l[1][0]))                           # mép ngoài nét dày (phải)
-    E0x = x_at(*thick, 700.0)
-    return V.U(p, flare_top(E0x, 700.0, thick, 1, A_FL))
+    L = [l for l in lines(ds, 300) if abs(l[0][0] - l[1][0]) > 100]
+    thin = min(L, key=lambda l: min(l[0][0], l[1][0]))                            # mép ngoài nét MẢNH (trái) — designer 23/11 "update lại móc đỉnh A"
+    E0x = x_at(*thin, 700.0)
+    return V.U(p, flare_top(E0x, 700.0, thin, -1, A_FL))
 
 def do_VW(ds, w, ch):
     p = V.I(path(ds), BAND)
