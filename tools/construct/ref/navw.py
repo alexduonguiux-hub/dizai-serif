@@ -18,6 +18,7 @@ import vn_punct as V
 
 PX = 700/247
 N_DIAG = {'Regular': 108.0, 'Bold': 148.0}
+OLD = 'AVW'          # designer 23/11 "bỏ móc trên A để A, V, W về phiên bản cũ": chỉ N theo bản vẽ mới
 VW_FLARE = False     # designer 23/11 "bỏ móc mới của V và W" (giữ đáy phẳng)
 FL_K = {'Regular': 1.0, 'Bold': 56.5/42.0}   # designer 23/11 "bold lên thì móc đỉnh A bị nhỏ lại": vạt loe phóng theo tỉ lệ nét mảnh (Bold 1.345)
 
@@ -168,7 +169,10 @@ def main():
         fp = os.path.join(HERE, f); keep = os.path.join(HERE, f'designer_{tag}_preNAVW.json')
         if not os.path.exists(keep): shutil.copy(fp, keep)
         src = json.load(open(keep)); out = json.load(open(fp))
+        for ch in OLD:                                                       # designer 23/11 "bỏ móc trên A để A, V, W về phiên bản cũ"
+            out[f'{ch}-{w}'] = src[f'{ch}-{w}']
         for ch, fn in (('N', do_N), ('A', do_A), ('V', lambda d, w: do_VW(d, w, 'V')), ('W', lambda d, w: do_VW(d, w, 'W'))):
+            if ch in OLD: continue
             k = f'{ch}-{w}'; p = fn(src[k], w); p.simplify()
             out[k] = [V.to_d(p)]
             b = p.bounds; print(k, 'y', round(b[1], 1), '…', round(b[3], 1), 'x', round(b[0], 1), '…', round(b[2], 1))
