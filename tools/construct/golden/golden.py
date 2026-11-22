@@ -1128,23 +1128,59 @@ def main():
 # Bold 5.4 u → chéo nhau thành nhọn). Đặt lại: điểm trái mặt cắt = điểm phải − bề rộng mặt cắt AnNam Serif (mép mảnh xoay < 1°).
 APEX_KEEP = set('AÆ')
 def apex_keep(d, d_serif):
+    """mép NGOÀI nét mảnh trái về đúng chỗ AnNam Serif (song song, dời ngang dx) → mặt cắt đỉnh như Serif; mép TRONG (lòng) dời thêm
+    cùng dx → nét mảnh vẫn đúng chuẩn Golden, đều suốt chiều dài (lòng rộng ra); đỉnh trong lòng = giao mép trong mới với mép trong nét dày"""
     cs = parse(d); cs0 = parse(d_serif)
-    def tops(cs_, ys=None):
+    def tops(cs_, ys):
         out = []
         for c in cs_:
             for cmd, pts in c:
-                if pts and pts[-1][1] > 690 and (ys is None or abs(pts[-1][1] - ys) < 0.6) and all(q is not pts[-1] for q in out): out.append(pts[-1])
+                if pts and abs(pts[-1][1] - ys) < 0.6 and all(q is not pts[-1] for q in out): out.append(pts[-1])
         return out
-    T0 = tops(cs0)
-    if len(T0) < 2: return d
-    ys = max(p[1] for p in T0); s0 = sorted(tops(cs0, ys), key=lambda p: p[0])
-    if len(s0) != 2: return d
+    ys = max((pts[-1][1] for c in cs0 for cmd, pts in c if pts), default=0)
+    s0 = sorted(tops(cs0, ys), key=lambda p: p[0]); top = tops(cs, ys)
+    if len(s0) != 2 or len(top) != 2: return d
     w0 = s0[1][0] - s0[0][0]
-    top = tops(cs, ys)
-    if len(top) != 2: return d
-    R_ = min(top, key=lambda q: abs(q[0] - s0[1][0])); L_ = top[0] if R_ is top[1] else top[1]   # R = phía nét DÀY (giữ nguyên)
-    if R_[0] - L_[0] >= w0 - 0.05: return d
-    L_[0] = R_[0] - w0                                                     # mặt cắt rộng đúng như AnNam Serif
+    R_ = min(top, key=lambda q: abs(q[0] - s0[1][0])); L_ = top[0] if R_ is top[1] else top[1]
+    dx = (R_[0] - w0) - L_[0]
+    if abs(dx) < 0.05: return d
+    # mép ngoài: đoạn L kết thúc tại L_ — dời cả đoạn (và tay nắm vào điểm đầu đoạn) theo dx
+    for c in cs:
+        for k, (cmd, pts) in enumerate(c):
+            if cmd == 'L' and pts[-1] is L_:
+                prev = c[k - 1]; B = prev[1][-1]
+                B[0] += dx
+                if prev[0] == 'C': prev[1][1][0] += dx                 # tay nắm vào B (giữ tiếp tuyến loe chân)
+                L_[0] += dx
+    u = (L_[0] - B[0], L_[1] - B[1]); un = math.hypot(*u); u = (u[0]/un, u[1]/un)
+    # mép trong chân dưới thanh ngang (trên contour ngoài): đoạn L song song mép ngoài, khác mép ngoài → dời dx (+ tay nắm kề)
+    for c in cs:
+        if not any(pts and pts[-1] is L_ for cmd, pts in c): continue              # chỉ contour NGOÀI (chứa đỉnh)
+        for k, (cmd, pts) in enumerate(c):
+            if cmd != 'L' or pts[-1] is L_ or k == 0: continue
+            a_ = c[k - 1][1][-1]; b_ = pts[-1]; v = (b_[0] - a_[0], b_[1] - a_[1]); vn = math.hypot(*v)
+            if vn < 30 or abs(v[0]/vn*u[1] - v[1]/vn*u[0]) > 0.02 or max(a_[1], b_[1]) > ys - 100: continue
+            a_[0] += dx; b_[0] += dx
+            if k + 1 < len(c) and c[k + 1][0] == 'C': c[k + 1][1][0][0] += dx
+            if c[k - 1][0] == 'C': c[k - 1][1][1][0] += dx
+    # mép trong (lòng): contour lòng (không chứa điểm trên đường cap); đoạn song song mép ngoài, dời cùng dx
+    for c in cs:
+        P = [pts[-1] for cmd, pts in c if pts]
+        if any(abs(q[1] - ys) < 0.6 for q in P) or len(P) < 3: continue
+        n = len(P)
+        for i in range(n):
+            p1, p2 = P[i], P[(i + 1) % n]
+            v = (p2[0] - p1[0], p2[1] - p1[1]); vn = math.hypot(*v)
+            if vn < 50 or abs(v[0]/vn*u[1] - v[1]/vn*u[0]) > 0.02: continue          # song song mép ngoài
+            lo, hi = (p1, p2) if p1[1] < p2[1] else (p2, p1)                          # lo: góc trên thanh ngang, hi: đỉnh trong
+            other = next(P[j] for j in range(n) if P[j] is not lo and P[j] is not hi)   # góc thanh phía nét dày
+            lo[0] += dx                                                               # trượt trên mặt thanh ngang
+            # hi = giao (đường qua lo song song u) × (đường other → hi cũ)
+            ex, ey = hi[0] - other[0], hi[1] - other[1]; den = u[0]*ey - u[1]*ex
+            if abs(den) > 1e-9:
+                t = ((other[0] - lo[0])*ey - (other[1] - lo[1])*ex)/den
+                hi[0], hi[1] = lo[0] + u[0]*t, lo[1] + u[1]*t
+            return fmt(cs)
     return fmt(cs)
 
 if __name__ == '__main__':
