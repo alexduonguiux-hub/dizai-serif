@@ -78,7 +78,7 @@ def main():
         b2 = GD.no_horn(c)
         if not b2 or f'{c}-Regular' not in O or f'{b2}-Regular' not in O: continue
         WS_ = [w for w in ('Regular', 'Medium', 'SemiBold', 'Bold') if f'{c}-{w}' in SRC and f'{b2}-{w}' in SRC]
-        rr = {w: GD.horn_compose(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}']) for w in WS_}
+        rr = {w: GD.horn_compose(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}']) for w in WS_}   # từng weight; compat_masters ghép R / B
         if rr and all(rr.values()):
             for w in WS_: O[f'{c}-{w}'] = rr[w]
             nh += 1

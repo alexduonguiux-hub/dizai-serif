@@ -1115,8 +1115,9 @@ def main():
     for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
         b2 = no_horn(c)
         if not b2 or f'{c}-Regular' not in G or f'{b2}-Regular' not in G: continue
+        if c in G17_SKIP: continue
         WS_ = [w for w in ('Regular', 'Medium', 'SemiBold', 'Bold') if f'{c}-{w}' in O and f'{b2}-{w}' in O and f'{b2}-{w}' in G]
-        rr = {w: horn_compose(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in WS_}
+        rr = {w: horn_compose(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in WS_}   # từng weight; compat_masters ghép R / B
         if rr and all(rr.values()):
             for w in WS_: G[f'{c}-{w}'] = rr[w]
             nh += 1
@@ -1208,6 +1209,7 @@ def apex_keep(d, d_serif):
 # (thành phần chạm thân), kèm dải chồng 6 u vào thân.
 import pathops
 HORN = '\u031b'
+G17_SKIP = set('ỡữ')        # Golden: ghép sừng ra R / B khác cấu trúc mà compat_masters không ghép được — giữ cách cũ (vốn đúng nét)
 def _pp(d):
     p = pathops.Path()
     for c in parse(d):
@@ -1238,6 +1240,9 @@ def _op(a, b, op): return pathops.op(a, b, op)
 def no_horn(c):
     n = unicodedata.normalize('NFD', c)
     return unicodedata.normalize('NFC', n.replace(HORN, '')) if HORN in n else None
+def horn_compat(a, b):
+    sig = lambda d: [[k for k, _ in c] for c in parse(d)]
+    return sig(a) == sig(b)
 def horn_compose(src_c, src_b, new_b):
     SC, SB_ = parse(src_c), parse(src_b)
     dx = dy = None                                                 # tịnh tiến thân: contour lòng khớp hình (nguồn)
