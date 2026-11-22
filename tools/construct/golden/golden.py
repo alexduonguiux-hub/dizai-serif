@@ -155,7 +155,7 @@ def tan_end(k, q, at_start):
     return None
 
 # ---------- G3 chân loe ----------
-CAPS_AS_SERIF = True            # designer 20/11 "Golden hoa nên có độ dày y chang Serif. khác loe chân"
+CAPS_AS_SERIF = False           # S72 (designer 22/11 "làm mỏng các nét mỏng của golden đồng loạt" — cả hoa lẫn thường): bỏ luật 20/11 "Golden hoa nên có độ dày y chang Serif"
 FLARE_KX_CAP = 1.45            # designer 20/11: giữ size loe như cũ (thử ×2.9 bỏ)            # designer 20/11 "các chữ hoa Golden đuôi chân loe dài thêm ra thêm xíu" (chữ thường giữ 1.3)
 FLK = [1.3]                    # bề rộng loe đang dùng (g23 đặt theo chữ hoa / thường)
 FLARE_KX, FLARE_KY = 1.3, 0.85   # designer 20/11: loe rộng hơn 30 %; "giảm chiều cao của loe để cảm giác vuốt nhọn hơn" → cao × 0.85
@@ -200,7 +200,7 @@ def g3(cs):
 
 # ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
 ARCH = set()                   # (cũ: 'nmhuµ' dịch nguyên khối) — nay vòm / đáy u dùng G10 (dốc tuyến tính, vai cạnh thân gần đứng yên)
-ARCH_T = {'Regular': 42.0, 'Bold': 56.5}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
+ARCH_T = {'Regular': 34.0, 'Bold': 42.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
     """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
     δ = (1 − THIN_R)·bề dày đỉnh — dáng cung giữ nguyên, điểm nối trượt trên thân. Trả về id các điểm đã dời (G2 bỏ qua)."""
@@ -631,7 +631,7 @@ def g4(d, ch, w):
 # cho chữ cùng gốc (ó ò ỏ õ ọ ô … ơ Ơ).
 RING = {'o': 'o', 'O': 'O', 'ơ': 'o', 'Ơ': 'O', 'Q': 'Q'}   # Q: lòng có đuôi ăn vào — vùng đuôi giữ nguyên (ring_scale tail)
 RINGK = {}
-RING_T = {'Regular': 42.0, 'Bold': 56.5}   # designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
+RING_T = {'Regular': 34.0, 'Bold': 42.0}   # S72 (designer 22/11 "làm mỏng các nét mỏng của golden đồng loạt … khi bold lên thì nét mỏng tăng ít thôi", chọn 34 → 42; trước 42 / 56.5 = Serif) · designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
                                            # — không theo tỉ lệ AnNam Serif (o 42 / O 34 ở bản gốc vốn lệch). M / SB nội suy.
 def _counter(cs):
     ar = lambda c: 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(polys([c])[0], polys([c])[0][1:] + polys([c])[0][:1]))
