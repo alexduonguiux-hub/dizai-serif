@@ -565,7 +565,7 @@ def punct(S, w):
     qx0, qx1, qd = Q_NARROW
     def qw(x, y):
         u = min(1, max(0, (qx1 - x)/(qx1 - qx0))); return (x + qd*u*u*(3 - 2*u), y)
-    G['?'] = U(_fair(xform(U(top2, qs), qw)), dot((sx, r - 3), d))      # S69: làm trơn bụng (fair.py)
+    G['?'] = U(xform(U(top2, qs), qw), dot((sx, r - 3), d))      # S69: làm trơn bụng ở khâu XUẤT (export_font, curve_fair) — bước ghép đoạn sau đây dựng lại cung
     # nháy thẳng ' "
     # (designer 06/11 "thử" làm nháy thẳng gần dáng nháy cong): đầu rộng bằng đầu giọt nháy cong (= chấm câu), cao bằng nháy
     # cong, thon nhanh như giọt (lõm 0.45), chân cắt ngang 0.30 V; " cùng nhịp với ” (khe 0.6 V). Bản cũ: đầu 0.86 V, cao 256 cố định
