@@ -432,7 +432,7 @@ def letter(S, ch, w): return ref_outline(S[f'{ch}-{w}'])
 
 def anchor_x(ch, p):
     x0, y0, x1, y1 = bounds(p)
-    if ch == 'E': return x0 + 0.44*(x1 - x0)          # tâm thị giác của E nằm lệch về thân
+    # E: tâm hộp (designer 23/11 "dấu ô bị lệch trên chữ Ê" — trước 0.44 bề ngang, lệch trái 22 u)
     return (x0 + x1)/2
 
 def horn_anchor(ch, p, w):
