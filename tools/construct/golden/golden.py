@@ -1604,9 +1604,10 @@ if __name__ == '__main__':
 
 # ---------- G21 dấu sắc / huyền cắt ngang (designer 23/11 "dấu sắc và huyền nên cắt như này", "nâng chiều dài lên sau khi cắt để dễ đọc") ----------
 # Dấu sắc / huyền là một nét xiên: hai cạnh dài (cung) + hai nhát cắt (đoạn thẳng xiên). Luật: nhát cắt nằm NGANG như chân dấu mũ;
-# đầu dưới cắt ở điểm cao hơn của nhát cũ (không lấn xuống chữ), đầu trên cắt ở điểm cao hơn rồi kéo dài thêm MARK_EXT × chiều cao dấu
-# (cạnh dài kéo theo tiếp tuyến cuối, một đoạn thẳng).
+# đầu dưới cắt ngang ở điểm thấp nhất cũ (khoảng cách tới chữ không đổi; cạnh còn lại kéo dài thẳng theo tiếp tuyến), đầu trên cắt ngang ở
+# đáy + MARK_H × chiều cao cũ (bỏ mũi nhọn; mẫu designer).
 MARK_EXT = 0.18
+MARK_H = 0.91                  # chiều cao dấu sau cắt / chiều cao dấu cũ (đo mẫu "Chiếu" designer: 43 / 47 px, cắt bỏ mũi nhọn)
 ACUTE_GRAVE = {'̀', '́'}
 def _ag_contour(c):
     ks = [k for k, _ in c if k in 'LC']
@@ -1655,9 +1656,10 @@ def mark_cut(c, ext=MARK_EXT):
         else:
             add_b = ext_pt(pb, (pb[0] - eb[2][0], pb[1] - eb[2][1]))
         return out_a, add_a, out_b, add_b
-    yc1 = max(cut1[1][1], cut1[2][1]); yc2 = max(cut2[1][1], cut2[2][1])
-    if top_is_1: yc1 += ext*H
-    else: yc2 += ext*H
+    lo_cut = cut2 if top_is_1 else cut1
+    y_bot = min(lo_cut[1][1], lo_cut[2][1])                       # đáy: giữ điểm thấp nhất (khoảng cách tới chữ không đổi)
+    y_top = y_bot + MARK_H*H                                      # đỉnh: cắt ngang, dấu cao MARK_H × cũ (mẫu designer 23/11: 136 / 150)
+    yc1, yc2 = (y_top, y_bot) if top_is_1 else (y_bot, y_top)
     a1, x1, b1, x2_ = recut(e1, cut1, e2, yc1)
     b1b, y1, a2, y2 = recut(b1, cut2, a1, yc2)
     # ghép: a2 (e1 đã chỉnh 2 đầu) → [x1 nối] → ngang → [x2_] → b1b (e2) → [y1] → ngang → [y2] → về đầu a2
@@ -1682,6 +1684,33 @@ def mark_fix(d, ch):
     import unicodedata as _u
     if not (set(_u.normalize('NFD', ch)) & ACUTE_GRAVE) and ch not in '´`ˊˋ̀́`´': return d
     cs = parse(d); out = []
-    for c in cs:
-        out.append(mark_cut(c) if _ag_contour(c) else c)
+    def gap(a, others):                                           # khe nhỏ nhất (lấy mẫu 2 u) giữa contour a và các contour khác
+        A = polys([a])[0]; best = 1e9
+        def dens(pl):
+            r = []
+            for i in range(len(pl)):
+                (x1, y1), (x2, y2) = pl[i - 1], pl[i]; n = max(1, int(math.hypot(x2 - x1, y2 - y1)/2))
+                r += [(x1 + (x2 - x1)*k/n, y1 + (y2 - y1)*k/n) for k in range(n)]
+            return r
+        Ad = dens(A)
+        for o in others:
+            for q in dens(polys([o])[0]):
+                for p in Ad:
+                    dd = (p[0] - q[0])**2 + (p[1] - q[1])**2
+                    if dd < best: best = dd
+        return math.sqrt(best)
+    for i, c in enumerate(cs):
+        if not _ag_contour(c): out.append(c); continue
+        others = [o for j, o in enumerate(cs) if j != i]
+        g0 = gap(c, others) if others else 1e9
+        nc = mark_cut(c)
+        if others and gap(nc, others) < min(g0, 60) - 1:          # dấu mới lấn dấu mũ / chữ: dời ngang ra xa tới khi khe = khe cũ
+            cx = sum(p[0] for p in polys([nc])[0])/len(polys([nc])[0])
+            ox = sum(p[0] for o in others for p in polys([o])[0])/sum(len(polys([o])[0]) for o in others)
+            sx = 1 if cx >= ox else -1
+            for _ in range(40):
+                for k_, ps_ in nc:
+                    for p in ps_: p[0] += 2*sx
+                if gap(nc, others) >= min(g0, 60) - 1: break
+        out.append(nc)
     return fmt(out)
