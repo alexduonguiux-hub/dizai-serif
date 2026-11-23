@@ -100,6 +100,12 @@ def main():
     for c in order:                                               # G17 chữ có sừng = chữ không sừng đã đồng bộ + sừng (designer 23/11)
         b2 = GD.no_horn(c)
         if not b2 or f'{c}-Regular' not in O or f'{b2}-Regular' not in O: continue
+        rs = {w: GD.horn_splice(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}']) for w in ('Regular', 'Bold')}   # S79: ghép sừng không boolean (như Golden) — R / B cùng cấu trúc, Medium / SemiBold không méo
+        if all(rs.values()) and GD.horn_compat(rs['Regular'], rs['Bold']):
+            for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = rs[w]
+            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(rs['Regular'], rs['Bold'], t)
+            nh += 1; continue
+        print('G17 splice không ghép được, dùng boolean:', c)
         WS_ = [w for w in ('Regular', 'Medium', 'SemiBold', 'Bold') if f'{c}-{w}' in SRC and f'{b2}-{w}' in SRC]
         rr = {w: GD.horn_compose(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}']) for w in WS_}   # từng weight; compat_masters ghép R / B
         if rr and all(rr.values()):
