@@ -132,6 +132,10 @@ def main():
             for w in WS_: O[f'{c}-{w}'] = rr[w]
             nh += 1
     print('G17 chữ có sừng:', nh)
+    if 'ẞ-Regular' in O:                                          # G30 ẞ: duỗi cung gần thẳng (chỗ thắt) — hết gãy ở weight giữa
+        for w in ('Regular', 'Bold'): O[f'ẞ-{w}'] = GD.flatten_near(O[f'ẞ-{w}'])
+        if GD.horn_compat(O['ẞ-Regular'], O['ẞ-Bold']):
+            for w, t in GD.TW.items(): O[f'ẞ-{w}'] = GD.lerp_d(O['ẞ-Regular'], O['ẞ-Bold'], t)
     nm = 0
     for k in list(O):                                             # G21 dấu sắc / huyền cắt ngang + kéo dài (designer 23/11)
         c, w = k.rsplit('-', 1)

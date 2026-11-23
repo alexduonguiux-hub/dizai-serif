@@ -1347,6 +1347,31 @@ def bar_compose(src_c, src_b, new_b):
     out = _op(newB, bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
 
+# ---------- G30 duỗi cung gần thẳng (ẞ: mép trên chỗ thắt là 2 cung lệch < 3 u → nội suy weight giữa gãy 4–8°): cung C có tay nắm
+# cách dây cung < tol → đoạn thẳng L. Áp cùng lúc mọi master (cấu trúc giữ giống nhau).
+def flatten_near(d, tol=3.0):
+    cs = parse(d)
+    for c in cs:
+        cur = None
+        for j, (k, ps) in enumerate(c):
+            if k == 'M': cur = ps[0]; continue
+            if k == 'C':
+                a, b = cur, ps[2]; L_ = math.hypot(b[0] - a[0], b[1] - a[1])
+                if L_ > 5:
+                    dist = lambda q: abs((b[0] - a[0])*(a[1] - q[1]) - (a[0] - q[0])*(b[1] - a[1]))/L_
+                    if max(dist(ps[0]), dist(ps[1])) < tol: c[j] = ['L', [ps[2]]]
+            if ps: cur = c[j][1][-1]
+        j = 2
+        while j < len(c) - 1:                                       # hai đoạn L gần thẳng hàng (< 4°) → bỏ nút giữa
+            if c[j][0] == 'L' and c[j - 1][0] == 'L' and j - 2 >= 0 and c[j - 2][1]:
+                a, b, q = c[j - 2][1][-1], c[j - 1][1][0], c[j][1][0]
+                v1 = (b[0] - a[0], b[1] - a[1]); v2 = (q[0] - b[0], q[1] - b[1])
+                n1, n2 = math.hypot(*v1), math.hypot(*v2)
+                if n1 > 1 and n2 > 1 and abs(math.degrees(math.atan2(v1[0]*v2[1] - v1[1]*v2[0], v1[0]*v2[0] + v1[1]*v2[1]))) < 4:
+                    del c[j - 1]; continue
+            j += 1
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
