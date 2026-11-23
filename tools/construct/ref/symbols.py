@@ -659,6 +659,15 @@ def group3(S, L, w, M, P, G1):
     # vòng là thanh ngang đúng bề dày thành đáy (0.42 H), tiếp tuyến ngang ở đáy vòng → liền; góc gặp thân vuông
     waist = rect(s1l - 1, 425, cxi + 1, 425 + tw_)   # designer 06/11 "làm dày chỗ thắt ß": 0.42 H → 0.66 H
     G['ß'] = q2c(U(stem, up, lo, waist))
+    # ẞ (eszett hoa, U+1E9E — designer 23/11 "thêm ẞ"): thân B (loe trên / dưới, cao trọn cap) + thanh đỉnh phẳng + nét chéo từ đầu
+    # thanh xuống chỗ thắt + bụng dưới của ß (cùng chỗ thắt) — canh theo mép phải thân B
+    B_ = V.letter(S, 'B', w); s0b, s1b = runs_y(B_, 300)[0]; dxb = s1b - s1l
+    stemB = I(B_, rect(-100, -100, s1b + 0.5, 800))
+    loB = move(lo, dxb, 0); waistB = move(waist, dxb, 0)
+    xt = xr_ + dxb - 0.30*vth; dw = 0.55*vth; yw = 425 + 0.25*tw_; xw = cxi + dxb + 0.55*vth   # chéo "/" = nét MẢNH (hệ tương phản)
+    barB = rect(s1b - 1, 700 - 0.62*H, xt, 700)
+    diag = poly([(xt - dw, 700), (xt, 700), (xw + 0.5*dw, yw), (xw - 0.5*dw, yw)])   # chân chéo chìm vào đỉnh bụng dưới (liền, không khe)
+    G['ẞ'] = q2c(U(stemB, barB, diag, loB, waistB))
     # toán / phút giây
     YC_ = 330.0; mh = 0.55*Vv; ms = 500
     eq = P['=']; eb_ = bounds(eq); cxq = (eb_[0] + eb_[2])/2; sw = 0.45*Vv

@@ -79,7 +79,7 @@ if __name__ == '__main__':
     allg = '--all' in sys.argv; rep = {}; inherited = 0; intent_n = [0]
     BASE = {'$': 'S', '€': 'C', '&': '8', 'Æ': 'AE', 'Œ': 'OE', 'æ': 'ae', 'œ': 'oe', '™': 'TM', '®': 'R', '©': 'C', '¢': 'c',
             # £ (06/11): móc trên = module đầu nét trên C (góc trong 24.5°), đầu phải đáy = module đầu tay dưới E
-            'Ð': 'D', 'Ø': 'O', 'ø': 'o', 'Þ': 'P', 'þ': 'pb', 'µ': 'u', '¥': 'Y', '£': 'CE', 'ð': 'o', 'ß': 'l', '§': 'S', '‰': '%'}
+            'Ð': 'D', 'Ø': 'O', 'ø': 'o', 'Þ': 'P', 'þ': 'pb', 'µ': 'u', '¥': 'Y', '£': 'CE', 'ð': 'o', 'ß': 'l', 'ẞ': 'B', '§': 'S', '‰': '%'}
     for k, v in ref.items():
         if not allg and v.get('src') not in ('rule', 'interp'): continue
         iss = check(v['cmds'])
