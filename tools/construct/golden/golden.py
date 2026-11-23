@@ -978,8 +978,8 @@ def _stem_handles(cs):
         for k, ps in c:
             if k == 'C':
                 a, b, e = ps
-                if prev is not None and abs(prev[0] - xm) < 0.6 and abs(a[1] - prev[1]) < 0.6 and a[0] > prev[0] + 1: hs.append((prev, a, b))   # tay ra khỏi nút ở thân
-                if abs(e[0] - xm) < 0.6 and abs(b[1] - e[1]) < 0.6 and b[0] > e[0] + 1: hs.append((e, b, a))                              # tay vào nút ở thân
+                if prev is not None and abs(prev[0] - xm) < 0.6 and abs(a[1] - prev[1]) < 0.6 + 0.05*abs(a[0] - prev[0]) and a[0] > prev[0] + 1: hs.append((prev, a, b))   # tay ra khỏi nút ở thân
+                if abs(e[0] - xm) < 0.6 and abs(b[1] - e[1]) < 0.6 + 0.05*abs(b[0] - e[0]) and b[0] > e[0] + 1: hs.append((e, b, a))                              # tay vào nút ở thân
             if ps: prev = ps[-1]
     return hs
 def _vthick(cs, x, ytop):
