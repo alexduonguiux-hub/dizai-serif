@@ -1724,6 +1724,13 @@ def horn_splice(src_c, src_b, new_b, tol=2.5):
         if d2 > 1.0: hr = hr + [['L', [list(p2)]]]
         else: hr[-1][1][-1] = list(p2)                                 # J ≈ p: trùng điểm, không đoạn suy biến
         cont += hr + [['Z', []]]
+        def _sa(cc):
+            P_ = polys([cc])[0]; return sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(P_, P_[1:] + P_[:1]))
+        if (_sa(cont) > 0) != (_sa(c) > 0):                         # giữ chiều contour gốc (lòng ngược chiều) — không thì tô kín lòng (SVG nonzero)
+            sg2 = _segs(cont)
+            rv = [(tuple(ps[-1]), k, ([[p0[0], p0[1]]] if k == 'L' else [ps[1], ps[0], [p0[0], p0[1]]])) for p0, k, ps in reversed(sg2)]
+            cont = [['M', [list(rv[0][0])]]] + [[k, [list(q) for q in ps]] for _, k, ps in rv] + [['Z', []]]
+            if cont[-2][0] == 'L' and abs(cont[-2][1][0][0] - cont[0][1][0][0]) < 0.01 and abs(cont[-2][1][0][1] - cont[0][1][0][1]) < 0.01: cont.pop(-2)
         NB[ci] = cont
         return fmt(NB)
     return None
