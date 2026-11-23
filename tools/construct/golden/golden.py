@@ -939,6 +939,77 @@ def g8_solve(d, ch, w, low, xtop=None):
     for _ in range(2): cur = g8_apply(cur, ch, w, 1.0, low, xtop, abs_t=RING_T[w])
     return cur, 1.0
 
+# ---------- G19 thanh số 4: G8 làm mảnh phần thanh bên trái thân (đáy 167 → 183 Regular) nhưng phần bên phải thân (dưới cung loe)
+# giữ / dời khác → đáy hai bên lệch nhau (Regular 10 u, Bold 14 u) và phần phải dày 36 / 54. Luật: đáy phần phải = đáy phần trái; mép trên
+# phần phải (cung loe, cả điểm đầu cung ở thân) hạ xuống bằng mép trên phần trái (= đáy lòng tam giác) → thanh một khối, dày chuẩn hai bên.
+def bar4(d):
+    cs = parse(d)
+    if len(cs) < 2: return d
+    c0 = cs[0]; P = pts_of(c0)
+    hs = []                                                       # đoạn ngang thấp (đáy thanh)
+    prev = None
+    for k, ps in c0:
+        if k == 'L' and prev is not None and abs(ps[0][1] - prev[1]) < 0.01 and 100 < ps[0][1] < 320 and abs(ps[0][0] - prev[0]) > 40: hs.append((prev, ps[0]))
+        if ps: prev = ps[-1]
+    if len(hs) != 2: return d
+    (a1, b1), (a2, b2) = sorted(hs, key=lambda h: -max(h[0][0], h[1][0]))   # phải, trái
+    yl = a2[1]; ytop = min(p[1] for p in pts_of(cs[1]))
+    xs = min(a1[0], b1[0])                                        # mép phải thân
+    for p in (a1, b1): p[1] = yl
+    top = [p for p in P if p[0] >= xs - 0.01 and p[1] > ytop + 0.5 and p[1] < 320 and p[0] <= max(a1[0], b1[0]) + 0.01 and p not in (a1, b1)]
+    if not top: return fmt(cs)
+    y0 = min(p[1] for p in top if abs(p[0] - xs) < 0.01) if any(abs(p[0] - xs) < 0.01 for p in top) else None
+    if y0 is None: return fmt(cs)
+    dl = y0 - ytop; done = set()
+    for p in top:
+        if id(p) in done: continue
+        done.add(id(p)); p[1] -= dl
+    return fmt(cs)
+
+# ---------- G20 nét mảnh bụng D P B R (designer 23/11 "chữ D và P nét mỏng vẫn chưa đủ mỏng như O"): tại chỗ giao thân nét mảnh đúng
+# chuẩn nhưng mép lòng rời tiếp tuyến ngang ngay → nét dày nhanh (Serif D: 42 → 46 ở 80 u, 57 ở 140 u). Luật: kéo dài tay nắm ngang của lòng
+# tại mép trong thân (cùng hệ số s cho mọi tay trong chữ) tới khi nét mảnh đo trục giữa (stroke_balance, bỏ khớp) = chuẩn như O.
+STEMBOWL = set('DPBR')
+def _stem_handles(cs):
+    hs = []
+    for c in _holes(cs):
+        P = pts_of(c); xm = min(p[0] for p in P)
+        prev = None
+        for k, ps in c:
+            if k == 'C':
+                a, b, e = ps
+                if prev is not None and abs(prev[0] - xm) < 0.6 and abs(a[1] - prev[1]) < 0.6 and a[0] > prev[0] + 1: hs.append((prev, a, b))   # tay ra khỏi nút ở thân
+                if abs(e[0] - xm) < 0.6 and abs(b[1] - e[1]) < 0.6 and b[0] > e[0] + 1: hs.append((e, b, a))                              # tay vào nút ở thân
+            if ps: prev = ps[-1]
+    return hs
+def _vthick(cs, x, ytop):
+    ys = []
+    for P in polys(cs):
+        for i in range(len(P)):
+            (x1, y1), (x2, y2) = P[i - 1], P[i]
+            if (x1 <= x) != (x2 <= x): ys.append(y1 + (x - x1)*(y2 - y1)/(x2 - x1))
+    ys = sorted(y for y in ys if y > ytop - 200)
+    return ys[-1] - ys[-2] if len(ys) >= 2 else None
+def stem_bowl(d, tgt, k=1.15):
+    """nét mảnh trên của bụng, đo đứng tại cuối đoạn phẳng mép ngoài (nơi bụng bắt đầu cong) ≤ k × chuẩn (O tăng ~15 % ở cùng độ xa vùng mảnh)"""
+    cs = parse(d); hs = _stem_handles(cs)
+    if not hs: return d, 1.0
+    outer = cs[0]; P0 = [ps[-1] for k_, ps in outer if ps]; ymax = max(p[1] for p in P0)      # nút trên đường (bỏ tay nắm)
+    xf = max(p[0] for p in P0 if abs(p[1] - ymax) < 0.5)
+    base = [(n, h, o, h[0] - n[0]) for n, h, o in hs]
+    def at(s_):
+        for n, h, o, L in base: h[0] = n[0] + L*s_
+    smax = min(2.2, min((o[0] - n[0] - 2)/L for n, h, o, L in base if L > 0))
+    f = lambda s_: (at(s_), _vthick(cs, xf, ymax))[1]
+    if f(1.0) is None or f(1.0) <= k*tgt: at(1.0); return fmt(cs), 1.0
+    lo, hi = 1.0, max(1.0, smax)
+    if f(hi) > k*tgt: return fmt(cs), hi
+    for _ in range(25):
+        m = (lo + hi)/2
+        if f(m) > k*tgt: lo = m
+        else: hi = m
+    at(hi); return fmt(cs), hi
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
@@ -1080,6 +1151,8 @@ def main():
         if ((c.isalpha() and len(c) == 1 and c.isascii()) or c in DIGIT_G8) and not CAP_:   # G8 tuyệt đối mọi chữ gốc (đoạn thẳng nét mảnh = chuẩn, gồm thanh e f t); S72: + số 4 7
             for w in ('Regular', 'Bold'):
                 G[f'{c}-{w}'], G8R[(c, w)] = g8_solve(G[f'{c}-{w}'], c, w, low)
+        if c == '4':                                                  # G19 thanh số 4 một đường thẳng xuyên thân (designer 23/11 "sửa luôn thanh số 4")
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = bar4(G[f'{c}-{w}'])
         if c in TCH:                                                  # G15 thanh t hai bên mảnh đều
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = tbar_eq(G[f'{c}-{w}'])
         if c in ARMD:                                                 # G13 tay loe đầu thanh dài bằng nhau (cả Æ Œ)
@@ -1088,6 +1161,10 @@ def main():
     for c in APEX_KEEP:                                            # G16 đỉnh A cắt như AnNam Serif
         if f'{c}-Regular' not in G: continue
         for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = apex_keep(G[f'{c}-{w}'], O[f'{c}-{w}'])
+        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    for c in STEMBOWL:                                            # G20 nét mảnh bụng D P B R giữ mảnh như O
+        if f'{c}-Regular' not in G: continue
+        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = stem_bowl(G[f'{c}-{w}'], RING_T[w])[0]
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
