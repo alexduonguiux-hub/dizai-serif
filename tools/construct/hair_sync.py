@@ -58,10 +58,6 @@ def main():
         if c in GD.APEX_KEEP and f'{c}-Regular' in O:
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.apex_set(O[f'{c}-{w}'], GD.APEX_W)
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
-    for c in order:                                               # G20 nét mảnh bụng D P B R giữ mảnh như O (designer 23/11)
-        if c in GD.STEMBOWL and f'{c}-Regular' in O:
-            for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.stem_bowl(O[f'{c}-{w}'], T[w])[0]
-            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)
         b = unicodedata.normalize('NFD', c)[0]
         if c == b or f'{b}-Regular' not in O: continue

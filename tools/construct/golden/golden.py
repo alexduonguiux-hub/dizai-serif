@@ -1162,10 +1162,6 @@ def main():
         if f'{c}-Regular' not in G: continue
         for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = apex_keep(G[f'{c}-{w}'], O[f'{c}-{w}'])
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
-    for c in STEMBOWL:                                            # G20 nét mảnh bụng D P B R giữ mảnh như O
-        if f'{c}-Regular' not in G: continue
-        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = stem_bowl(G[f'{c}-{w}'], RING_T[w])[0]
-        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
