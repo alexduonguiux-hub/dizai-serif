@@ -638,6 +638,7 @@ def g4(d, ch, w):
 # cho chữ cùng gốc (ó ò ỏ õ ọ ô … ơ Ơ).
 RING = {'o': 'o', 'O': 'O', 'ơ': 'o', 'Ơ': 'O', 'Q': 'Q'}   # Q: lòng có đuôi ăn vào — vùng đuôi giữ nguyên (ring_scale tail)
 RINGK = {}
+LINE_T = {}                                      # S79: chuẩn riêng cho đoạn THẲNG nét mảnh (G8); trống = RING_T
 RING_T = {'Regular': 34.0, 'Bold': 34.0}   # S78 designer 23/11 "mảnh hơn đồng loạt … bold không tăng" (trước 34 / 42) · S72 (designer 22/11 "làm mỏng các nét mỏng của golden đồng loạt … khi bold lên thì nét mỏng tăng ít thôi", chọn 34 → 42; trước 42 / 56.5 = Serif) · designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
                                            # — không theo tỉ lệ AnNam Serif (o 42 / O 34 ở bản gốc vốn lệch). M / SB nội suy.
 def _counter(cs):
@@ -936,7 +937,7 @@ def g8_solve(d, ch, w, low, xtop=None):
     """G8 tuyệt đối (S52, designer "thanh ngang của T sao lại dày hơn"): mỗi đoạn thẳng nét mảnh tự về đúng chuẩn RING_T — không còn
     một hệ số chung cho cả chữ (hệ số chung làm thanh P mảnh quá khi cung của nó mảnh hơn). 2 lượt (đo lại sau khi dời)."""
     cur = d
-    for _ in range(2): cur = g8_apply(cur, ch, w, 1.0, low, xtop, abs_t=RING_T[w])
+    for _ in range(2): cur = g8_apply(cur, ch, w, 1.0, low, xtop, abs_t=LINE_T.get(w, RING_T[w]))
     return cur, 1.0
 
 # ---------- G19 thanh số 4: G8 làm mảnh phần thanh bên trái thân (đáy 167 → 183 Regular) nhưng phần bên phải thân (dưới cung loe)
