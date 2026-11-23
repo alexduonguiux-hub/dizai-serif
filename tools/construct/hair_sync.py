@@ -70,7 +70,7 @@ def main():
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     for c in GD.ARMD - {'T'}:                                     # G27 móc nét ngang Bold đồng dạng móc Regular (designer 23/11 "lài đồng bộ")
         if f'{c}-Bold' in O:
-            O[f'{c}-Bold'] = GD.flare_like(O[f'{c}-Regular'], O[f'{c}-Bold'])
+            for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.flare_set(O[f'{c}-{w}'])   # S84 G28 dáng móc dài, lài (mẫu designer)
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     if 'T-Regular' in O and 'E-Regular' in O:                     # G26 móc T = móc E (designer 23/11)
         for w in ('Regular', 'Bold'): O[f'T-{w}'] = GD.t_flare(O[f'T-{w}'], O[f'E-{w}'])

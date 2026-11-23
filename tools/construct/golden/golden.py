@@ -1303,6 +1303,32 @@ def flare_like(dR, dX):
             NX[0], NX[1] = NXn; hTX[0], hTX[1] = hT; hNX[0], hNX[1] = hN
     return fmt(X)
 
+# ---------- G28 dáng móc nét ngang (designer 23/11 "kiểu như này" — mẫu F Bold): cung loe DÀI, lài: bề ngang cung W = FLARE_K × chiều sâu D
+# (mẫu: 180 / 120 ≈ 1.5), tiếp tuyến ngang ở nút trên thanh (tay nắm 0.5 W), vào mũi dốc (tay nắm (−0.15 W, 0.55 D)); giới hạn W ≤ 0.8 × chiều
+# dài tay (mũi → đầu đoạn thanh). Mọi weight, mọi móc E F L Z Æ Œ (T theo E — G26).
+FLARE_K = 1.5
+FLARE_TIP = (0.153, 0.33)      # tay nắm ở mũi (tỉ lệ W, D): tiếp tuyến vào mũi dốc 55° (không nhọn, cung lồi một chiều)
+def flare_set(d, k=None):
+    k = FLARE_K if k is None else k
+    cs = parse(d)
+    for c in cs:
+        for (i, ts, st) in _flares(c):
+            p0 = st[i]; c1, c2, p3 = c[i][1]
+            if ts: T_, N_, hT, hN = p0, p3, c1, c2
+            else:  T_, N_, hT, hN = p3, p0, c2, c1
+            sgx = 1 if N_[0] > T_[0] else -1
+            D = N_[1] - T_[1]
+            # đầu kia của đoạn thanh (nút trên thanh nối tiếp bằng L)
+            idx = [j for j, (kk, ps) in enumerate(c) if kk in 'LC']; a = idx.index(i)
+            jn = idx[(a + 1) % len(idx)] if ts else idx[a - 1]
+            far = c[jn][1][-1] if ts else st[jn]
+            Lmax = abs(far[0] - T_[0])
+            W = min(k*abs(D), 0.8*Lmax)
+            N_[0] = T_[0] + sgx*W
+            hN[0], hN[1] = N_[0] - sgx*0.4*W, N_[1]
+            hT[0], hT[1] = T_[0] + sgx*FLARE_TIP[0]*W, T_[1] + FLARE_TIP[1]*D      # vào mũi mở (designer "lài cho cả regular để k bị cảm giác nhọn")
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
@@ -1458,9 +1484,9 @@ def main():
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
-    for c in ARMD - {'T'}:                                        # G27 móc nét ngang Bold đồng dạng móc Regular (lài như nhau); T theo E (G26)
-        if f'{c}-Bold' in G: G[f'{c}-Bold'] = flare_like(G[f'{c}-Regular'], G[f'{c}-Bold'])
+    for c in ARMD - {'T'}:                                        # G28 dáng móc nét ngang dài, lài (mọi weight); T theo E (G26)
         if f'{c}-Regular' in G:
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = flare_set(G[f'{c}-{w}'])
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'T-Regular' in G and 'E-Regular' in G:                     # G26 móc T = móc E Golden (loe Golden)
         for w in ('Regular', 'Bold'): G[f'T-{w}'] = t_flare(G[f'T-{w}'], G[f'E-{w}'])
