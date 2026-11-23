@@ -202,7 +202,7 @@ def g3(cs):
 ARCH = set()                   # (cũ: 'nmhuµ' dịch nguyên khối) — nay vòm / đáy u dùng G10 (dốc tuyến tính, vai cạnh thân gần đứng yên)
 DIGIT_G8 = set('47')            # S72 (designer 22/11 "có, làm luôn số 4 7"): số theo bản vẽ riêng; chỉ 4 7 vào G8
 SER_T = {'Regular': 34.0, 'Bold': 34.0}        # S78: Serif nay 34 mọi weight · S72: chuẩn nét mảnh AnNam Serif — chỉ dùng NHẬN DIỆN nét mảnh (ngưỡng), đích là RING_T / ARCH_T
-ARCH_T = {'Regular': 34.0, 'Bold': 34.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
+ARCH_T = {'Regular': 28.0, 'Bold': 28.0}       # S79 nét mảnh CONG 28 · = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
     """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
     δ = (1 − THIN_R)·bề dày đỉnh — dáng cung giữ nguyên, điểm nối trượt trên thân. Trả về id các điểm đã dời (G2 bỏ qua)."""
@@ -638,8 +638,8 @@ def g4(d, ch, w):
 # cho chữ cùng gốc (ó ò ỏ õ ọ ô … ơ Ơ).
 RING = {'o': 'o', 'O': 'O', 'ơ': 'o', 'Ơ': 'O', 'Q': 'Q'}   # Q: lòng có đuôi ăn vào — vùng đuôi giữ nguyên (ring_scale tail)
 RINGK = {}
-LINE_T = {}                                      # S79: chuẩn riêng cho đoạn THẲNG nét mảnh (G8); trống = RING_T
-RING_T = {'Regular': 34.0, 'Bold': 34.0}   # S78 designer 23/11 "mảnh hơn đồng loạt … bold không tăng" (trước 34 / 42) · S72 (designer 22/11 "làm mỏng các nét mỏng của golden đồng loạt … khi bold lên thì nét mỏng tăng ít thôi", chọn 34 → 42; trước 42 / 56.5 = Serif) · designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
+LINE_T = {'Regular': 34.0, 'Bold': 34.0}         # S79 (designer 23/11 "ok 28"): nét mảnh THẲNG (G8 đoạn thẳng, thanh, nối) giữ 34
+RING_T = {'Regular': 28.0, 'Bold': 28.0}   # S78 designer 23/11 "mảnh hơn đồng loạt … bold không tăng" (trước 34 / 42) · S72 (designer 22/11 "làm mỏng các nét mỏng của golden đồng loạt … khi bold lên thì nét mỏng tăng ít thôi", chọn 34 → 42; trước 42 / 56.5 = Serif) · designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
                                            # — không theo tỉ lệ AnNam Serif (o 42 / O 34 ở bản gốc vốn lệch). M / SB nội suy.
 def _counter(cs):
     ar = lambda c: 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(polys([c])[0], polys([c])[0][1:] + polys([c])[0][:1]))
@@ -783,7 +783,7 @@ def g10(d, w, tgt=None):
             # δ lớn nhất sao cho mọi mẫu sau khi kéo (dày − δ·dốc) vẫn ≥ chuẩn; mẫu giới hạn chạm đúng chuẩn
             def delta(smp, r):
                 amin = 0.3 if hole[gi] else 0.937                 # lòng hở: chỉ mẫu tiếp tuyến gần ngang (≤ 20°) — vai / đầu nét mảnh chủ ý không giới hạn
-                ds = [(h - tgt/an)/r(y) for h, _, y, an, x in smp if r(y) > 0.15 and an >= amin and 0.5*tgt <= h*an <= 1.8*tgt
+                ds = [(h - tgt/an)/r(y) for h, _, y, an, x in smp if r(y) > 0.15 and an >= amin and 0.5*tgt <= h*an <= 1.8*max(tgt, SER_T[w])
                       and all(math.dist((x, y), fe) > 90 for fe in fixed_e)]   # < ½ chuẩn: mũi; gần đầu nét cắt (90 u): độ thuôn chủ ý
                 return max(-0.4*tgt, min(ds)) if ds else 0.0                     # âm: nét đang mảnh hơn chuẩn → lòng co lại (dày lên)
             dT, dB = delta(top, rT), delta(bot, rB)
@@ -814,7 +814,7 @@ TBAR = set('T')
 DIAG_K = 1.0                   # chuẩn nét CHÉO = DIAG_K × chuẩn nét mảnh (hiệu chỉnh quang học; designer "nét xéo của golden mỏng quá")
 BAR_K = 0.88                   # designer 20/11 chọn k 0.88, giữ (quyết định cuối: "giữ nét ngang 0.88 như cũ") ("nét ngang F L T E Z dầy hơn nét còn lại") — chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học)
 def bar_thin(d, w, tgt=None):
-    tgt = (RING_T[w] if tgt is None else tgt)*BAR_K
+    tgt = (LINE_T.get(w, RING_T[w]) if tgt is None else tgt)*BAR_K        # thanh = đoạn THẲNG (S79)
     cs = parse(d); P = polys(cs); n_ = 0
     for c in cs:
         S_ = segs(c); n = len(S_)
@@ -1213,7 +1213,7 @@ def main():
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
     for c in STEMBOWL:                                            # G20 phần nối bụng–thân D P B R mỏng (sau G18 eo B)
         if f'{c}-Regular' not in G: continue
-        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = joint_thin(G[f'{c}-{w}'], JOINT_K*RING_T['Regular'])
+        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = joint_thin(G[f'{c}-{w}'], JOINT_K*LINE_T.get('Regular', RING_T['Regular']))
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'l-Regular' in G and 't-Regular' in G:                     # G14 chân l = chân t
         for w in ('Regular', 'Bold'): G[f'l-{w}'] = l_from_t(G[f'l-{w}'], G[f't-{w}'])

@@ -16,10 +16,11 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path[:0] = [HERE, os.path
 import golden as GD
 OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
 T = {'Regular': 34.0, 'Bold': 34.0}           # S78 designer 23/11 "mảnh hơn đồng loạt, Serif 34, bold không tăng" (trước 42 / 56.5) · designer 20/11 "đồng bộ weight của serif giống golden": nét mảnh tăng theo tỉ lệ thân (42 × 140/104) — tương phản 0.40 cố định
+CT = {'Regular': 28.0, 'Bold': 28.0}          # S79 (designer 23/11 "ok 28"): nét mảnh CONG (vòng, vòm, bụng, cung) 28 — mắt đọc cả vùng mảnh của cung, 34 ở điểm mỏng nhất trông dày hơn nét thẳng 34
 XTOP = 503.4
 
 def main():
-    GD.RING_T.update(T); GD.ARCH_T.update(T); GD.BAR_K = 1.0
+    GD.RING_T.update(CT); GD.ARCH_T.update(CT); GD.LINE_T.update(T); GD.BAR_K = 1.0
     GD.SER_T.update({'Regular': 42.0, 'Bold': 56.5})              # NHẬN DIỆN nét mảnh theo bản vẽ nguồn (Bold 56–70) — chuẩn mới 34 làm ngưỡng 1.6× bỏ sót thanh / chéo Bold     # AnNam Serif: không hiệu chỉnh nét ngang (chỉ Golden)
     GD.ARM_D.update({'Regular': 94.0, 'Bold': 122.0})        # G13: tay loe đầu thanh = độ sâu bản vẽ gốc v0.918 (mọi tay bằng nhau)
     O = json.load(open(os.path.join(OUT, 'outlines.json'))); SRC = dict(O); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
@@ -42,7 +43,7 @@ def main():
                 tl = b == 'Q'
                 if (b, w, 'k') not in K: K[(b, w, 'k')] = GD.solve_ring(d, d, w, tl)
                 d = GD.ring_scale(d, K[(b, w, 'k')], tl)
-            elif b in GD.EFAM: d = GD.e_top(d, T[w])
+            elif b in GD.EFAM: d = GD.e_top(d, CT[w])
             elif b in GD.SFAM: d = GD.s_thin(d, w)
             if b not in GD.G10_SKIP: d = GD.g10(d, w)                    # G10 nét mảnh cong: kéo dãn lòng theo chiều đứng
             d, _ = GD.g8_solve(d, c, w, low, XTOP)                      # G8 tuyệt đối: đoạn thẳng nét mảnh = chuẩn (gồm thanh e f t)
@@ -77,7 +78,7 @@ def main():
                              else GD.rebase(SRC[f'{c}-{w}'], SRC[f'{b}-{w}'], O[f'{b}-{w}'], O[f'{c}-{w}']))
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     if 'B-Regular' in O:                                          # G18 eo B = chuẩn nét mảnh (designer 23/11)
-        for w in ('Regular', 'Bold'): O[f'B-{w}'] = GD.b_waist(O[f'B-{w}'], T[w])
+        for w in ('Regular', 'Bold'): O[f'B-{w}'] = GD.b_waist(O[f'B-{w}'], CT[w])
         for w, t in GD.TW.items(): O[f'B-{w}'] = GD.lerp_d(O['B-Regular'], O['B-Bold'], t)
         for c in order:                                           # chữ có dấu gốc B (nếu có): dựng lại theo B
             b = unicodedata.normalize('NFD', c)[0]
