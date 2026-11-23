@@ -1628,58 +1628,40 @@ def _ycut_curve(p0, c1, c2, p3, y, from_end):
     m_ = [b[0][j] + (b[1][j] - b[0][j])*t for j in (0, 1)]
     return ([list(P[0]), a[0], b[0], m_], [m_, b[1], a[2], list(P[3])])
 def mark_cut(c, ext=MARK_EXT):
-    """contour dấu sắc / huyền → cắt ngang hai đầu + kéo dài đầu trên. c: contour (parse)."""
-    sg = []
-    cur = None
+    """contour dấu sắc / huyền (C L C L) → hai nhát cắt ngang; LUÔN ra đúng cấu trúc C L C L (cắt cung: tách de Casteljau; kéo dài:
+    dời điểm cuối + tay nắm kề theo tiếp tuyến) → mọi weight cùng cấu trúc, nội suy đúng."""
+    sg = []; cur = None
     for k, ps in c:
         if k == 'M': cur = ps[0]
         elif k in 'LC': sg.append([k, list(cur)] + [list(p) for p in ps]); cur = ps[-1]
     while sg[0][0] != 'C': sg = sg[1:] + sg[:1]                    # C L C L
-    e1, cut1, e2, cut2 = sg
-    ys = [p[1] for s in sg for p in s[1:]]; H = max(ys) - min(ys)
-    # nhát cắt nào ở trên
+    e1, cut1, e2, cut2 = [list(map(lambda v: list(v) if isinstance(v, list) else v, s_)) for s_ in sg]
+    ys = [p[1] for s_ in sg for p in s_[1:]]; H = max(ys) - min(ys)
     top_is_1 = (cut1[1][1] + cut1[2][1]) > (cut2[1][1] + cut2[2][1])
-    def recut(ea, cut, eb, y):
-        """ea kết thúc ở cut[1], eb bắt đầu ở cut[2]: đưa hai đầu về đúng y (cắt cung nếu vượt, kéo dài thẳng theo tiếp tuyến nếu thiếu)"""
-        out_a, out_b = ea, eb
-        pa, pb = ea[-1], eb[1]
-        def ext_pt(p, d):
-            if abs(d[1]) < 1e-6: return list(p)
-            s = (y - p[1])/d[1]; return [p[0] + d[0]*s, p[1] + d[1]*s]
-        add_a = add_b = None
-        if (pa[1] > y) == (ea[1][1] < pa[1]) and abs(pa[1] - y) > 0.01 and ((pa[1] - y)*(pa[1] - ea[1][1]) > 0):   # cung ea vượt qua y → cắt
-            L, R = _ycut_curve(ea[1], ea[2], ea[3], ea[4], y, False); out_a = ['C', L[0], L[1], L[2], L[3]]
-        else:
-            add_a = ext_pt(pa, (pa[0] - ea[3][0], pa[1] - ea[3][1]))
-        if abs(pb[1] - y) > 0.01 and ((pb[1] - y)*(pb[1] - eb[4][1]) > 0):
-            L, R = _ycut_curve(eb[1], eb[2], eb[3], eb[4], y, True); out_b = ['C', R[0], R[1], R[2], R[3]]
-        else:
-            add_b = ext_pt(pb, (pb[0] - eb[2][0], pb[1] - eb[2][1]))
-        return out_a, add_a, out_b, add_b
     lo_cut = cut2 if top_is_1 else cut1
-    y_bot = min(lo_cut[1][1], lo_cut[2][1])                       # đáy: giữ điểm thấp nhất (khoảng cách tới chữ không đổi)
-    y_top = y_bot + MARK_H*H                                      # đỉnh: cắt ngang, dấu cao MARK_H × cũ (mẫu designer 23/11: 136 / 150)
-    yc1, yc2 = (y_top, y_bot) if top_is_1 else (y_bot, y_top)
-    a1, x1, b1, x2_ = recut(e1, cut1, e2, yc1)
-    b1b, y1, a2, y2 = recut(b1, cut2, a1, yc2)
-    # ghép: a2 (e1 đã chỉnh 2 đầu) → [x1 nối] → ngang → [x2_] → b1b (e2) → [y1] → ngang → [y2] → về đầu a2
-    pts = []
-    def segs_of(e): return [['C', [e[2], e[3], e[4]]]] if e[0] == 'C' else [['L', [e[-1]]]]
-    seq = []
-    start = a2[1]
-    seq += segs_of(a2)
-    if x1: seq.append(['L', [x1]])
-    seq.append(['L', [x2_ if x2_ else b1b[1]]])
-    if x2_: seq.append(['L', [b1b[1]]])
-    seq += segs_of(b1b)
-    if y1: seq.append(['L', [y1]])
-    seq.append(['L', [y2 if y2 else a2[1]]])
-    out_, last = [], start
-    for k_, ps_ in seq:                                            # bỏ đoạn suy biến (đầu cung đã nằm đúng mép cắt)
-        if k_ == 'L' and abs(ps_[0][0] - last[0]) < 0.05 and abs(ps_[0][1] - last[1]) < 0.05: continue
-        out_.append([k_, ps_]); last = ps_[-1]
-    if out_ and out_[-1][0] == 'L' and abs(out_[-1][1][0][0] - start[0]) < 0.05 and abs(out_[-1][1][0][1] - start[1]) < 0.05: out_.pop()
-    return [['M', [start]]] + out_ + [['Z', []]]
+    y_bot = min(lo_cut[1][1], lo_cut[2][1]); y_top = y_bot + MARK_H*H
+    y1, y2 = (y_top, y_bot) if top_is_1 else (y_bot, y_top)
+    def adj_end(e, y):
+        p0, c1, c2, p3 = e[1], e[2], e[3], e[4]
+        if (p3[1] - y)*(p3[1] - p0[1]) > 0:                        # cung vượt mép → cắt, giữ phần đầu
+            L, R = _ycut_curve(p0, c1, c2, p3, y, False); e[1:] = [list(L[0]), list(L[1]), list(L[2]), list(L[3])]
+        else:                                                       # thiếu → kéo dài theo tiếp tuyến cuối
+            dx, dy = p3[0] - c2[0], p3[1] - c2[1]
+            if abs(dy) > 1e-6:
+                s_ = (y - p3[1])/dy; v = (dx*s_, dy*s_)
+                e[4] = [p3[0] + v[0], y]; e[3] = [c2[0] + v[0], c2[1] + v[1]]
+    def adj_start(e, y):
+        p0, c1, c2, p3 = e[1], e[2], e[3], e[4]
+        if (p0[1] - y)*(p0[1] - p3[1]) > 0:
+            L, R = _ycut_curve(p0, c1, c2, p3, y, True); e[1:] = [list(R[0]), list(R[1]), list(R[2]), list(R[3])]
+        else:
+            dx, dy = p0[0] - c1[0], p0[1] - c1[1]
+            if abs(dy) > 1e-6:
+                s_ = (y - p0[1])/dy; v = (dx*s_, dy*s_)
+                e[1] = [p0[0] + v[0], y]; e[2] = [c1[0] + v[0], c1[1] + v[1]]
+    adj_end(e1, y1); adj_start(e2, y1); adj_end(e2, y2); adj_start(e1, y2)
+    e1[4][1] = e2[1][1] = y1; e2[4][1] = e1[1][1] = y2               # mép cắt ngang tuyệt đối
+    return [['M', [e1[1]]], ['C', [e1[2], e1[3], e1[4]]], ['L', [e2[1]]], ['C', [e2[2], e2[3], e2[4]]], ['L', [list(e1[1])]], ['Z', []]]   # bản sao: dời ngang không cộng hai lần
 def mark_fix(d, ch):
     import unicodedata as _u
     if not (set(_u.normalize('NFD', ch)) & ACUTE_GRAVE) and ch not in '´`ˊˋ̀́`´': return d
@@ -1701,16 +1683,21 @@ def mark_fix(d, ch):
         return math.sqrt(best)
     for i, c in enumerate(cs):
         if not _ag_contour(c): out.append(c); continue
-        others = [o for j, o in enumerate(cs) if j != i]
+        ymin_c = min(p[1] for p in polys([c])[0])
+        others = [o for j, o in enumerate(cs) if j != i and min(p[1] for p in polys([o])[0]) > 400]   # chỉ các dấu khác (mũ / trăng), không phải thân chữ
         g0 = gap(c, others) if others else 1e9
         nc = mark_cut(c)
         if others and gap(nc, others) < min(g0, 60) - 1:          # dấu mới lấn dấu mũ / chữ: dời ngang ra xa tới khi khe = khe cũ
             cx = sum(p[0] for p in polys([nc])[0])/len(polys([nc])[0])
             ox = sum(p[0] for o in others for p in polys([o])[0])/sum(len(polys([o])[0]) for o in others)
+            oy = max(p[1] for o in others for p in polys([o])[0])
+            below = oy < ymin_c + 25                                # dấu kia nằm dưới (trăng ắ): dời LÊN; bên cạnh (mũ ế): dời NGANG
             sx = 1 if cx >= ox else -1
             for _ in range(40):
                 for k_, ps_ in nc:
-                    for p in ps_: p[0] += 2*sx
+                    for p in ps_:
+                        if below: p[1] += 2
+                        else: p[0] += 2*sx
                 if gap(nc, others) >= min(g0, 60) - 1: break
         out.append(nc)
     return fmt(out)

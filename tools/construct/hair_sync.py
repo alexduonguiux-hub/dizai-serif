@@ -19,7 +19,8 @@ T = {'Regular': 34.0, 'Bold': 34.0}           # S78 designer 23/11 "mảnh hơn 
 XTOP = 503.4
 
 def main():
-    GD.RING_T.update(T); GD.ARCH_T.update(T); GD.BAR_K = 1.0     # AnNam Serif: không hiệu chỉnh nét ngang (chỉ Golden)
+    GD.RING_T.update(T); GD.ARCH_T.update(T); GD.BAR_K = 1.0
+    GD.SER_T.update({'Regular': 42.0, 'Bold': 56.5})              # NHẬN DIỆN nét mảnh theo bản vẽ nguồn (Bold 56–70) — chuẩn mới 34 làm ngưỡng 1.6× bỏ sót thanh / chéo Bold     # AnNam Serif: không hiệu chỉnh nét ngang (chỉ Golden)
     GD.ARM_D.update({'Regular': 94.0, 'Bold': 122.0})        # G13: tay loe đầu thanh = độ sâu bản vẽ gốc v0.918 (mọi tay bằng nhau)
     O = json.load(open(os.path.join(OUT, 'outlines.json'))); SRC = dict(O); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
     chars = [c for c in SP['Regular'] if f'{c}-Regular' in O]
