@@ -810,7 +810,7 @@ def g10(d, w, tgt=None):
 # ---------- G11 thanh T: mép dưới thanh là cung loe chạy vào thân (không có đoạn thẳng) — designer 20/11 "thanh ngang của T sao lại
 # dày hơn của các chữ khác". Điểm nối cung–thân (tiếp tuyến ngang, thân đứng) dời đứng δ = bề dày thanh (tia đứng tới mép trên) − chuẩn
 # nét mảnh; tay nắm kề nó dời cùng (giữ ngang → cung trơn); đầu nhọn loe đứng yên.
-TBAR = set('T')
+TBAR = set()                   # S83: T nay có thanh thẳng (G26 móc = móc E) → G8 lo bề dày thanh; G11 không còn dùng
 DIAG_K = 1.0                   # chuẩn nét CHÉO = DIAG_K × chuẩn nét mảnh (hiệu chỉnh quang học; designer "nét xéo của golden mỏng quá")
 BAR_K = 0.88                   # designer 20/11 chọn k 0.88, giữ (quyết định cuối: "giữ nét ngang 0.88 như cũ") ("nét ngang F L T E Z dầy hơn nét còn lại") — chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học)
 def bar_thin(d, w, tgt=None):
@@ -1232,6 +1232,35 @@ def run_thin(d, side, tgt, xr=(0.25, 0.8), H=170.0, it=3):
         d = fmt(cs)
     return d
 
+# ---------- G26 móc T = móc E (designer 23/11 "2 móc chữ T không đồng bộ với móc của các nét ngang chữ E"): mép dưới thanh T trước là
+# MỘT cung từ thân ra mũi loe (dài 148–153 u) → nay = thanh thẳng + cung loe CÙNG hình móc trên E (cùng bề ngang, cùng tay nắm tương đối),
+# hai bên đối xứng. Mũi loe (điểm, chiều sâu) giữ nguyên.
+def t_flare(dT, dE):
+    E = parse(dE)[0]
+    ef = None                                                       # móc trên E: C (mũi → đầu cung trên thanh), mũi ở mép phải
+    cur = None
+    for k, ps in E:
+        if k == 'M': cur = ps[0]; continue
+        if k == 'C' and cur is not None and abs(ps[2][1] - ps[1][1]) < 0.6 and ps[2][1] > 500 and cur[1] < ps[2][1]:
+            ef = (cur, ps); break
+        if ps: cur = ps[-1]
+    if ef is None: return dT
+    tip, (c1, c2, st) = ef
+    W = tip[0] - st[0]; h1 = (c1[0] - tip[0], c1[1] - tip[1]); h2 = (c2[0] - st[0], c2[1] - st[1])
+    cs = parse(dT); c = cs[0]; out = []; i = 0; cur = None
+    for k, ps in c:
+        if k == 'M': cur = ps[0]; out.append([k, ps]); continue
+        if k == 'C' and abs(ps[2][1] - ps[1][1]) < 0.6 and ps[2][1] > 500 and cur[1] < ps[2][1] and cur[0] > ps[2][0]:   # mũi phải → thân
+            t_ = cur; s_ = [t_[0] - W, ps[2][1]]
+            out.append(['C', [[t_[0] + h1[0], t_[1] + h1[1]], [s_[0] + h2[0], s_[1] + h2[1]], s_]]); out.append(['L', [ps[2]]])
+        elif k == 'C' and abs(ps[0][1] - cur[1]) < 0.6 and cur[1] > 500 and ps[2][1] < cur[1] and ps[2][0] < cur[0]:   # thân → mũi trái
+            t_ = ps[2]; s_ = [t_[0] + W, cur[1]]
+            out.append(['L', [s_]]); out.append(['C', [[s_[0] - h2[0], s_[1] + h2[1]], [t_[0] - h1[0], t_[1] + h1[1]], t_]])
+        else: out.append([k, ps])
+        if ps: cur = ps[-1]
+    cs[0] = out
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
@@ -1387,6 +1416,9 @@ def main():
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
+    if 'T-Regular' in G and 'E-Regular' in G:                     # G26 móc T = móc E Golden (loe Golden)
+        for w in ('Regular', 'Bold'): G[f'T-{w}'] = t_flare(G[f'T-{w}'], G[f'E-{w}'])
+        for w, t in TW.items(): G[f'T-{w}'] = lerp_d(G['T-Regular'], G['T-Bold'], t)
     for c in STEMBOWL:                                            # G20 phần nối bụng–thân D P B R mỏng (sau G18 eo B)
         if f'{c}-Regular' not in G: continue
         for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = joint_thin(G[f'{c}-{w}'], JOINT_K*LINE_T.get('Regular', RING_T['Regular']))
