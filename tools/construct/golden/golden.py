@@ -1010,6 +1010,29 @@ def stem_bowl(d, tgt, k=1.15):
         else: hi = m
     at(hi); return fmt(cs), hi
 
+JOINT_K = 0.65                 # G20 (designer 23/11): phần nối bụng–thân D P B R = 0.65 × nét mảnh Regular, MỌI weight bằng nhau ("khi bold lên không tăng độ dày nét mỏng")
+def joint_thin(d, tgt):
+    """G20: nút lòng chạm thân (tay nắm ngang) dời về phía mép ngoài / lòng kia (cùng tay nắm) → khe tại chỗ nối = tgt; cung lòng giữ nguyên
+    phía xa → nét mảnh mỏng ở chỗ nối rồi cong lài ra."""
+    cs = parse(d); hs = _stem_handles(cs); done = set()
+    for n, h, o in hs:
+        if id(n) in done: continue
+        done.add(id(n))
+        hole = [c for c in _holes(cs) if any(p is n for p in pts_of(c))]
+        if not hole: continue
+        hole = hole[0]; ys_h = [p[1] for p in polys([hole])[0]]; up = n[1] > (min(ys_h) + max(ys_h))/2
+        x = n[0] + 1.0; ys = []
+        for P in polys([c for c in cs if c is not hole]):
+            for i in range(len(P)):
+                (x1, y1), (x2, y2) = P[i - 1], P[i]
+                if (x1 <= x) != (x2 <= x): ys.append(y1 + (x - x1)*(y2 - y1)/(x2 - x1))
+        ys = [y for y in ys if (y > n[1] if up else y < n[1])]
+        if not ys: continue
+        yo = min(ys) if up else max(ys); dl = abs(yo - n[1]) - tgt
+        if abs(dl) < 0.3: continue
+        sg = 1 if up else -1; n[1] += sg*dl; h[1] += sg*dl
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
@@ -1165,6 +1188,10 @@ def main():
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
+    for c in STEMBOWL:                                            # G20 phần nối bụng–thân D P B R mỏng (sau G18 eo B)
+        if f'{c}-Regular' not in G: continue
+        for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = joint_thin(G[f'{c}-{w}'], JOINT_K*RING_T['Regular'])
+        for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'l-Regular' in G and 't-Regular' in G:                     # G14 chân l = chân t
         for w in ('Regular', 'Bold'): G[f'l-{w}'] = l_from_t(G[f'l-{w}'], G[f't-{w}'])
         for w, t in TW.items(): G[f'l-{w}'] = lerp_d(G['l-Regular'], G['l-Bold'], t)

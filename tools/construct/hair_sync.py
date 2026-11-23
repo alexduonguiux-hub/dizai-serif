@@ -73,6 +73,17 @@ def main():
             if c != b and b == 'B' and f'{c}-Regular' in O and GD.composable(c):
                 for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.compose(O[f'B-{w}'], O[f'{c}-{w}'])
                 for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    for c in order:                                               # G20 phần nối bụng–thân D P B R = 0.65 × 42 mọi weight (designer 23/11)
+        if c in GD.STEMBOWL and f'{c}-Regular' in O:
+            for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.joint_thin(O[f'{c}-{w}'], GD.JOINT_K*T['Regular'])
+            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    for c in order:                                               # chữ có dấu gốc D P B R: dựng lại theo chữ gốc mới
+        b = unicodedata.normalize('NFD', c)[0]
+        if c != b and b in GD.STEMBOWL and f'{c}-Regular' in O:
+            for w in ('Regular', 'Bold'):
+                O[f'{c}-{w}'] = (GD.compose(O[f'{b}-{w}'], O[f'{c}-{w}']) if GD.composable(c)
+                                 else GD.rebase(SRC[f'{c}-{w}'], SRC[f'{b}-{w}'], O[f'{b}-{w}'], O[f'{c}-{w}']))
+            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     nh = 0
     for c in order:                                               # G17 chữ có sừng = chữ không sừng đã đồng bộ + sừng (designer 23/11)
         b2 = GD.no_horn(c)
