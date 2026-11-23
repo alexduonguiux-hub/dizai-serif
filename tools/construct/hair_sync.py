@@ -104,6 +104,12 @@ def main():
             for w in WS_: O[f'{c}-{w}'] = rr[w]
             nh += 1
     print('G17 chữ có sừng:', nh)
+    nm = 0
+    for k in list(O):                                             # G21 dấu sắc / huyền cắt ngang + kéo dài (designer 23/11)
+        c, w = k.rsplit('-', 1)
+        d2 = GD.mark_fix(O[k], c)
+        if d2 != O[k]: O[k] = d2; nm += 1
+    print('G21 dấu sắc / huyền cắt ngang:', nm)
     json.dump(O, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('hair_sync:', ' '.join(f'{b}{w[0]}{k}{v:.2f}' for (b, w, k), v in sorted(K.items()) if abs(v - 1) > 0.02))
 

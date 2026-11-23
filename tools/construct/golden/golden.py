@@ -1601,3 +1601,87 @@ def b_waist(d, tgt):
 
 if __name__ == '__main__':
     main()
+
+# ---------- G21 dấu sắc / huyền cắt ngang (designer 23/11 "dấu sắc và huyền nên cắt như này", "nâng chiều dài lên sau khi cắt để dễ đọc") ----------
+# Dấu sắc / huyền là một nét xiên: hai cạnh dài (cung) + hai nhát cắt (đoạn thẳng xiên). Luật: nhát cắt nằm NGANG như chân dấu mũ;
+# đầu dưới cắt ở điểm cao hơn của nhát cũ (không lấn xuống chữ), đầu trên cắt ở điểm cao hơn rồi kéo dài thêm MARK_EXT × chiều cao dấu
+# (cạnh dài kéo theo tiếp tuyến cuối, một đoạn thẳng).
+MARK_EXT = 0.18
+ACUTE_GRAVE = {'̀', '́'}
+def _ag_contour(c):
+    ks = [k for k, _ in c if k in 'LC']
+    if len(ks) != 4 or ks.count('L') != 2 or ks.count('C') != 2: return False
+    return ks in (['C', 'L', 'C', 'L'], ['L', 'C', 'L', 'C'])
+def _ycut_curve(p0, c1, c2, p3, y, from_end):
+    """cắt cung (p0..p3) tại mép ngang y: trả về (cmd, pts) phần giữ lại (from_end: giữ phần cuối) + điểm cắt"""
+    f = lambda t: (1-t)**3*p0[1] + 3*(1-t)**2*t*c1[1] + 3*(1-t)*t*t*c2[1] + t**3*p3[1]
+    lo, hi = 0.0, 1.0; up = f(1.0) > f(0.0)
+    for _ in range(50):
+        m = (lo + hi)/2
+        if (f(m) < y) == up: lo = m
+        else: hi = m
+    t = (lo + hi)/2
+    P = [p0, c1, c2, p3]
+    a = [[P[i][j] + (P[i+1][j] - P[i][j])*t for j in (0, 1)] for i in range(3)]
+    b = [[a[i][j] + (a[i+1][j] - a[i][j])*t for j in (0, 1)] for i in range(2)]
+    m_ = [b[0][j] + (b[1][j] - b[0][j])*t for j in (0, 1)]
+    return ([list(P[0]), a[0], b[0], m_], [m_, b[1], a[2], list(P[3])])
+def mark_cut(c, ext=MARK_EXT):
+    """contour dấu sắc / huyền → cắt ngang hai đầu + kéo dài đầu trên. c: contour (parse)."""
+    sg = []
+    cur = None
+    for k, ps in c:
+        if k == 'M': cur = ps[0]
+        elif k in 'LC': sg.append([k, list(cur)] + [list(p) for p in ps]); cur = ps[-1]
+    while sg[0][0] != 'C': sg = sg[1:] + sg[:1]                    # C L C L
+    e1, cut1, e2, cut2 = sg
+    ys = [p[1] for s in sg for p in s[1:]]; H = max(ys) - min(ys)
+    # nhát cắt nào ở trên
+    top_is_1 = (cut1[1][1] + cut1[2][1]) > (cut2[1][1] + cut2[2][1])
+    def recut(ea, cut, eb, y):
+        """ea kết thúc ở cut[1], eb bắt đầu ở cut[2]: đưa hai đầu về đúng y (cắt cung nếu vượt, kéo dài thẳng theo tiếp tuyến nếu thiếu)"""
+        out_a, out_b = ea, eb
+        pa, pb = ea[-1], eb[1]
+        def ext_pt(p, d):
+            if abs(d[1]) < 1e-6: return list(p)
+            s = (y - p[1])/d[1]; return [p[0] + d[0]*s, p[1] + d[1]*s]
+        add_a = add_b = None
+        if (pa[1] > y) == (ea[1][1] < pa[1]) and abs(pa[1] - y) > 0.01 and ((pa[1] - y)*(pa[1] - ea[1][1]) > 0):   # cung ea vượt qua y → cắt
+            L, R = _ycut_curve(ea[1], ea[2], ea[3], ea[4], y, False); out_a = ['C', L[0], L[1], L[2], L[3]]
+        else:
+            add_a = ext_pt(pa, (pa[0] - ea[3][0], pa[1] - ea[3][1]))
+        if abs(pb[1] - y) > 0.01 and ((pb[1] - y)*(pb[1] - eb[4][1]) > 0):
+            L, R = _ycut_curve(eb[1], eb[2], eb[3], eb[4], y, True); out_b = ['C', R[0], R[1], R[2], R[3]]
+        else:
+            add_b = ext_pt(pb, (pb[0] - eb[2][0], pb[1] - eb[2][1]))
+        return out_a, add_a, out_b, add_b
+    yc1 = max(cut1[1][1], cut1[2][1]); yc2 = max(cut2[1][1], cut2[2][1])
+    if top_is_1: yc1 += ext*H
+    else: yc2 += ext*H
+    a1, x1, b1, x2_ = recut(e1, cut1, e2, yc1)
+    b1b, y1, a2, y2 = recut(b1, cut2, a1, yc2)
+    # ghép: a2 (e1 đã chỉnh 2 đầu) → [x1 nối] → ngang → [x2_] → b1b (e2) → [y1] → ngang → [y2] → về đầu a2
+    pts = []
+    def segs_of(e): return [['C', [e[2], e[3], e[4]]]] if e[0] == 'C' else [['L', [e[-1]]]]
+    seq = []
+    start = a2[1]
+    seq += segs_of(a2)
+    if x1: seq.append(['L', [x1]])
+    seq.append(['L', [x2_ if x2_ else b1b[1]]])
+    if x2_: seq.append(['L', [b1b[1]]])
+    seq += segs_of(b1b)
+    if y1: seq.append(['L', [y1]])
+    seq.append(['L', [y2 if y2 else a2[1]]])
+    out_, last = [], start
+    for k_, ps_ in seq:                                            # bỏ đoạn suy biến (đầu cung đã nằm đúng mép cắt)
+        if k_ == 'L' and abs(ps_[0][0] - last[0]) < 0.05 and abs(ps_[0][1] - last[1]) < 0.05: continue
+        out_.append([k_, ps_]); last = ps_[-1]
+    if out_ and out_[-1][0] == 'L' and abs(out_[-1][1][0][0] - start[0]) < 0.05 and abs(out_[-1][1][0][1] - start[1]) < 0.05: out_.pop()
+    return [['M', [start]]] + out_ + [['Z', []]]
+def mark_fix(d, ch):
+    import unicodedata as _u
+    if not (set(_u.normalize('NFD', ch)) & ACUTE_GRAVE) and ch not in '´`ˊˋ̀́`´': return d
+    cs = parse(d); out = []
+    for c in cs:
+        out.append(mark_cut(c) if _ag_contour(c) else c)
+    return fmt(out)
