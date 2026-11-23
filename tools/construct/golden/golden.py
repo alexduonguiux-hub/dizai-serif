@@ -201,8 +201,8 @@ def g3(cs):
 # ---------- G2b lòng vòm n m h / lòng đáy u: dịch nguyên khối (designer 20/11: "đường cong bụng trong chữ u, m, n không tự nhiên") ----------
 ARCH = set()                   # (cũ: 'nmhuµ' dịch nguyên khối) — nay vòm / đáy u dùng G10 (dốc tuyến tính, vai cạnh thân gần đứng yên)
 DIGIT_G8 = set('47')            # S72 (designer 22/11 "có, làm luôn số 4 7"): số theo bản vẽ riêng; chỉ 4 7 vào G8
-SER_T = {'Regular': 42.0, 'Bold': 56.5}        # S72: chuẩn nét mảnh AnNam Serif — chỉ dùng NHẬN DIỆN nét mảnh (ngưỡng), đích là RING_T / ARCH_T
-ARCH_T = {'Regular': 34.0, 'Bold': 42.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
+SER_T = {'Regular': 34.0, 'Bold': 34.0}        # S78: Serif nay 34 mọi weight · S72: chuẩn nét mảnh AnNam Serif — chỉ dùng NHẬN DIỆN nét mảnh (ngưỡng), đích là RING_T / ARCH_T
+ARCH_T = {'Regular': 34.0, 'Bold': 34.0}       # = RING_T (G8): bề dày đỉnh vòm sau khi dịch
 def arch_thin(cs, w):
     """chuỗi đoạn cong giữa hai đoạn thân THẲNG ĐỨNG, phía mực nằm ngoài cung (lòng vòm / lòng đáy u): dời đứng cả chuỗi
     δ = (1 − THIN_R)·bề dày đỉnh — dáng cung giữ nguyên, điểm nối trượt trên thân. Trả về id các điểm đã dời (G2 bỏ qua)."""
@@ -638,7 +638,7 @@ def g4(d, ch, w):
 # cho chữ cùng gốc (ó ò ỏ õ ọ ô … ơ Ơ).
 RING = {'o': 'o', 'O': 'O', 'ơ': 'o', 'Ơ': 'O', 'Q': 'Q'}   # Q: lòng có đuôi ăn vào — vùng đuôi giữ nguyên (ring_scale tail)
 RINGK = {}
-RING_T = {'Regular': 34.0, 'Bold': 42.0}   # S72 (designer 22/11 "làm mỏng các nét mỏng của golden đồng loạt … khi bold lên thì nét mỏng tăng ít thôi", chọn 34 → 42; trước 42 / 56.5 = Serif) · designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
+RING_T = {'Regular': 34.0, 'Bold': 34.0}   # S78 designer 23/11 "mảnh hơn đồng loạt … bold không tăng" (trước 34 / 42) · S72 (designer 22/11 "làm mỏng các nét mỏng của golden đồng loạt … khi bold lên thì nét mỏng tăng ít thôi", chọn 34 → 42; trước 42 / 56.5 = Serif) · designer 20/11 "các nét mỏng của Golden đưa về bằng với nét mỏng của Serif" (trước 32 / 44)   # designer 20/11 "tại sao nó không bằng nhau": MỘT nét mảnh tuyệt đối cho mọi vòng (o O ơ Ơ …)
                                            # — không theo tỉ lệ AnNam Serif (o 42 / O 34 ở bản gốc vốn lệch). M / SB nội suy.
 def _counter(cs):
     ar = lambda c: 0.5*sum(a[0]*b[1] - b[0]*a[1] for a, b in zip(polys([c])[0], polys([c])[0][1:] + polys([c])[0][:1]))
@@ -1031,6 +1031,28 @@ def joint_thin(d, tgt):
         yo = min(ys) if up else max(ys); dl = abs(yo - n[1]) - tgt
         if abs(dl) < 0.3: continue
         sg = 1 if up else -1; n[1] += sg*dl; h[1] += sg*dl
+    return fmt(cs)
+
+def seven_bar(d, tgt):
+    """số 7: thanh trên dày = tgt, GIỮ mặt trên ở chiều cao hoa (G8 tự chọn mép có thể hạ mặt trên). Mép dưới thanh + vạt loe trái dời lên;
+    góc trong thanh–chéo trượt dọc mép trong nét chéo."""
+    cs = parse(d); c0 = cs[0]; P = pts_of(c0)
+    top = max(p[1] for p in P)
+    hz = [p for p in P if abs(p[1] - top) > 0.5 and p[1] > top - 160]
+    ys = sorted({round(p[1], 1) for p in hz})
+    if not ys: return d
+    yb = max(ys, key=lambda y: sum(1 for p in hz if abs(p[1] - y) < 0.6))     # mép dưới thanh (nhiều nút nhất)
+    dl = (top - yb) - tgt
+    if abs(dl) < 0.3: return d
+    corner = max((p for p in hz if abs(p[1] - yb) < 0.6), key=lambda p: p[0])   # góc trong thanh–chéo
+    i = P.index(corner); prev = P[i - 1]                                       # nút trước = chân mép trong chéo
+    done = set()
+    for p in P:
+        if id(p) in done or p is corner: continue
+        if p[1] < top - 0.5 and p[1] > yb - 90 and p[0] < corner[0] - 1: done.add(id(p)); p[1] += dl
+    y2 = corner[1] + dl
+    if abs(corner[1] - prev[1]) > 1: corner[0] = prev[0] + (corner[0] - prev[0])*(y2 - prev[1])/(corner[1] - prev[1])
+    corner[1] = y2
     return fmt(cs)
 
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------

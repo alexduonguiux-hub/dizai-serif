@@ -2,7 +2,7 @@
 """S49 đồng bộ nét mảnh AnNam Serif (designer 20/11: "đồng bộ nét mảnh cho cả Serif" — cả chữ hoa, cả b d p q a: "đồng bộ tất cả").
     python3 tools/construct/hair_sync.py      (sau build.py, trước spacing.py) → ghi lại out/construct/outlines.json
 
-Chuẩn: nét mảnh 42 (Regular) / 56.5 (Bold, = 42 × thân 140/104 — tương phản cố định như Golden) cho mọi chữ có nét mảnh; Medium / SemiBold = nội suy đúng (1/3, 2/3).
+Chuẩn (S78, designer 23/11): nét mảnh 34 cho MỌI weight (Bold không tăng); Medium / SemiBold = nội suy đúng. Số 0–9 đồng bộ cùng chuẩn.
 Dùng lại luật của An Nam Golden (golden/golden.py), đo bằng trục giữa (stroke_balance.measure):
   - vòm n m h u: lòng vòm / lòng đáy u dịch nguyên khối tới đỉnh vòm = chuẩn (giữ dáng cung);
   - vòng o O ơ Ơ Q: lòng giãn / co theo trục dài của chính nó (Q: vùng đuôi giữ);
@@ -15,7 +15,7 @@ import json, os, sys, unicodedata
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path[:0] = [HERE, os.path.join(HERE, 'golden')]
 import golden as GD
 OUT = os.path.join(HERE, '..', '..', 'out', 'construct')
-T = {'Regular': 42.0, 'Bold': 56.5}           # designer 20/11 "đồng bộ weight của serif giống golden": nét mảnh tăng theo tỉ lệ thân (42 × 140/104) — tương phản 0.40 cố định
+T = {'Regular': 34.0, 'Bold': 34.0}           # S78 designer 23/11 "mảnh hơn đồng loạt, Serif 34, bold không tăng" (trước 42 / 56.5) · designer 20/11 "đồng bộ weight của serif giống golden": nét mảnh tăng theo tỉ lệ thân (42 × 140/104) — tương phản 0.40 cố định
 XTOP = 503.4
 
 def main():
@@ -47,6 +47,16 @@ def main():
             d, _ = GD.g8_solve(d, c, w, low, XTOP)                      # G8 tuyệt đối: đoạn thẳng nét mảnh = chuẩn (gồm thanh e f t)
             O[f'{c}-{w}'] = d
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    for c in '0123456789':                                        # S78 số đồng bộ nét mảnh (designer 23/11 "lưu ý các số … cũng nên đồng bộ")
+        if f'{c}-Regular' not in O: continue
+        for w in ('Regular', 'Bold'):
+            d = O[f'{c}-{w}']
+            if c in '0689': d = GD.ring_scale(d, GD.solve_ring(d, d, w, False), False)   # vòng: lòng giãn theo trục dài
+            elif c in '35': d = GD.g8_solve(GD.g10(d, w), c, w, low, XTOP)[0]           # cung mở
+            elif c == '4': d = GD.bar4(GD.g8_solve(d, c, w, low, XTOP)[0])               # thanh liền xuyên thân
+            elif c == '7': d = GD.seven_bar(d, T[w])                                   # thanh trên, giữ mặt trên ở cap
+            O[f'{c}-{w}'] = d
+        for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     if 'l-Regular' in O and 't-Regular' in O:                     # G14 chân l = chân t (designer 21/11: "chân chữ l và t … như golden cho serif")
         for w in ('Regular', 'Bold'): O[f'l-{w}'] = GD.l_from_t(O[f'l-{w}'], O[f't-{w}'])
         for w, t in GD.TW.items(): O[f'l-{w}'] = GD.lerp_d(O['l-Regular'], O['l-Bold'], t)
@@ -73,7 +83,7 @@ def main():
             if c != b and b == 'B' and f'{c}-Regular' in O and GD.composable(c):
                 for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.compose(O[f'B-{w}'], O[f'{c}-{w}'])
                 for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
-    for c in order:                                               # G20 phần nối bụng–thân D P B R = 0.65 × 42 mọi weight (designer 23/11)
+    for c in order:                                               # G20 phần nối bụng–thân D P B R = 0.65 × chuẩn mọi weight (designer 23/11)
         if c in GD.STEMBOWL and f'{c}-Regular' in O:
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.joint_thin(O[f'{c}-{w}'], GD.JOINT_K*T['Regular'])
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
