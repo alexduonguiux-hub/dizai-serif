@@ -1093,6 +1093,68 @@ def w_thin(d, flat=8.0):
     for k, v in new.items(): K[k][0], K[k][1] = v[0], v[1]
     return fmt(cs)
 
+# ---------- G23 số 2 (designer 23/11 "làm mảnh luôn số 2"): đế ngang (mép trên đế + loe phải) hạ xuống cho dày = chuẩn THẲNG;
+# mép ngoài nét chéo kéo dài theo tiếp tuyến tới mép đế mới. Cung trên: lòng (chuỗi cung trong, trên mép phải lòng) kéo dãn đứng
+# affine tới khi đỉnh cung dày = chuẩn CONG (đầu nét trái trượt theo).
+def digit2(d, t_line, t_curve):
+    cs = parse(d); c = cs[0]
+    segs_ = [[k, ps] for k, ps in c]
+    P = pts_of(c)
+    # đế: nút L có y = mép trên đế (y nhỏ > 30, xuất hiện ở ≥ 2 điểm ngang)
+    ys = sorted({round(p[1], 1) for p in P if 30 < p[1] < 200})
+    yb = None
+    for y in ys:
+        same = [p for p in P if abs(p[1] - y) < 0.6]
+        if len(same) >= 2 and max(q[0] for q in same) - min(q[0] for q in same) > 150: yb = y; break
+    if yb is not None and yb - t_line > 0.5:
+        dl = yb - t_line
+        i0 = None
+        for i, (k, ps) in enumerate(segs_):
+            if k == 'C' and abs(ps[-1][1] - yb) < 0.6 and ps[-1][0] < 200: i0 = i; break
+        if i0 is not None:                                          # cung mép ngoài chéo: kéo dài tiếp tuyến cuối
+            ps = segs_[i0][1]; e, c2 = ps[2], ps[1]
+            dx, dy = e[0] - c2[0], e[1] - c2[1]
+            k_ = abs(dx/dy) if abs(dy) > 3 else 1e9
+            k_ = min(k_, 0.3)                                       # chân chéo xuống gần đứng (giữ bề dày nét chéo, không vát nhọn)
+            e[0] -= k_*dl; e[1] -= dl
+            c2[0], c2[1] = e[0] + k_*45, e[1] + 45                  # tay nắm cuối theo cùng hướng → cung trơn
+        done = {id(segs_[i0][1][2])} if i0 is not None else set()
+        for p in P:                                                 # mép trên đế + loe phải (dưới 200, x > đầu đế)
+            if id(p) in done: continue
+            if p[1] > 1 and p[1] < yb + 60 and p[0] > 150: done.add(id(p)); p[1] -= dl
+    # cung trên: chuỗi cung LÒNG = các đoạn C sau đoạn kết thúc ở đầu trên mép trong nét chéo (y 250–360, x 150–300) tới đầu nét trái (x < 60)
+    jd = None
+    for i, (k, ps) in enumerate(segs_):
+        if k == 'C' and 250 < ps[-1][1] < 360 and 150 < ps[-1][0] < 300 and i > 3: jd = i; break
+    if jd is not None:
+        chain = []
+        for k, ps in segs_[jd + 1:]:
+            if k != 'C': break
+            chain.append(ps)
+            if ps[-1][0] < 60: break
+        def bz_(p0, ps, t): return [(1-t)**3*p0[i] + 3*(1-t)**2*t*ps[0][i] + 3*(1-t)*t*t*ps[1][i] + t**3*ps[2][i] for i in (0, 1)]
+        samp = []; p0 = segs_[jd][1][-1]
+        for ps in chain:
+            samp += [bz_(p0, ps, n/30) for n in range(31)]; p0 = ps[-1]
+        if samp:
+            pk = max(samp, key=lambda q: q[1]); x = pk[0]; hits = []
+            for pl in polys([c]):
+                for i in range(len(pl)):
+                    (x1, y1), (x2, y2) = pl[i - 1], pl[i]
+                    if (x1 <= x) != (x2 <= x): hits.append(y1 + (x - x1)*(y2 - y1)/(x2 - x1))
+            yo = max(hits) if hits else None
+            if yo is not None:
+                dl = (yo - pk[1]) - t_curve
+                if dl > 0.5:
+                    ylo = segs_[jd][1][-1][1] + 60; yhi = pk[1]
+                    done = set()
+                    for ps in chain:
+                        for q in ps:
+                            if id(q) in done: continue
+                            done.add(id(q))
+                            if q[1] > ylo: q[1] += dl*min(1.0, (q[1] - ylo)/max(1.0, yhi - ylo))
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
