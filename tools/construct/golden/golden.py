@@ -1329,6 +1329,24 @@ def flare_set(d, k=None):
             hT[0], hT[1] = T_[0] + sgx*FLARE_TIP[0]*W, T_[1] + FLARE_TIP[1]*D      # vào mũi mở (designer "lài cho cả regular để k bị cảm giác nhọn")
     return fmt(cs)
 
+# ---------- G29 Đ = D đã đồng bộ + thanh (designer 23/11 "Đ Bold bị lỗi, Đ regular cũng lỗi"): thanh Đ dính liền thân → rebase không
+# khớp contour, Đ giữ bản vẽ cũ (bụng dày, không có nối mảnh G20). Thanh = phần Đ nguồn nằm ngoài D nguồn (boolean), hợp với D mới.
+def bar_compose(src_c, src_b, new_b):
+    SC, SB_ = parse(src_c), parse(src_b)
+    dx, dy = horn_align(SC, SB_)
+    mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
+    srcC = _pp(src_c); srcB = _pp(mv(src_b)); newB = _pp(mv(new_b))
+    bar = _op(srcC, srcB, pathops.PathOp.DIFFERENCE)
+    PC = polys(parse(src_c)); xb = min(p[0] for c in parse(mv(src_b)) for p in pts_of(c))
+    ys = [p[1] for pl in PC for p in pl if p[0] < xb - 3]          # dải thanh: phần Đ nhô trái thân D
+    if not ys: return None
+    y0, y1 = min(ys) - 0.5, max(ys) + 0.5
+    xs_ = [p[0] for c in parse(mv(src_b)) for p in pts_of(c)]; xm = (min(xs_) + max(xs_))/2    # thanh chỉ ở nửa trái (không lấy dải chênh mép phải bụng)
+    band = pathops.Path(); band.moveTo(-3000, y0); band.lineTo(xm, y0); band.lineTo(xm, y1); band.lineTo(-3000, y1); band.close()
+    bar = _op(bar, band, pathops.PathOp.INTERSECTION)               # bỏ dải chênh bụng (bản vẽ Đ cũ khác D)
+    out = _op(newB, bar, pathops.PathOp.UNION); out.convertConicsToQuads()
+    return _pd(out)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
@@ -1516,6 +1534,12 @@ def main():
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rebase(O[f'{c}-{w}'], O[f'{b_}-{w}'], G[f'{b_}-{w}'], G[f'{c}-{w}'])
         else: continue
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    if 'Đ-Regular' in G and 'D-Regular' in G:                     # G29 Đ = D Golden + thanh
+        rr = {w: bar_compose(O[f'Đ-{w}'], O[f'D-{w}'], G[f'D-{w}']) for w in ('Regular', 'Bold')}
+        if all(rr.values()):
+            for w in ('Regular', 'Bold'): G[f'Đ-{w}'] = rr[w]
+            if horn_compat(rr['Regular'], rr['Bold']):
+                for w, t in TW.items(): G[f'Đ-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
     nh = 0
     for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
         b2 = no_horn(c)

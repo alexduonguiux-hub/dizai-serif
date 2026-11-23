@@ -108,6 +108,14 @@ def main():
                 O[f'{c}-{w}'] = (GD.compose(O[f'{b}-{w}'], O[f'{c}-{w}']) if GD.composable(c)
                                  else GD.rebase(SRC[f'{c}-{w}'], SRC[f'{b}-{w}'], O[f'{b}-{w}'], O[f'{c}-{w}']))
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    if 'Đ-Regular' in O and 'D-Regular' in O:                     # G29 Đ = D đã đồng bộ + thanh (designer 23/11 "Đ bị lỗi")
+        rr = {w: GD.bar_compose(SRC[f'Đ-{w}'], SRC[f'D-{w}'], O[f'D-{w}']) for w in ('Regular', 'Bold')}
+        if all(rr.values()):
+            for w in ('Regular', 'Bold'): O[f'Đ-{w}'] = rr[w]
+            if GD.horn_compat(rr['Regular'], rr['Bold']):
+                for w, t in GD.TW.items(): O[f'Đ-{w}'] = GD.lerp_d(rr['Regular'], rr['Bold'], t)
+            else:
+                for w in ('Medium', 'SemiBold'): O[f'Đ-{w}'] = GD.bar_compose(SRC[f'Đ-{w}'], SRC[f'D-{w}'], O[f'D-{w}']) or O[f'Đ-{w}']
     nh = 0
     for c in order:                                               # G17 chữ có sừng = chữ không sừng đã đồng bộ + sừng (designer 23/11)
         b2 = GD.no_horn(c)
