@@ -1056,6 +1056,43 @@ def seven_bar(d, tgt):
     corner[1] = y2
     return fmt(cs)
 
+# ---------- G22 nét chéo mảnh trong W Bold (designer 23/11 "làm mảnh luôn nét chéo trong W Bold"): bản vẽ W Bold có nét "/" mảnh thứ nhất
+# (từ đỉnh dưới trái lên giữa) phần dưới chỗ cắt nét đậm giữa dày 68 u, phần trên 33 u. Luật: hai mép nét về đúng đường của phần trên —
+# mép trái = đường mép trái phần trên; mép phải = đường qua đỉnh phải trên (549, 700) và chân phải còn mặt phẳng 8 u ở đỉnh dưới.
+# Góc nách (giao với mép nét đậm kề) trượt dọc mép nét đậm (giao đường). Chỉ Bold; Medium / SemiBold nội suy.
+def _lx(a, b, c, d):
+    """giao hai đường (a, b) và (c, d)"""
+    x1, y1 = a; x2, y2 = b; x3, y3 = c; x4, y4 = d
+    den = (x1 - x2)*(y3 - y4) - (y1 - y2)*(x3 - x4)
+    if abs(den) < 1e-9: return None
+    t = ((x1 - x3)*(y3 - y4) - (y1 - y3)*(x3 - x4))/den
+    return [x1 + t*(x2 - x1), y1 + t*(y2 - y1)]
+def w_thin(d, flat=8.0):
+    cs = parse(d); c = cs[0]
+    P = [ps[-1] for k, ps in c if ps]
+    near = lambda q: min(P, key=lambda p: (p[0] - q[0])**2 + (p[1] - q[1])**2)
+    def at(q, tol=4):
+        p = near(q); return p if (p[0] - q[0])**2 + (p[1] - q[1])**2 <= tol*tol else None
+    keys = {'tl': (447, 539), 'tl2': (512, 700), 'tr': (549, 700), 'cr_up': (464, 492), 'mid_r': (555, 243), 'cr_lo': (393, 275),
+            'mr_lo': (490, -11), 'r_mid': (342, 151), 'bot': (283, -11), 'botL': (260, -11), 'cl_lo': (317, 269), 'lt_in': (186, 628),
+            'cl_up': (359, 371), 'mt_l': (238, 700)}
+    K = {k: at(v) for k, v in keys.items()}
+    if any(v is None for v in K.values()): return d
+    B = (K['tl'][:], K['tl2'][:])                                  # mép trái phần trên (đường đích mép trái)
+    bot = [K['botL'][0] + flat, K['bot'][1]]
+    R = (bot, K['tr'][:])                                          # mép phải đích
+    new = {
+        'cl_lo': _lx(K['lt_in'], K['cl_lo'], *B),                  # nách nét đậm trái
+        'cl_up': _lx(K['mt_l'], K['cl_up'], *B),                   # nách nét đậm giữa (mép trái)
+        'cr_lo': _lx(K['mr_lo'], K['cr_lo'], *R),                  # nách nét đậm giữa (mép dưới phải)
+        'cr_up': _lx(K['mid_r'], K['cr_up'], *R),
+        'r_mid': _lx(R[0], R[1], [0, K['r_mid'][1]], [1, K['r_mid'][1]]),
+        'bot': bot,
+    }
+    if any(v is None for v in new.values()): return d
+    for k, v in new.items(): K[k][0], K[k][1] = v[0], v[1]
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.

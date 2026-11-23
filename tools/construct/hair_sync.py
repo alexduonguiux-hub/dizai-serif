@@ -70,6 +70,9 @@ def main():
         if c in GD.APEX_KEEP and f'{c}-Regular' in O:
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.apex_set(O[f'{c}-{w}'], GD.APEX_W)
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    if 'W-Bold' in O:                                             # G22 nét chéo mảnh trong W Bold (designer 23/11)
+        O['W-Bold'] = GD.w_thin(O['W-Bold'])
+        for w, t in GD.TW.items(): O[f'W-{w}'] = GD.lerp_d(O['W-Regular'], O['W-Bold'], t)
     for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)
         b = unicodedata.normalize('NFD', c)[0]
         if c == b or f'{b}-Regular' not in O: continue
