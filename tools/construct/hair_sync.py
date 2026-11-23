@@ -54,7 +54,7 @@ def main():
         for w in ('Regular', 'Bold'):
             d = O[f'{c}-{w}']
             if c in '0689': d = GD.ring_scale(d, GD.solve_ring(d, d, w, False), False)   # vòng: lòng giãn theo trục dài
-            elif c in '35': d = GD.g8_solve(GD.g10(d, w), c, w, low, XTOP)[0]           # cung mở
+            elif c in '35': d = GD.smooth_cl(GD.g8_solve(GD.g10(d, w), c, w, low, XTOP)[0])   # cung mở; G24 góc lòng 5 liền tiếp tuyến
             elif c == '4': d = GD.bar4(GD.g8_solve(d, c, w, low, XTOP)[0])               # thanh liền xuyên thân
             elif c == '7': d = GD.seven_bar(d, T[w])                                   # thanh trên, giữ mặt trên ở cap
             elif c == '2': d = GD.digit2(d, T[w], CT[w])                               # S80 đế = thẳng 34, cung trên = cong 28

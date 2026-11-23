@@ -1155,6 +1155,24 @@ def digit2(d, t_line, t_curve):
                             if q[1] > ylo: q[1] += dl*min(1.0, (q[1] - ylo)/max(1.0, yhi - ylo))
     return fmt(cs)
 
+# ---------- G24 nối cung → đoạn thẳng gần tiếp tuyến (gãy 5–25°, vd. góc lòng số 5 chạm thân: 14° Regular → nghiêng 10.6°):
+# xoay tay nắm cuối của cung về đúng hướng đoạn thẳng (giữ độ dài tay nắm) → liền tiếp tuyến G1.
+def smooth_cl(d, lo=4.0, hi=25.0):
+    cs = parse(d)
+    for c in cs:
+        n = len(c)
+        for i in range(1, n - 1):
+            k, ps = c[i]; k2, ps2 = c[i + 1]
+            if k != 'C' or k2 != 'L': continue
+            e, c2 = ps[2], ps[1]; q = ps2[0]
+            v1 = (e[0] - c2[0], e[1] - c2[1]); v2 = (q[0] - e[0], q[1] - e[1])
+            l1 = math.hypot(*v1); l2 = math.hypot(*v2)
+            if l1 < 1e-6 or l2 < 1e-6: continue
+            a = math.degrees(math.acos(max(-1, min(1, (v1[0]*v2[0] + v1[1]*v2[1])/(l1*l2)))))
+            if lo < a < hi:
+                c2[0] = e[0] - v2[0]/l2*l1; c2[1] = e[1] - v2[1]/l2*l1
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
