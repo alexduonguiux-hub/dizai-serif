@@ -68,6 +68,10 @@ def main():
         if c in GD.ARMD and f'{c}-Regular' in O:
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.arm_depth(O[f'{c}-{w}'], w)[0]
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    for c in GD.ARMD - {'T'}:                                     # G27 móc nét ngang Bold đồng dạng móc Regular (designer 23/11 "lài đồng bộ")
+        if f'{c}-Bold' in O:
+            O[f'{c}-Bold'] = GD.flare_like(O[f'{c}-Regular'], O[f'{c}-Bold'])
+            for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     if 'T-Regular' in O and 'E-Regular' in O:                     # G26 móc T = móc E (designer 23/11)
         for w in ('Regular', 'Bold'): O[f'T-{w}'] = GD.t_flare(O[f'T-{w}'], O[f'E-{w}'])
         for w, t in GD.TW.items(): O[f'T-{w}'] = GD.lerp_d(O['T-Regular'], O['T-Bold'], t)

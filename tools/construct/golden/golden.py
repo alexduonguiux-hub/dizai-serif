@@ -1261,6 +1261,48 @@ def t_flare(dT, dE):
     cs[0] = out
     return fmt(cs)
 
+# ---------- G27 móc nét ngang lài đồng bộ (designer 23/11 "khi bold lên làm cho phần móc nét ngang lài đồng bộ hết đi để k bị nhọn quá"):
+# móc (cung loe ở đầu tay E F L T Z Æ Œ) ở mọi weight = ĐỒNG DẠNG móc Regular: bề ngang W tỉ lệ theo chiều sâu D (W = W_R · D / D_R), tay nắm
+# tương đối giữ nguyên → độ dốc / độ lài như Regular, mũi không nhọn khi Bold. Mũi loe (điểm cắt) và chiều sâu giữ nguyên; nút trên mép
+# thanh trượt dọc thanh.
+def _flares(c):
+    """[(i, tip_is_start)] các cung C: một đầu tiếp tuyến ngang (nút trên thanh), đầu kia là mũi nằm trên đoạn thẳng đứng (nhát cắt) — vòng quanh contour"""
+    idx = [i for i, (k, ps) in enumerate(c) if k in 'LC']
+    m = len(idx); out = []
+    st = {}
+    for a in range(m):
+        i = idx[a]; st[i] = c[idx[a - 1]][1][-1] if a > 0 else c[0][1][0]
+    vert = lambda a_, b_: abs(a_[0] - b_[0]) < 0.6 and abs(a_[1] - b_[1]) > 20
+    for a in range(m):
+        i = idx[a]; k, ps = c[i]
+        if k != 'C': continue
+        p0 = st[i]; c1, c2, p3 = ps
+        ip, inx = idx[a - 1], idx[(a + 1) % m]
+        if abs(p3[0] - p0[0]) < 20: continue
+        if abs(c2[1] - p3[1]) < 0.6 and c[ip][0] == 'L' and vert(st[ip], p0): out.append((i, True, st))
+        elif abs(c1[1] - p0[1]) < 0.6 and c[inx][0] == 'L' and vert(p3, c[inx][1][0]): out.append((i, False, st))
+    return out
+def flare_like(dR, dX):
+    R, X = parse(dR), parse(dX)
+    if [[k for k, _ in c] for c in R] != [[k for k, _ in c] for c in X]: return dX
+    for cr, cx in zip(R, X):
+        FX = {i: stx for i, _, stx in _flares(cx)}
+        for (i, ts, str_) in _flares(cr):
+            if i not in FX: continue
+            pr0 = str_[i]; c1r, c2r, p3r = cr[i][1]
+            px0 = FX[i][i]; c1x, c2x, p3x = cx[i][1]
+            if ts: TR, NR, hTR, hNR, TX, NX, hTX, hNX = pr0, p3r, c1r, c2r, px0, p3x, c1x, c2x
+            else:  TR, NR, hTR, hNR, TX, NX, hTX, hNX = p3r, pr0, c2r, c1r, p3x, px0, c2x, c1x
+            WR, DR = NR[0] - TR[0], NR[1] - TR[1]; DX = NX[1] - TX[1]
+            if abs(WR) < 1 or abs(DR) < 1 or abs(DX) < 1: continue
+            k_ = DX/DR; WX = WR*abs(k_)
+            NXn = [TX[0] + WX, NX[1]]
+            sx, sy = WX/WR, DX/DR
+            hT = [TX[0] + (hTR[0] - TR[0])*sx, TX[1] + (hTR[1] - TR[1])*sy]
+            hN = [NXn[0] + (hNR[0] - NR[0])*sx, NXn[1] + (hNR[1] - NR[1])*sy]
+            NX[0], NX[1] = NXn; hTX[0], hTX[1] = hT; hNX[0], hNX[1] = hN
+    return fmt(X)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
@@ -1416,6 +1458,10 @@ def main():
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
+    for c in ARMD - {'T'}:                                        # G27 móc nét ngang Bold đồng dạng móc Regular (lài như nhau); T theo E (G26)
+        if f'{c}-Bold' in G: G[f'{c}-Bold'] = flare_like(G[f'{c}-Regular'], G[f'{c}-Bold'])
+        if f'{c}-Regular' in G:
+            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'T-Regular' in G and 'E-Regular' in G:                     # G26 móc T = móc E Golden (loe Golden)
         for w in ('Regular', 'Bold'): G[f'T-{w}'] = t_flare(G[f'T-{w}'], G[f'E-{w}'])
         for w, t in TW.items(): G[f'T-{w}'] = lerp_d(G['T-Regular'], G['T-Bold'], t)
