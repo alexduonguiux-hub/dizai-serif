@@ -1173,6 +1173,65 @@ def smooth_cl(d, lo=4.0, hi=25.0):
                 c2[0] = e[0] - v2[0]/l2*l1; c2[1] = e[1] - v2[1]/l2*l1
     return fmt(cs)
 
+# ---------- G25 nét mảnh ở đáy / đỉnh của cung mở (số 3 đáy bụng, 6 móc trên, 9 đuôi dưới — designer 23/11): đo bề dày đứng của dải mực
+# thấp nhất (đáy) / cao nhất (đỉnh) trên khoảng ngang [x0, x1] của bề rộng chữ; chỗ mỏng nhất phải = chuẩn. Mép TRONG của dải đó (các điểm
+# trong vùng cao H trên / dưới mép trong) dời đứng theo trọng số tuyến tính 1 → 0 (giữ dáng cung). Hai chiều: mỏng quá → dày lên.
+def run_thin(d, side, tgt, xr=(0.25, 0.8), H=170.0, it=3):
+    for _ in range(it):
+        cs = parse(d); PL = polys(cs)
+        xs = [p[0] for pl in PL for p in pl]; X0, X1 = min(xs), max(xs)
+        best = None
+        for k in range(41):
+            x = X0 + (X1 - X0)*(xr[0] + (xr[1] - xr[0])*k/40); hits = []
+            for pl in PL:
+                for i in range(len(pl)):
+                    (x1, y1), (x2, y2) = pl[i - 1], pl[i]
+                    if (x1 <= x) != (x2 <= x): hits.append(y1 + (x - x1)*(y2 - y1)/(x2 - x1))
+            hits.sort()
+            if len(hits) < 4: continue                              # cần ≥ 2 dải (dải mảnh + phần khác) để có mép trong
+            a, b = (hits[0], hits[1]) if side == 'bottom' else (hits[-2], hits[-1])
+            if best is None or b - a < best[0]: best = (b - a, x, b if side == 'bottom' else a)
+        if best is None: return d
+        t, xm, yin = best; dl = t - tgt
+        if abs(dl) < 0.6: return d
+        # đoạn chứa mép trong tại (xm, yin) → lan dọc contour qua các cung C (dừng ở đoạn thẳng = nhát cắt / góc, hoặc ra khỏi dải H)
+        bestc = None
+        for ci, c in enumerate(cs):
+            cur = None
+            for si, (k, ps) in enumerate(c):
+                if k == 'M': cur = ps[0]; continue
+                if k == 'C':
+                    for n_ in range(21):
+                        t_ = n_/20; u = 1 - t_
+                        q = [u**3*cur[i] + 3*u*u*t_*ps[0][i] + 3*u*t_*t_*ps[1][i] + t_**3*ps[2][i] for i in (0, 1)]
+                        dd = (q[0] - xm)**2 + (q[1] - yin)**2
+                        if bestc is None or dd < bestc[0]: bestc = (dd, ci, si)
+                if ps: cur = ps[-1]
+        if bestc is None or bestc[0] > 25: return d
+        _, ci, si = bestc; c = cs[ci]; n = len(c)
+        inband = lambda y: (y - yin < H) if side == 'bottom' else (yin - y < H)
+        sel = {si}
+        for step in (1, -1):
+            j = si
+            while True:
+                j2 = j + step
+                if j2 < 1 or j2 >= n or c[j2][0] != 'C' or not inband(c[j2][1][-1][1]): break
+                sel.add(j2); j = j2
+        # nút + hai tay nắm kề nó dời CÙNG lượng (theo độ cao của nút) → cung giữ liền tiếp tuyến
+        disp = lambda y: (-dl*max(0.0, 1 - max(0.0, y - yin)/H)) if side == 'bottom' else (dl*max(0.0, 1 - max(0.0, yin - y)/H))
+        nodes = set()
+        for j in sel: nodes.add(j); nodes.add(j - 1)                # nút cuối đoạn j và nút đầu (cuối đoạn j-1)
+        moved = set()
+        for j in sorted(nodes):
+            if j < 0 or not c[j][1]: continue
+            node = c[j][1][-1]; dy = disp(node[1])
+            grp = [node] + ([c[j][1][1]] if c[j][0] == 'C' else []) + ([c[j + 1][1][0]] if j + 1 < n and c[j + 1][0] == 'C' else [])
+            for q in grp:
+                if id(q) in moved: continue
+                moved.add(id(q)); q[1] += dy
+        d = fmt(cs)
+    return d
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.

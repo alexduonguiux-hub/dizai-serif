@@ -58,6 +58,7 @@ def main():
             elif c == '4': d = GD.bar4(GD.g8_solve(d, c, w, low, XTOP)[0])               # thanh liền xuyên thân
             elif c == '7': d = GD.seven_bar(d, T[w])                                   # thanh trên, giữ mặt trên ở cap
             elif c == '2': d = GD.digit2(d, T[w], CT[w])                               # S80 đế = thẳng 34, cung trên = cong 28
+            if c in '369': d = GD.run_thin(d, 'top' if c == '6' else 'bottom', CT[w])   # S81 G25 đáy 3 / móc 6 / đuôi 9 = chuẩn cong (hai chiều)
             O[f'{c}-{w}'] = d
         for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
     if 'l-Regular' in O and 't-Regular' in O:                     # G14 chân l = chân t (designer 21/11: "chân chữ l và t … như golden cho serif")
