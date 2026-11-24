@@ -21,6 +21,7 @@ XTOP = 503.4
 
 def main():
     GD.RING_T.update(CT); GD.ARCH_T.update(CT); GD.LINE_T.update(T); GD.BAR_K = 1.0
+    GD.TBAR = set('T')                                            # Serif: G11 làm mảnh thanh T trên bản vẽ nguồn (Golden tắt — T Golden lấy từ Serif đã có thanh thẳng)
     GD.SER_T.update({'Regular': 42.0, 'Bold': 56.5})              # NHẬN DIỆN nét mảnh theo bản vẽ nguồn (Bold 56–70) — chuẩn mới 34 làm ngưỡng 1.6× bỏ sót thanh / chéo Bold     # AnNam Serif: không hiệu chỉnh nét ngang (chỉ Golden)
     GD.ARM_D.update({'Regular': 94.0, 'Bold': 122.0})        # G13: tay loe đầu thanh = độ sâu bản vẽ gốc v0.918 (mọi tay bằng nhau)
     O = json.load(open(os.path.join(OUT, 'outlines.json'))); SRC = dict(O); SP = json.load(open(os.path.join(OUT, 'spacing.json')))
