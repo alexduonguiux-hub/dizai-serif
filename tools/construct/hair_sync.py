@@ -82,6 +82,11 @@ def main():
     if 'W-Bold' in O:                                             # G22 nét chéo mảnh trong W Bold (designer 23/11)
         O['W-Bold'] = GD.w_thin(O['W-Bold'])
         for w, t in GD.TW.items(): O[f'W-{w}'] = GD.lerp_d(O['W-Regular'], O['W-Bold'], t)
+    if 'y-Regular' in O:                                          # G31 đuôi y: nhát cắt đứng + cung lõm + đáy phẳng (designer 24/11)
+        rr = {w: GD.y_tail(O[f'y-{w}']) for w in ('Regular', 'Bold')}
+        if GD.horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): O[f'y-{w}'] = rr[w]
+            for w, t in GD.TW.items(): O[f'y-{w}'] = GD.lerp_d(O['y-Regular'], O['y-Bold'], t)
     for c in order:                                               # thân chữ có dấu = chữ gốc đã đồng bộ (không lệch như ệ)
         b = unicodedata.normalize('NFD', c)[0]
         if c == b or f'{b}-Regular' not in O: continue

@@ -1372,6 +1372,34 @@ def flatten_near(d, tol=3.0):
             j += 1
     return fmt(cs)
 
+# ---------- G31 đuôi y (designer 24/11 "thử xử lý đuôi y thành như này"): mép phải nét chéo đi thẳng xuống đáy; đáy phẳng rộng
+# YT_FLAT × h (h = bề ngang nét chéo); bên trái nhát cắt đứng cao YT_CUT × h; từ đầu nhát cắt một cung LÕM (đáy lõm thấp hơn đầu cắt
+# YT_DIP × h) vòng lên nối tiếp tuyến vào mép trái nét chéo ở độ cao YT_JOIN × h trên đáy. Tỉ lệ đo theo mẫu designer.
+YT_FLAT, YT_CUT, YT_DIP, YT_JOIN = 1.6, 2.0, 1.1, 3.3
+def y_tail(d):
+    cs = parse(d); c = cs[0]
+    ys = [ps[-1][1] for k, ps in c if ps]; yb = min(ys)
+    n = len(c)
+    i0 = next((i for i, (k, ps) in enumerate(c) if ps and abs(ps[-1][1] - yb) < 0.6 and i + 1 < n and c[i + 1][0] == 'L' and abs(c[i + 1][1][0][1] - yb) < 0.6), None)
+    if i0 is None or i0 != 0: return d                              # cần M ở góc đáy trái (cấu trúc y gốc)
+    if c[2][0] != 'C' or c[3][0] != 'L': return d
+    Pr = c[2][1][2]; Pn = c[3][1][0]                                # mép phải: Pr → Pn (đoạn thẳng)
+    # mép trái: hai đoạn cuối trước cung về M: ... L A, L Bp, C → M
+    if c[-2][0] != 'C' or c[-3][0] != 'L' or c[-4][0] != 'L': return d
+    A = c[-4][1][0]; Bp = c[-3][1][0]
+    kx_r = (Pn[0] - Pr[0])/(Pn[1] - Pr[1]); kx_l = (Bp[0] - A[0])/(Bp[1] - A[1])
+    xr = lambda y: Pr[0] + (y - Pr[1])*kx_r; xl = lambda y: A[0] + (y - A[1])*kx_l
+    yh = Bp[1]; h = xr(yh) - xl(yh)
+    BR = [xr(yb), yb]; BL = [BR[0] - YT_FLAT*h, yb]; T = [BL[0], yb + YT_CUT*h]
+    J = [xl(yb + YT_JOIN*h), yb + YT_JOIN*h]
+    ux, uy = -kx_l, -1.0; nn = math.hypot(ux, uy); ux, uy = ux/nn, uy/nn           # hướng xuống dọc mép trái
+    cJ = [J[0] + ux*1.0*h, J[1] + uy*1.0*h]                         # rời J theo mép trái (tiếp tuyến)
+    cT = [T[0] + 0.35*(J[0] - T[0]), T[1] - YT_DIP*h]               # vào T từ dưới-phải (lõm)
+    rest = c[3:-4]                                                  # từ L Pn … tới trước L A
+    new = [['M', [BL]], ['L', [BR]]] + [[k, ps] for k, ps in rest] + [['L', [A]], ['L', [J]], ['C', [cJ, cT, T]], ['Z', []]]
+    cs[0] = new
+    return fmt(cs)
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
