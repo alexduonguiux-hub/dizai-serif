@@ -72,6 +72,11 @@ def main():
         if f'{c}-Bold' in O:
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = GD.flare_set(O[f'{c}-{w}'])   # S84 G28 dáng móc dài, lài (mẫu designer)
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(O[f'{c}-Regular'], O[f'{c}-Bold'], t)
+    if 'z-Regular' in O and 'Z-Regular' in O:                     # G32 móc z = móc Z (designer 24/11)
+        rr = {w: GD.z_from_Z(O[f'z-{w}'], O[f'Z-{w}']) for w in ('Regular', 'Bold')}
+        if GD.horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): O[f'z-{w}'] = rr[w]
+            for w, t in GD.TW.items(): O[f'z-{w}'] = GD.lerp_d(O['z-Regular'], O['z-Bold'], t)
     if 'T-Regular' in O and 'E-Regular' in O:                     # G26 móc T = móc E (designer 23/11)
         for w in ('Regular', 'Bold'): O[f'T-{w}'] = GD.t_flare(O[f'T-{w}'], O[f'E-{w}'])
         for w, t in GD.TW.items(): O[f'T-{w}'] = GD.lerp_d(O['T-Regular'], O['T-Bold'], t)

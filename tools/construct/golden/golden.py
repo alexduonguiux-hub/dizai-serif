@@ -1408,6 +1408,33 @@ def y_tail(d):
     cs[0] = [['M', [BL]], ['L', [B2]], ['C', [c1, c2, R1]]] + [[k, ps] for k, ps in rest] + [['L', [A]], ['L', [J]], ['C', [cJ, cT, T]], ['Z', []]]
     return fmt(cs)
 
+# ---------- G32 móc z = móc Z (designer 24/11 "chữ z thường nên đồng bộ đuôi loe với Z"): móc z (2 cung, nông dần khi Bold) → MỘT cung
+# đúng dáng G28, chiều sâu = chiều sâu móc Z cùng weight (mũi trượt dọc nhát cắt đứng).
+def z_from_Z(dz, dZ):
+    FZ = parse(dZ)[0]; fz = _flares(FZ)
+    if not fz: return dz
+    i, ts, st = fz[0]; p0 = st[i]; p3 = FZ[i][1][2]
+    T_, N_ = (p0, p3) if ts else (p3, p0); DZ = abs(N_[1] - T_[1])
+    cs = parse(dz); c = cs[0]; out = []; j = 0
+    def is_vert(a, b): return abs(a[0] - b[0]) < 0.6 and abs(a[1] - b[1]) > 20
+    cur = None
+    while j < len(c):
+        k, ps = c[j]
+        if k == 'M': cur = ps[0]; out.append([k, ps]); j += 1; continue
+        if k == 'C' and j + 1 < len(c) and c[j + 1][0] == 'C':          # hai cung liền → một cung (đầu / cuối giữ)
+            a = cur; e = c[j + 1][1][2]
+            out.append(['C', [list(ps[0]), list(c[j + 1][1][1]), e]]); cur = e; j += 2; continue
+        out.append([k, ps]); cur = ps[-1] if ps else cur; j += 1
+    cs[0] = out
+    # chỉnh mũi: chiều sâu = DZ
+    c = cs[0]
+    for (i, ts, st) in _flares(c):
+        p0 = st[i]; c1, c2, p3 = c[i][1]
+        T_, N_ = (p0, p3) if ts else (p3, p0)
+        sg = 1 if N_[1] > T_[1] else -1
+        T_[1] = N_[1] - sg*DZ
+    return flare_set(fmt(cs))
+
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
 # Lòng mắt e (contour trong cao nhất, đáy là mép trên thanh) kéo lên theo chiều đứng, độ kéo tăng tuyến tính theo độ cao:
 # y' = y + δ·(y − y_thanh)/(y_đỉnh − y_thanh) → mép thanh đứng yên, đỉnh lòng lên đúng δ = bề dày đỉnh − chuẩn.
@@ -1567,6 +1594,11 @@ def main():
         if f'{c}-Regular' in G:
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = flare_set(G[f'{c}-{w}'])
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    if 'z-Regular' in G and 'Z-Regular' in G:                     # G32 móc z = móc Z Golden
+        rr = {w: z_from_Z(G[f'z-{w}'], G[f'Z-{w}']) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'z-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'z-{w}'] = lerp_d(G['z-Regular'], G['z-Bold'], t)
     if 'T-Regular' in G and 'E-Regular' in G:                     # G26 móc T = móc E Golden (loe Golden)
         for w in ('Regular', 'Bold'): G[f'T-{w}'] = t_flare(G[f'T-{w}'], G[f'E-{w}'])
         for w, t in TW.items(): G[f'T-{w}'] = lerp_d(G['T-Regular'], G['T-Bold'], t)
