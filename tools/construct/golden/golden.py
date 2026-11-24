@@ -1375,7 +1375,7 @@ def flatten_near(d, tol=3.0):
 # ---------- G31 đuôi y (designer 24/11 "thử xử lý đuôi y thành như này"): mép phải nét chéo đi thẳng xuống đáy; đáy phẳng rộng
 # YT_FLAT × h (h = bề ngang nét chéo); bên trái nhát cắt đứng cao YT_CUT × h; từ đầu nhát cắt một cung LÕM (đáy lõm thấp hơn đầu cắt
 # YT_DIP × h) vòng lên nối tiếp tuyến vào mép trái nét chéo ở độ cao YT_JOIN × h trên đáy. Tỉ lệ đo theo mẫu designer.
-YT_FLAT, YT_CUT, YT_DIP, YT_JOIN = 1.6, 2.0, 1.1, 3.3
+YT_FLAT, YT_CUT, YT_DIP, YT_JOIN = 3.05, 3.86, 1.8, 2.43   # S85 đo mẫu y designer 24/11 (h = 21 px): đáy 64, cắt 81, nối 51 px
 YT_EXT = 0.0                   # (designer 24/11: không kéo dài xuống — chỉ móc loe dài hơn)
 def y_tail(d):
     cs = parse(d); c = cs[0]
@@ -1395,8 +1395,9 @@ def y_tail(d):
     BR = [xr(yb), yb]; BL = [BR[0] - YT_FLAT*h, yb]; T = [BL[0], yb + YT_CUT*h]
     J = [xl(yb + YT_JOIN*h), yb + YT_JOIN*h]
     ux, uy = -kx_l, -1.0; nn = math.hypot(ux, uy); ux, uy = ux/nn, uy/nn           # hướng xuống dọc mép trái
-    cJ = [J[0] + ux*1.0*h, J[1] + uy*1.0*h]                         # rời J theo mép trái (tiếp tuyến)
-    cT = [T[0] + 0.35*(J[0] - T[0]), T[1] - YT_DIP*h]               # vào T từ dưới-phải (lõm)
+    cJ = [J[0] + ux*1.0*h, J[1] + uy*1.0*h]                         # rời J theo mép trái (tiếp tuyến), xuống
+    Wc = J[0] - T[0]
+    cT = [T[0] + 0.7*Wc, T[1] - 0.7*Wc]                             # vào mũi T dốc 45° từ dưới-phải → đáy lõm ~2 h (mẫu)
     rest = c[3:-4]                                                  # từ L Pn … tới trước L A
     new = [['M', [BL]], ['L', [BR]]] + [[k, ps] for k, ps in rest] + [['L', [A]], ['L', [J]], ['C', [cJ, cT, T]], ['Z', []]]
     cs[0] = new
