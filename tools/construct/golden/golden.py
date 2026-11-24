@@ -1067,7 +1067,8 @@ def _lx(a, b, c, d):
     if abs(den) < 1e-9: return None
     t = ((x1 - x3)*(y3 - y4) - (y1 - y3)*(x3 - x4))/den
     return [x1 + t*(x2 - x1), y1 + t*(y2 - y1)]
-def w_thin(d, flat=8.0):
+def w_thin(d, flat=8.0, t=None):
+    if t is None: t = LINE_T['Bold']
     cs = parse(d); c = cs[0]
     P = [ps[-1] for k, ps in c if ps]
     near = lambda q: min(P, key=lambda p: (p[0] - q[0])**2 + (p[1] - q[1])**2)
@@ -1078,9 +1079,14 @@ def w_thin(d, flat=8.0):
             'cl_up': (359, 371), 'mt_l': (238, 700)}
     K = {k: at(v) for k, v in keys.items()}
     if any(v is None for v in K.values()): return d
-    B = (K['tl'][:], K['tl2'][:])                                  # mép trái phần trên (đường đích mép trái)
     bot = [K['botL'][0] + flat, K['bot'][1]]
     R = (bot, K['tr'][:])                                          # mép phải đích
+    # S87: mép trái đích SONG SONG mép phải, cách đúng chuẩn thẳng t (trước: lấy mép trái phần trên → lệch góc, nách dày 39)
+    ux, uy = K['tr'][0] - bot[0], K['tr'][1] - bot[1]; ul = math.hypot(ux, uy); ux, uy = ux/ul, uy/ul
+    B = ([bot[0] - uy*t, bot[1] + ux*t], [K['tr'][0] - uy*t, K['tr'][1] + ux*t])
+    i_tl = next(i for i, q in enumerate(P) if q is K['tl']); pre = P[i_tl - 1]
+    K['tl'][0], K['tl'][1] = _lx(pre, K['tl'], *B)                  # nách trên: trượt theo mép phải nét đậm giữa
+    K['tl2'][0], K['tl2'][1] = _lx(B[0], B[1], [0, K['tl2'][1]], [1, K['tl2'][1]])   # đầu trên: trượt theo đường cap
     new = {
         'cl_lo': _lx(K['lt_in'], K['cl_lo'], *B),                  # nách nét đậm trái
         'cl_up': _lx(K['mt_l'], K['cl_up'], *B),                   # nách nét đậm giữa (mép trái)
@@ -1171,6 +1177,15 @@ def smooth_cl(d, lo=4.0, hi=25.0):
             a = math.degrees(math.acos(max(-1, min(1, (v1[0]*v2[0] + v1[1]*v2[1])/(l1*l2)))))
             if lo < a < hi:
                 c2[0] = e[0] - v2[0]/l2*l1; c2[1] = e[1] - v2[1]/l2*l1
+            elif a >= hi and l2 > 10:                              # S87 cung cụt (dây < 8) gặp đường thẳng thành góc: dựng góc lượn
+                s0 = c[i - 1][1][-1]; ch = math.hypot(e[0] - s0[0], e[1] - s0[1])   # liền tiếp tuyến như Regular (5 SemiBold gãy 3.8°)
+                if ch >= 8: continue
+                dx, dy = v2[0]/l2, v2[1]/l2; m = min(6.0, 0.4*l2)
+                e[0] += dx*m; e[1] += dy*m
+                tx, ty = ps[0][0] - s0[0], ps[0][1] - s0[1]; tl_ = math.hypot(tx, ty) or 1.0
+                r = 0.45*math.hypot(e[0] - s0[0], e[1] - s0[1])
+                ps[0][0], ps[0][1] = s0[0] + tx/tl_*r, s0[1] + ty/tl_*r
+                c2[0], c2[1] = e[0] - dx*r, e[1] - dy*r
     return fmt(cs)
 
 # ---------- G25 nét mảnh ở đáy / đỉnh của cung mở (số 3 đáy bụng, 6 móc trên, 9 đuôi dưới — designer 23/11): đo bề dày đứng của dải mực
