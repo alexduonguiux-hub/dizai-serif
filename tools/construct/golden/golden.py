@@ -1376,7 +1376,7 @@ def flatten_near(d, tol=3.0):
 # YT_FLAT × h (h = bề ngang nét chéo); bên trái nhát cắt đứng cao YT_CUT × h; từ đầu nhát cắt một cung LÕM (đáy lõm thấp hơn đầu cắt
 # YT_DIP × h) vòng lên nối tiếp tuyến vào mép trái nét chéo ở độ cao YT_JOIN × h trên đáy. Tỉ lệ đo theo mẫu designer.
 YT_FLAT, YT_CUT, YT_DIP, YT_JOIN = 1.6, 2.0, 1.1, 3.3
-YT_EXT = 25.0                  # designer 24/11 "đuôi y hơi ngắn hơn so với mẫu": đuôi xuống sâu thêm 25 u (−201 → −226)
+YT_EXT = 0.0                   # (designer 24/11: không kéo dài xuống — chỉ móc loe dài hơn)
 def y_tail(d):
     cs = parse(d); c = cs[0]
     ys = [ps[-1][1] for k, ps in c if ps]; yb = min(ys)
