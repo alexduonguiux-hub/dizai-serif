@@ -1375,32 +1375,37 @@ def flatten_near(d, tol=3.0):
 # ---------- G31 đuôi y (designer 24/11 "thử xử lý đuôi y thành như này"): mép phải nét chéo đi thẳng xuống đáy; đáy phẳng rộng
 # YT_FLAT × h (h = bề ngang nét chéo); bên trái nhát cắt đứng cao YT_CUT × h; từ đầu nhát cắt một cung LÕM (đáy lõm thấp hơn đầu cắt
 # YT_DIP × h) vòng lên nối tiếp tuyến vào mép trái nét chéo ở độ cao YT_JOIN × h trên đáy. Tỉ lệ đo theo mẫu designer.
-YT_FLAT, YT_CUT, YT_DIP, YT_JOIN = 3.05, 3.86, 1.8, 2.43   # S85 đo mẫu y designer 24/11 (h = 21 px): đáy 64, cắt 81, nối 51 px
+YT_FLAT, YT_CUT, YT_DIP, YT_JOIN = 3.05, 4.0, 1.8, 2.43
+YT_R, YT_W, YT_B = 2.2, 3.35, 0.5    # S86 đo mẫu 2 (h = 47 px): cong bắt đầu 103 px trên đáy, mũi cách mép phải 157 px, phẳng 24 px, cắt 188 px
 YT_EXT = 0.0                   # (designer 24/11: không kéo dài xuống — chỉ móc loe dài hơn)
 def y_tail(d):
+    """S86 (mẫu designer 24/11 "chỉnh đuôi y lại y vầy"): mép phải nét chéo thẳng xuống tới YT_R × h trên đáy rồi cong LỒI vòng sang
+    trái thành mép dưới (tiếp tuyến ngang ở đáy, còn YT_B × h phẳng sát nhát cắt); nhát cắt trái đứng cao YT_CUT × h (mũi nhọn);
+    mép trên từ mũi đổ xuống ~40° rồi lõm nhẹ nối tiếp tuyến vào mép trái nét chéo ở cùng độ cao YT_R × h. Mũi trái cách mép phải
+    nét chéo (ở đáy) YT_W × h. h = bề ngang nét chéo."""
     cs = parse(d); c = cs[0]
     ys = [ps[-1][1] for k, ps in c if ps]; yb = min(ys)
     n = len(c)
-    i0 = next((i for i, (k, ps) in enumerate(c) if ps and abs(ps[-1][1] - yb) < 0.6 and i + 1 < n and c[i + 1][0] == 'L' and abs(c[i + 1][1][0][1] - yb) < 0.6), None)
-    if i0 is None or i0 != 0: return d                              # cần M ở góc đáy trái (cấu trúc y gốc)
+    if not (c[0][0] == 'M' and abs(c[0][1][0][1] - yb) < 0.6 and c[1][0] == 'L' and abs(c[1][1][0][1] - yb) < 0.6): return d
     if c[2][0] != 'C' or c[3][0] != 'L': return d
-    Pr = c[2][1][2]; Pn = c[3][1][0]                                # mép phải: Pr → Pn (đoạn thẳng)
-    # mép trái: hai đoạn cuối trước cung về M: ... L A, L Bp, C → M
     if c[-2][0] != 'C' or c[-3][0] != 'L' or c[-4][0] != 'L': return d
-    A = c[-4][1][0]; Bp = c[-3][1][0]
+    Pr = c[2][1][2]; Pn = c[3][1][0]; A = c[-4][1][0]; Bp = c[-3][1][0]
+    yb = yb - YT_EXT
     kx_r = (Pn[0] - Pr[0])/(Pn[1] - Pr[1]); kx_l = (Bp[0] - A[0])/(Bp[1] - A[1])
     xr = lambda y: Pr[0] + (y - Pr[1])*kx_r; xl = lambda y: A[0] + (y - A[1])*kx_l
-    yh = Bp[1]; h = xr(yh) - xl(yh)
-    yb = yb - YT_EXT
-    BR = [xr(yb), yb]; BL = [BR[0] - YT_FLAT*h, yb]; T = [BL[0], yb + YT_CUT*h]
-    J = [xl(yb + YT_JOIN*h), yb + YT_JOIN*h]
-    ux, uy = -kx_l, -1.0; nn = math.hypot(ux, uy); ux, uy = ux/nn, uy/nn           # hướng xuống dọc mép trái
-    cJ = [J[0] + ux*1.0*h, J[1] + uy*1.0*h]                         # rời J theo mép trái (tiếp tuyến), xuống
-    Wc = J[0] - T[0]
-    cT = [T[0] + 0.7*Wc, T[1] - 0.7*Wc]                             # vào mũi T dốc 45° từ dưới-phải → đáy lõm ~2 h (mẫu)
-    rest = c[3:-4]                                                  # từ L Pn … tới trước L A
-    new = [['M', [BL]], ['L', [BR]]] + [[k, ps] for k, ps in rest] + [['L', [A]], ['L', [J]], ['C', [cJ, cT, T]], ['Z', []]]
-    cs[0] = new
+    h = xr(Bp[1]) - xl(Bp[1])
+    yR = yb + YT_R*h
+    R1 = [xr(yR), yR]; J = [xl(yR), yR]
+    BL = [xr(yb) - YT_W*h, yb]; B2 = [BL[0] + YT_B*h, yb]; T = [BL[0], yb + YT_CUT*h]
+    uu = (kx_r, 1.0); nu = math.hypot(*uu); uu = (uu[0]/nu, uu[1]/nu)             # hướng LÊN dọc mép chéo
+    span = R1[0] - B2[0]
+    c1 = [B2[0] + 0.55*span, yb]; c2 = [R1[0] - uu[0]*0.55*(yR - yb), R1[1] - uu[1]*0.55*(yR - yb)]
+    ul = (kx_l, 1.0); nl = math.hypot(*ul); ul = (ul[0]/nl, ul[1]/nl)
+    cJ = [J[0] - ul[0]*0.6*h, J[1] - ul[1]*0.6*h]                   # rời J xuống dọc mép trái
+    L_ = math.hypot(J[0] - T[0], J[1] - T[1])
+    cT = [T[0] + math.cos(math.radians(40))*0.45*L_, T[1] - math.sin(math.radians(40))*0.45*L_]   # vào mũi dốc 40°
+    rest = c[3:-4]
+    cs[0] = [['M', [BL]], ['L', [B2]], ['C', [c1, c2, R1]]] + [[k, ps] for k, ps in rest] + [['L', [A]], ['L', [J]], ['C', [cJ, cT, T]], ['Z', []]]
     return fmt(cs)
 
 # ---------- G9 đỉnh cung trên e = nét mảnh (designer 20/11: "phần trên này của e là nét mỏng") ----------
