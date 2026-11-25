@@ -143,6 +143,7 @@ def main():
             for w in WS_: O[f'{c}-{w}'] = rr[w]
             nh += 1
     print('G17 chữ có sừng:', nh)
+    GD.horn_flare_all(O, order)                                   # G34 sừng ư dính vào loe (designer 25/11)
     if 'ẞ-Regular' in O:                                          # G30 ẞ: duỗi cung gần thẳng (chỗ thắt) — hết gãy ở weight giữa
         for w in ('Regular', 'Bold'): O[f'ẞ-{w}'] = GD.flatten_near(O[f'ẞ-{w}'])
         if GD.horn_compat(O['ẞ-Regular'], O['ẞ-Bold']):

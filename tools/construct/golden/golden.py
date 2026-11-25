@@ -1659,6 +1659,7 @@ def main():
             nh += 1
         else: print('G17 không ghép được (giữ cách cũ):', c)
     print('G17 chữ có sừng = chữ gốc + sừng:', nh)
+    horn_flare_all(G, chars)
     ntiny = []
     for c in chars:
         if f'{c}-Regular' not in G: continue
@@ -1777,6 +1778,64 @@ def _op(a, b, op): return pathops.op(a, b, op)
 def no_horn(c):
     n = unicodedata.normalize('NFD', c)
     return unicodedata.normalize('NFC', n.replace(HORN, '')) if HORN in n else None
+# ---------- G34 sừng ư dính vào loe (designer 25/11 "dấu ư k dính vào loe"): mép trong sừng (từ đỉnh sừng đi xuống) kết thúc TRÊN
+# đường cong loe đầu thân phải (điểm nối ở HF_FRAC chiều cao loe), loe giữ nguyên cung của chữ gốc từ điểm nối tới góc đỉnh.
+# Trước: Golden — mép trong sừng cắm vào thân DƯỚI loe → khe trắng hẹp giữa loe và sừng; Serif — loe bị thay bằng đoạn thẳng.
+HF_FRAC = 0.6
+def horn_flare(d, base_d, h, frac=None):
+    frac = HF_FRAC if frac is None else frac
+    F = None                                                        # loe phải của chữ gốc: cung C đi lên, kết thúc ở góc đỉnh phải
+    for c in parse(base_d):
+        for sg in _segs(c):
+            p0, k, ps = sg; e = ps[-1]
+            if k != 'C': continue
+            for a, b in ((p0, e), (e, p0)):
+                if abs(b[1] - h) < 1.0 and h - a[1] > 20 and b[0] > a[0] and (F is None or b[0] > F[1][0]):
+                    F = (a, b, sg if a is p0 else (tuple(e), 'C', [ps[1], ps[0], list(p0)]))
+    if F is None: return d
+    S, K, Fs = F
+    cs = parse(d)
+    for ci, c in enumerate(cs):
+        sg = _segs(c); n = len(sg)
+        if not sg or max(q[1] for _, _, ps in sg for q in ps) < h + 2: continue
+        j = next((i for i in range(n) if math.dist(sg[i][0], K) < 2.0), None)          # đoạn bắt đầu ở góc đỉnh phải
+        it = next((i for i in range(n) if sg[i][1] == 'L' and min(sg[i][0][1], sg[i][2][0][1]) > h + 2
+                   and min(sg[i][0][0], sg[i][2][0][0]) > K[0] - 5), None)              # mặt đỉnh sừng (bên phải góc loe, trên đỉnh thân)
+        if j is None or it is None: return d
+        ii = (it + 1) % n
+        if sg[ii][1] != 'C': return d
+        lo, hi = 0.0, 1.0; yc = S[1] + frac*(K[1] - S[1])
+        for _ in range(40):
+            m = (lo + hi)/2
+            if _bz(Fs, m)[1] < yc: lo = m
+            else: hi = m
+        tc = (lo + hi)/2; X = list(_bz(Fs, tc))
+        p0, _, ps = sg[ii]; J = ps[2]
+        T0 = p0; r = math.dist(X, T0)/max(1e-6, math.dist(J, T0))          # co tay nắm theo dây cung mới (giữ hướng hai đầu)
+        inner = ('C', [[T0[0] + (ps[0][0] - T0[0])*r, T0[1] + (ps[0][1] - T0[1])*r], [X[0] + (ps[1][0] - J[0])*r, X[1] + (ps[1][1] - J[1])*r], X])
+        up = _cut(Fs, tc, 1.0)
+        seq = []; k = j
+        while k % n != ii: seq.append((sg[k % n][1], sg[k % n][2])); k += 1
+        seq += [inner, up]
+        cont = [['M', [list(K)]]] + [[kk, [list(q) for q in ps_]] for kk, ps_ in seq]
+        cont[-1][1][-1] = cont[0][1][0]; cont.append(['Z', []])
+        cs[ci] = cont
+        return fmt(cs)
+    return d
+def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold')):
+    """G34 cho cả họ ư thường (ư ứ ừ ử ữ ự): R / B rồi nội suy; nếu không tương thích thì từng weight"""
+    h = max(p[1] for pl in polys(parse(G['u-Regular'])) for p in pl); n = 0
+    for c in chars:
+        if unicodedata.normalize('NFD', c)[0] != 'u' or not no_horn(c) or f'{c}-Regular' not in G: continue
+        b2 = no_horn(c)
+        rr = {w: horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h) for w in WS if f'{c}-{w}' in G}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        else:
+            for w, d in rr.items(): G[f'{c}-{w}'] = d
+        n += 1
+    print('G34 sừng ư dính loe:', n)
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
