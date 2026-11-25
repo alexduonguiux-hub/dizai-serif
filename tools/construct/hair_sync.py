@@ -131,8 +131,8 @@ def main():
     for c in order:                                               # G17 chữ có sừng = chữ không sừng đã đồng bộ + sừng (designer 23/11)
         b2 = GD.no_horn(c)
         if not b2 or f'{c}-Regular' not in O or f'{b2}-Regular' not in O: continue
-        if unicodedata.normalize('NFD', c)[0] in 'uo':              # G33 sừng mới ư ơ thường (designer 25/11)
-            rs = {w: GD.horn_new(O[f'{b2}-{w}'], c) for w in ('Regular', 'Bold')}
+        if unicodedata.normalize('NFD', c)[0] in 'uoUO':            # G33 sừng mới ư ơ Ư Ơ (designer 25/11)
+            rs = {w: GD.horn_new(O[f'{b2}-{w}'], c, GD.horn_h(O, c)) for w in ('Regular', 'Bold')}
         else: rs = {w: GD.horn_splice(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}']) for w in ('Regular', 'Bold')}   # S79: ghép sừng không boolean (như Golden) — R / B cùng cấu trúc, Medium / SemiBold không méo
         if all(rs.values()) and GD.horn_compat(rs['Regular'], rs['Bold']):
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = rs[w]

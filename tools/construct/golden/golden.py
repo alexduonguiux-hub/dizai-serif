@@ -1652,8 +1652,8 @@ def main():
     for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
         b2 = no_horn(c)
         if not b2 or f'{c}-Regular' not in G or f'{b2}-Regular' not in G: continue
-        if unicodedata.normalize('NFD', c)[0] in 'uo':              # G33 sừng mới ư ơ thường (designer 25/11)
-            rr = {w: horn_new(G[f'{b2}-{w}'], c) for w in ('Regular', 'Bold')}
+        if unicodedata.normalize('NFD', c)[0] in 'uoUO':            # G33 sừng mới ư ơ Ư Ơ (designer 25/11)
+            rr = {w: horn_new(G[f'{b2}-{w}'], c, horn_h(G, c)) for w in ('Regular', 'Bold')}
         else: rr = {w: horn_splice(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in ('Regular', 'Bold')}   # ghép sừng không boolean → R / B cùng cấu trúc
         if all(rr.values()) and horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
@@ -1779,35 +1779,40 @@ def _op(a, b, op): return pathops.op(a, b, op)
 def no_horn(c):
     n = unicodedata.normalize('NFD', c)
     return unicodedata.normalize('NFC', n.replace(HORN, '')) if HORN in n else None
-# ---------- G33 sừng mới ư ơ thường (designer 25/11, Figma "Frame 7"): một hình sừng cố định (đo từ bản vẽ, 320 px → 1000 u),
-# đỉnh phẳng cao 572.5, mép trái chôn vào thân. ư: mép trái sừng = mép phải thân phải (đo ở y 300) − 8.9; ơ: = cực phải vòng − 114.6.
-# Sừng giữ nguyên hình ở mọi weight, chỉ dời theo thân. Ghép: nguồn = thân ∪ sừng → horn_splice (không boolean ở kết quả).
+# ---------- G33 sừng mới ư ơ Ư Ơ (designer 25/11, Figma "Frame 7"): một hình sừng cố định đo từ bản vẽ (320 px → 1000 u), mọi weight.
+# Đỉnh phẳng cao hơn x-height (thường) / cap (hoa) HORN_UP = 37.5. Mép trái sừng chôn vào thân: lấy mép phải ngoài của chữ ở độ cao
+# giữa đoạn chôn (đỉnh − 94.5), lùi vào HORN_IN (thân u: 9.3; vòng o: 30.2 — đo từ bản vẽ trên Golden).
+# Ghép: nguồn = thân ∪ sừng → horn_splice (kết quả không boolean, R / B cùng cấu trúc).
 HORN_PX = [('M', [(0, 24.5)]), ('C', [(0, 24.5), (15.992, 31.061), (24.5, 22.5)]), ('C', [(32.675, 14.273), (27.065, 0), (27.065, 0)]),
            ('L', [(54, 0)]), ('C', [(54, 0), (52.517, 33), (32.5, 38)]), ('C', [(18.053, 41.609), (0, 36), (0, 36)]), ('L', [(0, 24.5)])]
-HORN_TOP, HORN_U, HORN_O = 572.5, -8.9, -114.6
-def horn_shape(x0):
-    k = 1000/320
+HORN_K, HORN_UP, HORN_MID = 1000/320, 37.5, 94.5
+HORN_IN = {'u': 9.3, 'o': 30.2}
+def horn_shape(x0, top):
     s_ = ''
     for cmd, pts in HORN_PX:
-        s_ += cmd + ' '.join('%.2f %.2f' % (x0 + x*k, HORN_TOP - y*k) for x, y in pts)
+        s_ += cmd + ' '.join('%.2f %.2f' % (x0 + x*HORN_K, top - y*HORN_K) for x, y in pts)
     return s_ + 'Z'
-def horn_src(base_d, c):
-    P = [p for pl in polys(parse(base_d)) for p in pl if p[1] < 560]
-    fam = unicodedata.normalize('NFD', c)[0]
-    if fam == 'u':
-        xs = []
-        for pl in polys(parse(base_d)):
-            for i in range(len(pl)):
-                (x1, y1), (x2, y2) = pl[i - 1], pl[i]
-                if (y1 > 300) != (y2 > 300): xs.append(x1 + (300 - y1)*(x2 - x1)/(y2 - y1))
-        x0 = max(xs) + HORN_U
-    else: x0 = max(p[0] for p in P) + HORN_O
-    h = _pp(horn_shape(x0))
-    out = _op(_pp(base_d), h, pathops.PathOp.UNION); out.convertConicsToQuads()
+def _xr(d, y):
+    xs = []
+    for pl in polys(parse(d)):
+        for i in range(len(pl)):
+            (x1, y1), (x2, y2) = pl[i - 1], pl[i]
+            if (y1 > y) != (y2 > y): xs.append(x1 + (y - y1)*(x2 - x1)/(y2 - y1))
+    return max(xs) if xs else None
+def horn_src(base_d, c, h):
+    """h = x-height (thường) / cap (hoa) của bộ chữ"""
+    fam = unicodedata.normalize('NFD', c)[0].lower()
+    top = h + HORN_UP
+    x0 = _xr(base_d, top - HORN_MID) - HORN_IN[fam]
+    out = _op(_pp(base_d), _pp(horn_shape(x0, top)), pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
-def horn_new(new_b, c):
-    """G33: chữ thường ư ơ (+ dấu thanh) = thân đã đồng bộ + sừng mới"""
-    return horn_splice(horn_src(new_b, c), new_b, new_b)
+def horn_new(new_b, c, h):
+    """G33: ư ơ Ư Ơ (+ dấu thanh) = thân đã đồng bộ + sừng mới"""
+    return horn_splice(horn_src(new_b, c, h), new_b, new_b)
+def horn_h(O, c):
+    """độ cao tham chiếu: đỉnh thân u (thường) / U (hoa)"""
+    k = ('U' if unicodedata.normalize('NFD', c)[0].isupper() else 'u') + '-Regular'
+    return max(p[1] for pl in polys(parse(O[k])) for p in pl)
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
