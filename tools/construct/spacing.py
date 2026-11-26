@@ -37,6 +37,7 @@ STEM_L = 'BDEFHIKLMNPRÞ'   # S17 chữ có thân đứng bên trái
 FOOT_R, FOOT_L, FOOT_Y, MIN_GAP_FOOT = set('RKX'), set('A'), 110.0, 10.0   # S16 RA KA XA: chân serif hai chữ được sát hơn (designer 26/11 "RA, KA nên gần hơn")
 LOOSE_X = set('AVY')                  # S19 chéo nới với chữ tròn (O C G Q)
 KSCALE = {'V|A': 1.15, 'A|V': 1.15}   # S18 designer 26/11 "VA kerning cho gần lại cỡ 15%" + "AV luôn"
+HORN_BAR = set('tf')                 # S20 designer 26/11 "chữ ứt sừng ư bị overlap lên t" (sừng dời xuống ngang tầm thanh t)
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
 WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.35, 0.32   # designer 05/11 lần 2: "RA KA XA cũng hơi xa" — 0.25 / 0.38 → 0.35 / 0.32
 # cặp NÊM ĐỐI NÊM (designer 05/11: "KA, RA, LA, ƯA, XA…" thưa): khe nhỏ nhất ở CHÂN (đường chân) nên luật khe nhỏ nhất không
@@ -327,6 +328,7 @@ def main():
                 g = pair_gap(a, b_, k)
                 if not np.any(~np.isnan(g)): continue
                 fl_ = FLOOR.get(a, MIN_GAP)
+                if a in FLOOR and lclass(b_) in HORN_BAR: fl_ = MIN_GAP        # S20 sừng × thanh ngang t f: sàn khe đủ (không chồng)
                 if base(a) in FOOT_R and base(b_) in FOOT_L: fl_ = np.where(YS < FOOT_Y, MIN_GAP_FOOT, fl_)   # S16 chân serif
                 short = np.nanmax(fl_ - g)                                    # thiếu bao nhiêu so với sàn (theo cao độ)
                 gm = np.nanmin(g)
