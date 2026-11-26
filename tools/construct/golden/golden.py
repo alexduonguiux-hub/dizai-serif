@@ -1102,6 +1102,14 @@ def w_thin(d, flat=8.0, t=None):
 # ---------- G23 số 2 (designer 23/11 "làm mảnh luôn số 2"): đế ngang (mép trên đế + loe phải) hạ xuống cho dày = chuẩn THẲNG;
 # mép ngoài nét chéo kéo dài theo tiếp tuyến tới mép đế mới. Cung trên: lòng (chuỗi cung trong, trên mép phải lòng) kéo dãn đứng
 # affine tới khi đỉnh cung dày = chuẩn CONG (đầu nét trái trượt theo).
+def bar5_t(d5):
+    """bề dày thanh trên số 5 (đo đứng ở x 300 — giữa thanh)"""
+    ys = []
+    for pl in polys(parse(d5)):
+        for i in range(len(pl)):
+            (x0, y0), (x1, y1) = pl[i], pl[(i + 1) % len(pl)]
+            if (x0 - 300)*(x1 - 300) < 0: ys.append(y0 + (300 - x0)*(y1 - y0)/(x1 - x0))
+    ys.sort(); return ys[-1] - ys[-2]
 def digit2(d, t_line, t_curve):
     cs = parse(d); c = cs[0]
     segs_ = [[k, ps] for k, ps in c]
@@ -1112,7 +1120,7 @@ def digit2(d, t_line, t_curve):
     for y in ys:
         same = [p for p in P if abs(p[1] - y) < 0.6]
         if len(same) >= 2 and max(q[0] for q in same) - min(q[0] for q in same) > 150: yb = y; break
-    if yb is not None and yb - t_line > 0.5:
+    if yb is not None and abs(yb - t_line) > 0.5:                   # (G51: đế có thể nâng lên — dl âm)
         dl = yb - t_line
         i0 = None
         for i, (k, ps) in enumerate(segs_):
@@ -1712,6 +1720,13 @@ def main():
             tfn[c] = TF_N[0]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     print('G42 chân loe nét mảnh (R + B):', tfn)
+    if '2-Regular' in G and '5-Regular' in G:                     # G51 đế số 2 DÀY = thanh trên số 5 (bản vẽ designer: đế 90.7 / 130.4)
+        T5 = {w: bar5_t(G[f'5-{w}']) for w in ('Regular', 'Bold')}
+        rr = {w: digit2(G[f'2-{w}'], T5[w], RING_T[w]) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'2-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'2-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        print('G51 đế số 2 = thanh số 5:', {w: round(v, 1) for w, v in T5.items()})
     if os.environ.get('DIZAI_HAIR'):                              # trục HAIR: số lấy nét mảnh từ bước Serif (hair_sync) → chạy lại luật số với chuẩn mới
         XT_ = 503.4; nd = 0
         for c in '0123456789':
@@ -1724,7 +1739,7 @@ def main():
                     elif c in '35': d = smooth_cl(g8_solve(g10(d, w), c, w, low, XT_)[0])
                     elif c == '4': d = bar4(g8_solve(d, c, w, low, XT_)[0])
                     elif c == '7': d = seven_bar(d, LINE_T[w]*BAR_K)
-                    elif c == '2': d = digit2(d, LINE_T[w], RING_T[w])
+                    elif c == '2': d = digit2(d, bar5_t(G[f'5-{w}']), RING_T[w])   # G51 đế dày giữ (chỉ cung trên theo nét mảnh)
                     if c in '369': d = run_thin(d, 'top' if c == '6' else 'bottom', RING_T[w])
                 except Exception as e_: print('HAIR số', c, w, e_); d = G[f'{c}-{w}']
                 rr[w] = d
