@@ -1633,9 +1633,15 @@ def main():
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
-    if 't-Regular' in G:                                          # G45 lòng móc t khoét sâu (đáy mảnh) — trước G43 để j theo
-        for w in ('Regular', 'Bold'): G[f't-{w}'] = t_hook_deep(G[f't-{w}'])
-        for w, t in TW.items(): G[f't-{w}'] = lerp_d(G['t-Regular'], G['t-Bold'], t)
+    for c_ in 't':                                                # G45 lòng móc t khoét sâu, đáy mảnh — trước G43 / G46 để j, l theo
+        if f'{c_}-Regular' not in G: continue
+        for w in ('Regular', 'Bold'): G[f'{c_}-{w}'] = t_hook_deep(G[f'{c_}-{w}'])
+        for w, t in TW.items(): G[f'{c_}-{w}'] = lerp_d(G[f'{c_}-Regular'], G[f'{c_}-Bold'], t)
+    if 'l-Regular' in G and 't-Regular' in G:                     # G46 móc l = móc t
+        rr = {w: l_hook_from_t(G[f'l-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'l-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'l-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
     for c in 'jȷ':                                                # G43 móc j = móc t lật gương
         if f'{c}-Regular' in G and 't-Regular' in G:
             rr = {w: j_from_t(G[f'{c}-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
@@ -2249,6 +2255,24 @@ def t_hook_deep(d, k=None):
     dl = (B[1] - yb)*(1 - k)
     for q in (c[ci + 1][1][1], B, c[ci + 2][1][0]): q[1] -= dl
     return fmt(cs)
+def l_hook_from_t(dl, dt):
+    """G46 móc l = đúng móc t (designer 26/11 "móc chữ l đồng bộ với t"): 2 cung ngoài, nhát cắt, 2 cung lòng của t dời ngang vào thân l"""
+    L = parse(dl); lc = L[0]; tc = parse(dt)[0]
+    def cut(c):
+        best = None
+        for i, (k, ps) in enumerate(c):
+            if k != 'L' or i < 3: continue
+            a = c[i - 1][1][-1]; b = ps[0]
+            if abs(a[0] - b[0]) < 0.6 and 40 < abs(a[1] - b[1]) < 200 and min(a[1], b[1]) < 50 and (best is None or a[0] > c[best - 1][1][-1][0]): best = i
+        return best
+    li, ti = cut(lc), cut(tc)
+    if li is None or ti is None or li + 2 >= len(lc) or ti + 2 >= len(tc): return dl
+    if [lc[li + k][0] for k in (-2, -1, 1, 2)] != ['C', 'C', 'C', 'C'] or [tc[ti + k][0] for k in (-2, -1, 1, 2)] != ['C', 'C', 'C', 'C']: return dl
+    dx = lc[li - 3][1][-1][0] - tc[ti - 3][1][-1][0]
+    for k in (-2, -1, 0, 1, 2):
+        lc[li + k] = [tc[ti + k][0], [[p[0] + dx, p[1]] for p in tc[ti + k][1]]]
+    lc[li - 3][1][-1][1] = tc[ti - 3][1][-1][1]                     # điểm rời mép thân ngoài cùng cao độ với t
+    return fmt(L)
 def j_from_t(dj, dt):
     T = parse(dt)[0]; J = parse(dj); jc = J[0]
     def cut_idx(c, side):
