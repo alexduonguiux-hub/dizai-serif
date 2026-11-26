@@ -1698,6 +1698,8 @@ def main():
     for k_ in list(G):                                            # G39 mũi loe s / đuôi y hết gãy
         c_ = unicodedata.normalize('NFD', k_.rsplit('-', 1)[0])[:1]
         if c_ == 's': G[k_] = tip_unwiggle(G[k_])
+        elif c_ == '&': G[k_] = tip_unwiggle(amp_waist(G[k_]))
+        elif c_ in 'oO' and '\u031b' in unicodedata.normalize('NFD', k_.rsplit('-', 1)[0]): G[k_] = tip_unwiggle(G[k_])
         elif c_ == 'y': G[k_] = y_tail_fix(G[k_])
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('G6 lòng giãn:', {f'{b}-{w}': round(k, 3) for (b, w), k in RINGK.items()})
@@ -1929,26 +1931,34 @@ def horn_flare(d, base_d, h, frac=None, ref=None):
         return fmt(cs)
     return d
 def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold'), tip_src=None):
-    """G34 cho cả họ ư thường (ư ứ ừ ử ữ ự): R / B rồi nội suy; nếu không tương thích thì từng weight"""
-    h = max(p[1] for pl in polys(parse(G['u-Regular'])) for p in pl); n = 0
-    def tip_of(D_, w):                                              # đầu sừng của ư KHÔNG dấu (dấu thanh không được lẫn vào)
-        T = D_[f'ư-{w}']; t_ = max(p[1] for pl in polys(parse(T)) for p in pl)
-        return max(p[0] for pl in polys(parse(T)) for p in pl if p[1] > t_ - 3)
-    ux = lambda D_, w: max(p[0] for pl in polys(parse(D_[f'u-{w}'])) for p in pl)
-    SRC_ = tip_src if tip_src is not None else G
-    TIP = {w: tip_of(SRC_, w) + (ux(G, w) - ux(SRC_, w) if tip_src is not None else 0.0) for w in WS if f'ư-{w}' in SRC_}
-    for c in chars:
-        if unicodedata.normalize('NFD', c)[0] != 'u' or not no_horn(c) or f'{c}-Regular' not in G: continue
-        b2 = no_horn(c)
-        rr = {w: (horn_from_o(TIP[w], G[f'ơ-{w}'], G[f'o-{w}'], G[f'{b2}-{w}'])                   # G37 sừng ư = sừng ơ
-                  or horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h, ref=G.get(f'ơ-{w}'))) for w in WS if f'{c}-{w}' in G}
-        if horn_compat(rr['Regular'], rr['Bold']):
-            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
-            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
-        else:
-            for w, d in rr.items(): G[f'{c}-{w}'] = d
-        n += 1
-    print('G37 sừng ư = sừng ơ:', n)
+    """G37 họ ư thường (ư ứ ừ ử ữ ự) và Ư hoa (Ư Ứ Ừ Ử Ữ Ự): sừng = sừng ơ / Ơ cùng bộ, cùng weight (designer 26/11 "Ư Ơ sừng phải có
+    nét tạo giống nhau"). R / B rồi nội suy; nếu không tương thích thì từng weight."""
+    n = 0
+    for bu, hu, ho, bo in (('u', 'ư', 'ơ', 'o'), ('U', 'Ư', 'Ơ', 'O')):
+        if f'{hu}-Regular' not in G or f'{ho}-Regular' not in G: continue
+        h = max(p[1] for pl in polys(parse(G[f'{bu}-Regular'])) for p in pl)
+        def tip_of(D_, w):                                          # đầu sừng của chữ KHÔNG dấu, chỉ xét phần cao hơn đỉnh thân
+            P = [p for pl in polys(parse(D_[f'{hu}-{w}'])) for p in pl if p[1] > h + 2]
+            t_ = max(p[1] for p in P); return max(p[0] for p in P if p[1] > t_ - 3)
+        ux = lambda D_, w: max(p[0] for pl in polys(parse(D_[f'{bu}-{w}'])) for p in pl)
+        SRC_ = tip_src if tip_src is not None else G
+        TIP = {w: tip_of(SRC_, w) + (ux(G, w) - ux(SRC_, w) if tip_src is not None else 0.0) for w in WS if f'{hu}-{w}' in SRC_}
+        for c in chars:
+            if unicodedata.normalize('NFD', c)[0] != bu or not no_horn(c) or f'{c}-Regular' not in G: continue
+            b2 = no_horn(c)
+            rr = {}
+            for w in WS:
+                if f'{c}-{w}' not in G: continue
+                r_ = horn_from_o(TIP[w], G[f'{ho}-{w}'], G[f'{bo}-{w}'], G[f'{b2}-{w}'])
+                if r_ is None and bu == 'u': r_ = horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h, ref=G.get(f'ơ-{w}'))
+                rr[w] = r_ or G[f'{c}-{w}']
+            if horn_compat(rr['Regular'], rr['Bold']):
+                for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
+                for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+            else:
+                for w, d in rr.items(): G[f'{c}-{w}'] = d
+            n += 1
+    print('G37 sừng ư Ư = sừng ơ Ơ:', n)
 # ---------- G37 sừng ư = sừng ơ (designer 26/11 "phần nối và độ cong sừng ư có vẻ khác ơ"): lấy nguyên chuỗi sừng của ơ cùng bộ /
 # cùng weight, dời ngang cho đầu sừng ở đúng vị trí đầu sừng ư hiện có. Mép trong: kéo dài theo tiếp tuyến cuối vào thân (gặp loe → khấc
 # chữ V như ơ gặp vòng). Mép ngoài: chân rời thân phải NẰM NGANG rồi cong lên, liền tiếp tuyến với cung sừng ơ (không gờ nhọn).
@@ -1968,7 +1978,9 @@ def horn_from_o(cur, ro, o, ub, embed=3.0, shift=None):
     top_of = lambda d: max(p[1] for pl in polys(parse(d)) for p in pl)
     def tipx(d):
         t = top_of(d); return max(p[0] for pl in polys(parse(d)) for p in pl if p[1] > t - 3)
-    sx = (cur if isinstance(cur, (int, float)) else tipx(cur)) - tipx(ro) + (HORN_SHIFT if shift is None else shift)
+    rp = [q for _, _, ps in run for q in ps]; rt = max(q[1] for q in rp)
+    tip_ro = max(q[0] for q in rp if q[1] > rt - 3)                 # đầu sừng tính trên CHUỖI SỪNG (không lẫn đỉnh vòng O hoa)
+    sx = (cur if isinstance(cur, (int, float)) else tipx(cur)) - tip_ro + (HORN_SHIFT if shift is None else shift)
     run = [((p0[0] + sx, p0[1]), k, [[x + sx, y] for x, y in ps]) for p0, k, ps in run]
     a, e = run[0][0], run[-1][2][-1]
     if a[1] > e[1]:                                                 # chuỗi phải đi từ chân NGOÀI (thấp) lên đỉnh rồi xuống mép trong
@@ -2031,6 +2043,40 @@ def tip_unwiggle(d, maxch=60.0, k=0.4):
             if abs((math.degrees(to - ti) + 180) % 360 - 180) < 30: continue   # chỉ đoạn đi vào GÓC (mũi loe)
             ps[1] = [e[0] + (h1[0] - e[0])*k, e[1] + (h1[1] - e[1])*k]
     return fmt(cs)
+def amp_waist(d, maxl=35.0):
+    """G40 & (designer 26/11 "bụng nối của & có khấc hở"): eo phải — mép nét chéo (L) → mẩu cong ngắn (gờ) → bụng trên. Bỏ gờ: kéo
+    dài mép chéo tới khi cắt cung bụng trên, cắt bụng trên tại đó (khấc chữ V gọn, không bậc)."""
+    cs = parse(d); c = cs[0]; sg = _segs(c); n = len(sg)
+    for i in range(n):
+        a, b, cc = sg[i], sg[(i + 1) % n], sg[(i + 2) % n]
+        if a[1] != 'L' or b[1] != 'C' or cc[1] != 'C': continue
+        if math.dist(b[0], b[2][-1]) > maxl or math.dist(cc[0], cc[2][-1]) < 80: continue
+        P0, P1 = a[0], a[2][0]; dx, dy = P1[0] - P0[0], P1[1] - P0[1]
+        best = None
+        for k in range(1, 400):
+            t = k/400; q = _bz(cc, t)
+            cr_ = (q[0] - P0[0])*dy - (q[1] - P0[1])*dx
+            if best is not None and (cr_ > 0) != (best[1] > 0):
+                lo, hi = best[0], t
+                for _ in range(40):
+                    m = (lo + hi)/2; qm = _bz(cc, m); cm = (qm[0] - P0[0])*dy - (qm[1] - P0[1])*dx
+                    if (cm > 0) == (best[1] > 0): lo = m
+                    else: hi = m
+                tx = (lo + hi)/2; X = list(_bz(cc, tx))
+                if (X[0] - P1[0])*dx + (X[1] - P1[1])*dy < 0: return d    # phải nằm PHÍA TRƯỚC mép chéo (kéo dài)
+                newc = []
+                for j in range(n):
+                    if j == (i + 1) % n: continue
+                    p0, k_, ps = sg[j]
+                    if j == i: newc.append(('L', [X]))
+                    elif j == (i + 2) % n: kk, pp = _cut(cc, tx, 1.0); newc.append((kk, pp))
+                    else: newc.append((k_, [list(q) for q in ps]))
+                start = sg[(i + 2) % n][0] if (i + 1) % n == 0 else sg[0][0]
+                cont = [['M', [list(X) if (i + 1) % n == 0 else list(sg[0][0])]]] + [[k_, ps] for k_, ps in newc] + [['Z', []]]
+                cs[0] = cont
+                return fmt(cs)
+            best = (t, cr_)
+    return d
 def y_tail_fix(d):
     cs = parse(d)
     ci = min(range(len(cs)), key=lambda i: min(p[1] for _, ps in cs[i] for p in ps) if cs[i] else 1e9)
