@@ -1111,9 +1111,10 @@ def bar5_t(d5):
             if (x0 - 300)*(x1 - 300) < 0: ys.append(y0 + (300 - x0)*(y1 - y0)/(x1 - x0))
     ys.sort(); return ys[-1] - ys[-2]
 def two_joint(d, t):
-    """G51b mối nối nét chéo số 2 với đế mảnh = nét mảnh t (designer 26/11 "mối nối với thanh ngang sẽ mỏng lại bằng nét mỏng"):
-    nút góc trong (mép trên đế, đầu trái) trượt trái dọc mép trên đế tới khi cách mép ngoài nét chéo (2 cung sau góc chân trái) đúng t;
-    tay nắm cuối của cung trong dời theo"""
+    """G51b mối nối nét chéo số 2 với đế (designer 26/11 "mối nối với thanh ngang sẽ mỏng lại bằng nét mỏng", "nó uốn theo đường
+    cong mép trên"): đoạn cuối mép trong nét chéo = đường SONG SONG mép ngoài (2 cung sau góc chân trái) cách đúng t, uốn theo cung
+    mép ngoài xuống tới mép trên đế; nút góc trong đặt tại giao điểm đường song song với mép trên đế, tay nắm cuối theo tiếp tuyến
+    của đường song song ở đó (cung trong liền hướng với dải mảnh)"""
     cs = parse(d); c = cs[0]
     st = [None]*len(c); cur = None
     for j, (k, ps) in enumerate(c):
@@ -1125,16 +1126,21 @@ def two_joint(d, t):
                and ps[-1][1] > 50), None)
     if i0 is None or jc is None: return d
     def bz(p0, ps, u): return [(1-u)**3*p0[i] + 3*(1-u)**2*u*ps[0][i] + 3*(1-u)*u*u*ps[1][i] + u**3*ps[2][i] for i in (0, 1)]
-    samp = [bz(st[jc], c[jc][1], u/200) for u in range(201)] + [bz(st[jc + 1], c[jc + 1][1], u/200) for u in range(201)]
+    samp = [bz(st[jc], c[jc][1], u/400) for u in range(401)] + [bz(st[jc + 1], c[jc + 1][1], u/400) for u in range(1, 401)]
     N = c[i0][1][2]; yb = N[1]
-    def dist(x): return min(math.dist((x, yb), q) for q in samp)
-    lo, hi = min(q[0] for q in samp if abs(q[1] - yb) < 40), N[0]
-    if dist(hi) <= t: return d
-    for _ in range(40):
-        m = (lo + hi)/2
-        if dist(m) > t: hi = m
-        else: lo = m
-    dx = hi - N[0]; N[0] += dx; c[i0][1][1][0] += dx
+    off = []                                                         # đường song song: pháp tuyến về phía mực (phải-dưới của mép ngoài đi lên)
+    for a_, b_ in zip(samp, samp[1:]):
+        tx, ty = b_[0] - a_[0], b_[1] - a_[1]; L = math.hypot(tx, ty)
+        if L < 1e-6: continue
+        tx, ty = tx/L, ty/L; off.append(((a_[0] + ty*t, a_[1] - tx*t), (tx, ty)))
+    hit = None
+    for (p1, u1), (p2, _) in zip(off, off[1:]):
+        if (p1[1] - yb)*(p2[1] - yb) <= 0 and p2[1] != p1[1]:
+            f = (yb - p1[1])/(p2[1] - p1[1]); hit = ([p1[0] + f*(p2[0] - p1[0]), yb], u1); break
+    if hit is None or hit[0][0] >= N[0]: return d
+    (hx, hy), (ux, uy) = hit
+    P0 = st[i0]; Lh = 0.45*math.dist(P0, (hx, hy))
+    c[i0][1][2] = [hx, hy]; c[i0][1][1] = [hx + ux*Lh, hy + uy*Lh]
     return fmt(cs)
 def digit2(d, t_line, t_curve):
     cs = parse(d); c = cs[0]
@@ -1748,7 +1754,7 @@ def main():
     print('G42 chân loe nét mảnh (R + B):', tfn)
     if '2-Regular' in G and '5-Regular' in G:                     # G51 đế số 2 DÀY = thanh trên số 5 (bản vẽ designer: đế 90.7 / 130.4)
         T5 = {w: bar5_t(G[f'5-{w}']) for w in ('Regular', 'Bold')}
-        rr = {w: two_joint(digit2(G[f'2-{w}'], T5[w], RING_T[w]), LINE_T[w]) for w in ('Regular', 'Bold')}
+        rr = {w: two_joint(digit2(G[f'2-{w}'], T5[w], RING_T[w]), LINE_T[w]*BAR_K) for w in ('Regular', 'Bold')}
         if horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'2-{w}'] = rr[w]
             for w, t in TW.items(): G[f'2-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
@@ -1765,7 +1771,7 @@ def main():
                     elif c in '35': d = smooth_cl(g8_solve(g10(d, w), c, w, low, XT_)[0])
                     elif c == '4': d = bar4(g8_solve(d, c, w, low, XT_)[0])
                     elif c == '7': d = seven_bar(d, LINE_T[w]*BAR_K)
-                    elif c == '2': d = two_joint(digit2(d, bar5_t(G[f'5-{w}']), RING_T[w]), LINE_T[w])   # G51 đế dày giữ (chỉ cung trên theo nét mảnh)
+                    elif c == '2': d = two_joint(digit2(d, bar5_t(G[f'5-{w}']), RING_T[w]), LINE_T[w]*BAR_K)   # G51 đế dày giữ (chỉ cung trên theo nét mảnh)
                     if c in '369': d = run_thin(d, 'top' if c == '6' else 'bottom', RING_T[w])
                 except Exception as e_: print('HAIR số', c, w, e_); d = G[f'{c}-{w}']
                 rr[w] = d
