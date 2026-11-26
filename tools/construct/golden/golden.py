@@ -1111,6 +1111,7 @@ def bar5_t(d5):
             if (x0 - 300)*(x1 - 300) < 0: ys.append(y0 + (300 - x0)*(y1 - y0)/(x1 - x0))
     ys.sort(); return ys[-1] - ys[-2]
 JT_M = 0.45
+JT_S = 1.0                   # G51b trọng số độ trơn (độ cong biến thiên đều + liền độ cong ở P0)
 JT_P = 1.0                   # G51b số mũ lài bề dày từ mối nối (s^JT_P)
 def two_joint(d, t):
     """G51b mối nối nét chéo số 2 với đế (designer 26/11 "mối nối với thanh ngang sẽ mỏng lại bằng nét mỏng", "nó uốn theo đường
@@ -1163,6 +1164,12 @@ def two_joint(d, t):
             d2 = [6*(1-u)*(q[2][i]-2*q[1][i]+q[0][i]) + 6*u*(q[3][i]-2*q[2][i]+q[1][i]) for i in (0, 1)]
             ks.append((d1[0]*d2[1] - d1[1]*d2[0])/max(math.hypot(*d1)**3, 1e-9))
         return ks
+    pq = [st[i0 - 1]] + c[i0 - 1][1]                                 # cung liền trước (kết thúc ở P0): độ cong ở P0 → nối G2
+    def k_at(q, u):
+        d1 = [3*(1-u)**2*(q[1][i]-q[0][i]) + 6*(1-u)*u*(q[2][i]-q[1][i]) + 3*u*u*(q[3][i]-q[2][i]) for i in (0, 1)]
+        d2 = [6*(1-u)*(q[2][i]-2*q[1][i]+q[0][i]) + 6*u*(q[3][i]-2*q[2][i]+q[1][i]) for i in (0, 1)]
+        return (d1[0]*d2[1] - d1[1]*d2[0])/max(math.hypot(*d1)**3, 1e-9)
+    k_prev = k_at(pq, 1.0) if c[i0 - 1][0] == 'C' else None
     best = None
     for la in [n/40 for n in range(2, 41)]:
         for lb in [n/40 for n in range(2, 41)]:
@@ -1171,6 +1178,8 @@ def two_joint(d, t):
             sc = sum(min(math.dist(g, r) for r in cp)**2 for g in tg[::3])/max(len(tg[::3]), 1)
             ks = curv(q); sg = 1 if sum(ks) > 0 else -1
             sc += 1e5*sum(k_*k_ for k_ in ks if k_*sg < 0)
+            sc += JT_S*sum((ks[i + 1] - ks[i])**2 for i in range(len(ks) - 1))*1e6    # (designer 26/11 "canh lại nét cong cho mượt hơn")
+            if k_prev is not None: sc += JT_S*1e6*(k_at(q, 0.0) - k_prev)**2*20
             if best is None or sc < best[0]: best = (sc, q)
     if best is None: return d
     q = best[1]; c[i0][1] = [q[1], q[2], q[3]]
