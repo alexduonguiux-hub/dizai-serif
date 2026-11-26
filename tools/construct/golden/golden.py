@@ -1682,6 +1682,27 @@ def main():
             tfn[c] = TF_N[0]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     print('G42 chân loe nét mảnh (R + B):', tfn)
+    if os.environ.get('DIZAI_HAIR'):                              # trục HAIR: số lấy nét mảnh từ bước Serif (hair_sync) → chạy lại luật số với chuẩn mới
+        XT_ = 503.4; nd = 0
+        for c in '0123456789':
+            if f'{c}-Regular' not in G: continue
+            rr = {}
+            for w in ('Regular', 'Bold'):
+                d = G[f'{c}-{w}']
+                try:
+                    if c in '0689': d = ring_scale(d, solve_ring(d, d, w, False), False)
+                    elif c in '35': d = smooth_cl(g8_solve(g10(d, w), c, w, low, XT_)[0])
+                    elif c == '4': d = bar4(g8_solve(d, c, w, low, XT_)[0])
+                    elif c == '7': d = seven_bar(d, LINE_T[w]*BAR_K)
+                    elif c == '2': d = digit2(d, LINE_T[w], RING_T[w])
+                    if c in '369': d = run_thin(d, 'top' if c == '6' else 'bottom', RING_T[w])
+                except Exception as e_: print('HAIR số', c, w, e_); d = G[f'{c}-{w}']
+                rr[w] = d
+            if horn_compat(rr['Regular'], rr['Bold']) and horn_compat(rr['Regular'], G[f'{c}-Regular']):
+                for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
+                for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+                nd += 1
+        print('HAIR số theo chuẩn nét mảnh mới:', nd)
     for c in '247':                                               # G47 móc số dài bằng móc E
         if f'{c}-Regular' in G:
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = digit_arm(G[f'{c}-{w}'], w)
