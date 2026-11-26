@@ -1414,7 +1414,7 @@ def bar_add(src_c, src_b, new_b, gap=15.0, tgt=None):
         P_ = [p for pl in polys(parse(_pd(bar))) for p in pl]; x0_ = min(p[0] for p in P_)
         ys_ = [p[1] for p in P_ if p[0] < x0_ + 5]                  # đầu trái thanh (mặt cắt đứng): tâm thanh
         ym_ = (max(ys_) + min(ys_))/2
-        xs_ = _hspans(new_b, ym_); xr_ = min(x for x, _ in xs_ if x > x0_ + 20) + 6   # thanh chôn 6 u vào mép trái thân
+        xr_ = max(x for _, x in _hspans(src_c, ym_))                # mép phải thanh như bản đ nguồn (thanh xuyên thân)
         bar = pathops.Path(); bar.moveTo(x0_, ym_ - tgt/2); bar.lineTo(xr_, ym_ - tgt/2); bar.lineTo(xr_, ym_ + tgt/2); bar.lineTo(x0_, ym_ + tgt/2); bar.close()
     else: bar = _bar_thin(bar, HAIR_R[0])
     out = _op(_pp(new_b), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
