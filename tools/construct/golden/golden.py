@@ -1643,7 +1643,8 @@ def main():
     for c in sorted(TF_SET):                                      # G42 chân loe nét mảnh dài, lài (mọi weight)
         if f'{c}-Regular' in G:
             TF_N[0] = 0
-            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = thin_flare(G[f'{c}-{w}'])
+            kk_ = (TF_K, TF_WK) if c.isupper() else (TF_K_LOW, TF_WK_LOW)   # chữ thường: loe nhẹ hơn (y Bold: nét mảnh 38 khi ×2.4)
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = thin_flare(G[f'{c}-{w}'], *kk_)
             tfn[c] = TF_N[0]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     print('G42 chân loe nét mảnh (R + B):', tfn)
@@ -2141,11 +2142,13 @@ def y_tail_fix(d):
 # tay nắm tại điểm nối dọc theo mép nét (liền tiếp tuyến), tay nắm ở mũi giữ hướng, co giãn theo dây cung.
 TF_K, TF_THICK, TF_SET = float(os.environ.get('DIZAI_TF_K', 2.4)), 60.0, set('AKMNVWXYvwxy')
 TF_WK = float(os.environ.get('DIZAI_TF_WK', 1.3))
+TF_K_LOW, TF_WK_LOW = 1.8, 1.15
 TF_HV = float(os.environ.get('DIZAI_TF_HV', 0.12))
 TF_HT, TF_HN = float(os.environ.get('DIZAI_TF_HT', 0.5)), float(os.environ.get('DIZAI_TF_HN', 0.55))   # tay nắm cung loe (tỉ lệ khoảng tới góc)   # G42 hệ số bề ngang loe (mũi ra xa mép nét)
 TF_N = [0]
-def thin_flare(d, k=None):
+def thin_flare(d, k=None, wk=None):
     k = TF_K if k is None else k
+    wk = TF_WK if wk is None else wk
     cs = parse(d); PL = polys(cs)
     def ins(q):
         n_ = 0
@@ -2212,10 +2215,10 @@ def thin_flare(d, k=None):
             ext = min((k - 1)*D/abs(uy), 0.3*ul); TF_N[0] += 1
             ps = segs[j][1]
             hT = ps[1] if side == 'start' else ps[0]; hN = ps[0] if side == 'start' else ps[1]
-            if TF_WK != 1.0:                                          # loe rộng thêm: mũi trượt ra ngoài dọc đoạn ngang
+            if wk != 1.0:                                             # loe rộng thêm: mũi trượt ra ngoài dọc đoạn ngang
                 xs_ = node[0] + (tip[1] - node[1])*ux/uy if abs(uy) > 1e-6 else node[0]   # mép nét kéo tới cao độ mũi
                 sg_ = 1 if tip[0] > xs_ else -1
-                tip[0] = xs_ + sg_*abs(tip[0] - xs_)*TF_WK
+                tip[0] = xs_ + sg_*abs(tip[0] - xs_)*wk
             ch0 = math.dist(node, tip)
             node[0], node[1] = node[0] + ux*ext, node[1] + uy*ext
             ch1 = math.dist(node, tip)
