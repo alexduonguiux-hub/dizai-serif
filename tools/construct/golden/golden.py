@@ -1348,8 +1348,11 @@ def flare_set(d, k=None):
             jn = idx[(a + 1) % len(idx)] if ts else idx[a - 1]
             far = c[jn][1][-1] if ts else st[jn]
             Lmax = abs(far[0] - T_[0])
-            W = min(k*abs(D), 0.8*Lmax)
-            N_[0] = T_[0] + sgx*W
+            if abs(far[1] - N_[1]) > 0.6:                           # S89 nút là góc nối thân đứng (số 4): không dời nút, chỉ nắn cung
+                W = abs(N_[0] - T_[0])
+            else:
+                W = min(k*abs(D), 0.8*Lmax)
+                N_[0] = T_[0] + sgx*W
             hN[0], hN[1] = N_[0] - sgx*0.4*W, N_[1]
             hT[0], hT[1] = T_[0] + sgx*FLARE_TIP[0]*W, T_[1] + FLARE_TIP[1]*D      # vào mũi mở (designer "lài cho cả regular để k bị cảm giác nhọn")
     return fmt(cs)
