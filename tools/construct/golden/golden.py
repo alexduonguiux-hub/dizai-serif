@@ -1399,7 +1399,7 @@ def bar_compose(src_c, src_b, new_b, tgt=None):
 
 # ---------- G38 đ = d đã đồng bộ + thanh (designer 26/11 "độ dày bụng chữ d và đ không đồng bộ"): thanh = phần đ nguồn nằm ngoài d nguồn,
 # CHỈ lấy các mảnh cao hơn đỉnh bụng (bỏ dải chênh bụng của bản vẽ đ cũ) rồi hợp với d mới.
-def bar_add(src_c, src_b, new_b, gap=15.0):
+def bar_add(src_c, src_b, new_b, gap=15.0, tgt=None):
     PB = polys(parse(src_b)); xs = [p[0] for pl in PB for p in pl]; xm = (min(xs) + max(xs))/2
     btop = max(p[1] for pl in PB for p in pl if p[0] < xm - 20)     # đỉnh bụng (bên trái thân)
     diff = _op(_pp(src_c), _pp(src_b), pathops.PathOp.DIFFERENCE)
@@ -1409,7 +1409,9 @@ def bar_add(src_c, src_b, new_b, gap=15.0):
         P = polys(parse(_pd(q)))
         if P and min(p[1] for pl in P for p in pl) > btop + gap: bar = _op(bar, q, pathops.PathOp.UNION)
     if not list(bar.segments): return None
-    bar = _bar_thin(bar, HAIR_R[0])
+    if tgt:                                                         # G49 thanh đ = thanh t (designer 26/11 "đ cũng đồng bộ với thanh t luôn")
+        ys_ = [p[1] for pl in polys(parse(_pd(bar))) for p in pl]; bar = _bar_thin(bar, tgt/(max(ys_) - min(ys_)))
+    else: bar = _bar_thin(bar, HAIR_R[0])
     out = _op(_pp(new_b), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
 # ---------- G30 duỗi cung gần thẳng (ẞ: mép trên chỗ thắt là 2 cung lệch < 3 u → nội suy weight giữa gãy 4–8°): cung C có tay nắm
@@ -1761,7 +1763,7 @@ def main():
             if horn_compat(rr['Regular'], rr['Bold']):
                 for w, t in TW.items(): G[f'Đ-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
     if 'đ-Regular' in G and 'd-Regular' in G:                     # G38 đ = d Golden + thanh Golden
-        rr = {w: bar_add(G[f'đ-{w}'], G[f'd-{w}'], G[f'd-{w}']) for w in ('Regular', 'Medium', 'SemiBold', 'Bold')}
+        rr = {w: bar_add(G[f'đ-{w}'], G[f'd-{w}'], G[f'd-{w}'], tgt=LINE_T.get(w, LINE_T['Regular'])*BAR_K) for w in ('Regular', 'Medium', 'SemiBold', 'Bold')}
         if all(rr.values()):
             for w in rr: G[f'đ-{w}'] = rr[w]
             if horn_compat(rr['Regular'], rr['Bold']):
