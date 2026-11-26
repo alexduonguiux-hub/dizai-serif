@@ -134,6 +134,7 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
       <label class="chk">wght <input type="range" id="vfw" min="400" max="700" step="1" value="400" aria-label="Độ đậm"> <span id="vfwv">400</span></label>
       <div class="seg" role="group" aria-label="Kiểu"><button id="vfr" aria-pressed="true">Roman</button><button id="vfi" aria-pressed="false">Italic</button></div>
       <label class="chk" id="vfxl" style="display:none">x-Height <input type="range" id="vfx" min="0" max="100" step="1" value="0" aria-label="x-Height (0 AnNam Serif → 100 AnNam Golden)"> <span id="vfxv">0</span></label>
+      <label class="chk" id="vfhl" style="display:none">nét mảnh <input type="range" id="vfh" min="16" max="34" step="0.5" value="34" aria-label="Nét mảnh (trục HAIR 16 → 34)"> <span id="vfhv">34</span></label>
       <label class="chk" id="vfnl">nghiêng (slnt) <input type="range" id="vfn" min="-10" max="0" step="0.5" value="0" aria-label="Độ nghiêng"> <span id="vfnv">0°</span></label>
       <label class="chk">cỡ <input type="range" id="vfs" min="16" max="120" value="48" aria-label="Cỡ chữ"> <span id="vfsv">48 px</span></label>
     </div>
@@ -397,6 +398,9 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
   // S63/S65: font gộp AnNam Golden — trục x-Height 0 (AnNam Serif, x 495) → 100 (AnNam Golden, x 535); Roman / Italic = hai file gộp
   const XH = [...document.querySelectorAll("style")].some((e) => e.textContent.includes('"AnNam VF XH"')), x = $("vfx"), xv = $("vfxv");
   const ALL = [...document.querySelectorAll("style")].some((e) => e.textContent.includes('"AnNam VF All"'));   // 1 file đủ 3 trục
+  // trục HAIR (designer 26/11 "thanh slide variable điều khiển nét mỏng"): file [HAIR,wght] — nét mảnh 16 → 34 (mặc định)
+  const HAIR = [...document.querySelectorAll("style")].some((e) => e.textContent.includes('"AnNam VF Hair"')), h = $("vfh"), hv = $("vfhv");
+  if (HAIR) { $("vfhl").style.display = ""; h.addEventListener("input", () => apply()); }
   if (XH) { $("vfxl").style.display = ""; $("vfnl").style.display = ALL ? "" : "none"; x.addEventListener("input", () => apply()); }
   const apply = () => {
     if (ALL) { out.style.fontFamily = '"AnNam VF All", serif';
@@ -405,6 +409,8 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     else if (XH) { const itl = +sl.value < -5; out.style.fontFamily = itl ? '"AnNam VF XH Italic", serif' : '"AnNam VF XH", serif';
       out.style.fontVariationSettings = `"wght" ${w.value}, "XHGT" ${x.value}`;
       xv.textContent = x.value + " · x " + Math.round(495 + 0.4*x.value) + (+x.value === 0 ? " · Serif" : +x.value === 100 ? " · Golden" : ""); }
+    else if (HAIR) { const itl = +sl.value < -5; out.style.fontFamily = itl ? '"AnNam VF Hair Italic", serif' : '"AnNam VF Hair", serif';
+      out.style.fontVariationSettings = `"wght" ${w.value}, "HAIR" ${h.value}`; hv.textContent = h.value + (+h.value === 34 ? " · mặc định" : ""); }
     else { out.style.fontFamily = '"AnNam VF Combined", serif'; out.style.fontVariationSettings = `"wght" ${w.value}, "slnt" ${sl.value}`; }
     wv.textContent = w.value; slv.textContent = sl.value + "°"; out.style.fontSize = sz.value + "px"; szv.textContent = sz.value + " px";
     br.setAttribute("aria-pressed", String(+sl.value === 0)); bi.setAttribute("aria-pressed", String(+sl.value === -10)); };
@@ -423,6 +429,12 @@ textarea { width: 100%; box-sizing: border-box; font: 14px/1.5 var(--ui); color:
     sm.textContent = "Golden " + n + " · " + v + " · x-Height 100";
     t.textContent = "Ánh Đèn Phố Hội — quả ổi"; t.style.fontFamily = '"AnNam VF XH", serif';
     t.style.fontVariationSettings = `"wght" ${v}, "XHGT" 100`; d.append(sm, t); steps.append(d);
+  }
+  if (HAIR) for (const v of [34, 25, 16]) for (const [n, wv_] of [["Regular", 400], ["Bold", 700]]) {
+    const d = document.createElement("div"), sm = document.createElement("small"), t = document.createElement("span");
+    sm.textContent = n + " · nét mảnh " + v;
+    t.textContent = "Ánh Đèn Phố Hội — quả ổi"; t.style.fontFamily = '"AnNam VF Hair", serif';
+    t.style.fontVariationSettings = `"wght" ${wv_}, "HAIR" ${v}`; d.append(sm, t); steps.append(d);
   }
   apply();
 })();

@@ -970,7 +970,7 @@ def bar4(d):
 # ---------- G20 nét mảnh bụng D P B R (designer 23/11 "chữ D và P nét mỏng vẫn chưa đủ mỏng như O"): tại chỗ giao thân nét mảnh đúng
 # chuẩn nhưng mép lòng rời tiếp tuyến ngang ngay → nét dày nhanh (Serif D: 42 → 46 ở 80 u, 57 ở 140 u). Luật: kéo dài tay nắm ngang của lòng
 # tại mép trong thân (cùng hệ số s cho mọi tay trong chữ) tới khi nét mảnh đo trục giữa (stroke_balance, bỏ khớp) = chuẩn như O.
-STEMBOWL = set('DPBR')
+STEMBOWL = set('DPBRÞ')
 def _stem_handles(cs):
     hs = []
     for c in _holes(cs):
@@ -1011,7 +1011,7 @@ def stem_bowl(d, tgt, k=1.15):
         else: hi = m
     at(hi); return fmt(cs), hi
 
-JOINT_K = 0.65                 # G20 (designer 23/11): phần nối bụng–thân D P B R = 0.65 × nét mảnh Regular, MỌI weight bằng nhau ("khi bold lên không tăng độ dày nét mỏng")
+JOINT_K = 0.80                 # G20 (designer 23/11): phần nối bụng–thân D P B R = 0.65 × nét mảnh Regular, MỌI weight bằng nhau ("khi bold lên không tăng độ dày nét mỏng") · 26/11 "nét mỏng của D lại thấy mỏng hơn nét mảnh N A" → 0.80 = nét ngang (22 → 27.2)
 def joint_thin(d, tgt):
     """G20: nút lòng chạm thân (tay nắm ngang) dời về phía mép ngoài / lòng kia (cùng tay nắm) → khe tại chỗ nối = tgt; cung lòng giữ nguyên
     phía xa → nét mảnh mỏng ở chỗ nối rồi cong lài ra."""
@@ -1595,6 +1595,12 @@ def lerp_d(a, b, t):
     return fmt(A)
 
 def main():
+    hair = os.environ.get('DIZAI_HAIR')                             # trục HAIR (designer 26/11 "thanh slide variable điều khiển nét mỏng"):
+    if hair:                                                        # master nét mảnh mảnh hơn — cùng hệ luật, chuẩn nét mảnh × r
+        r_ = float(hair)/LINE_T['Regular']
+        for D_ in (LINE_T, RING_T, ARCH_T):
+            for w in D_: D_[w] *= r_
+        print('HAIR: nét mảnh', {w: round(LINE_T[w], 1) for w in LINE_T}, 'cong', {w: round(RING_T[w], 1) for w in RING_T})
     O = json.load(open(os.path.join(SRC, 'outlines.json'))); SP = json.load(open(os.path.join(SRC, 'spacing.json')))
     chars = list(SP['Regular']); low = set(lower_set(chars)); G = {}; NF = {'Regular': 0, 'Bold': 0}; NT = dict(NF)
     for c in chars:                                               # mẩu nối < 3 u của bản vẽ (nách K): bỏ TRƯỚC mọi luật (không có tiếp tuyến)

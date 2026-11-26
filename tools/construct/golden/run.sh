@@ -15,6 +15,12 @@ echo "== QA"
 for q in qa_outline qa_stroke qa_weight qa_kern; do echo "## $q"; python3 $q.py 2>&1 | grep -v Warn | tail -4; done
 mkdir -p $DIZAI_OUTI && cp $DIZAI_OUT/{outlines,spacing,kerning,ref_ratios}.json $DIZAI_OUTI/
 python3 export_font.py > $DIZAI_OUT/export.log 2>&1; tail -3 $DIZAI_OUT/export.log
+# trục HAIR — nét mảnh (designer 26/11): master nét mảnh 16 cùng hệ luật → font [HAIR,wght]
+HO=$R/out/golden_hair; mkdir -p $HO
+GOLDEN_OUT=$HO DIZAI_HAIR=16 python3 golden/golden.py | grep '^HAIR'
+DIZAI_OUT=$HO DIZAI_RTOL=1.5 DIZAI_CTOL=0.3 python3 compat_masters.py | grep '^compat' | cut -c1-120
+DIZAI_OUT=$HO python3 golden/post_compat.py > /dev/null
+DIZAI_HAIR_OUT=$HO DIZAI_HAIR=16 python3 hair_export.py
 PV_OUT=$DIZAI_OUT PV_OUTI=$DIZAI_OUTI PV_FONTS=$DIZAI_FONTS PV_PS=AnNamGolden PV_NAME="AnNam Golden" PV_HTML=annam-golden.html PV_XH=535 PV_GUIDES=0 python3 preview_html.py | cut -c1-120
 python3 qa_dirs.py $DIZAI_OUT/outlines.json
 echo DONE
