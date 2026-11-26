@@ -1111,6 +1111,7 @@ def bar5_t(d5):
             if (x0 - 300)*(x1 - 300) < 0: ys.append(y0 + (300 - x0)*(y1 - y0)/(x1 - x0))
     ys.sort(); return ys[-1] - ys[-2]
 JT_M = 0.45
+JT_P = 1.0                   # G51b số mũ lài bề dày từ mối nối (s^JT_P)
 def two_joint(d, t):
     """G51b mối nối nét chéo số 2 với đế (designer 26/11 "mối nối với thanh ngang sẽ mỏng lại bằng nét mỏng", "nó uốn theo đường
     cong mép trên"): đoạn cuối mép trong nét chéo = đường SONG SONG mép ngoài (2 cung sau góc chân trái) cách đúng t, uốn theo cung
@@ -1141,9 +1142,19 @@ def two_joint(d, t):
     if hit is None or hit[0][0] >= N[0]: return d
     (hx, hy), (ux, uy) = hit
     P0 = st[i0]; h1 = c[i0][1][0]
-    # MỘT cung liền từ P0 (giữ hướng cung cũ) tới điểm chạm đế trên đường song song (hướng song song mép ngoài): tay nắm chọn
-    # để cung không có điểm uốn và độ cong biến thiên đều (quét JT_H1 × JT_H2, chọn phương án độ cong trơn nhất)
+    # MỘT cung liền từ P0 (giữ hướng cung cũ) tới điểm chạm đế: bám đường mép trong MỤC TIÊU = mép ngoài + pháp tuyến × w(s),
+    # w lài dần từ t (ở đế) lên bề dày cũ ở P0 theo s^JT_P (designer 26/11 "độ dày từ mối nối lài ra chứ không tăng đột ngột");
+    # tay nắm (hướng cố định ở hai đầu) chọn để cung sát mục tiêu nhất, phạt điểm uốn
     a0 = math.atan2(h1[1] - P0[1], h1[0] - P0[0]); ch = math.dist(P0, (hx, hy))
+    iq0 = min(range(len(samp)), key=lambda i: math.dist(samp[i], P0)); W0 = math.dist(samp[iq0], P0)
+    ih = min(range(len(off)), key=lambda i: math.dist(off[i][0], (hx, hy)))
+    lo_, hi_ = sorted((ih, iq0)); tg = []
+    for i in range(lo_, hi_ + 1):
+        if i >= len(off): break
+        s_ = (i - ih)/((iq0 - ih) or 1); s_ = min(max(s_, 0.0), 1.0)
+        w_ = t + (W0 - t)*s_**JT_P
+        (ox, oy), (tx, ty) = off[i]; qx, qy = ox - ty*t, oy + tx*t       # điểm mép ngoài
+        tg.append((qx + ty*w_, qy - tx*w_))
     def curv(q):
         ks = []
         for n in range(1, 60):
@@ -1153,13 +1164,13 @@ def two_joint(d, t):
             ks.append((d1[0]*d2[1] - d1[1]*d2[0])/max(math.hypot(*d1)**3, 1e-9))
         return ks
     best = None
-    for la in [n/20 for n in range(2, 17)]:
-        for lb in [n/20 for n in range(2, 17)]:
+    for la in [n/40 for n in range(2, 41)]:
+        for lb in [n/40 for n in range(2, 41)]:
             q = [P0, [P0[0] + math.cos(a0)*la*ch, P0[1] + math.sin(a0)*la*ch], [hx + ux*lb*ch, hy + uy*lb*ch], [hx, hy]]
-            ks = curv(q)
-            sc = sum((ks[i + 1] - ks[i])**2 for i in range(len(ks) - 1))
-            sg = 1 if sum(ks) > 0 else -1
-            sc += 1e3*sum(k_*k_ for k_ in ks if k_*sg < 0)             # phạt đoạn cong ngược (điểm uốn)
+            cp = [bz(q[0], q[1:], u/80) for u in range(81)]
+            sc = sum(min(math.dist(g, r) for r in cp)**2 for g in tg[::3])/max(len(tg[::3]), 1)
+            ks = curv(q); sg = 1 if sum(ks) > 0 else -1
+            sc += 1e5*sum(k_*k_ for k_ in ks if k_*sg < 0)
             if best is None or sc < best[0]: best = (sc, q)
     if best is None: return d
     q = best[1]; c[i0][1] = [q[1], q[2], q[3]]
