@@ -1110,6 +1110,7 @@ def bar5_t(d5):
             (x0, y0), (x1, y1) = pl[i], pl[(i + 1) % len(pl)]
             if (x0 - 300)*(x1 - 300) < 0: ys.append(y0 + (300 - x0)*(y1 - y0)/(x1 - x0))
     ys.sort(); return ys[-1] - ys[-2]
+JT_M = 0.45
 def two_joint(d, t):
     """G51b mối nối nét chéo số 2 với đế (designer 26/11 "mối nối với thanh ngang sẽ mỏng lại bằng nét mỏng", "nó uốn theo đường
     cong mép trên"): đoạn cuối mép trong nét chéo = đường SONG SONG mép ngoài (2 cung sau góc chân trái) cách đúng t, uốn theo cung
@@ -1139,8 +1140,29 @@ def two_joint(d, t):
             f = (yb - p1[1])/(p2[1] - p1[1]); hit = ([p1[0] + f*(p2[0] - p1[0]), yb], u1); break
     if hit is None or hit[0][0] >= N[0]: return d
     (hx, hy), (ux, uy) = hit
-    P0 = st[i0]; Lh = 0.45*math.dist(P0, (hx, hy))
-    c[i0][1][2] = [hx, hy]; c[i0][1][1] = [hx + ux*Lh, hy + uy*Lh]
+    P0 = st[i0]; h1 = c[i0][1][0]
+    # MỘT cung liền từ P0 (giữ hướng cung cũ) tới điểm chạm đế trên đường song song (hướng song song mép ngoài): tay nắm chọn
+    # để cung không có điểm uốn và độ cong biến thiên đều (quét JT_H1 × JT_H2, chọn phương án độ cong trơn nhất)
+    a0 = math.atan2(h1[1] - P0[1], h1[0] - P0[0]); ch = math.dist(P0, (hx, hy))
+    def curv(q):
+        ks = []
+        for n in range(1, 60):
+            u = n/60
+            d1 = [3*(1-u)**2*(q[1][i]-q[0][i]) + 6*(1-u)*u*(q[2][i]-q[1][i]) + 3*u*u*(q[3][i]-q[2][i]) for i in (0, 1)]
+            d2 = [6*(1-u)*(q[2][i]-2*q[1][i]+q[0][i]) + 6*u*(q[3][i]-2*q[2][i]+q[1][i]) for i in (0, 1)]
+            ks.append((d1[0]*d2[1] - d1[1]*d2[0])/max(math.hypot(*d1)**3, 1e-9))
+        return ks
+    best = None
+    for la in [n/20 for n in range(2, 17)]:
+        for lb in [n/20 for n in range(2, 17)]:
+            q = [P0, [P0[0] + math.cos(a0)*la*ch, P0[1] + math.sin(a0)*la*ch], [hx + ux*lb*ch, hy + uy*lb*ch], [hx, hy]]
+            ks = curv(q)
+            sc = sum((ks[i + 1] - ks[i])**2 for i in range(len(ks) - 1))
+            sg = 1 if sum(ks) > 0 else -1
+            sc += 1e3*sum(k_*k_ for k_ in ks if k_*sg < 0)             # phạt đoạn cong ngược (điểm uốn)
+            if best is None or sc < best[0]: best = (sc, q)
+    if best is None: return d
+    q = best[1]; c[i0][1] = [q[1], q[2], q[3]]
     return fmt(cs)
 def digit2(d, t_line, t_curve):
     cs = parse(d); c = cs[0]
