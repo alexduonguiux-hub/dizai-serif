@@ -1412,8 +1412,10 @@ def bar_add(src_c, src_b, new_b, gap=15.0, tgt=None):
     if not list(bar.segments): return None
     if tgt:                                                         # G49 thanh đ = thanh t (designer 26/11 "đ cũng đồng bộ với thanh t luôn")
         P_ = [p for pl in polys(parse(_pd(bar))) for p in pl]; x0_ = min(p[0] for p in P_)
-        ys_ = [p[1] for p in P_ if p[0] < x0_ + 5]                  # bề dày đo ở đầu trái thanh
-        bar = _bar_thin(bar, tgt/(max(ys_) - min(ys_)))
+        ys_ = [p[1] for p in P_ if p[0] < x0_ + 5]                  # đầu trái thanh (mặt cắt đứng): tâm thanh
+        ym_ = (max(ys_) + min(ys_))/2
+        xs_ = _hspans(new_b, ym_); xr_ = min(x for x, _ in xs_ if x > x0_ + 20) + 6   # thanh chôn 6 u vào mép trái thân
+        bar = pathops.Path(); bar.moveTo(x0_, ym_ - tgt/2); bar.lineTo(xr_, ym_ - tgt/2); bar.lineTo(xr_, ym_ + tgt/2); bar.lineTo(x0_, ym_ + tgt/2); bar.close()
     else: bar = _bar_thin(bar, HAIR_R[0])
     out = _op(_pp(new_b), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
@@ -2439,7 +2441,20 @@ def lig_build(da, db, df, dn, dt):
     bar = pathops.Path(); bar.moveTo(ra - 5, yb); bar.lineTo(lb + 5, yb); bar.lineTo(lb + 5, yt); bar.lineTo(ra - 5, yt); bar.close()
     B = _pp(fmt([[[k, [[x + dl, y] for x, y in ps]] for k, ps in c] for c in parse(db)]))
     out = _op(_op(_pp(da), B, pathops.PathOp.UNION), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
-    return _pd(out)
+    return merge_tiny(_pd(out))
+def merge_tiny(d, lim=3.0):
+    """bỏ đoạn cực ngắn (< lim u) do boolean tách cung: điểm cuối đoạn trước dời tới điểm cuối đoạn ngắn (tay nắm dời theo)"""
+    cs = parse(d)
+    for c in cs:
+        j = 2
+        while j < len(c) - 1:
+            k, ps = c[j]; prev = c[j - 1]
+            if k in 'LC' and prev[0] in 'LC' and math.dist(prev[1][-1], ps[-1]) < lim and j < len(c) - 2:
+                dx, dy = ps[-1][0] - prev[1][-1][0], ps[-1][1] - prev[1][-1][1]
+                if prev[0] == 'C': prev[1][1] = [prev[1][1][0] + dx, prev[1][1][1] + dy]
+                prev[1][-1] = list(ps[-1]); del c[j]; continue
+            j += 1
+    return fmt(cs)
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
