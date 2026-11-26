@@ -31,6 +31,7 @@ sys.path.insert(0, HERE)
 from weights import WEIGHTS, lerp_w
 lerp_w(SB_REF)
 G_CAP, K_F, MIN_GAP, KMIN = 300.0, 0.45, 26.0, -150.0
+ARM_R, ARM_L, ARM_K = set('EFTZ'), set('TZ'), 0.55   # S15 tay ngang đỉnh đối mặt (ET FT TT EZ…): khe ≥ 0.55 khe HH (designer 26/11 "kerning ET hơi gần")
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
 WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.35, 0.32   # designer 05/11 lần 2: "RA KA XA cũng hơi xa" — 0.25 / 0.38 → 0.35 / 0.32
@@ -277,6 +278,9 @@ def main():
                 if (ra_ in ROUND_R and rb_ in WEDGE_X) or (ra_ in WEDGE_X and rb_ in ROUND_L):   # 05/11: mở rộng OV DY… (V W Y T)
                     g = pair_gap(a, b_, k); gm = float(np.nanmin(g)); gh = float(np.nanmin(pair_gap('H', 'H', 0.0)))
                     if gm > ROUND_A*gh: k -= math.floor((gm - ROUND_A*gh)/5)*5
+                if ra_ in ARM_R and rb_ in ARM_L:                            # S15 tay ngang đỉnh hai chữ đối mặt: giữ khe ≥ ARM_K × khe HH
+                    g = pair_gap(a, b_, k); gm = float(np.nanmin(g)); gh = float(np.nanmin(pair_gap('H', 'H', 0.0)))
+                    if gm < ARM_K*gh: k += math.ceil((ARM_K*gh - gm)/5)*5
                 if k <= -10 or k >= 5: KC[f'{rc}|{lc}'] = k
         if w not in ('Regular', 'Bold'):
             KR, KB = kerning['Regular']['class'], kerning['Bold']['class']; t_ = TW[w]; KC = {}
