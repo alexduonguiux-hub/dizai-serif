@@ -1652,6 +1652,8 @@ def main():
     for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
         b2 = no_horn(c)
         if not b2 or f'{c}-Regular' not in G or f'{b2}-Regular' not in G: continue
+        if unicodedata.normalize('NFD', c)[0] == 'u':               # họ ư thường: G37 dựng từ ơ + u Golden (horn_flare_all)
+            nh += 1; continue
         rr = {w: horn_splice(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in ('Regular', 'Bold')}   # (sừng nguồn = Serif đã hạ G35)   # ghép sừng không boolean → R / B cùng cấu trúc
         if all(rr.values()) and horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
@@ -1659,7 +1661,7 @@ def main():
             nh += 1
         else: print('G17 không ghép được (giữ cách cũ):', c)
     print('G17 chữ có sừng = chữ gốc + sừng:', nh)
-    horn_flare_all(G, chars)
+    horn_flare_all(G, chars, tip_src=O)
     ntiny = []
     for c in chars:
         if f'{c}-Regular' not in G: continue
@@ -1900,13 +1902,19 @@ def horn_flare(d, base_d, h, frac=None, ref=None):
         cs[ci] = cont
         return fmt(cs)
     return d
-def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold')):
+def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold'), tip_src=None):
     """G34 cho cả họ ư thường (ư ứ ừ ử ữ ự): R / B rồi nội suy; nếu không tương thích thì từng weight"""
     h = max(p[1] for pl in polys(parse(G['u-Regular'])) for p in pl); n = 0
+    def tip_of(D_, w):                                              # đầu sừng của ư KHÔNG dấu (dấu thanh không được lẫn vào)
+        T = D_[f'ư-{w}']; t_ = max(p[1] for pl in polys(parse(T)) for p in pl)
+        return max(p[0] for pl in polys(parse(T)) for p in pl if p[1] > t_ - 3)
+    ux = lambda D_, w: max(p[0] for pl in polys(parse(D_[f'u-{w}'])) for p in pl)
+    SRC_ = tip_src if tip_src is not None else G
+    TIP = {w: tip_of(SRC_, w) + (ux(G, w) - ux(SRC_, w) if tip_src is not None else 0.0) for w in WS if f'ư-{w}' in SRC_}
     for c in chars:
         if unicodedata.normalize('NFD', c)[0] != 'u' or not no_horn(c) or f'{c}-Regular' not in G: continue
         b2 = no_horn(c)
-        rr = {w: (horn_from_o(G[f'{c}-{w}'], G[f'ơ-{w}'], G[f'o-{w}'], G[f'{b2}-{w}'])                   # G37 sừng ư = sừng ơ
+        rr = {w: (horn_from_o(TIP[w], G[f'ơ-{w}'], G[f'o-{w}'], G[f'{b2}-{w}'])                   # G37 sừng ư = sừng ơ
                   or horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h, ref=G.get(f'ơ-{w}'))) for w in WS if f'{c}-{w}' in G}
         if horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
@@ -1934,7 +1942,7 @@ def horn_from_o(cur, ro, o, ub, embed=3.0, shift=None):
     top_of = lambda d: max(p[1] for pl in polys(parse(d)) for p in pl)
     def tipx(d):
         t = top_of(d); return max(p[0] for pl in polys(parse(d)) for p in pl if p[1] > t - 3)
-    sx = tipx(cur) - tipx(ro) + (HORN_SHIFT if shift is None else shift)
+    sx = (cur if isinstance(cur, (int, float)) else tipx(cur)) - tipx(ro) + (HORN_SHIFT if shift is None else shift)
     run = [((p0[0] + sx, p0[1]), k, [[x + sx, y] for x, y in ps]) for p0, k, ps in run]
     a, e = run[0][0], run[-1][2][-1]
     if a[1] > e[1]:                                                 # chuỗi phải đi từ chân NGOÀI (thấp) lên đỉnh rồi xuống mép trong
