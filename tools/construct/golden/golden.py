@@ -1782,6 +1782,7 @@ def no_horn(c):
 # đường cong loe đầu thân phải (điểm nối ở HF_FRAC chiều cao loe), loe giữ nguyên cung của chữ gốc từ điểm nối tới góc đỉnh.
 # Trước: Golden — mép trong sừng cắm vào thân DƯỚI loe → khe trắng hẹp giữa loe và sừng; Serif — loe bị thay bằng đoạn thẳng.
 HORN_DY = 20.0   # G35 hạ sừng ư ơ thường 20 u (designer 26/11 "dời sừng xuống 1 chút … ơ cho đồng bộ"): đỉnh 570 → 550
+HF_CUP = 18.0    # G36 Golden: khoảng lượn từ mép trong sừng vào chân loe
 HF_FRAC = 0.15                                                  # 25/11 0.6 lấp mất serif → nối ở chân loe (designer 26/11 "mất nét serif")
 def _horn_edges(sg, it):
     """mép ngoài (2 đoạn trước mặt đỉnh, đi lên tới đỉnh) / mép trong (đoạn sau mặt đỉnh) — điểm lấy mẫu"""
@@ -1882,7 +1883,11 @@ def horn_flare(d, base_d, h, frac=None, ref=None):
                         tc = (lo + hi)/2
                         X = list(_bz(Fs, tc)); Q = [q for q in Q if q[1] > X[1] + 3]
                         if len(Q) >= 4: inner = ('C', _fit_c(list(T0), X, Q))
-                    break                                           # chạm thân DƯỚI loe (Golden: thân cao hơn): giữ mép trong G34
+                    else:                                           # chạm thân DƯỚI loe (Golden: thân cao hơn): mép trong đều nét tới ngang chân loe
+                        X = list(S); Q = [q for q in Q if q[1] > X[1] + HF_CUP]   # rồi lượn vào chân loe (khấc đáy tròn)
+                        if len(Q) >= 4: inner = ('C', _fit_c(list(T0), X, Q))
+                        tc = 0.0
+                    break
                 Q.append(q)
         up = _cut(Fs, tc, 1.0)
         seq = []; k = j
