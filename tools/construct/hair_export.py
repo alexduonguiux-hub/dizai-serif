@@ -60,6 +60,30 @@ def align(dh, dd):
             elif seg[0] == 'M': s_ += 'M%.2f %.2f' % tuple(seg[1])
             else: s_ += seg[0] + ' '.join('%.2f %.2f' % tuple(p) for p in seg[1:])
     return s_ if sig(s_) == sig(dd) else None
+BARRED = {'đ': 'd', 'Đ': 'D'}
+def bar_morph(dc, db, hb, r):
+    """chữ có gạch (đ Đ) lệch cấu trúc: từ outline MẶC ĐỊNH — điểm trùng điểm chữ gốc mặc định dời như chữ gốc nét mảnh (cùng cấu trúc),
+    điểm còn lại (gạch) ép theo tỉ lệ r quanh trục giữa gạch"""
+    C, B0, B1 = EF.parse(dc), EF.parse(db), EF.parse(hb)
+    if sig(db) != sig(hb): return None
+    mv = {}
+    for c0, c1 in zip(B0, B1):
+        for s0, s1 in zip(c0, c1):
+            for p0, p1 in zip(s0[1:], s1[1:]): mv[(round(p0[0], 1), round(p0[1], 1))] = (p1[0] - p0[0], p1[1] - p0[1])
+    other = [p[1] for c in C for s in c for p in s[1:] if (round(p[0], 1), round(p[1], 1)) not in mv]
+    if not other: return None
+    ys = sorted(other); ym = (ys[0] + ys[-1])/2
+    def f(p):
+        k = (round(p[0], 1), round(p[1], 1))
+        if k in mv: return (p[0] + mv[k][0], p[1] + mv[k][1])
+        return (p[0], ym + (p[1] - ym)*r)
+    s_ = ''
+    for c in C:
+        for seg in c:
+            if seg[0] == 'M': s_ += 'M%.2f %.2f' % f(seg[1])
+            else: s_ += seg[0] + ' '.join('%.2f %.2f' % f(p) for p in seg[1:])
+        s_ += 'Z'
+    return s_
 def gsig(g): return [[(p.type or 'o') for p in c.points] for c in g.contours]
 
 def main():
@@ -73,6 +97,9 @@ def main():
             ks = [f'{c}-{w}' for w in ('Regular', 'Bold')]
             if all(k in D0 and k in H for k in ks) and any(sig(D0[k]) != sig(H[k]) for k in ks):
                 al = {k: (H[k] if sig(D0[k]) == sig(H[k]) else align(H[k], D0[k])) for k in ks}
+                if not all(al.values()) and c in BARRED:                # đ: dựng từ đ mặc định + d nét mảnh + gạch ép mảnh
+                    b = BARRED[c]
+                    al = {k: bar_morph(D0[k], D0[f'{b}-{k.rsplit("-", 1)[1]}'], H[f'{b}-{k.rsplit("-", 1)[1]}'], HAIR_MIN/HAIR_DEF) for k in ks}
                 if all(al.values()): H = dict(H); H.update(al); nal += 1
             if all(k in D0 and k in H and sig(D0[k]) == sig(H[k]) for k in ks):
                 for k in ks: M[k] = H[k]

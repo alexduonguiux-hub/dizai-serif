@@ -1662,7 +1662,7 @@ def main():
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
     for c_ in 't':                                                # G45 lòng móc t khoét sâu, đáy mảnh — trước G43 / G46 để j, l theo
         if f'{c_}-Regular' not in G: continue
-        for w in ('Regular', 'Bold'): G[f'{c_}-{w}'] = t_hook_deep(G[f'{c_}-{w}'])
+        for w in ('Regular', 'Bold'): G[f'{c_}-{w}'] = t_hook_deep(G[f'{c_}-{w}'], TH_K*HAIR_R[0])   # trục HAIR: đáy móc mảnh theo tỉ lệ nét mảnh
         for w, t in TW.items(): G[f'{c_}-{w}'] = lerp_d(G[f'{c_}-Regular'], G[f'{c_}-Bold'], t)
     if 'f-Regular' in G and 't-Regular' in G:                     # G48 móc trên f = móc t lật dọc
         rr = {w: f_from_t(G[f'f-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
