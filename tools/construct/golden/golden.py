@@ -1840,12 +1840,12 @@ def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold')):
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
-def horn_compose(src_c, src_b, new_b, dy=0.0):
+def horn_compose(src_c, src_b, new_b, hdy=0.0):
     SC, SB_ = parse(src_c), parse(src_b)
     dx, dy = horn_align(SC, SB_)
     mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
     srcC = _pp(src_c); srcB = _pp(mv(src_b)); newB = _pp(mv(new_b))
-    return _horn_bool(srcC, srcB, newB, dy)
+    return _horn_bool(srcC, srcB, newB, hdy)
 def horn_align(SC, SB_):
     dx = dy = None                                                 # tịnh tiến thân: contour lòng khớp hình (nguồn)
     for sb in SB_:
@@ -1930,7 +1930,7 @@ def _near(segs, q):
         h *= 0.6
     return (dd, i, t)
 HORN_CUT = [None]
-def horn_splice(src_c, src_b, new_b, tol=2.5, dy=0.0):
+def horn_splice(src_c, src_b, new_b, tol=2.5, hdy=0.0):
     """G17 (bản tương thích R / B): sừng = chuỗi đoạn của contour nguồn chữ có sừng nằm NGOÀI chữ gốc nguồn (J1 → J2);
     cắt contour chữ gốc mới tại điểm gần J1 / J2 nhất và chèn chuỗi sừng vào (nối bằng đoạn thẳng ngắn). Không dùng boolean →
     cấu trúc điểm của Regular / Bold giống nhau (nội suy / variable đúng)."""
@@ -1951,7 +1951,7 @@ def horn_splice(src_c, src_b, new_b, tol=2.5, dy=0.0):
         while off[j % n]: j += 1
         if sum(1 for i in range(n) if off[i] and not off[i - 1]) != 1: return None   # một sừng / contour
         run = [sg[k % n] for k in range(i0, j + 1)]; src_cont = c; break
-    if run and dy: run = [((p0[0], p0[1] - dy), k, [[x, y - dy] for x, y in ps]) for p0, k, ps in run]   # G35 hạ sừng (mép chôn tự cắt lại theo thân mới)
+    if run and hdy: run = [((p0[0], p0[1] - hdy), k, [[x, y - hdy] for x, y in ps]) for p0, k, ps in run]   # G35 hạ sừng (mép chôn tự cắt lại theo thân mới)
     if not run: return None
     PL = polys(NB)                                                  # cắt chuỗi sừng tại chỗ ra / vào thân MỚI (thân Golden cao hơn nguồn)
     def inside(q):

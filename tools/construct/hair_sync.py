@@ -132,7 +132,7 @@ def main():
         b2 = GD.no_horn(c)
         if not b2 or f'{c}-Regular' not in O or f'{b2}-Regular' not in O: continue
         dyh = GD.HORN_DY if c.islower() else 0.0                    # G35 hạ sừng ư ơ thường
-        rs = {w: GD.horn_splice(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}'], dy=dyh) for w in ('Regular', 'Bold')}   # S79: ghép sừng không boolean (như Golden) — R / B cùng cấu trúc, Medium / SemiBold không méo
+        rs = {w: GD.horn_splice(SRC[f'{c}-{w}'], SRC[f'{b2}-{w}'], O[f'{b2}-{w}'], hdy=dyh) for w in ('Regular', 'Bold')}   # S79: ghép sừng không boolean (như Golden) — R / B cùng cấu trúc, Medium / SemiBold không méo
         if all(rs.values()) and GD.horn_compat(rs['Regular'], rs['Bold']):
             for w in ('Regular', 'Bold'): O[f'{c}-{w}'] = rs[w]
             for w, t in GD.TW.items(): O[f'{c}-{w}'] = GD.lerp_d(rs['Regular'], rs['Bold'], t)
