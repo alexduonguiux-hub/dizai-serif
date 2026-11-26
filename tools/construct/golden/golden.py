@@ -2141,6 +2141,7 @@ def y_tail_fix(d):
 # tay nắm tại điểm nối dọc theo mép nét (liền tiếp tuyến), tay nắm ở mũi giữ hướng, co giãn theo dây cung.
 TF_K, TF_THICK, TF_SET = float(os.environ.get('DIZAI_TF_K', 2.4)), 60.0, set('AKMNVWXYvwxy')
 TF_WK = float(os.environ.get('DIZAI_TF_WK', 1.3))
+TF_HV = float(os.environ.get('DIZAI_TF_HV', 0.12))
 TF_HT, TF_HN = float(os.environ.get('DIZAI_TF_HT', 0.5)), float(os.environ.get('DIZAI_TF_HN', 0.55))   # tay nắm cung loe (tỉ lệ khoảng tới góc)   # G42 hệ số bề ngang loe (mũi ra xa mép nét)
 TF_N = [0]
 def thin_flare(d, k=None):
@@ -2219,7 +2220,7 @@ def thin_flare(d, k=None):
             node[0], node[1] = node[0] + ux*ext, node[1] + uy*ext
             ch1 = math.dist(node, tip)
             cx_ = node[0] + (tip[1] - node[1])*ux/uy                  # góc: mép nét kéo dài gặp đường chân / đỉnh
-            hT[0], hT[1] = tip[0] + (cx_ - tip[0])*TF_HT, tip[1]       # tay nắm ở mũi: dọc đường chân về phía góc
+            hT[0], hT[1] = tip[0] + (cx_ - tip[0])*TF_HT, tip[1] + (node[1] - tip[1])*TF_HV   # tay nắm ở mũi: về phía góc, chếch nhẹ (mũi không nhọn 0°)
             hN[0], hN[1] = node[0] - ux*TF_HN*abs(tip[1] - node[1])/abs(uy), node[1] - uy*TF_HN*abs(tip[1] - node[1])/abs(uy)   # dọc mép nét về góc
     return fmt(cs)
 # ---------- G43 móc j = móc t lật gương (designer 26/11 "bụng cong của móc t và j phải đồng bộ"): chuỗi móc t (2 cung ngoài, nhát cắt
