@@ -1782,6 +1782,7 @@ def no_horn(c):
 # đường cong loe đầu thân phải (điểm nối ở HF_FRAC chiều cao loe), loe giữ nguyên cung của chữ gốc từ điểm nối tới góc đỉnh.
 # Trước: Golden — mép trong sừng cắm vào thân DƯỚI loe → khe trắng hẹp giữa loe và sừng; Serif — loe bị thay bằng đoạn thẳng.
 HORN_DY = 20.0   # G35 hạ sừng ư ơ thường 20 u (designer 26/11 "dời sừng xuống 1 chút … ơ cho đồng bộ"): đỉnh 570 → 550
+HORN_SHIFT = 0.0   # G37 dời ngang sừng ư so với vị trí đầu sừng cũ
 HORN_EMBED = 2.0  # G37 chân sừng ư chôn vào thân
 HF_CUP = 18.0    # G36 Golden: khoảng lượn từ mép trong sừng vào chân loe
 HF_FRAC = 0.15                                                  # 25/11 0.6 lấp mất serif → nối ở chân loe (designer 26/11 "mất nét serif")
@@ -1927,13 +1928,13 @@ def _horn_run(src_c, src_b, tol=2.5):
         while off[j % n]: j += 1
         return [sg[k % n] for k in range(i0, j + 1)]
     return None
-def horn_from_o(cur, ro, o, ub, embed=3.0):
+def horn_from_o(cur, ro, o, ub, embed=3.0, shift=None):
     run = _horn_run(ro, o)
     if not run: return None
     top_of = lambda d: max(p[1] for pl in polys(parse(d)) for p in pl)
     def tipx(d):
         t = top_of(d); return max(p[0] for pl in polys(parse(d)) for p in pl if p[1] > t - 3)
-    sx = tipx(cur) - tipx(ro)
+    sx = tipx(cur) - tipx(ro) + (HORN_SHIFT if shift is None else shift)
     run = [((p0[0] + sx, p0[1]), k, [[x + sx, y] for x, y in ps]) for p0, k, ps in run]
     a, e = run[0][0], run[-1][2][-1]
     if a[1] > e[1]:                                                 # chuỗi phải đi từ chân NGOÀI (thấp) lên đỉnh rồi xuống mép trong
