@@ -1783,7 +1783,44 @@ def no_horn(c):
 # Trước: Golden — mép trong sừng cắm vào thân DƯỚI loe → khe trắng hẹp giữa loe và sừng; Serif — loe bị thay bằng đoạn thẳng.
 HORN_DY = 20.0   # G35 hạ sừng ư ơ thường 20 u (designer 26/11 "dời sừng xuống 1 chút … ơ cho đồng bộ"): đỉnh 570 → 550
 HF_FRAC = 0.15                                                  # 25/11 0.6 lấp mất serif → nối ở chân loe (designer 26/11 "mất nét serif")
-def horn_flare(d, base_d, h, frac=None):
+def _horn_edges(sg, it):
+    """mép ngoài (2 đoạn trước mặt đỉnh, đi lên tới đỉnh) / mép trong (đoạn sau mặt đỉnh) — điểm lấy mẫu"""
+    sm = lambda seg, n=30: [_bz(seg, i/n) for i in range(n + 1)]
+    n = len(sg)
+    outer = [q for k in (it - 2, it - 1) for q in sm(sg[k % n])]
+    inner = [q for k in (it + 1, it + 2) for q in sm(sg[k % n])]
+    return outer, inner
+def _horn_prof(ref_d, h):
+    """G36 hồ sơ độ dày sừng ơ: [(khoảng cách dưới đỉnh, độ dày vuông góc)]"""
+    for c in parse(ref_d):
+        sg = _segs(c); n = len(sg)
+        if not sg: continue
+        top = max(q[1] for _, _, ps in sg for q in ps)
+        if top < h + 2: continue
+        it = next((i for i in range(n) if sg[i][1] == 'L' and min(sg[i][0][1], sg[i][2][0][1]) > top - 3), None)
+        if it is None: return None
+        outer, inner = _horn_edges(sg, it)
+        pr = sorted((top - p[1], min(math.dist(p, q) for q in inner)) for p in outer if p[1] > h - 140)
+        return pr
+    return None
+def _prof_at(pr, dy):
+    if dy <= pr[0][0]: return pr[0][1]
+    for (a, ta), (b, tb) in zip(pr, pr[1:]):
+        if a <= dy <= b: return ta + (tb - ta)*(dy - a)/max(1e-9, b - a)
+    return pr[-1][1]
+def _fit_c(P0, P3, Q):
+    """cubic P0 → P3 khớp bình phương tối thiểu các điểm Q (tham số theo dây cung)"""
+    import numpy as np
+    pts = [P0] + Q + [P3]; L = [0.0]
+    for a, b in zip(pts, pts[1:]): L.append(L[-1] + math.dist(a, b))
+    ts = [x/L[-1] for x in L]
+    A = []; B = []
+    for t, q in zip(ts, pts):
+        b0, b1, b2, b3 = (1 - t)**3, 3*(1 - t)**2*t, 3*(1 - t)*t*t, t**3
+        A.append([b1, b2]); B.append([q[0] - b0*P0[0] - b3*P3[0], q[1] - b0*P0[1] - b3*P3[1]])
+    X = np.linalg.lstsq(np.array(A), np.array(B), rcond=None)[0]
+    return [list(X[0]), list(X[1]), list(P3)]
+def horn_flare(d, base_d, h, frac=None, ref=None):
     frac = HF_FRAC if frac is None else frac
     F = None                                                        # loe phải của chữ gốc: cung C đi lên, kết thúc ở góc đỉnh phải
     for c in parse(base_d):
@@ -1814,6 +1851,39 @@ def horn_flare(d, base_d, h, frac=None):
         p0, _, ps = sg[ii]; J = ps[2]
         T0 = p0; r = math.dist(X, T0)/max(1e-6, math.dist(J, T0))          # co tay nắm theo dây cung mới (giữ hướng hai đầu)
         inner = ('C', [[T0[0] + (ps[0][0] - T0[0])*r, T0[1] + (ps[0][1] - T0[1])*r], [X[0] + (ps[1][0] - J[0])*r, X[1] + (ps[1][1] - J[1])*r], X])
+        pr = _horn_prof(ref, h) if ref else None
+        if pr:                                                      # G36 mép trong sừng ư = mép ngoài lùi vào đúng độ dày sừng ơ (cùng weight)
+            top = max(q[1] for _, _, ps_ in sg for q in ps_)
+            outer, _ = _horn_edges(sg, it); outer = outer[::-1]     # từ đỉnh đi xuống
+            mid = _bz(sg[ii], 0.5); PLb = polys(parse(base_d))
+            def ins(q):
+                k_ = 0
+                for P_ in PLb:
+                    for i_ in range(len(P_)):
+                        (x1, y1), (x2, y2) = P_[i_ - 1], P_[i_]
+                        if (y1 > q[1]) != (y2 > q[1]) and q[0] < x1 + (q[1] - y1)*(x2 - x1)/(y2 - y1): k_ += 1
+                return k_ % 2 == 1
+            Q = []
+            for a_, b_ in zip(outer, outer[1:]):
+                tx, ty = b_[0] - a_[0], b_[1] - a_[1]; tl = math.hypot(tx, ty)
+                if tl < 1e-6: continue
+                nx, ny = ty/tl, -tx/tl
+                if (mid[0] - a_[0])*nx + (mid[1] - a_[1])*ny < 0: nx, ny = -nx, -ny
+                t_ = _prof_at(pr, top - a_[1]); q = (a_[0] + nx*t_, a_[1] + ny*t_)
+                if q[1] > top - 2: continue
+                if ins(q):
+                    yq = q[1]
+                    if yq > S[1] + 1:                               # chạm loe: điểm nối = điểm loe cùng độ cao
+                        lo, hi = 0.0, 1.0
+                        for _ in range(40):
+                            m = (lo + hi)/2
+                            if _bz(Fs, m)[1] < yq: lo = m
+                            else: hi = m
+                        tc = (lo + hi)/2
+                        X = list(_bz(Fs, tc)); Q = [q for q in Q if q[1] > X[1] + 3]
+                        if len(Q) >= 4: inner = ('C', _fit_c(list(T0), X, Q))
+                    break                                           # chạm thân DƯỚI loe (Golden: thân cao hơn): giữ mép trong G34
+                Q.append(q)
         up = _cut(Fs, tc, 1.0)
         seq = []; k = j
         while k % n != ii: seq.append((sg[k % n][1], sg[k % n][2])); k += 1
@@ -1829,7 +1899,7 @@ def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold')):
     for c in chars:
         if unicodedata.normalize('NFD', c)[0] != 'u' or not no_horn(c) or f'{c}-Regular' not in G: continue
         b2 = no_horn(c)
-        rr = {w: horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h) for w in WS if f'{c}-{w}' in G}
+        rr = {w: horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h, ref=G.get(f'ơ-{w}')) for w in WS if f'{c}-{w}' in G}
         if horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
