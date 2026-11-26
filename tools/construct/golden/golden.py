@@ -1333,6 +1333,19 @@ def flare_like(dR, dX):
 # dài tay (mũi → đầu đoạn thanh). Mọi weight, mọi móc E F L Z Æ Œ (T theo E — G26).
 FLARE_K = 1.5
 FLARE_TIP = (0.153, 0.33)      # tay nắm ở mũi (tỉ lệ W, D): tiếp tuyến vào mũi dốc 55° (không nhọn, cung lồi một chiều)
+def digit_arm(d, w):
+    """G47 móc số 2 / 4 / 7 dài bằng móc E cùng weight (designer 26/11 "đuôi móc ở đáy số 2, 4 và móc trên của số 7 chưa đồng bộ với E và T"):
+    mũi loe trượt dọc nhát cắt đứng tới khi cách gốc nhát cắt (mép ngoài thanh) đúng ARM_D[w]"""
+    cs = parse(d)
+    for c in cs:
+        idx = [j for j, (kk, ps) in enumerate(c) if kk in 'LC']
+        for (i, ts, st) in _flares(c):
+            a = idx.index(i)
+            if ts: T_ = st[i]; root = st[idx[a - 1]]
+            else: T_ = c[i][1][2]; root = c[idx[(a + 1) % len(idx)]][1][0]
+            sg = 1 if T_[1] > root[1] else -1
+            T_[1] = root[1] + sg*ARM_D[w]
+    return fmt(cs)
 def flare_set(d, k=None):
     k = FLARE_K if k is None else k
     cs = parse(d)
@@ -1637,6 +1650,12 @@ def main():
         if f'{c_}-Regular' not in G: continue
         for w in ('Regular', 'Bold'): G[f'{c_}-{w}'] = t_hook_deep(G[f'{c_}-{w}'])
         for w, t in TW.items(): G[f'{c_}-{w}'] = lerp_d(G[f'{c_}-Regular'], G[f'{c_}-Bold'], t)
+    if 'f-Regular' in G and 't-Regular' in G:                     # G48 móc trên f = móc t lật dọc
+        rr = {w: f_from_t(G[f'f-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'f-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'f-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        else: print('G48 f: R / B không tương thích')
     if 'l-Regular' in G and 't-Regular' in G:                     # G46 móc l = móc t
         rr = {w: l_hook_from_t(G[f'l-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
         if horn_compat(rr['Regular'], rr['Bold']):
@@ -1657,6 +1676,9 @@ def main():
             tfn[c] = TF_N[0]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     print('G42 chân loe nét mảnh (R + B):', tfn)
+    for c in '247':                                               # G47 móc số dài bằng móc E
+        if f'{c}-Regular' in G:
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = digit_arm(G[f'{c}-{w}'], w)
     for c in (ARMD - {'T'}) | set('247'):                         # G28 dáng móc nét ngang dài, lài (mọi weight); T theo E (G26); số 2 4 7 (designer 26/11)
         if f'{c}-Regular' in G:
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = flare_set(G[f'{c}-{w}'])
@@ -2273,6 +2295,39 @@ def l_hook_from_t(dl, dt):
         lc[li + k] = [tc[ti + k][0], [[p[0] + dx, p[1]] for p in tc[ti + k][1]]]
     lc[li - 3][1][-1][1] = tc[ti - 3][1][-1][1]                     # điểm rời mép thân ngoài cùng cao độ với t
     return fmt(L)
+def f_from_t(df, dt):
+    """G48 móc trên f = móc t lật dọc (designer 26/11 "bụng khoét móc trên của f cũng chưa đồng bộ với t"): chuỗi móc t (2 cung ngoài,
+    nhát cắt, 2 cung lòng) lật quanh trục ngang sao cho đáy ngoài t thành đỉnh f hiện tại; thay chuỗi (cung lòng → nhát cắt → cung ngoài) của f"""
+    F = parse(df); fc = F[0]; tc = parse(dt)[0]
+    ti = None
+    for i, (k, ps) in enumerate(tc):
+        if k == 'L' and i >= 3:
+            a = tc[i - 1][1][-1]; b = ps[0]
+            if abs(a[0] - b[0]) < 0.6 and 40 < abs(a[1] - b[1]) < 200 and min(a[1], b[1]) < 50 and (ti is None or a[0] > tc[ti - 1][1][-1][0]): ti = i
+    fi = None
+    for i, (k, ps) in enumerate(fc):
+        if k == 'L' and i >= 2:
+            a = fc[i - 1][1][-1]; b = ps[0]
+            if abs(a[0] - b[0]) < 0.6 and 40 < abs(a[1] - b[1]) < 200 and max(a[1], b[1]) > 600: fi = i
+    if ti is None or fi is None or fi + 1 >= len(fc): return df
+    if [tc[ti + k][0] for k in (-2, -1, 1, 2)] != ['C', 'C', 'C', 'C'] or fc[fi - 1][0] != 'C' or fc[fi + 1][0] != 'C': return df
+    ftop = max(p[1] for p in polys(F)[0]); tbot = min(p[1] for _, ps in tc[ti - 2:ti + 3] for p in ps)
+    tbot = min(tbot, min(p[1] for p in polys([tc])[0]))
+    ay = ftop + tbot
+    fl = lambda p: [p[0], ay - p[1]]
+    hook = [(tc[ti + k][0], tc[ti + k][1]) for k in (-2, -1, 0, 1, 2)]
+    starts = [tc[ti - 3][1][-1]] + [ps[-1] for _, ps in hook[:-1]]
+    seq = []
+    for (k, ps), st in zip(reversed(hook), reversed(starts)):
+        seq.append(['L', [fl(st)]] if k == 'L' else ['C', [fl(ps[1]), fl(ps[0]), fl(st)]])
+    p_ = fl(hook[-1][1][-1]); ybar = fc[fi - 3][1][-1][1] if fi >= 3 else -1e9
+    if p_[1] < ybar + 4: p_[1] = ybar + 4                              # không thấp hơn mặt trên thanh f (Bold: móc t thấp hơn)
+    fc[fi - 2][1][-1][0], fc[fi - 2][1][-1][1] = p_                    # mép phải thân lên tới điểm đầu móc mới
+    end_ = seq[-1][1][-1]
+    fc[fi - 1:fi + 2] = seq
+    if fi + 1 == len(fc) - 1 or fc[-1][0] == 'Z':                       # điểm cuối móc = điểm đầu contour (M)
+        fc[0][1][0][0], fc[0][1][0][1] = end_[0], end_[1]; seq[-1][1][-1] = fc[0][1][0]
+    return fmt(F)
 def j_from_t(dj, dt):
     T = parse(dt)[0]; J = parse(dj); jc = J[0]
     def cut_idx(c, side):
