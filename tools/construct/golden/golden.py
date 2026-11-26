@@ -812,7 +812,7 @@ def g10(d, w, tgt=None):
 # nét mảnh; tay nắm kề nó dời cùng (giữ ngang → cung trơn); đầu nhọn loe đứng yên.
 TBAR = set()                   # S83: T nay có thanh thẳng (G26 móc = móc E) → G8 lo bề dày thanh; G11 không còn dùng
 DIAG_K = 1.0                   # chuẩn nét CHÉO = DIAG_K × chuẩn nét mảnh (hiệu chỉnh quang học; designer "nét xéo của golden mỏng quá")
-BAR_K = 0.88                   # designer 20/11 chọn k 0.88, giữ (quyết định cuối: "giữ nét ngang 0.88 như cũ") ("nét ngang F L T E Z dầy hơn nét còn lại") — chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học)
+BAR_K = 0.80                   # designer 20/11 chọn k 0.88, giữ (quyết định cuối: "giữ nét ngang 0.88 như cũ") ("nét ngang F L T E Z dầy hơn nét còn lại") — chuẩn nét NGANG = BAR_K × chuẩn nét mảnh (hiệu chỉnh quang học) · 26/11: "nét ngang mỏng của Z E vẫn đậm hơn nét mỏng A N" → 0.80 (29.9 → 27.2)
 def bar_thin(d, w, tgt=None):
     tgt = (LINE_T.get(w, RING_T[w]) if tgt is None else tgt)*BAR_K        # thanh = đoạn THẲNG (S79)
     cs = parse(d); P = polys(cs); n_ = 0
@@ -2118,6 +2118,17 @@ def thin_flare(d, k=None):
                 (x1, y1), (x2, y2) = P_[i_ - 1], P_[i_]
                 if (y1 > q[1]) != (y2 > q[1]) and q[0] < x1 + (q[1] - y1)*(x2 - x1)/(y2 - y1): n_ += 1
         return n_ % 2 == 1
+    hor_ = lambda a, b: abs(a[1] - b[1]) < 0.6 and abs(a[0] - b[0]) > 10
+    edge_ = lambda a, b: abs(a[1] - b[1]) > 60
+    for c in cs:                                                  # gộp cung loe 2 đoạn (W) → 1 cung, rồi xử lý như mọi chân loe
+        i = 1
+        while i + 2 < len(c):
+            if c[i][0] == 'C' and c[i + 1][0] == 'C' and c[i - 1][0] == 'L' and c[i + 2][0] == 'L':
+                a0 = c[i - 2][1][-1] if i >= 2 else c[0][1][0]; a1 = c[i - 1][1][-1]
+                b0 = c[i + 1][1][-1]; b1 = c[i + 2][1][-1]
+                if (hor_(a0, a1) and edge_(b0, b1)) or (edge_(a0, a1) and hor_(b0, b1)):
+                    c[i:i + 2] = [['C', [c[i][1][0], c[i + 1][1][1], c[i + 1][1][2]]]]
+            i += 1
     for c in cs:
         segs = [(kk, ps) for kk, ps in c if kk in 'LC']
         if not segs: continue
