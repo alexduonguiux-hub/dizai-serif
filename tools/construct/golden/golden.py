@@ -2143,13 +2143,14 @@ def y_tail_fix(d):
 TF_K, TF_THICK, TF_SET = float(os.environ.get('DIZAI_TF_K', 2.4)), 60.0, set('AKMNVWXYvwxy')
 TF_WK = float(os.environ.get('DIZAI_TF_WK', 1.3))
 TF_K_LOW, TF_WK_LOW = 1.8, 1.15
+TF_DCAP = 0.26
 TF_HV = float(os.environ.get('DIZAI_TF_HV', 0.12))
 TF_HT, TF_HN = float(os.environ.get('DIZAI_TF_HT', 0.5)), float(os.environ.get('DIZAI_TF_HN', 0.55))   # tay nắm cung loe (tỉ lệ khoảng tới góc)   # G42 hệ số bề ngang loe (mũi ra xa mép nét)
 TF_N = [0]
 def thin_flare(d, k=None, wk=None):
     k = TF_K if k is None else k
     wk = TF_WK if wk is None else wk
-    cs = parse(d); PL = polys(cs)
+    cs = parse(d); PL = polys(cs); HMAX = max(p[1] for P_ in PL for p in P_)
     def ins(q):
         n_ = 0
         for P_ in PL:
@@ -2212,7 +2213,9 @@ def thin_flare(d, k=None, wk=None):
             if th is None or th > TF_THICK: continue                  # nét đậm: giữ nguyên
             D = abs(tip[1] - node[1])
             if D < 5 or abs(uy) < 0.2: continue
-            ext = min((k - 1)*D/abs(uy), 0.3*ul); TF_N[0] += 1
+            Dt = min(k*D, TF_DCAP*HMAX)                               # trần chiều cao cung loe (v y: mép ngoài vốn đã cong dài)
+            if Dt <= D + 1: continue
+            ext = min((Dt - D)/abs(uy), 0.3*ul); TF_N[0] += 1
             ps = segs[j][1]
             hT = ps[1] if side == 'start' else ps[0]; hN = ps[0] if side == 'start' else ps[1]
             if wk != 1.0:                                             # loe rộng thêm: mũi trượt ra ngoài dọc đoạn ngang
