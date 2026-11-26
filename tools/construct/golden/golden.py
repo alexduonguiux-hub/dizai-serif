@@ -2139,7 +2139,9 @@ def y_tail_fix(d):
 # và T", "chữ thường w v x y", "chân loe A cũng vậy"): cung loe nối mép nét (đoạn thẳng xiên / đứng) với mũi trên đường chân / đỉnh
 # (đoạn ngang). Chỉ nét MẢNH (bề dày đo vuông góc < TF_THICK). Điểm nối trên mép nét trượt xa mũi hơn để chiều sâu cung = TF_K × cũ;
 # tay nắm tại điểm nối dọc theo mép nét (liền tiếp tuyến), tay nắm ở mũi giữ hướng, co giãn theo dây cung.
-TF_K, TF_THICK, TF_SET = 1.8, 60.0, set('AKMNVWXYvwxy')
+TF_K, TF_THICK, TF_SET = float(os.environ.get('DIZAI_TF_K', 2.4)), 60.0, set('AKMNVWXYvwxy')
+TF_WK = float(os.environ.get('DIZAI_TF_WK', 1.3))
+TF_HT, TF_HN = float(os.environ.get('DIZAI_TF_HT', 0.5)), float(os.environ.get('DIZAI_TF_HN', 0.55))   # tay nắm cung loe (tỉ lệ khoảng tới góc)   # G42 hệ số bề ngang loe (mũi ra xa mép nét)
 TF_N = [0]
 def thin_flare(d, k=None):
     k = TF_K if k is None else k
@@ -2209,11 +2211,16 @@ def thin_flare(d, k=None):
             ext = min((k - 1)*D/abs(uy), 0.3*ul); TF_N[0] += 1
             ps = segs[j][1]
             hT = ps[1] if side == 'start' else ps[0]; hN = ps[0] if side == 'start' else ps[1]
+            if TF_WK != 1.0:                                          # loe rộng thêm: mũi trượt ra ngoài dọc đoạn ngang
+                xs_ = node[0] + (tip[1] - node[1])*ux/uy if abs(uy) > 1e-6 else node[0]   # mép nét kéo tới cao độ mũi
+                sg_ = 1 if tip[0] > xs_ else -1
+                tip[0] = xs_ + sg_*abs(tip[0] - xs_)*TF_WK
             ch0 = math.dist(node, tip)
             node[0], node[1] = node[0] + ux*ext, node[1] + uy*ext
-            ch1 = math.dist(node, tip); r = ch1/max(ch0, 1e-6)
-            hT[0], hT[1] = tip[0] + (hT[0] - tip[0])*r, tip[1] + (hT[1] - tip[1])*r
-            hN[0], hN[1] = node[0] - ux*0.45*ch1, node[1] - uy*0.45*ch1
+            ch1 = math.dist(node, tip)
+            cx_ = node[0] + (tip[1] - node[1])*ux/uy                  # góc: mép nét kéo dài gặp đường chân / đỉnh
+            hT[0], hT[1] = tip[0] + (cx_ - tip[0])*TF_HT, tip[1]       # tay nắm ở mũi: dọc đường chân về phía góc
+            hN[0], hN[1] = node[0] - ux*TF_HN*abs(tip[1] - node[1])/abs(uy), node[1] - uy*TF_HN*abs(tip[1] - node[1])/abs(uy)   # dọc mép nét về góc
     return fmt(cs)
 # ---------- G43 móc j = móc t lật gương (designer 26/11 "bụng cong của móc t và j phải đồng bộ"): chuỗi móc t (2 cung ngoài, nhát cắt
 # đứng, 2 cung lòng) lật ngang quanh trục giữa mép thân, dời xuống đáy j; thay chuỗi móc j (cung lòng → nhát cắt → cung ngoài).
