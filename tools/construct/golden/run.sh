@@ -19,6 +19,6 @@ PV_OUT=$DIZAI_OUT PV_OUTI=$DIZAI_OUTI PV_FONTS=$DIZAI_FONTS PV_PS=AnNamGolden PV
 python3 qa_dirs.py $DIZAI_OUT/outlines.json
 echo DONE
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_lines.py tools/construct/qa_ref/AnNamSerif-v0918-%s.otf fonts/golden/otf/AnNamGolden-%s.otf --xh=535 | grep -v "^    ")
-(cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_bars.py fonts/golden/otf/AnNamGolden-%s.otf 27.2 27.2 AEFHLTZeftz && python3 tools/construct/qa_thin.py out/golden/outlines.json 34 34)
+(cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_bars.py fonts/golden/otf/AnNamGolden-%s.otf 27.2 27.2 AEFHLTZeftz && python3 tools/construct/qa_thin.py out/golden/outlines.json 34 34 0.80)
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_arms.py fonts/golden/otf/AnNamGolden-%s.otf)
 if [ -n "$DIZAI_XHGT" ]; then (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/xhgt_var.py | tail -2); fi   # 26/11: Serif dừng phát triển — chỉ chạy khi DIZAI_XHGT=1   # S63: AnNam Serif variable gộp Golden (trục XHGT) — cần cả hai họ đã build

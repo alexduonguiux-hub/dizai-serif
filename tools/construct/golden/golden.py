@@ -1626,10 +1626,14 @@ def main():
             if horn_compat(rr['Regular'], rr['Bold']):
                 for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
                 for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
-    for c in TF_SET:                                              # G42 chân loe nét mảnh dài, lài (mọi weight)
+    tfn = {}
+    for c in sorted(TF_SET):                                      # G42 chân loe nét mảnh dài, lài (mọi weight)
         if f'{c}-Regular' in G:
+            TF_N[0] = 0
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = thin_flare(G[f'{c}-{w}'])
+            tfn[c] = TF_N[0]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    print('G42 chân loe nét mảnh (R + B):', tfn)
     for c in (ARMD - {'T'}) | set('247'):                         # G28 dáng móc nét ngang dài, lài (mọi weight); T theo E (G26); số 2 4 7 (designer 26/11)
         if f'{c}-Regular' in G:
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = flare_set(G[f'{c}-{w}'])
@@ -2108,6 +2112,7 @@ def y_tail_fix(d):
 # (đoạn ngang). Chỉ nét MẢNH (bề dày đo vuông góc < TF_THICK). Điểm nối trên mép nét trượt xa mũi hơn để chiều sâu cung = TF_K × cũ;
 # tay nắm tại điểm nối dọc theo mép nét (liền tiếp tuyến), tay nắm ở mũi giữ hướng, co giãn theo dây cung.
 TF_K, TF_THICK, TF_SET = 1.8, 60.0, set('AKMNVWXYvwxy')
+TF_N = [0]
 def thin_flare(d, k=None):
     k = TF_K if k is None else k
     cs = parse(d); PL = polys(cs)
@@ -2120,6 +2125,19 @@ def thin_flare(d, k=None):
         return n_ % 2 == 1
     hor_ = lambda a, b: abs(a[1] - b[1]) < 0.6 and abs(a[0] - b[0]) > 10
     edge_ = lambda a, b: abs(a[1] - b[1]) > 60
+    for c in cs:                                                  # bỏ đoạn thẳng NGẮN chen giữa cung loe và mép nét (W: lệch 2° → gãy)
+        i = 1
+        while i + 1 < len(c):
+            k0, k1 = c[i][0], c[i + 1][0]
+            if k0 == 'L' and k1 == 'L' and i >= 1 and c[i - 1][0] == 'C':
+                a = c[i - 1][1][-1]; b = c[i][1][0]; e2 = c[i + 1][1][0]
+                if math.dist(a, b) < 25 and math.dist(b, e2) > 60:
+                    c[i - 1][1][-1][0], c[i - 1][1][-1][1] = b[0], b[1]; del c[i]; continue
+            if k0 == 'L' and k1 == 'L' and i + 2 < len(c) and c[i + 2][0] == 'C':
+                a = c[i][1][0]; b = c[i + 1][1][0]; a0 = c[i - 1][1][-1]
+                if math.dist(a, b) < 25 and math.dist(a0, a) > 60:
+                    del c[i + 1]; continue
+            i += 1
     for c in cs:                                                  # gộp cung loe 2 đoạn (W) → 1 cung, rồi xử lý như mọi chân loe
         i = 1
         while i + 2 < len(c):
@@ -2160,7 +2178,7 @@ def thin_flare(d, k=None):
             if th is None or th > TF_THICK: continue                  # nét đậm: giữ nguyên
             D = abs(tip[1] - node[1])
             if D < 5 or abs(uy) < 0.2: continue
-            ext = min((k - 1)*D/abs(uy), 0.3*ul)
+            ext = min((k - 1)*D/abs(uy), 0.3*ul); TF_N[0] += 1
             ps = segs[j][1]
             hT = ps[1] if side == 'start' else ps[0]; hN = ps[0] if side == 'start' else ps[1]
             ch0 = math.dist(node, tip)
