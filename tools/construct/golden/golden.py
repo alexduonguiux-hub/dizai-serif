@@ -1781,7 +1781,7 @@ def no_horn(c):
 # ---------- G34 sừng ư dính vào loe (designer 25/11 "dấu ư k dính vào loe"): mép trong sừng (từ đỉnh sừng đi xuống) kết thúc TRÊN
 # đường cong loe đầu thân phải (điểm nối ở HF_FRAC chiều cao loe), loe giữ nguyên cung của chữ gốc từ điểm nối tới góc đỉnh.
 # Trước: Golden — mép trong sừng cắm vào thân DƯỚI loe → khe trắng hẹp giữa loe và sừng; Serif — loe bị thay bằng đoạn thẳng.
-HF_FRAC = 0.6
+HF_FRAC = 0.15                                                  # 25/11 0.6 lấp mất serif → nối ở chân loe (designer 26/11 "mất nét serif")
 def horn_flare(d, base_d, h, frac=None):
     frac = HF_FRAC if frac is None else frac
     F = None                                                        # loe phải của chữ gốc: cung C đi lên, kết thúc ở góc đỉnh phải
