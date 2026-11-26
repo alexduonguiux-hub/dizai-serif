@@ -30,6 +30,8 @@ def align(dh, dd):
             for j in range(m + 1):
                 if C[i][j] >= INF: continue
                 if i < n and j < m and hs[i][0] == ds[j][0] and C[i][j] < C[i + 1][j + 1]: C[i + 1][j + 1] = C[i][j]; B[i + 1][j + 1] = 'm'
+                if i < n and j < m and hs[i][0] == 'L' and ds[j][0] == 'C' and C[i][j] + 3 < C[i + 1][j + 1]:   # thẳng → cung suy biến (ff)
+                    C[i + 1][j + 1] = C[i][j] + 3; B[i + 1][j + 1] = 'c'
                 if i < n and hs[i][0] == 'L':
                     L_ = math.dist(st[i], hs[i][-1])
                     if L_ < 15 or True:
@@ -40,13 +42,17 @@ def align(dh, dd):
         ops = []; i, j = n, m
         while i or j:
             o = B[i][j]; ops.append(o)
-            if o == 'm': i -= 1; j -= 1
+            if o in 'mc': i -= 1; j -= 1
             elif o == 'd': i -= 1
             else: j -= 1
         ops.reverse()
         new = [hc[0]]; i = 0; cur = M0
         for o in ops:
             if o == 'm': new.append(hs[i]); cur = hs[i][-1]; i += 1
+            elif o == 'c':
+                e = hs[i][-1]; a_ = cur
+                new.append(('C', [a_[0] + (e[0] - a_[0])/3, a_[1] + (e[1] - a_[1])/3], [a_[0] + 2*(e[0] - a_[0])/3, a_[1] + 2*(e[1] - a_[1])/3], list(e)))
+                cur = e; i += 1
             elif o == 'd':
                 if i == len(hs) - 1: new[0] = ('M', list(hs[i][-1])) if False else new[0]
                 i += 1
