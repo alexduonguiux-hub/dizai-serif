@@ -1633,6 +1633,9 @@ def main():
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
+    if 't-Regular' in G:                                          # G45 lòng móc t khoét sâu (đáy mảnh) — trước G43 để j theo
+        for w in ('Regular', 'Bold'): G[f't-{w}'] = t_hook_deep(G[f't-{w}'])
+        for w, t in TW.items(): G[f't-{w}'] = lerp_d(G['t-Regular'], G['t-Bold'], t)
     for c in 'jȷ':                                                # G43 móc j = móc t lật gương
         if f'{c}-Regular' in G and 't-Regular' in G:
             rr = {w: j_from_t(G[f'{c}-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
@@ -2231,6 +2234,21 @@ def thin_flare(d, k=None, wk=None):
     return fmt(cs)
 # ---------- G43 móc j = móc t lật gương (designer 26/11 "bụng cong của móc t và j phải đồng bộ"): chuỗi móc t (2 cung ngoài, nhát cắt
 # đứng, 2 cung lòng) lật ngang quanh trục giữa mép thân, dời xuống đáy j; thay chuỗi móc j (cung lòng → nhát cắt → cung ngoài).
+TH_K = 0.6                     # G45 đáy móc t (→ j) = 0.6 × độ dày cũ (designer 26/11 "bụng khoét của móc t và j nên sâu hơn để đáy là nét mảnh")
+def t_hook_deep(d, k=None):
+    k = TH_K if k is None else k
+    cs = parse(d); c = cs[0]
+    ci = None
+    for i, (kk, ps) in enumerate(c):
+        if kk == 'L' and i > 0:
+            a = c[i - 1][1][-1]; b = ps[0]
+            if abs(a[0] - b[0]) < 0.6 and 40 < abs(a[1] - b[1]) < 200 and min(a[1], b[1]) < 50 and (ci is None or a[0] > c[ci - 1][1][-1][0]): ci = i
+    if ci is None or ci + 2 >= len(c) or c[ci + 1][0] != 'C' or c[ci + 2][0] != 'C': return d
+    B = c[ci + 1][1][2]
+    yb = min(p[1] for p in polys(cs)[0] if abs(p[0] - B[0]) < 25)      # đáy ngoài dưới điểm đáy lòng
+    dl = (B[1] - yb)*(1 - k)
+    for q in (c[ci + 1][1][1], B, c[ci + 2][1][0]): q[1] -= dl
+    return fmt(cs)
 def j_from_t(dj, dt):
     T = parse(dt)[0]; J = parse(dj); jc = J[0]
     def cut_idx(c, side):
