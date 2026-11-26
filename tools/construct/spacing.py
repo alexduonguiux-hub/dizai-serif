@@ -33,6 +33,7 @@ lerp_w(SB_REF)
 G_CAP, K_F, MIN_GAP, KMIN = 300.0, 0.45, 26.0, -150.0
 ARM_R, ARM_L, ARM_K = set('EFTZ'), set('TZ'), 0.55   # S15 tay ngang đỉnh đối mặt (ET FT TT EZ…): khe ≥ 0.55 khe HH (designer 26/11 "kerning ET hơi gần")
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
+FOOT_R, FOOT_L, FOOT_Y, MIN_GAP_FOOT = set('RKX'), set('A'), 110.0, 10.0   # S16 RA KA XA: chân serif hai chữ được sát hơn (designer 26/11 "RA, KA nên gần hơn")
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
 WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.35, 0.32   # designer 05/11 lần 2: "RA KA XA cũng hơi xa" — 0.25 / 0.38 → 0.35 / 0.32
 # cặp NÊM ĐỐI NÊM (designer 05/11: "KA, RA, LA, ƯA, XA…" thưa): khe nhỏ nhất ở CHÂN (đường chân) nên luật khe nhỏ nhất không
@@ -306,7 +307,9 @@ def main():
                 k = KC.get(f'{rclass(a)}|{lclass(b_)}', 0.0)
                 g = pair_gap(a, b_, k)
                 if not np.any(~np.isnan(g)): continue
-                short = np.nanmax(FLOOR.get(a, MIN_GAP) - g)                  # thiếu bao nhiêu so với sàn (theo cao độ)
+                fl_ = FLOOR.get(a, MIN_GAP)
+                if base(a) in FOOT_R and base(b_) in FOOT_L: fl_ = np.where(YS < FOOT_Y, MIN_GAP_FOOT, fl_)   # S16 chân serif
+                short = np.nanmax(fl_ - g)                                    # thiếu bao nhiêu so với sàn (theo cao độ)
                 gm = np.nanmin(g)
                 if short > -40: NEED[w][f'{a}|{b_}'] = k + short             # mức kern chặt nhất còn đủ sàn (cho bước variable)
                 if short > 0:
