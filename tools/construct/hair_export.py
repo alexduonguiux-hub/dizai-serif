@@ -13,6 +13,53 @@ HAIR_MIN, HAIR_DEF = float(os.environ.get('DIZAI_HAIR', 16)), 34.0
 HOUT = os.environ.get('DIZAI_HAIR_OUT') or os.path.join(EF.ROOT, 'out', 'golden_hair')
 
 def sig(d): return [[s[0] for s in c] for c in EF.parse(d)]
+
+def align(dh, dd):
+    """khớp cấu trúc outline nét mảnh với outline mặc định (cùng chữ, cùng weight): theo từng contour, so dãy đoạn (DP) — được BỎ một đoạn
+    thẳng của bản nét mảnh (giá = độ dài, chỉ đoạn ngắn / thẳng hàng) hoặc CHÈN đoạn thẳng dài 0 (giá 6). Trả về None nếu không khớp được."""
+    import math
+    H, Dd = EF.parse(dh), EF.parse(dd)
+    if len(H) != len(Dd): return None
+    out = []
+    for hc, dc in zip(H, Dd):
+        hs = [s for s in hc if s[0] in 'LC']; ds = [s for s in dc if s[0] in 'LC']
+        M0 = hc[0][1]; st = [M0] + [s[-1] for s in hs[:-1]]
+        n, m = len(hs), len(ds); INF = 1e18
+        C = [[INF]*(m + 1) for _ in range(n + 1)]; B = [[None]*(m + 1) for _ in range(n + 1)]; C[0][0] = 0
+        for i in range(n + 1):
+            for j in range(m + 1):
+                if C[i][j] >= INF: continue
+                if i < n and j < m and hs[i][0] == ds[j][0] and C[i][j] < C[i + 1][j + 1]: C[i + 1][j + 1] = C[i][j]; B[i + 1][j + 1] = 'm'
+                if i < n and hs[i][0] == 'L':
+                    L_ = math.dist(st[i], hs[i][-1])
+                    if L_ < 15 or True:
+                        c_ = C[i][j] + (L_ if L_ < 15 else 30 + L_*0.01)
+                        if c_ < C[i + 1][j]: C[i + 1][j] = c_; B[i + 1][j] = 'd'
+                if j < m and ds[j][0] == 'L' and C[i][j] + 6 < C[i][j + 1]: C[i][j + 1] = C[i][j] + 6; B[i][j + 1] = 'i'
+        if C[n][m] >= INF: return None
+        ops = []; i, j = n, m
+        while i or j:
+            o = B[i][j]; ops.append(o)
+            if o == 'm': i -= 1; j -= 1
+            elif o == 'd': i -= 1
+            else: j -= 1
+        ops.reverse()
+        new = [hc[0]]; i = 0; cur = M0
+        for o in ops:
+            if o == 'm': new.append(hs[i]); cur = hs[i][-1]; i += 1
+            elif o == 'd':
+                if i == len(hs) - 1: new[0] = ('M', list(hs[i][-1])) if False else new[0]
+                i += 1
+            else: new.append(('L', list(cur)))
+        new.append(('Z',))
+        out.append(new)
+    s_ = ''
+    for c in out:
+        for seg in c:
+            if seg[0] == 'Z': s_ += 'Z'
+            elif seg[0] == 'M': s_ += 'M%.2f %.2f' % tuple(seg[1])
+            else: s_ += seg[0] + ' '.join('%.2f %.2f' % tuple(p) for p in seg[1:])
+    return s_ if sig(s_) == sig(dd) else None
 def gsig(g): return [[(p.type or 'o') for p in c.points] for c in g.contours]
 
 def main():
@@ -21,9 +68,12 @@ def main():
     EF.YMAX, EF.YMIN = EF._ybounds()
     for ang, tag in ((0, ''), (EF.ITALIC_ANGLE, '-Italic')):
         EF.use('Italic' if tag else 'Roman'); D0 = EF.O
-        M = dict(D0); keep = set()
+        M = dict(D0); keep = set(); nal = 0
         for c in EF.CHARS:
             ks = [f'{c}-{w}' for w in ('Regular', 'Bold')]
+            if all(k in D0 and k in H for k in ks) and any(sig(D0[k]) != sig(H[k]) for k in ks):
+                al = {k: (H[k] if sig(D0[k]) == sig(H[k]) else align(H[k], D0[k])) for k in ks}
+                if all(al.values()): H = dict(H); H.update(al); nal += 1
             if all(k in D0 and k in H and sig(D0[k]) == sig(H[k]) for k in ks):
                 for k in ks: M[k] = H[k]
             elif all(k in D0 for k in ks): keep.add(c)
@@ -46,7 +96,7 @@ def main():
             p = os.path.join(EF.BUILD, f'{EF.PS}{tag}-{w}-Hair.ufo')
             if os.path.exists(p): shutil.rmtree(p)
             MS[w].save(p)
-        print(f'HAIR{tag or " Roman"}: giữ mặc định {len(keep)} chữ (lệch cấu trúc: {"".join(sorted(keep))}) · sửa sau dựng {fixed}')
+        print(f'HAIR{tag or " Roman"}: khớp cấu trúc {nal} chữ · giữ mặc định {len(keep)} chữ (lệch cấu trúc: {"".join(sorted(keep))}) · sửa sau dựng {fixed}')
         ds = DesignSpaceDocument()
         for name, t_, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('Hairline', 'HAIR', HAIR_MIN, HAIR_DEF, HAIR_DEF)):
             ax = AxisDescriptor(); ax.name, ax.tag, ax.minimum, ax.default, ax.maximum = name, t_, lo, df, hi; ds.addAxis(ax)

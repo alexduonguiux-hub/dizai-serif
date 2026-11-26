@@ -1372,6 +1372,12 @@ def flare_set(d, k=None):
 
 # ---------- G29 Đ = D đã đồng bộ + thanh (designer 23/11 "Đ Bold bị lỗi, Đ regular cũng lỗi"): thanh Đ dính liền thân → rebase không
 # khớp contour, Đ giữ bản vẽ cũ (bụng dày, không có nối mảnh G20). Thanh = phần Đ nguồn nằm ngoài D nguồn (boolean), hợp với D mới.
+def _bar_thin(bar, r):
+    """trục HAIR: gạch ngang (Đ đ) mảnh theo tỉ lệ r quanh trục giữa gạch"""
+    if abs(r - 1) < 1e-6 or not list(bar.segments): return bar
+    cs = parse(_pd(bar)); ys = [p[1] for c in cs for _, ps in c for p in ps]; ym = (min(ys) + max(ys))/2
+    return _pp(fmt([[[k, [[x, ym + (y - ym)*r] for x, y in ps]] for k, ps in c] for c in cs]))
+HAIR_R = [1.0]
 def bar_compose(src_c, src_b, new_b):
     SC, SB_ = parse(src_c), parse(src_b)
     dx, dy = horn_align(SC, SB_)
@@ -1385,6 +1391,7 @@ def bar_compose(src_c, src_b, new_b):
     xs_ = [p[0] for c in parse(mv(src_b)) for p in pts_of(c)]; xm = (min(xs_) + max(xs_))/2    # thanh chỉ ở nửa trái (không lấy dải chênh mép phải bụng)
     band = pathops.Path(); band.moveTo(-3000, y0); band.lineTo(xm, y0); band.lineTo(xm, y1); band.lineTo(-3000, y1); band.close()
     bar = _op(bar, band, pathops.PathOp.INTERSECTION)               # bỏ dải chênh bụng (bản vẽ Đ cũ khác D)
+    bar = _bar_thin(bar, HAIR_R[0])
     out = _op(newB, bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
 
@@ -1400,6 +1407,7 @@ def bar_add(src_c, src_b, new_b, gap=15.0):
         P = polys(parse(_pd(q)))
         if P and min(p[1] for pl in P for p in pl) > btop + gap: bar = _op(bar, q, pathops.PathOp.UNION)
     if not list(bar.segments): return None
+    bar = _bar_thin(bar, HAIR_R[0])
     out = _op(_pp(new_b), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
 # ---------- G30 duỗi cung gần thẳng (ẞ: mép trên chỗ thắt là 2 cung lệch < 3 u → nội suy weight giữa gãy 4–8°): cung C có tay nắm
@@ -1597,7 +1605,7 @@ def lerp_d(a, b, t):
 def main():
     hair = os.environ.get('DIZAI_HAIR')                             # trục HAIR (designer 26/11 "thanh slide variable điều khiển nét mỏng"):
     if hair:                                                        # master nét mảnh mảnh hơn — cùng hệ luật, chuẩn nét mảnh × r
-        r_ = float(hair)/LINE_T['Regular']
+        r_ = float(hair)/LINE_T['Regular']; HAIR_R[0] = r_
         for D_ in (LINE_T, RING_T, ARCH_T):
             for w in D_: D_[w] *= r_
         print('HAIR: nét mảnh', {w: round(LINE_T[w], 1) for w in LINE_T}, 'cong', {w: round(RING_T[w], 1) for w in RING_T})
