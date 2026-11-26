@@ -35,6 +35,7 @@ ARM_R, ARM_L, ARM_K = set('EFTZ'), set('TZ'), 0.55   # S15 tay ngang đỉnh đ�
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
 STEM_L = 'BDEFHIKLMNPRÞ'   # S17 chữ có thân đứng bên trái
 FOOT_R, FOOT_L, FOOT_Y, MIN_GAP_FOOT = set('RKX'), set('A'), 110.0, 10.0   # S16 RA KA XA: chân serif hai chữ được sát hơn (designer 26/11 "RA, KA nên gần hơn")
+KSCALE = {'V|A': 1.15, 'A|V': 1.15}   # S18 designer 26/11 "VA kerning cho gần lại cỡ 15%" + "AV luôn"
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
 WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.35, 0.32   # designer 05/11 lần 2: "RA KA XA cũng hơi xa" — 0.25 / 0.38 → 0.35 / 0.32
 # cặp NÊM ĐỐI NÊM (designer 05/11: "KA, RA, LA, ƯA, XA…" thưa): khe nhỏ nhất ở CHÂN (đường chân) nên luật khe nhỏ nhất không
@@ -292,6 +293,8 @@ def main():
                 kT = math.ceil((gE - gT0)/5)*5
                 if kT <= -10 or kT >= 5: KC[f'T|{lc}'] = kT
                 else: KC.pop(f'T|{lc}', None)
+            for key, f_ in KSCALE.items():                                  # S18 nhân hệ số kerning từng cặp (chặn va chạm phía dưới vẫn giữ)
+                if key in KC: KC[key] = math.floor(KC[key]*f_/5)*5
         if w not in ('Regular', 'Bold'):
             KR, KB = kerning['Regular']['class'], kerning['Bold']['class']; t_ = TW[w]; KC = {}
             for key in set(KR) | set(KB):

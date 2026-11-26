@@ -1687,7 +1687,7 @@ def main():
             TF_N[0] = 0
             kk_ = (TF_K, TF_WK) if c.isupper() else (TF_K_LOW, TF_WK_LOW)   # chữ thường: loe nhẹ hơn (y Bold: nét mảnh 38 khi ×2.4)
             if c in TF_K_CH: kk_ = (TF_K_CH[c], kk_[1])
-            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = thin_flare(G[f'{c}-{w}'], *kk_)
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = thin_flare(G[f'{c}-{w}'], *kk_, dabs=TF_DABS.get(c))
             tfn[c] = TF_N[0]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     print('G42 chân loe nét mảnh (R + B):', tfn)
@@ -2211,11 +2211,12 @@ TF_K, TF_THICK, TF_SET = float(os.environ.get('DIZAI_TF_K', 2.4)), 60.0, set('AK
 TF_WK = float(os.environ.get('DIZAI_TF_WK', 1.3))
 TF_K_LOW, TF_WK_LOW = 1.8, 1.15
 TF_DCAP = 0.26
-TF_K_CH = {'A': float(os.environ.get('DIZAI_TF_KA', 2.4)), 'K': float(os.environ.get('DIZAI_TF_KK', 2.4))}   # G42 riêng từng chữ (designer 26/11 "chân loe A ở nét mỏng cao lên xíu")
+TF_DABS = {'A': 0.226}           # G42 chân loe phía lòng A cao bằng loe trong nét mảnh V (161 / 711) (designer 26/11 "chân loe nét mỏng A nên giống của V")
+TF_K_CH = {'A': float(os.environ.get('DIZAI_TF_KA', 2.4)), 'K': float(os.environ.get('DIZAI_TF_KK', 1.4))}   # G42 riêng từng chữ (designer 26/11 "chân loe A ở nét mỏng cao lên xíu")
 TF_HV = float(os.environ.get('DIZAI_TF_HV', 0.12))
 TF_HT, TF_HN = float(os.environ.get('DIZAI_TF_HT', 0.5)), float(os.environ.get('DIZAI_TF_HN', 0.55))   # tay nắm cung loe (tỉ lệ khoảng tới góc)   # G42 hệ số bề ngang loe (mũi ra xa mép nét)
 TF_N = [0]
-def thin_flare(d, k=None, wk=None):
+def thin_flare(d, k=None, wk=None, dabs=None):
     k = TF_K if k is None else k
     wk = TF_WK if wk is None else wk
     cs = parse(d); PL = polys(cs); HMAX = max(p[1] for P_ in PL for p in P_)
@@ -2282,8 +2283,11 @@ def thin_flare(d, k=None, wk=None):
             D = abs(tip[1] - node[1])
             if D < 5 or abs(uy) < 0.2: continue
             Dt = min(k*D, TF_DCAP*HMAX*max(1.0, k/TF_K))                               # trần chiều cao cung loe (v y: mép ngoài vốn đã cong dài)
+            lim = 0.3*ul
+            if dabs and ul < 0.5*HMAX:                                # mép nét bị thanh cắt ngắn (lòng A): cung loe cao theo chuẩn tuyệt đối
+                Dt = max(Dt, dabs*HMAX); lim = ul - 12.0                 # (chừa 12 u trước chỗ gặp thanh)
             if Dt <= D + 1: continue
-            ext = min((Dt - D)/abs(uy), 0.3*ul); TF_N[0] += 1
+            ext = min((Dt - D)/abs(uy), lim); TF_N[0] += 1
             ps = segs[j][1]
             hT = ps[1] if side == 'start' else ps[0]; hN = ps[0] if side == 'start' else ps[1]
             if wk != 1.0:                                             # loe rộng thêm: mũi trượt ra ngoài dọc đoạn ngang
