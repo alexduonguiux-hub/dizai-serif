@@ -1620,7 +1620,17 @@ def main():
     if 'B-Regular' in G:                                          # G18 eo B = chuẩn nét ngang Golden
         for w in ('Regular', 'Bold'): G[f'B-{w}'] = b_waist(G[f'B-{w}'], RING_T[w]*BAR_K)
         for w, t in TW.items(): G[f'B-{w}'] = lerp_d(G['B-Regular'], G['B-Bold'], t)
-    for c in ARMD - {'T'}:                                        # G28 dáng móc nét ngang dài, lài (mọi weight); T theo E (G26)
+    for c in 'jȷ':                                                # G43 móc j = móc t lật gương
+        if f'{c}-Regular' in G and 't-Regular' in G:
+            rr = {w: j_from_t(G[f'{c}-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
+            if horn_compat(rr['Regular'], rr['Bold']):
+                for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
+                for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+    for c in TF_SET:                                              # G42 chân loe nét mảnh dài, lài (mọi weight)
+        if f'{c}-Regular' in G:
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = thin_flare(G[f'{c}-{w}'])
+            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    for c in (ARMD - {'T'}) | set('247'):                         # G28 dáng móc nét ngang dài, lài (mọi weight); T theo E (G26); số 2 4 7 (designer 26/11)
         if f'{c}-Regular' in G:
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = flare_set(G[f'{c}-{w}'])
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
@@ -2093,6 +2103,91 @@ def y_tail_fix(d):
     d1 = (h1[0] - J[0], h1[1] - J[1]); J[0], J[1] = nJ; h1[0], h1[1] = nJ[0] + d1[0], nJ[1] + d1[1]
     for p_ in (h2, T): p_[1] = yb + (p_[1] - yb)*YT_THIN
     return fmt(cs)
+# ---------- G42 chân loe NÉT MẢNH dài, lài như móc Z / T (designer 26/11 "Chân loe nét mảnh của M, N, W, V, Y, X, K cũng nên lài như Z
+# và T", "chữ thường w v x y", "chân loe A cũng vậy"): cung loe nối mép nét (đoạn thẳng xiên / đứng) với mũi trên đường chân / đỉnh
+# (đoạn ngang). Chỉ nét MẢNH (bề dày đo vuông góc < TF_THICK). Điểm nối trên mép nét trượt xa mũi hơn để chiều sâu cung = TF_K × cũ;
+# tay nắm tại điểm nối dọc theo mép nét (liền tiếp tuyến), tay nắm ở mũi giữ hướng, co giãn theo dây cung.
+TF_K, TF_THICK, TF_SET = 1.8, 60.0, set('AKMNVWXYvwxy')
+def thin_flare(d, k=None):
+    k = TF_K if k is None else k
+    cs = parse(d); PL = polys(cs)
+    def ins(q):
+        n_ = 0
+        for P_ in PL:
+            for i_ in range(len(P_)):
+                (x1, y1), (x2, y2) = P_[i_ - 1], P_[i_]
+                if (y1 > q[1]) != (y2 > q[1]) and q[0] < x1 + (q[1] - y1)*(x2 - x1)/(y2 - y1): n_ += 1
+        return n_ % 2 == 1
+    for c in cs:
+        segs = [(kk, ps) for kk, ps in c if kk in 'LC']
+        if not segs: continue
+        M0 = c[0][1][0]
+        starts = [M0] + [ps[-1] for _, ps in segs[:-1]]
+        if math.dist(segs[-1][1][-1], M0) > 0.01:                    # đoạn đóng ngầm
+            segs.append(('L', [M0])); starts.append(c[-2][1][-1] if c[-1][0] == 'Z' else c[-1][1][-1])
+        n = len(segs)
+        hor = lambda a, b: abs(a[1] - b[1]) < 0.6 and abs(a[0] - b[0]) > 10
+        edge = lambda a, b: abs(a[1] - b[1]) > 60
+        todo = []
+        for j in range(n):
+            kk, ps = segs[j]
+            if kk != 'C': continue
+            s0, e0 = starts[j], ps[2]
+            pk, pps = segs[j - 1]; nk, nps = segs[(j + 1) % n]
+            pa, pb = starts[j - 1], pps[-1]; na, nb = e0, nps[-1]
+            if pk == 'L' and nk == 'L' and edge(pa, pb) and hor(na, nb): todo.append((j, 'start', s0, e0, pa))      # nút = đầu cung
+            elif pk == 'L' and nk == 'L' and hor(pa, pb) and edge(na, nb): todo.append((j, 'end', e0, s0, nb))     # nút = cuối cung
+        for j, side, node, tip, far in todo:
+            ux, uy = far[0] - node[0], far[1] - node[1]; ul = math.hypot(ux, uy); ux, uy = ux/ul, uy/ul   # dọc mép, rời mũi
+            q = (node[0] + ux*30, node[1] + uy*30); th = None
+            for sg in (1, -1):
+                nx, ny = -uy*sg, ux*sg
+                if not ins((q[0] + nx*3, q[1] + ny*3)): continue
+                t_ = 3
+                while t_ < 200 and ins((q[0] + nx*t_, q[1] + ny*t_)): t_ += 2
+                th = t_
+            if th is None or th > TF_THICK: continue                  # nét đậm: giữ nguyên
+            D = abs(tip[1] - node[1])
+            if D < 5 or abs(uy) < 0.2: continue
+            ext = min((k - 1)*D/abs(uy), 0.3*ul)
+            ps = segs[j][1]
+            hT = ps[1] if side == 'start' else ps[0]; hN = ps[0] if side == 'start' else ps[1]
+            ch0 = math.dist(node, tip)
+            node[0], node[1] = node[0] + ux*ext, node[1] + uy*ext
+            ch1 = math.dist(node, tip); r = ch1/max(ch0, 1e-6)
+            hT[0], hT[1] = tip[0] + (hT[0] - tip[0])*r, tip[1] + (hT[1] - tip[1])*r
+            hN[0], hN[1] = node[0] - ux*0.45*ch1, node[1] - uy*0.45*ch1
+    return fmt(cs)
+# ---------- G43 móc j = móc t lật gương (designer 26/11 "bụng cong của móc t và j phải đồng bộ"): chuỗi móc t (2 cung ngoài, nhát cắt
+# đứng, 2 cung lòng) lật ngang quanh trục giữa mép thân, dời xuống đáy j; thay chuỗi móc j (cung lòng → nhát cắt → cung ngoài).
+def j_from_t(dj, dt):
+    T = parse(dt)[0]; J = parse(dj); jc = J[0]
+    def cut_idx(c, side):
+        best = None
+        for i, (k, ps) in enumerate(c):
+            if k != 'L' or i == 0: continue
+            a = c[i - 1][1][-1]; b = ps[0]
+            if abs(a[0] - b[0]) < 0.6 and 40 < abs(a[1] - b[1]) < 200 and min(a[1], b[1]) < 200:
+                if best is None or (side*a[0] > side*c[best - 1][1][-1][0]): best = i
+        return best
+    ti = cut_idx(T, 1); ji = cut_idx(jc, -1)
+    if ti is None or ji is None or ti < 3 or ji < 4: return dj
+    if not all(T[ti + k][0] == 'C' for k in (-2, -1, 1, 2)) or not all(jc[ji + k][0] == 'C' for k in (-3, -2, -1, 1, 2)): return dj
+    t0 = T[ti - 3][1][-1]                                         # điểm rời thân ngoài của t
+    hook = [(T[ti + k][0], T[ti + k][1]) for k in (-2, -1, 0, 1, 2)]
+    pts = [t0] + [ps[-1] for _, ps in hook]
+    tb = min(p[1] for _, ps in hook for p in ps); jb = min(p[1] for _, ps in jc[ji - 3:ji + 3] for p in ps)
+    xr = jc[ji + 2][1][-1][0]; ax = t0[0] + xr; dy = jb - tb
+    mir = lambda p: [ax - p[0], p[1] + dy]
+    # đảo chiều chuỗi + lật gương (giữ chiều contour)
+    seq = []; starts = [t0] + [ps[-1] for _, ps in hook[:-1]]
+    for (k, ps), st in zip(reversed(hook), reversed(starts)):
+        if k == 'L': seq.append(['L', [mir(st)]])
+        else: seq.append(['C', [mir(ps[1]), mir(ps[0]), mir(st)]])
+    new_start = mir(hook[-1][1][-1])
+    prev = jc[ji - 4][1]; prev[-1] = new_start                    # cuối mép thân trong j → điểm đầu móc mới
+    jc[ji - 3:ji + 3] = seq
+    return fmt(J)
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
