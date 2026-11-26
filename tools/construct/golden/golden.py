@@ -1686,6 +1686,7 @@ def main():
         if f'{c}-Regular' in G:
             TF_N[0] = 0
             kk_ = (TF_K, TF_WK) if c.isupper() else (TF_K_LOW, TF_WK_LOW)   # chữ thường: loe nhẹ hơn (y Bold: nét mảnh 38 khi ×2.4)
+            if c in TF_K_CH: kk_ = (TF_K_CH[c], kk_[1])
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = thin_flare(G[f'{c}-{w}'], *kk_)
             tfn[c] = TF_N[0]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
@@ -2210,6 +2211,7 @@ TF_K, TF_THICK, TF_SET = float(os.environ.get('DIZAI_TF_K', 2.4)), 60.0, set('AK
 TF_WK = float(os.environ.get('DIZAI_TF_WK', 1.3))
 TF_K_LOW, TF_WK_LOW = 1.8, 1.15
 TF_DCAP = 0.26
+TF_K_CH = {'A': float(os.environ.get('DIZAI_TF_KA', 2.4)), 'K': float(os.environ.get('DIZAI_TF_KK', 2.4))}   # G42 riêng từng chữ (designer 26/11 "chân loe A ở nét mỏng cao lên xíu")
 TF_HV = float(os.environ.get('DIZAI_TF_HV', 0.12))
 TF_HT, TF_HN = float(os.environ.get('DIZAI_TF_HT', 0.5)), float(os.environ.get('DIZAI_TF_HN', 0.55))   # tay nắm cung loe (tỉ lệ khoảng tới góc)   # G42 hệ số bề ngang loe (mũi ra xa mép nét)
 TF_N = [0]
@@ -2279,7 +2281,7 @@ def thin_flare(d, k=None, wk=None):
             if th is None or th > TF_THICK: continue                  # nét đậm: giữ nguyên
             D = abs(tip[1] - node[1])
             if D < 5 or abs(uy) < 0.2: continue
-            Dt = min(k*D, TF_DCAP*HMAX)                               # trần chiều cao cung loe (v y: mép ngoài vốn đã cong dài)
+            Dt = min(k*D, TF_DCAP*HMAX*max(1.0, k/TF_K))                               # trần chiều cao cung loe (v y: mép ngoài vốn đã cong dài)
             if Dt <= D + 1: continue
             ext = min((Dt - D)/abs(uy), 0.3*ul); TF_N[0] += 1
             ps = segs[j][1]
