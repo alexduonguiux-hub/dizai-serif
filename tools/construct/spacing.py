@@ -33,6 +33,7 @@ lerp_w(SB_REF)
 G_CAP, K_F, MIN_GAP, KMIN = 300.0, 0.45, 26.0, -150.0
 ARM_R, ARM_L, ARM_K = set('EFTZ'), set('TZ'), 0.55   # S15 tay ngang đỉnh đối mặt (ET FT TT EZ…): khe ≥ 0.55 khe HH (designer 26/11 "kerning ET hơi gần")
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
+STEM_L = 'BDEFHIKLMNPRÞ'   # S17 chữ có thân đứng bên trái
 FOOT_R, FOOT_L, FOOT_Y, MIN_GAP_FOOT = set('RKX'), set('A'), 110.0, 10.0   # S16 RA KA XA: chân serif hai chữ được sát hơn (designer 26/11 "RA, KA nên gần hơn")
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
 WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.35, 0.32   # designer 05/11 lần 2: "RA KA XA cũng hơi xa" — 0.25 / 0.38 → 0.35 / 0.32
@@ -283,6 +284,14 @@ def main():
                     g = pair_gap(a, b_, k); gm = float(np.nanmin(g)); gh = float(np.nanmin(pair_gap('H', 'H', 0.0)))
                     if gm < ARM_K*gh: k += math.ceil((ARM_K*gh - gm)/5)*5
                 if k <= -10 or k >= 5: KC[f'{rc}|{lc}'] = k
+        if w in ('Regular', 'Bold'):                                        # S17 T + chữ thân đứng = E + chữ đó (designer 26/11 "TE nên bằng ER"):
+            for lc in STEM_L:                                               # khe nhỏ nhất (đầu tay T → thân) bằng khe đầu tay E → thân
+                if lc not in sp or 'T' not in sp or 'E' not in sp: continue
+                kE = KC.get(f'E|{lc}', 0.0)
+                gE = float(np.nanmin(pair_gap('E', lc, kE))); gT0 = float(np.nanmin(pair_gap('T', lc, 0.0)))
+                kT = math.ceil((gE - gT0)/5)*5
+                if kT <= -10 or kT >= 5: KC[f'T|{lc}'] = kT
+                else: KC.pop(f'T|{lc}', None)
         if w not in ('Regular', 'Bold'):
             KR, KB = kerning['Regular']['class'], kerning['Bold']['class']; t_ = TW[w]; KC = {}
             for key in set(KR) | set(KB):
