@@ -1264,6 +1264,13 @@ def t_flare(dT, dE):
     tip, (c1, c2, st) = ef
     W = tip[0] - st[0]; h1 = (c1[0] - tip[0], c1[1] - tip[1]); h2 = (c2[0] - st[0], c2[1] - st[1])
     cs = parse(dT); c = cs[0]; out = []; i = 0; cur = None
+    yT = None                                                       # S88 đáy thanh T = đáy thanh E cùng weight (T Bold còn 34 của Serif)
+    for k, ps in c:
+        if k == 'C' and abs(ps[2][1] - ps[1][1]) < 0.6 and ps[2][1] > 500: yT = ps[2][1]; break
+    if yT is not None and abs(yT - st[1]) > 0.3:
+        for k, ps in c:
+            for q in ps:
+                if abs(q[1] - yT) < 0.6: q[1] = st[1]
     for k, ps in c:
         if k == 'M': cur = ps[0]; out.append([k, ps]); continue
         if k == 'C' and abs(ps[2][1] - ps[1][1]) < 0.6 and ps[2][1] > 500 and cur[1] < ps[2][1] and cur[0] > ps[2][0]:   # mũi phải → thân
