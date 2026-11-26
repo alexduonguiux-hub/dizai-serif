@@ -1782,6 +1782,7 @@ def no_horn(c):
 # đường cong loe đầu thân phải (điểm nối ở HF_FRAC chiều cao loe), loe giữ nguyên cung của chữ gốc từ điểm nối tới góc đỉnh.
 # Trước: Golden — mép trong sừng cắm vào thân DƯỚI loe → khe trắng hẹp giữa loe và sừng; Serif — loe bị thay bằng đoạn thẳng.
 HORN_DY = 20.0   # G35 hạ sừng ư ơ thường 20 u (designer 26/11 "dời sừng xuống 1 chút … ơ cho đồng bộ"): đỉnh 570 → 550
+HORN_EMBED = 2.0  # G37 chân sừng ư chôn vào thân
 HF_CUP = 18.0    # G36 Golden: khoảng lượn từ mép trong sừng vào chân loe
 HF_FRAC = 0.15                                                  # 25/11 0.6 lấp mất serif → nối ở chân loe (designer 26/11 "mất nét serif")
 def _horn_edges(sg, it):
@@ -1904,14 +1905,75 @@ def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold')):
     for c in chars:
         if unicodedata.normalize('NFD', c)[0] != 'u' or not no_horn(c) or f'{c}-Regular' not in G: continue
         b2 = no_horn(c)
-        rr = {w: horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h, ref=G.get(f'ơ-{w}')) for w in WS if f'{c}-{w}' in G}
+        rr = {w: (horn_from_o(G[f'{c}-{w}'], G[f'ơ-{w}'], G[f'o-{w}'], G[f'{b2}-{w}'])                   # G37 sừng ư = sừng ơ
+                  or horn_flare(G[f'{c}-{w}'], G[f'{b2}-{w}'], h, ref=G.get(f'ơ-{w}'))) for w in WS if f'{c}-{w}' in G}
         if horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
         else:
             for w, d in rr.items(): G[f'{c}-{w}'] = d
         n += 1
-    print('G34 sừng ư dính loe:', n)
+    print('G37 sừng ư = sừng ơ:', n)
+# ---------- G37 sừng ư = sừng ơ (designer 26/11 "phần nối và độ cong sừng ư có vẻ khác ơ"): lấy nguyên chuỗi sừng của ơ cùng bộ /
+# cùng weight, dời ngang cho đầu sừng ở đúng vị trí đầu sừng ư hiện có. Mép trong: kéo dài theo tiếp tuyến cuối vào thân (gặp loe → khấc
+# chữ V như ơ gặp vòng). Mép ngoài: chân rời thân phải NẰM NGANG rồi cong lên, liền tiếp tuyến với cung sừng ơ (không gờ nhọn).
+def _horn_run(src_c, src_b, tol=2.5):
+    SC, SB_ = parse(src_c), parse(src_b); ss = [_segs(c) for c in SB_]
+    on = lambda q: min(_near(s_, q)[0] for s_ in ss if s_) <= tol*tol
+    for c in SC:
+        sg = _segs(c); n = len(sg); off = [not on(sg[i][2][-1]) for i in range(n)]
+        if not any(off) or all(off): continue
+        i0 = next(i for i in range(n) if off[i] and not off[i - 1]); j = i0
+        while off[j % n]: j += 1
+        return [sg[k % n] for k in range(i0, j + 1)]
+    return None
+def horn_from_o(cur, ro, o, ub, embed=3.0):
+    run = _horn_run(ro, o)
+    if not run: return None
+    top_of = lambda d: max(p[1] for pl in polys(parse(d)) for p in pl)
+    def tipx(d):
+        t = top_of(d); return max(p[0] for pl in polys(parse(d)) for p in pl if p[1] > t - 3)
+    sx = tipx(cur) - tipx(ro)
+    run = [((p0[0] + sx, p0[1]), k, [[x + sx, y] for x, y in ps]) for p0, k, ps in run]
+    a, e = run[0][0], run[-1][2][-1]
+    if a[1] > e[1]:                                                 # chuỗi phải đi từ chân NGOÀI (thấp) lên đỉnh rồi xuống mép trong
+        run = [(tuple(ps[-1]), k, ([[p0[0], p0[1]]] if k == 'L' else [ps[1], ps[0], [p0[0], p0[1]]])) for p0, k, ps in reversed(run)]
+        a, e = run[0][0], run[-1][2][-1]
+    PL = polys(parse(ub))
+    def ins(q):
+        k_ = 0
+        for P_ in PL:
+            for i_ in range(len(P_)):
+                (x1, y1), (x2, y2) = P_[i_ - 1], P_[i_]
+                if (y1 > q[1]) != (y2 > q[1]) and q[0] < x1 + (q[1] - y1)*(x2 - x1)/(y2 - y1): k_ += 1
+        return k_ % 2 == 1
+    def edge_x(y):
+        xs = []
+        for P_ in PL:
+            for i_ in range(len(P_)):
+                (x1, y1), (x2, y2) = P_[i_ - 1], P_[i_]
+                if (y1 > y) != (y2 > y): xs.append(x1 + (y - y1)*(x2 - x1)/(y2 - y1))
+        return max(xs)
+    s0 = run[0]; h0 = s0[2][0] if s0[1] == 'C' else s0[2][0]
+    ta = (h0[0] - a[0], h0[1] - a[1]); la = math.hypot(*ta); ta = (ta[0]/la, ta[1]/la)      # hướng rời chân ngoài (đi lên)
+    Ps = None                                                       # mép ngoài kéo dài ngược tiếp tuyến tới khi vào thân (góc nối như ơ gặp vòng)
+    for k_ in range(2, 200, 2):
+        q = (a[0] - ta[0]*k_, a[1] - ta[1]*k_)
+        if ins(q): Ps = [q[0] - ta[0]*embed, q[1] - ta[1]*embed]; break
+    if Ps is None: return None
+    foot = ('L', [list(a)])
+    s1 = run[-1]; h1 = s1[2][1] if s1[1] == 'C' else s1[0]
+    te = (e[0] - h1[0], e[1] - h1[1]); le = math.hypot(*te); te = (te[0]/le, te[1]/le)
+    E = None
+    for k_ in range(4, 200, 4):
+        q = (e[0] + te[0]*k_, e[1] + te[1]*k_)
+        if ins(q): E = (q[0] + te[0]*embed*2, q[1] + te[1]*embed*2); break
+    if E is None: return None
+    d = 'M%.2f %.2f' % tuple(Ps) + foot[0] + ' '.join('%.2f %.2f' % tuple(q) for q in foot[1])
+    for p0, k, ps in run: d += k + ' '.join('%.2f %.2f' % tuple(q) for q in ps)
+    d += 'L%.2f %.2f' % E + 'Z'
+    out = _op(_pp(ub), _pp(d), pathops.PathOp.UNION); out.convertConicsToQuads()
+    return _pd(out)
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
@@ -2005,7 +2067,7 @@ def _near(segs, q):
         h *= 0.6
     return (dd, i, t)
 HORN_CUT = [None]
-def horn_splice(src_c, src_b, new_b, tol=2.5, hdy=0.0):
+def horn_splice(src_c, src_b, new_b, tol=2.5, hdy=0.0, snap_stem=False, extra_dx=0.0):
     """G17 (bản tương thích R / B): sừng = chuỗi đoạn của contour nguồn chữ có sừng nằm NGOÀI chữ gốc nguồn (J1 → J2);
     cắt contour chữ gốc mới tại điểm gần J1 / J2 nhất và chèn chuỗi sừng vào (nối bằng đoạn thẳng ngắn). Không dùng boolean →
     cấu trúc điểm của Regular / Bold giống nhau (nội suy / variable đúng)."""
@@ -2027,6 +2089,16 @@ def horn_splice(src_c, src_b, new_b, tol=2.5, hdy=0.0):
         if sum(1 for i in range(n) if off[i] and not off[i - 1]) != 1: return None   # một sừng / contour
         run = [sg[k % n] for k in range(i0, j + 1)]; src_cont = c; break
     if run and hdy: run = [((p0[0], p0[1] - hdy), k, [[x, y - hdy] for x, y in ps]) for p0, k, ps in run]   # G35 hạ sừng (mép chôn tự cắt lại theo thân mới)
+    if run and snap_stem:                                           # G37 sừng ư = sừng ơ dời ngang: chân mép ngoài sừng đặt lên mép phải thân
+        L0 = min((run[0][0], run[-1][2][-1]), key=lambda q: q[1])
+        xs = []
+        for P_ in polys(NB):
+            for i_ in range(len(P_)):
+                (x1, y1), (x2, y2) = P_[i_ - 1], P_[i_]
+                if (y1 > L0[1]) != (y2 > L0[1]): xs.append(x1 + (L0[1] - y1)*(x2 - x1)/(y2 - y1))
+        if xs:
+            sx = max(xs) - L0[0] - HORN_EMBED + extra_dx
+            run = [((p0[0] + sx, p0[1]), k, [[x + sx, y] for x, y in ps]) for p0, k, ps in run]
     if not run: return None
     PL = polys(NB)                                                  # cắt chuỗi sừng tại chỗ ra / vào thân MỚI (thân Golden cao hơn nguồn)
     def inside(q):
