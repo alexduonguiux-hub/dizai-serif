@@ -1407,10 +1407,13 @@ def bar_add(src_c, src_b, new_b, gap=15.0, tgt=None):
     for cont in diff.contours:
         q = pathops.Path(); q.addPath(cont)
         P = polys(parse(_pd(q)))
-        if P and min(p[1] for pl in P for p in pl) > btop + gap: bar = _op(bar, q, pathops.PathOp.UNION)
+        if P and min(p[1] for pl in P for p in pl) > btop + gap and max(p[0] for pl in P for p in pl) - min(p[0] for pl in P for p in pl) > 20:
+            bar = _op(bar, q, pathops.PathOp.UNION)                      # (bỏ mảnh chênh ở loe đỉnh thân: hẹp < 20)
     if not list(bar.segments): return None
     if tgt:                                                         # G49 thanh đ = thanh t (designer 26/11 "đ cũng đồng bộ với thanh t luôn")
-        ys_ = [p[1] for pl in polys(parse(_pd(bar))) for p in pl]; bar = _bar_thin(bar, tgt/(max(ys_) - min(ys_)))
+        P_ = [p for pl in polys(parse(_pd(bar))) for p in pl]; x0_ = min(p[0] for p in P_)
+        ys_ = [p[1] for p in P_ if p[0] < x0_ + 5]                  # bề dày đo ở đầu trái thanh
+        bar = _bar_thin(bar, tgt/(max(ys_) - min(ys_)))
     else: bar = _bar_thin(bar, HAIR_R[0])
     out = _op(_pp(new_b), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
@@ -1685,6 +1688,18 @@ def main():
             if horn_compat(rr['Regular'], rr['Bold']):
                 for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
                 for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+    LIGS = (('ﬀ', 'f', 'f'), ('\ue000', 'f', 't'), ('\ue001', 't', 'f'), ('\ue002', 't', 't'))
+    if all(f'{a}-Regular' in G for a in 'tfn'):                   # G50 chữ ghép = t / f Golden + thanh nối cùng độ dày thanh t
+        for lig, a, b in LIGS:
+            if f'{lig}-Regular' not in G: continue
+            rr = {w: lig_build(G[f'{a}-{w}'], G[f'{b}-{w}'], G[f'f-{w}'], G[f'n-{w}'], G[f't-{w}']) for w in ('Regular', 'Bold')}
+            if all(rr.values()) and horn_compat(rr['Regular'], rr['Bold']):
+                for w in ('Regular', 'Bold'): G[f'{lig}-{w}'] = rr[w]
+                for w, t in TW.items(): G[f'{lig}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+            elif all(rr.values()):
+                for w in ('Regular', 'Bold'): G[f'{lig}-{w}'] = rr[w]
+                for w in TW: G[f'{lig}-{w}'] = lig_build(G[f'{a}-{w}'], G[f'{b}-{w}'], G[f'f-{w}'], G[f'n-{w}'], G[f't-{w}'])
+                print('G50', repr(lig), 'R / B lệch cấu trúc → dựng riêng từng weight')
     tfn = {}
     for c in sorted(TF_SET):                                      # G42 chân loe nét mảnh dài, lài (mọi weight)
         if f'{c}-Regular' in G:
@@ -2401,6 +2416,31 @@ def j_from_t(dj, dt):
     prev = jc[ji - 4][1]; prev[-1] = new_start                    # cuối mép thân trong j → điểm đầu móc mới
     jc[ji - 3:ji + 3] = seq
     return fmt(J)
+# ---------- G50 chữ ghép ff ft tf tt (designer 26/11 "cặp chữ ghép tf ff gạch nối không đồng bộ độ dày với gạch ngang t f"; "chữ ft
+# chữ t bất đồng bộ với t"): dựng lại từ t / f GOLDEN (cùng luật của ext ghép ở AnNam Serif, ref/symbols.py): chữ sau dời
+# dl = mép phải thân f + lòng n − mép trái thân f (đo ở y 250); thanh nối = dải thanh t (đúng cao độ, đúng độ dày) từ mép phải
+# thanh chữ trước tới thân chữ sau.
+def _hspans(d, y):
+    xs = []
+    for pl in polys(parse(d)):
+        for i in range(len(pl)):
+            (x0, y0), (x1, y1) = pl[i], pl[(i + 1) % len(pl)]
+            if (y0 - y)*(y1 - y) < 0: xs.append(x0 + (y - y0)*(x1 - x0)/(y1 - y0))
+    xs.sort(); return [(xs[i], xs[i + 1]) for i in range(0, len(xs) - 1, 2)]
+def lig_build(da, db, df, dn, dt):
+    sn = _hspans(dn, 250); st = _hspans(df, 250)
+    if len(sn) < 2 or not st: return None
+    dl = st[0][1] + (sn[1][0] - sn[0][1]) - st[0][0]
+    ys = sorted(set(round(p[1], 2) for pl in polys(parse(dt)) for p in pl if 400 < p[1] < 560))
+    yt = max(ys); yb = max(y for y in ys if y < yt - 5)             # thanh t: mặt trên (x-height) / mặt dưới
+    ym = (yt + yb)/2
+    ra = max(x for x0, x in _hspans(da, ym))                         # mép phải thanh chữ trước
+    lb = min(x for x, x1 in _hspans(db, ym - 200)) + dl              # mép trái thân chữ sau (dưới thanh)
+    bar = pathops.Path(); bar.moveTo(ra - 5, yb); bar.lineTo(lb + 5, yb); bar.lineTo(lb + 5, yt); bar.lineTo(ra - 5, yt); bar.close()
+    B = _pp(fmt([[[k, [[x + dl, y] for x, y in ps]] for k, ps in c] for c in parse(db)]))
+    out = _op(_op(_pp(da), B, pathops.PathOp.UNION), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
+    return _pd(out)
+
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
