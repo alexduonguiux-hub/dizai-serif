@@ -1406,6 +1406,7 @@ def flatten_near(d, tol=3.0):
 # YT_DIP × h) vòng lên nối tiếp tuyến vào mép trái nét chéo ở độ cao YT_JOIN × h trên đáy. Tỉ lệ đo theo mẫu designer.
 YT_FLAT, YT_CUT, YT_DIP, YT_JOIN = 3.05, 4.0, 1.8, 2.43
 YT_R, YT_W, YT_B = 2.2, 3.35, 0.5    # S86 đo mẫu 2 (h = 47 px): cong bắt đầu 103 px trên đáy, mũi cách mép phải 157 px, phẳng 24 px, cắt 188 px
+YT_JK = 0.6                    # S87 tay nắm tại J (designer 26/11 "đuôi y … zoom gần có lỗi gãy nét")
 YT_EXT = 0.0                   # (designer 24/11: không kéo dài xuống — chỉ móc loe dài hơn)
 def y_tail(d):
     """S86 (mẫu designer 24/11 "chỉnh đuôi y lại y vầy"): mép phải nét chéo thẳng xuống tới YT_R × h trên đáy rồi cong LỒI vòng sang
@@ -1430,7 +1431,7 @@ def y_tail(d):
     span = R1[0] - B2[0]
     c1 = [B2[0] + 0.55*span, yb]; c2 = [R1[0] - uu[0]*0.55*(yR - yb), R1[1] - uu[1]*0.55*(yR - yb)]
     ul = (kx_l, 1.0); nl = math.hypot(*ul); ul = (ul[0]/nl, ul[1]/nl)
-    cJ = [J[0] - ul[0]*0.6*h, J[1] - ul[1]*0.6*h]                   # rời J xuống dọc mép trái
+    cJ = [J[0] - ul[0]*YT_JK*h, J[1] - ul[1]*YT_JK*h]               # rời J xuống dọc mép trái (YT_JK: tay nắm dài → hết móc gãy ở J)
     L_ = math.hypot(J[0] - T[0], J[1] - T[1])
     cT = [T[0] + math.cos(math.radians(40))*0.45*L_, T[1] - math.sin(math.radians(40))*0.45*L_]   # vào mũi dốc 40°
     rest = c[3:-4]
@@ -1694,6 +1695,10 @@ def main():
     print('chữ có dấu ghép = chữ gốc + dấu:', nrb)
     print('G8 hệ số nét mảnh:', ' '.join(f'{c}{w[0]}{r:.2f}' for (c, w), r in sorted(G8R.items()) if abs(r - 1) > 0.02))
     os.makedirs(OUT, exist_ok=True)
+    for k_ in list(G):                                            # G39 mũi loe s / đuôi y hết gãy
+        c_ = unicodedata.normalize('NFD', k_.rsplit('-', 1)[0])[:1]
+        if c_ == 's': G[k_] = tip_unwiggle(G[k_])
+        elif c_ == 'y': G[k_] = y_tail_fix(G[k_])
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('G6 lòng giãn:', {f'{b}-{w}': round(k, 3) for (b, w), k in RINGK.items()})
     print('golden:', len(G), 'glyph ·', len(low), 'ký tự chữ thường nâng x-height', XH0, '→', XH1, '· loe phóng', NF, '· nút nét mảnh dời', NT)
@@ -2004,6 +2009,39 @@ def horn_from_o(cur, ro, o, ub, embed=3.0, shift=None):
     d += 'L%.2f %.2f' % E + 'Z'
     out = _op(_pp(ub), _pp(d), pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
+# ---------- G39 (designer 26/11 "2 đầu chân loe của s zoom gần có lỗi gãy nét", "đuôi y cũng vậy")
+# s: đoạn cong ngắn đi vào mũi loe có điểm uốn (tay nắm cuối quặt ngược) → kéo tay nắm cuối về phía tay nắm đầu (hết uốn).
+# y: đáy đuôi phẳng lại (điểm thứ hai cùng cao độ đáy); cung mép trên nối vào mép trái nét chéo: tay nắm tại chỗ nối dài ra YT_JOIN_K,
+# tay nắm ở mũi ngắn lại YT_TIP_K → chỗ nối hết cong gắt.
+YT_JOIN_K, YT_TIP_K = 1.8, 0.75
+def tip_unwiggle(d, maxch=60.0, k=0.4):
+    cr_ = lambda a, b: a[0]*b[1] - a[1]*b[0]
+    cs = parse(d)
+    for c in cs:
+        segs = [i for i, (cmd, ps) in enumerate(c) if cmd in 'LC']
+        for j, i in enumerate(segs):
+            cmd, ps = c[i]
+            if cmd != 'C': continue
+            s0 = c[i - 1][1][-1]; h1, h2, e = ps
+            v0 = (h1[0] - s0[0], h1[1] - s0[1]); v1 = (h2[0] - h1[0], h2[1] - h1[1]); v2 = (e[0] - h2[0], e[1] - h2[1])
+            c1, c2 = cr_(v0, v1), cr_(v1, v2)
+            if c1*c2 >= 0 or math.dist(s0, e) > maxch or min(abs(c1), abs(c2)) < 20: continue
+            b = c[segs[(j + 1) % len(segs)]][1][0]
+            ti = math.atan2(e[1] - h2[1], e[0] - h2[0]); to = math.atan2(b[1] - e[1], b[0] - e[0])
+            if abs((math.degrees(to - ti) + 180) % 360 - 180) < 30: continue   # chỉ đoạn đi vào GÓC (mũi loe)
+            ps[1] = [e[0] + (h1[0] - e[0])*k, e[1] + (h1[1] - e[1])*k]
+    return fmt(cs)
+def y_tail_fix(d):
+    cs = parse(d)
+    ci = min(range(len(cs)), key=lambda i: min(p[1] for _, ps in cs[i] for p in ps) if cs[i] else 1e9)
+    c = cs[ci]
+    if len(c) < 4 or c[0][0] != 'M' or c[1][0] != 'L': return d
+    BL = c[0][1][0]; B2 = c[1][1][0]
+    if abs(B2[1] - BL[1]) < 6: B2[1] = BL[1]
+    i = max(i for i, (k, ps) in enumerate(c) if k == 'C'); J = c[i - 1][1][-1]; h1, h2, T = c[i][1]
+    c[i][1][0] = [J[0] + (h1[0] - J[0])*YT_JOIN_K, J[1] + (h1[1] - J[1])*YT_JOIN_K]
+    c[i][1][1] = [T[0] + (h2[0] - T[0])*YT_TIP_K, T[1] + (h2[1] - T[1])*YT_TIP_K]
+    return fmt(cs)
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)

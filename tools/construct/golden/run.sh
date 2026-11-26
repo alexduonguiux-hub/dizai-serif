@@ -21,4 +21,4 @@ echo DONE
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_lines.py tools/construct/qa_ref/AnNamSerif-v0918-%s.otf fonts/golden/otf/AnNamGolden-%s.otf --xh=535 | grep -v "^    ")
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_bars.py fonts/golden/otf/AnNamGolden-%s.otf 29.9 29.9 AEFHLTZeftz && python3 tools/construct/qa_thin.py out/golden/outlines.json 34 34)
 (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/qa_arms.py fonts/golden/otf/AnNamGolden-%s.otf)
-(cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/xhgt_var.py | tail -2)   # S63: AnNam Serif variable gộp Golden (trục XHGT) — cần cả hai họ đã build
+[ -n "$DIZAI_XHGT" ] && (cd "$(git rev-parse --show-toplevel)" && python3 tools/construct/xhgt_var.py | tail -2)   # 26/11: Serif dừng phát triển — chỉ chạy khi DIZAI_XHGT=1   # S63: AnNam Serif variable gộp Golden (trục XHGT) — cần cả hai họ đã build
