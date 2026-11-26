@@ -1362,6 +1362,20 @@ def bar_compose(src_c, src_b, new_b):
     out = _op(newB, bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
 
+# ---------- G38 đ = d đã đồng bộ + thanh (designer 26/11 "độ dày bụng chữ d và đ không đồng bộ"): thanh = phần đ nguồn nằm ngoài d nguồn,
+# CHỈ lấy các mảnh cao hơn đỉnh bụng (bỏ dải chênh bụng của bản vẽ đ cũ) rồi hợp với d mới.
+def bar_add(src_c, src_b, new_b, gap=15.0):
+    PB = polys(parse(src_b)); xs = [p[0] for pl in PB for p in pl]; xm = (min(xs) + max(xs))/2
+    btop = max(p[1] for pl in PB for p in pl if p[0] < xm - 20)     # đỉnh bụng (bên trái thân)
+    diff = _op(_pp(src_c), _pp(src_b), pathops.PathOp.DIFFERENCE)
+    bar = pathops.Path()
+    for cont in diff.contours:
+        q = pathops.Path(); q.addPath(cont)
+        P = polys(parse(_pd(q)))
+        if P and min(p[1] for pl in P for p in pl) > btop + gap: bar = _op(bar, q, pathops.PathOp.UNION)
+    if not list(bar.segments): return None
+    out = _op(_pp(new_b), bar, pathops.PathOp.UNION); out.convertConicsToQuads()
+    return _pd(out)
 # ---------- G30 duỗi cung gần thẳng (ẞ: mép trên chỗ thắt là 2 cung lệch < 3 u → nội suy weight giữa gãy 4–8°): cung C có tay nắm
 # cách dây cung < tol → đoạn thẳng L. Áp cùng lúc mọi master (cấu trúc giữ giống nhau).
 def flatten_near(d, tol=3.0):
@@ -1648,6 +1662,13 @@ def main():
             for w in ('Regular', 'Bold'): G[f'Đ-{w}'] = rr[w]
             if horn_compat(rr['Regular'], rr['Bold']):
                 for w, t in TW.items(): G[f'Đ-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+    if 'đ-Regular' in G and 'd-Regular' in G:                     # G38 đ = d Golden + thanh Golden
+        rr = {w: bar_add(G[f'đ-{w}'], G[f'd-{w}'], G[f'd-{w}']) for w in ('Regular', 'Medium', 'SemiBold', 'Bold')}
+        if all(rr.values()):
+            for w in rr: G[f'đ-{w}'] = rr[w]
+            if horn_compat(rr['Regular'], rr['Bold']):
+                for w, t in TW.items(): G[f'đ-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        else: print('G38 đ: không tách được thanh')
     nh = 0
     for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
         b2 = no_horn(c)

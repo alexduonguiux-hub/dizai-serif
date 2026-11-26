@@ -127,6 +127,13 @@ def main():
                 for w, t in GD.TW.items(): O[f'Đ-{w}'] = GD.lerp_d(rr['Regular'], rr['Bold'], t)
             else:
                 for w in ('Medium', 'SemiBold'): O[f'Đ-{w}'] = GD.bar_compose(SRC[f'Đ-{w}'], SRC[f'D-{w}'], O[f'D-{w}']) or O[f'Đ-{w}']
+    if 'đ-Regular' in O and 'd-Regular' in O:                     # G38 đ = d đã đồng bộ + thanh (designer 26/11 "bụng d và đ không đồng bộ")
+        rr = {w: GD.bar_add(SRC[f'đ-{w}'], SRC[f'd-{w}'], O[f'd-{w}']) for w in ('Regular', 'Medium', 'SemiBold', 'Bold')}
+        if all(rr.values()):
+            for w in rr: O[f'đ-{w}'] = rr[w]
+            if GD.horn_compat(rr['Regular'], rr['Bold']):
+                for w, t in GD.TW.items(): O[f'đ-{w}'] = GD.lerp_d(rr['Regular'], rr['Bold'], t)
+        else: print('G38 đ: không tách được thanh')
     nh = 0
     for c in order:                                               # G17 chữ có sừng = chữ không sừng đã đồng bộ + sừng (designer 23/11)
         b2 = GD.no_horn(c)
