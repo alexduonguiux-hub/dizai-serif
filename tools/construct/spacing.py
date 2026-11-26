@@ -35,6 +35,7 @@ ARM_R, ARM_L, ARM_K = set('EFTZ'), set('TZ'), 0.55   # S15 tay ngang đỉnh đ�
 SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩn HH / nn / Hn)
 STEM_L = 'BDEFHIKLMNPRÞ'   # S17 chữ có thân đứng bên trái
 FOOT_R, FOOT_L, FOOT_Y, MIN_GAP_FOOT = set('RKX'), set('A'), 110.0, 10.0   # S16 RA KA XA: chân serif hai chữ được sát hơn (designer 26/11 "RA, KA nên gần hơn")
+LOOSE_X = set('AVY')                  # S19 chéo nới với chữ tròn (O C G Q)
 KSCALE = {'V|A': 1.15, 'A|V': 1.15}   # S18 designer 26/11 "VA kerning cho gần lại cỡ 15%" + "AV luôn"
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
 WEDGE_U0, WEDGE_G, WEDGE_SOFT = 110.0, 0.35, 0.32   # designer 05/11 lần 2: "RA KA XA cũng hơi xa" — 0.25 / 0.38 → 0.35 / 0.32
@@ -230,7 +231,7 @@ def main():
         RF = os.path.join(OUT, 'ref_ratios.json')
         REFR = None
         if os.path.exists(RF):                                             # trung bình tỉ số Regular + Bold tham chiếu cho CẢ HAI master:
-            RR = json.load(open(RF)); REFR = {p_: [(RR['Regular'][p_][0] + RR['Bold'][p_][0])/2] for p_ in RR['Regular'] if p_ in RR['Bold']}
+            RR = json.load(open(RF)); REFR = {p_: [(RR['Regular'][p_][0] + RR['Bold'][p_][0])/2, (RR['Regular'][p_][1] + RR['Bold'][p_][1])/2] for p_ in RR['Regular'] if p_ in RR['Bold']}
             # (font Bold tham chiếu dàn khác Regular của chúng → kern đổi dấu giữa hai master, vd. Fa −30 / +5)
         from ref_kern import white as _white
         for rc in rcls:
@@ -281,6 +282,12 @@ def main():
                 if (ra_ in ROUND_R and rb_ in WEDGE_X) or (ra_ in WEDGE_X and rb_ in ROUND_L):   # 05/11: mở rộng OV DY… (V W Y T)
                     g = pair_gap(a, b_, k); gm = float(np.nanmin(g)); gh = float(np.nanmin(pair_gap('H', 'H', 0.0)))
                     if gm > ROUND_A*gh: k -= math.floor((gm - ROUND_A*gh)/5)*5
+                if REFR is not None and ra_ + rb_ in REFR and ((ra_ in LOOSE_X and rb_ in ROUND_L) or (ra_ == 'O' and rb_ in LOOSE_X)):
+                    # S19 chéo × tròn (designer 26/11 "nới AO OA, VO OV OYO"): trắng cặp không sát hơn font tham chiếu sát nhất
+                    lower_ = ra_.islower() or rb_.islower(); band_ = (0.0, XH) if lower_ else (0.0, CAP)
+                    Wn = _white(placed('H'), placed('H'), sp['H'][1], 0.0, band_, YS, 0.12*XH)
+                    W0 = _white(placed(ra_), placed(rb_), sp[ra_][1], 0.0, band_, YS, 0.12*XH)
+                    if Wn and W0 is not None: k = max(k, math.ceil((REFR[ra_ + rb_][1]*Wn - W0)/5)*5)
                 if ra_ in ARM_R and rb_ in ARM_L:                            # S15 tay ngang đỉnh hai chữ đối mặt: giữ khe ≥ ARM_K × khe HH
                     g = pair_gap(a, b_, k); gm = float(np.nanmin(g)); gh = float(np.nanmin(pair_gap('H', 'H', 0.0)))
                     if gm < ARM_K*gh: k += math.ceil((ARM_K*gh - gm)/5)*5

@@ -1378,7 +1378,7 @@ def _bar_thin(bar, r):
     cs = parse(_pd(bar)); ys = [p[1] for c in cs for _, ps in c for p in ps]; ym = (min(ys) + max(ys))/2
     return _pp(fmt([[[k, [[x, ym + (y - ym)*r] for x, y in ps]] for k, ps in c] for c in cs]))
 HAIR_R = [1.0]
-def bar_compose(src_c, src_b, new_b):
+def bar_compose(src_c, src_b, new_b, tgt=None):
     SC, SB_ = parse(src_c), parse(src_b)
     dx, dy = horn_align(SC, SB_)
     mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
@@ -1391,7 +1391,9 @@ def bar_compose(src_c, src_b, new_b):
     xs_ = [p[0] for c in parse(mv(src_b)) for p in pts_of(c)]; xm = (min(xs_) + max(xs_))/2    # thanh chỉ ở nửa trái (không lấy dải chênh mép phải bụng)
     band = pathops.Path(); band.moveTo(-3000, y0); band.lineTo(xm, y0); band.lineTo(xm, y1); band.lineTo(-3000, y1); band.close()
     bar = _op(bar, band, pathops.PathOp.INTERSECTION)               # bỏ dải chênh bụng (bản vẽ Đ cũ khác D)
-    bar = _bar_thin(bar, HAIR_R[0])
+    if tgt:                                                         # G49 thanh Đ = chuẩn nét ngang (thanh E) (designer 26/11 "thanh ngang Đ nên đồng bộ độ dày với thanh E")
+        bar = _bar_thin(bar, tgt/(y1 - y0 - 1.0))                   # (tgt đã theo trục HAIR)
+    else: bar = _bar_thin(bar, HAIR_R[0])
     out = _op(newB, bar, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
 
@@ -1753,7 +1755,7 @@ def main():
         else: continue
         for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if 'Đ-Regular' in G and 'D-Regular' in G:                     # G29 Đ = D Golden + thanh
-        rr = {w: bar_compose(O[f'Đ-{w}'], O[f'D-{w}'], G[f'D-{w}']) for w in ('Regular', 'Bold')}
+        rr = {w: bar_compose(O[f'Đ-{w}'], O[f'D-{w}'], G[f'D-{w}'], LINE_T[w]*BAR_K) for w in ('Regular', 'Bold')}
         if all(rr.values()):
             for w in ('Regular', 'Bold'): G[f'Đ-{w}'] = rr[w]
             if horn_compat(rr['Regular'], rr['Bold']):
