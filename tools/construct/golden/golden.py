@@ -1652,7 +1652,7 @@ def main():
     for c in chars:                                               # G17 chữ có sừng = chữ không sừng đã xử lý + sừng (từng weight)
         b2 = no_horn(c)
         if not b2 or f'{c}-Regular' not in G or f'{b2}-Regular' not in G: continue
-        rr = {w: horn_splice(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in ('Regular', 'Bold')}   # ghép sừng không boolean → R / B cùng cấu trúc
+        rr = {w: horn_splice(O[f'{c}-{w}'], O[f'{b2}-{w}'], G[f'{b2}-{w}']) for w in ('Regular', 'Bold')}   # (sừng nguồn = Serif đã hạ G35)   # ghép sừng không boolean → R / B cùng cấu trúc
         if all(rr.values()) and horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w]
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
@@ -1781,6 +1781,7 @@ def no_horn(c):
 # ---------- G34 sừng ư dính vào loe (designer 25/11 "dấu ư k dính vào loe"): mép trong sừng (từ đỉnh sừng đi xuống) kết thúc TRÊN
 # đường cong loe đầu thân phải (điểm nối ở HF_FRAC chiều cao loe), loe giữ nguyên cung của chữ gốc từ điểm nối tới góc đỉnh.
 # Trước: Golden — mép trong sừng cắm vào thân DƯỚI loe → khe trắng hẹp giữa loe và sừng; Serif — loe bị thay bằng đoạn thẳng.
+HORN_DY = 20.0   # G35 hạ sừng ư ơ thường 20 u (designer 26/11 "dời sừng xuống 1 chút … ơ cho đồng bộ"): đỉnh 570 → 550
 HF_FRAC = 0.15                                                  # 25/11 0.6 lấp mất serif → nối ở chân loe (designer 26/11 "mất nét serif")
 def horn_flare(d, base_d, h, frac=None):
     frac = HF_FRAC if frac is None else frac
@@ -1839,12 +1840,12 @@ def horn_flare_all(G, chars, WS=('Regular', 'Medium', 'SemiBold', 'Bold')):
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
-def horn_compose(src_c, src_b, new_b):
+def horn_compose(src_c, src_b, new_b, dy=0.0):
     SC, SB_ = parse(src_c), parse(src_b)
     dx, dy = horn_align(SC, SB_)
     mv = lambda d: fmt([[[k, [[x + dx, y + dy] for x, y in ps]] for k, ps in c] for c in parse(d)])
     srcC = _pp(src_c); srcB = _pp(mv(src_b)); newB = _pp(mv(new_b))
-    return _horn_bool(srcC, srcB, newB)
+    return _horn_bool(srcC, srcB, newB, dy)
 def horn_align(SC, SB_):
     dx = dy = None                                                 # tịnh tiến thân: contour lòng khớp hình (nguồn)
     for sb in SB_:
@@ -1873,7 +1874,7 @@ def horn_align(SC, SB_):
             allc = [p for c in SC for p in pts_of(c)]; allb = [p for c in SB_ for p in pts_of(c)]
             dx = min(p[0] for p in allc) - min(p[0] for p in allb); dy = min(p[1] for p in allc) - min(p[1] for p in allb)
     return dx, dy
-def _horn_bool(srcC, srcB, newB):
+def _horn_bool(srcC, srcB, newB, dy=0.0):
     diff = _op(srcC, srcB, pathops.PathOp.DIFFERENCE)
     band = pathops.Path(); band.addPath(srcB); band.stroke(12, pathops.LineCap.BUTT_CAP, pathops.LineJoin.ROUND_JOIN, 4); band.convertConicsToQuads()
     horn = pathops.Path()
@@ -1883,6 +1884,7 @@ def _horn_bool(srcC, srcB, newB):
     if not list(horn.segments): return None
     hb = pathops.Path(); hb.addPath(horn); hb.stroke(12, pathops.LineCap.BUTT_CAP, pathops.LineJoin.ROUND_JOIN, 4); hb.convertConicsToQuads()
     hb = _op(_op(hb, horn, pathops.PathOp.UNION), srcC, pathops.PathOp.INTERSECTION)   # sừng + dải 6 u (trong nét nguồn)
+    if dy: hb = _pp(fmt([[[k, [[x, y - dy] for x, y in ps]] for k, ps in c] for c in parse(_pd(hb))]))   # G35 hạ sừng
     out = _op(newB, hb, pathops.PathOp.UNION); out.convertConicsToQuads()
     return _pd(out)
 
@@ -1928,7 +1930,7 @@ def _near(segs, q):
         h *= 0.6
     return (dd, i, t)
 HORN_CUT = [None]
-def horn_splice(src_c, src_b, new_b, tol=2.5):
+def horn_splice(src_c, src_b, new_b, tol=2.5, dy=0.0):
     """G17 (bản tương thích R / B): sừng = chuỗi đoạn của contour nguồn chữ có sừng nằm NGOÀI chữ gốc nguồn (J1 → J2);
     cắt contour chữ gốc mới tại điểm gần J1 / J2 nhất và chèn chuỗi sừng vào (nối bằng đoạn thẳng ngắn). Không dùng boolean →
     cấu trúc điểm của Regular / Bold giống nhau (nội suy / variable đúng)."""
@@ -1949,6 +1951,7 @@ def horn_splice(src_c, src_b, new_b, tol=2.5):
         while off[j % n]: j += 1
         if sum(1 for i in range(n) if off[i] and not off[i - 1]) != 1: return None   # một sừng / contour
         run = [sg[k % n] for k in range(i0, j + 1)]; src_cont = c; break
+    if run and dy: run = [((p0[0], p0[1] - dy), k, [[x, y - dy] for x, y in ps]) for p0, k, ps in run]   # G35 hạ sừng (mép chôn tự cắt lại theo thân mới)
     if not run: return None
     PL = polys(NB)                                                  # cắt chuỗi sừng tại chỗ ra / vào thân MỚI (thân Golden cao hơn nguồn)
     def inside(q):
