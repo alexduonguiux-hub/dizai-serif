@@ -1907,6 +1907,16 @@ def main():
         elif c_ in 'oO' and '\u031b' in unicodedata.normalize('NFD', k_.rsplit('-', 1)[0]): G[k_] = tip_unwiggle(G[k_])
         elif c_ == 'y': G[k_] = y_tail_fix(G[k_])
         elif c_ == 'W': G[k_] = straighten_ll(G[k_])
+    ffx = {}
+    for c in chars:                                               # G52 chân loe nét chéo hết gấp (R + B, M / SB nội suy)
+        if f'{c}-Regular' not in G or f'{c}-Bold' not in G: continue
+        rr = {w: flare_fair(G[f'{c}-{w}']) for w in ('Regular', 'Bold')}
+        if not (rr['Regular'][1] or rr['Bold'][1]): continue
+        if horn_compat(rr['Regular'][0], rr['Bold'][0]):
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = rr[w][0]
+            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'][0], rr['Bold'][0], t)
+            ffx[c] = rr['Regular'][1] + rr['Bold'][1]
+    print('G52 chân loe nét chéo nắn hết gấp:', ffx)
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('G6 lòng giãn:', {f'{b}-{w}': round(k, 3) for (b, w), k in RINGK.items()})
     print('golden:', len(G), 'glyph ·', len(low), 'ký tự chữ thường nâng x-height', XH0, '→', XH1, '· loe phóng', NF, '· nút nét mảnh dời', NT)
@@ -2544,6 +2554,72 @@ def merge_tiny(d, lim=3.0):
                 prev[1][-1] = list(ps[-1]); del c[j]; continue
             j += 1
     return fmt(cs)
+
+# ---------- G52 chân loe nét chéo hết gấp (designer 26/11 "kiểm tra chân loe dày của A có bị lỗi góc cong không — tương tự với các chữ
+# khác, QA QC lại 1 lượt"): cung loe nối đoạn thẳng chéo (dài > 100, nghiêng 12–60°) với mép ngang (chân / đỉnh). Bán kính cong nhỏ
+# nhất < FF_RMIN (W Bold 1.8: tay nắm nút dài 4.7 u; K k: loe cao 38 u, xoay ~100° trong 38 u → núm) → giữ mũi, hướng tiếp tuyến ở
+# mũi và đường chéo; chọn độ dài hai tay nắm và (nếu cần) trượt nút lên dọc đường chéo (≤ FF_SLIDE u) để bán kính nhỏ nhất ≥ FF_RMIN,
+# ưu tiên trượt ít nhất, rồi độ cong biến thiên đều nhất.
+FF_RMIN, FF_SLIDE = 40.0, 120.0
+def _kap(q, u):
+    d1 = [3*(1-u)**2*(q[1][i]-q[0][i]) + 6*(1-u)*u*(q[2][i]-q[1][i]) + 3*u*u*(q[3][i]-q[2][i]) for i in (0, 1)]
+    d2 = [6*(1-u)*(q[2][i]-2*q[1][i]+q[0][i]) + 6*u*(q[3][i]-2*q[2][i]+q[1][i]) for i in (0, 1)]
+    return (d1[0]*d2[1] - d1[1]*d2[0])/max(math.hypot(*d1)**3, 1e-9)
+def flare_fair(d):
+    cs = parse(d); nfix = 0
+    for c in cs:
+        idx = [j for j, (k, ps) in enumerate(c) if k in 'LC']; n = len(idx)
+        if n < 3: continue
+        def stp(a): return c[idx[a - 1]][1][-1] if a > 0 else c[0][1][0]
+        for a in range(n):
+            j = idx[a]; k, ps = c[j]
+            if k != 'C': continue
+            jp, jn = idx[a - 1], idx[(a + 1) % n]
+            s0, e0 = stp(a), ps[-1]
+            pa, pb = stp(a - 1 if a > 0 else n - 1), c[jp][1][-1]
+            na, nb = e0, c[jn][1][-1]
+            def diag(kk, u, v): return kk == 'L' and math.dist(u, v) > 100 and 12 < math.degrees(math.atan2(abs(v[0]-u[0]), abs(v[1]-u[1]))) < 60
+            def hor(kk, u, v): return kk == 'L' and abs(u[1] - v[1]) < 0.6
+            if diag(c[jp][0], pa, pb) and hor(c[jn][0], na, nb): fwd = True     # chéo → cung → ngang: nút = đầu cung
+            elif hor(c[jp][0], pa, pb) and diag(c[jn][0], na, nb): fwd = False
+            else: continue
+            q0 = [s0] + ps
+            if 1/max(abs(_kap(q0, u/60)) for u in range(61)) >= FF_RMIN: continue
+            if fwd: N, T, hN, hT, A_ = s0, e0, ps[0], ps[1], pa          # A_: đầu xa của đường chéo
+            else:   N, T, hN, hT, A_ = e0, s0, ps[1], ps[0], nb
+            dl = [A_[0] - N[0], A_[1] - N[1]]; L = math.hypot(*dl); dl = [dl[0]/L, dl[1]/L]       # hướng từ nút lên đường chéo
+            tT = [hT[0] - T[0], hT[1] - T[1]]; LT = math.hypot(*tT)
+            if LT < 1e-6: continue
+            tT = [tT[0]/LT, tT[1]/LT]
+            best = None
+            aT = math.atan2(tT[1], tT[0]); aL = math.atan2(dl[1], dl[0])
+            dA = (aL - aT + math.pi) % (2*math.pi) - math.pi            # quay hướng mũi dần về hướng đường chéo (nếu cần)
+            for sl in [x*10.0 for x in range(int(FF_SLIDE/10) + 1)]:
+                if sl > L - 40: break
+                N2 = [N[0] + dl[0]*sl, N[1] + dl[1]*sl]; ch = math.dist(N2, T)
+                for fa in (0.0, 0.1, 0.2, 0.3, 0.4, 0.5):
+                    a_ = aT + fa*dA; tt = [math.cos(a_), math.sin(a_)]
+                    for la in [x/20 for x in range(2, 15)]:
+                        for lb in [x/20 for x in range(2, 15)]:
+                            HN = [N2[0] - dl[0]*la*ch, N2[1] - dl[1]*la*ch]; HT = [T[0] + tt[0]*lb*ch, T[1] + tt[1]*lb*ch]
+                            q = [N2, HN, HT, T]
+                            ks = [_kap(q, u/40) for u in range(41)]
+                            if min(ks)*max(ks) < 0: continue
+                            r = 1/max(abs(x) for x in ks)
+                            sc = sum((ks[i + 1] - ks[i])**2 for i in range(40))
+                            key = (0 if r >= FF_RMIN else 1, (sl + 100*fa) if r >= FF_RMIN else -r, sc)
+                            if best is None or key < best[0]: best = (key, N2, HN, HT)
+                if best and best[0][0] == 0: break
+            if best is None: continue
+            _, N2, HN, HT = best
+            if fwd:
+                c[j][1] = [HN, HT, ps[-1]]; c[jp][1][-1] = N2
+                if jp == idx[0] and c[0][0] == 'M': pass
+                if a == 0 or jp == idx[-1]: c[0][1][0] = N2 if a == 0 else c[0][1][0]
+            else:
+                c[j][1] = [HT, HN, N2]
+            nfix += 1
+    return fmt(cs), nfix
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
