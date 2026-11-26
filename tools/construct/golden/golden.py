@@ -1250,6 +1250,7 @@ def run_thin(d, side, tgt, xr=(0.25, 0.8), H=170.0, it=3):
 # ---------- G26 móc T = móc E (designer 23/11 "2 móc chữ T không đồng bộ với móc của các nét ngang chữ E"): mép dưới thanh T trước là
 # MỘT cung từ thân ra mũi loe (dài 148–153 u) → nay = thanh thẳng + cung loe CÙNG hình móc trên E (cùng bề ngang, cùng tay nắm tương đối),
 # hai bên đối xứng. Mũi loe (điểm, chiều sâu) giữ nguyên.
+T_GAP = 8.0
 def t_flare(dT, dE):
     E = parse(dE)[0]
     ef = None                                                       # móc trên E: C (mũi → đầu cung trên thanh), mũi ở mép phải
@@ -1266,11 +1267,13 @@ def t_flare(dT, dE):
     for k, ps in c:
         if k == 'M': cur = ps[0]; out.append([k, ps]); continue
         if k == 'C' and abs(ps[2][1] - ps[1][1]) < 0.6 and ps[2][1] > 500 and cur[1] < ps[2][1] and cur[0] > ps[2][0]:   # mũi phải → thân
-            t_ = cur; s_ = [t_[0] - W, ps[2][1]]
-            out.append(['C', [[t_[0] + h1[0], t_[1] + h1[1]], [s_[0] + h2[0], s_[1] + h2[1]], s_]]); out.append(['L', [ps[2]]])
+            t_ = cur; f_ = min(1.0, (abs(t_[0] - ps[2][0]) - T_GAP)/W)   # S88 móc không lấn vào thân (T Medium / Bold: tay ngắn hơn móc E)
+            s_ = [t_[0] - W*f_, ps[2][1]]
+            out.append(['C', [[t_[0] + h1[0]*f_, t_[1] + h1[1]], [s_[0] + h2[0]*f_, s_[1] + h2[1]], s_]]); out.append(['L', [ps[2]]])
         elif k == 'C' and abs(ps[0][1] - cur[1]) < 0.6 and cur[1] > 500 and ps[2][1] < cur[1] and ps[2][0] < cur[0]:   # thân → mũi trái
-            t_ = ps[2]; s_ = [t_[0] + W, cur[1]]
-            out.append(['L', [s_]]); out.append(['C', [[s_[0] - h2[0], s_[1] + h2[1]], [t_[0] - h1[0], t_[1] + h1[1]], t_]])
+            t_ = ps[2]; f_ = min(1.0, (abs(cur[0] - t_[0]) - T_GAP)/W)
+            s_ = [t_[0] + W*f_, cur[1]]
+            out.append(['L', [s_]]); out.append(['C', [[s_[0] - h2[0]*f_, s_[1] + h2[1]], [t_[0] - h1[0]*f_, t_[1] + h1[1]], t_]])
         else: out.append([k, ps])
         if ps: cur = ps[-1]
     cs[0] = out
@@ -1715,6 +1718,7 @@ def main():
         elif c_ == '&': G[k_] = tip_unwiggle(amp_waist(G[k_]))
         elif c_ in 'oO' and '\u031b' in unicodedata.normalize('NFD', k_.rsplit('-', 1)[0]): G[k_] = tip_unwiggle(G[k_])
         elif c_ == 'y': G[k_] = y_tail_fix(G[k_])
+        elif c_ == 'W': G[k_] = straighten_ll(G[k_])
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('G6 lòng giãn:', {f'{b}-{w}': round(k, 3) for (b, w), k in RINGK.items()})
     print('golden:', len(G), 'glyph ·', len(low), 'ký tự chữ thường nâng x-height', XH0, '→', XH1, '· loe phóng', NF, '· nút nét mảnh dời', NT)
@@ -2092,6 +2096,20 @@ def amp_waist(d, maxl=35.0):
                 return fmt(cs)
             best = (t, cr_)
     return d
+def straighten_ll(d, maxdeg=6.0):
+    """G44 hai đoạn thẳng nối nhau gần thẳng hàng (gãy < maxdeg, vd. mép chéo W Bold từ w_thin) → điểm giữa chiếu lên đường nối hai đầu"""
+    cs = parse(d)
+    for c in cs:
+        for i in range(1, len(c) - 1):
+            if c[i][0] != 'L' or c[i + 1][0] != 'L': continue
+            a = c[i - 1][1][-1]; b = c[i][1][0]; e = c[i + 1][1][0]
+            t1 = math.atan2(b[1] - a[1], b[0] - a[0]); t2 = math.atan2(e[1] - b[1], e[0] - b[0])
+            dd = abs((math.degrees(t2 - t1) + 180) % 360 - 180)
+            if 0.3 < dd < maxdeg and math.dist(a, b) > 30 and math.dist(b, e) > 30:
+                ux, uy = e[0] - a[0], e[1] - a[1]; L2 = ux*ux + uy*uy
+                t = ((b[0] - a[0])*ux + (b[1] - a[1])*uy)/L2
+                b[0], b[1] = a[0] + ux*t, a[1] + uy*t
+    return fmt(cs)
 def y_tail_fix(d):
     cs = parse(d)
     ci = min(range(len(cs)), key=lambda i: min(p[1] for _, ps in cs[i] for p in ps) if cs[i] else 1e9)
