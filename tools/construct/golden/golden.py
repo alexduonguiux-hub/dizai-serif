@@ -2026,6 +2026,7 @@ def horn_from_o(cur, ro, o, ub, embed=3.0, shift=None):
 # y: đáy đuôi phẳng lại (điểm thứ hai cùng cao độ đáy); cung mép trên nối vào mép trái nét chéo: tay nắm tại chỗ nối dài ra YT_JOIN_K,
 # tay nắm ở mũi ngắn lại YT_TIP_K → chỗ nối hết cong gắt.
 YT_JOIN_K, YT_TIP_K = 1.8, 0.75
+YT_THIN = 0.8                  # G41 móc đuôi y mỏng đi: mép trên (J → mũi) hạ về phía đáy × 0.8 (designer 26/11 "phần móc đuôi y hơi dày")
 def tip_unwiggle(d, maxch=60.0, k=0.4):
     cr_ = lambda a, b: a[0]*b[1] - a[1]*b[0]
     cs = parse(d)
@@ -2087,6 +2088,10 @@ def y_tail_fix(d):
     i = max(i for i, (k, ps) in enumerate(c) if k == 'C'); J = c[i - 1][1][-1]; h1, h2, T = c[i][1]
     c[i][1][0] = [J[0] + (h1[0] - J[0])*YT_JOIN_K, J[1] + (h1[1] - J[1])*YT_JOIN_K]
     c[i][1][1] = [T[0] + (h2[0] - T[0])*YT_TIP_K, T[1] + (h2[1] - T[1])*YT_TIP_K]
+    yb = BL[1]; A = c[i - 2][1][-1]; h1 = c[i][1][0]; h2 = c[i][1][1]      # G41: hạ mép trên móc về phía đáy (J trượt trên mép chéo)
+    ny = yb + (J[1] - yb)*YT_THIN; t = (ny - A[1])/(J[1] - A[1]); nJ = [A[0] + (J[0] - A[0])*t, ny]
+    d1 = (h1[0] - J[0], h1[1] - J[1]); J[0], J[1] = nJ; h1[0], h1[1] = nJ[0] + d1[0], nJ[1] + d1[1]
+    for p_ in (h2, T): p_[1] = yb + (p_[1] - yb)*YT_THIN
     return fmt(cs)
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
