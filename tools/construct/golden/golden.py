@@ -1947,6 +1947,11 @@ def main():
             if horn_compat(rr['Regular'], rr['Bold']):
                 for w in ('Regular', 'Bold'): G[f'4-{w}'] = rr[w]
                 for w, t in TW.items(): G[f'4-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+    if '2-Regular' in G:                                          # G57 móc phải đế số 2 theo bản vẽ, lớn dần theo weight
+        rr = {w: two_flare(G[f'2-{w}'], w) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'2-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'2-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
     if '3-Regular' in G:                                          # G53 góc trên số 3 đúng cap
         rr = {w: three_cap(G[f'3-{w}']) for w in ('Regular', 'Bold')}
         if horn_compat(rr['Regular'], rr['Bold']):
@@ -2818,6 +2823,23 @@ def four_fix(d, w, Wr):
                 if P1[0] > P2[0] - 4: P1[0] = P2[0] - 4
                 break
     return fmt(cs)
+
+# ---------- G57 móc phải đế số 2 (đế dày G51): G47 đặt mũi cao ARM_D trên ĐÁY đế → đế dày nuốt móc (R 35 × 23, B 30 × 20, càng đậm
+# càng nhỏ). Móc = bản vẽ designer (R: rộng 89, cao 46 trên mặt đế), các weight × ARM_D[w] / ARM_D[R]; mép phải giữ, cung co giãn.
+TWO_FL = (89.0, 46.0)
+def two_flare(d, w):
+    cs = parse(d); c = cs[0]; k_ = ARM_D[w]/ARM_D['Regular']
+    for i in range(1, len(c) - 1):
+        if c[i][0] == 'L' and c[i + 1][0] == 'C' and c[i + 2][0] == 'L':
+            N = c[i][1][0]; h1, h2, T = c[i + 1][1]; B_ = c[i + 2][1][0]
+            if abs(B_[0] - T[0]) < 0.01 and B_[1] < 1 and abs(h1[1] - N[1]) < 0.01 and T[1] > N[1] and N[1] > 40:
+                W0, H0 = T[0] - N[0], T[1] - N[1]; W1, H1 = TWO_FL[0]*k_, TWO_FL[1]*k_
+                N2 = [T[0] - W1, N[1]]; T2 = [T[0], N[1] + H1]
+                h1[0], h1[1] = N2[0] + (h1[0] - N[0])*W1/W0, N[1]
+                h2[0], h2[1] = N2[0] + (h2[0] - N[0])*W1/W0, N[1] + (h2[1] - N[1])*H1/H0
+                N[0] = N2[0]; T[1] = T2[1]
+                return fmt(cs)
+    return d
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
