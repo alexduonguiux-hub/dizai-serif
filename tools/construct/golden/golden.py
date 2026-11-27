@@ -1917,6 +1917,28 @@ def main():
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'][0], rr['Bold'][0], t)
             ffx[c] = rr['Regular'][1] + rr['Bold'][1]
     print('G52 chân loe nét chéo nắn hết gấp:', ffx)
+    W4 = ('Regular', 'Medium', 'SemiBold', 'Bold'); g55 = []
+    for acc, b_, kind_ in (('Ç', 'C', 'c'), ('ç', 'c', 'c'), ('Ø', 'O', 's'), ('ø', 'o', 's')):   # G55
+        if f'{acc}-Regular' not in G or f'{b_}-Regular' not in G: continue
+        f_ = (lambda w: cedilla_add(O[f'{acc}-{w}'], G[f'{b_}-{w}'])) if kind_ == 'c' else (lambda w: slash_add(O[f'{acc}-{w}'], O[f'{b_}-{w}'], G[f'{b_}-{w}']))
+        rr = {w: f_(w) for w in ('Regular', 'Bold')}
+        if not all(rr.values()): print('G55', acc, 'không dựng được'); continue
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'{acc}-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'{acc}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        else:
+            for w in W4:
+                if f'{acc}-{w}' in O and f'{b_}-{w}' in G: G[f'{acc}-{w}'] = f_(w) or G[f'{acc}-{w}']
+        g55.append(acc)
+    if 'Ð-Regular' in G and 'Đ-Regular' in G:
+        for w in W4: G[f'Ð-{w}'] = G[f'Đ-{w}']
+        g55.append('Ð')
+    print('G55 dựng lại từ chữ gốc Golden:', ''.join(g55))
+    if HAIR_R[0] < 0.999:                                         # G54 trục HAIR cho nhóm không có luật nét mảnh riêng
+        for c in sorted(HT_SET - set('ÇçØøÐ')):
+            if f'{c}-Regular' not in G: continue
+            for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = hair_thin(G[f'{c}-{w}'], HAIR_R[0], LINE_T[w]/HAIR_R[0])
+            for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
     if '3-Regular' in G:                                          # G53 góc trên số 3 đúng cap
         rr = {w: three_cap(G[f'3-{w}']) for w in ('Regular', 'Bold')}
         if horn_compat(rr['Regular'], rr['Bold']):
@@ -2645,6 +2667,93 @@ def three_cap(d, cap=700.0):
             if ps: prev = ps[-1]
         c[:] = out
     return fmt(cs)
+
+# ---------- G54 trục HAIR cho nhóm chữ không có luật nét mảnh riêng (designer 27/11 "làm luôn nhóm chưa theo trục nét mảnh"):
+# Ç ç Ø ø Æ Œ Ð ð þ ß ẞ r & € £ ¥ $ ¢ @ … — CHỈ ở master nét mảnh. Mỗi nút trên viền: tia theo pháp tuyến vào trong mực tới mép
+# đối diện (mép đối gần song song, |cos| > 0.7); bề dày t < HT_MAX × chuẩn nét mảnh mặc định → nút (cùng tay nắm) dời vào trong
+# (t − t·r)/2 → hai mép cùng thu, nét mảnh × r quanh đường giữa; nét dày (≥ HT_MAX) giữ nguyên.
+HT_MAX = 1.9                 # (Bold ký hiệu nguồn Serif: nét mảnh 50–60)
+HT_SET = set('ÇçØøÆŒÐðþßẞr&€£¥$¢@')
+def hair_thin(d, r, t0=34.0):
+    cs = parse(d); P = polys(cs); mv = {}
+    for c in cs:
+        segs = [(k, ps) for k, ps in c if k in 'LC']; n = len(segs)
+        if n < 2: continue
+        st = [c[0][1][0]] + [ps[-1] for _, ps in segs[:-1]]
+        for i in range(n):
+            k, ps = segs[i]; p = ps[-1]; nk, nps = segs[(i + 1) % n]
+            a = ps[-2] if k == 'C' else st[i]; b = nps[0]
+            tin = unit((p[0] - a[0], p[1] - a[1])); tout = unit((b[0] - p[0], b[1] - p[1]))
+            cands = []
+            for tv in ([unit((tin[0] + tout[0], tin[1] + tout[1]))] if tin and tout and tin[0]*tout[0] + tin[1]*tout[1] > 0.87 else [tin, tout]):
+                if not tv: continue
+                nv = (-tv[1], tv[0])
+                if not inside((p[0] + nv[0]*2, p[1] + nv[1]*2), P): nv = (-nv[0], -nv[1])
+                if not inside((p[0] + nv[0]*2, p[1] + nv[1]*2), P): continue
+                h = ray(p, nv, P, 1.0)
+                if h is None: continue
+                t, nn = h
+                if abs(nn[0]*tv[0] + nn[1]*tv[1]) > 0.72 or t >= HT_MAX*t0: continue   # mép đối gần song song (pháp tuyến ⟂ tiếp tuyến)
+                cands.append((t, nv))
+            if not cands: continue
+            t, nv = min(cands); m = (t - t*r)/2
+            mv[id(p)] = (nv[0]*m, nv[1]*m)
+    for c in cs:
+        segs = [ps for k, ps in c if k in 'LC']
+        st = [c[0][1][0]] + [ps[-1] for ps in segs[:-1]]
+        for i, ps in enumerate(segs):
+            if len(ps) == 3:
+                d0 = mv.get(id(st[i])); d1 = mv.get(id(ps[2]))
+                if d0: ps[0][0] += d0[0]; ps[0][1] += d0[1]
+                if d1: ps[1][0] += d1[0]; ps[1][1] += d1[1]
+        done = set()
+        for p in [c[0][1][0]] + [ps[-1] for ps in segs]:
+            if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; p[1] += mv[id(p)][1]; done.add(id(p))
+    return fmt(cs)
+
+# ---------- G55 Ç ç Ø ø Ð = chữ gốc GOLDEN + phụ kiện (designer 27/11 "làm luôn nhóm chưa theo trục nét mảnh"): trước đây lấy nguyên
+# bản Serif (C / O bên trong không qua luật Golden, không theo trục HAIR). Móc Ç ç = phần nguồn dưới y −12 (dưới điểm vượt đáy C) + dải cổ
+# chôn 8 u vào đáy chữ; gạch Ø ø = bao lồi hai đầu gạch nằm ngoài vòng ngoài O nguồn; Ð = Đ.
+def _hull(pts):
+    pts = sorted(set((round(x, 3), round(y, 3)) for x, y in pts))
+    if len(pts) < 3: return pts
+    def cr(o, a, b): return (a[0]-o[0])*(b[1]-o[1]) - (a[1]-o[1])*(b[0]-o[0])
+    lo, up = [], []
+    for p in pts:
+        while len(lo) >= 2 and cr(lo[-2], lo[-1], p) <= 0: lo.pop()
+        lo.append(p)
+    for p in reversed(pts):
+        while len(up) >= 2 and cr(up[-2], up[-1], p) <= 0: up.pop()
+        up.append(p)
+    return lo[:-1] + up[:-1]
+def _poly_path(P):
+    q = pathops.Path(); q.moveTo(*P[0])
+    for p in P[1:]: q.lineTo(*p)
+    q.close(); return q
+def cedilla_add(src_acc, new_b, ycut=-12.0, neck=8.0):
+    low = pathops.Path(); low.moveTo(-3000, -3000); low.lineTo(3000, -3000); low.lineTo(3000, ycut); low.lineTo(-3000, ycut); low.close()
+    ced = _op(_pp(src_acc), low, pathops.PathOp.INTERSECTION)
+    if not list(ced.segments): return None
+    xs = [x for x0, x1 in _hspans(_pd(ced), ycut - 0.5) for x in (x0, x1)]
+    if not xs: return None
+    band = _poly_path([(min(xs), ycut - 1), (max(xs), ycut - 1), (max(xs), ycut + neck), (min(xs), ycut + neck)])
+    out = _op(_op(_pp(new_b), ced, pathops.PathOp.UNION), band, pathops.PathOp.UNION); out.convertConicsToQuads()
+    return merge_tiny(_pd(out))
+def slash_add(src_acc, src_b, new_b):
+    oy = [p[1] for c in parse(src_b) for p in pts_of(c)]; top, bot = max(oy), min(oy)
+    caps_lo, caps_hi = [], []                                      # nhát cắt hai đầu gạch: đoạn thẳng nằm hẳn dưới đáy / trên đỉnh vòng O
+    for c in parse(src_acc):
+        cur = None
+        for k, ps in c:
+            if k == 'L' and cur is not None and math.dist(cur, ps[0]) > 15:
+                if max(cur[1], ps[0][1]) < bot: caps_lo.append((list(cur), list(ps[0])))
+                if min(cur[1], ps[0][1]) > top: caps_hi.append((list(cur), list(ps[0])))
+            if ps: cur = ps[-1]
+    if not caps_lo or not caps_hi: return None
+    lo = min(caps_lo, key=lambda s_: s_[0][1] + s_[1][1]); hi = max(caps_hi, key=lambda s_: s_[0][1] + s_[1][1])
+    H = _hull(lo + hi)
+    out = _op(_pp(new_b), _poly_path(H), pathops.PathOp.UNION); out.convertConicsToQuads()
+    return merge_tiny(_pd(out))
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
