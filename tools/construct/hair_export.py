@@ -90,6 +90,45 @@ def bar_morph(dc, db, hb, r):
             else: s_ += seg[0] + ' '.join('%.2f %.2f' % f(p) for p in seg[1:])
         s_ += 'Z'
     return s_
+def reconcile(gh, gb):
+    """điểm UFO bản nét mảnh lệch bản mặc định (bước xuất bỏ nút thẳng hàng / đoạn suy biến / đổi điểm đầu khác nhau ở hai bản):
+    theo từng contour — thử mọi điểm đầu (xoay vòng), DP khớp dãy kiểu điểm: được BỎ điểm 'line' của bản nét mảnh (giá = độ lệch
+    khỏi đường nối hai điểm kề) hoặc CHÈN điểm 'line' trùng điểm trước (giá 4). Trả về danh sách contour điểm mới hoặc None."""
+    import math
+    if len(gh.contours) != len(gb.contours): return None
+    out = []
+    for ch, cb in zip(gh.contours, gb.contours):
+        H = [((p.x, p.y), p.type) for p in ch.points]; B = [p.type for p in cb.points]
+        best = None
+        for r in range(len(H)):
+            R = H[r:] + H[:r]; n, m = len(R), len(B); INF = 1e18
+            C = [[INF]*(m + 1) for _ in range(n + 1)]; P = [[None]*(m + 1) for _ in range(n + 1)]; C[0][0] = 0
+            for i in range(n + 1):
+                for j in range(m + 1):
+                    c0 = C[i][j]
+                    if c0 >= INF: continue
+                    if i < n and j < m and R[i][1] == B[j] and c0 < C[i + 1][j + 1]: C[i + 1][j + 1] = c0; P[i + 1][j + 1] = 'm'
+                    if i < n and R[i][1] == 'line':
+                        a, b, e = R[i - 1][0], R[i][0], R[(i + 1) % n][0]
+                        ux, uy = e[0] - a[0], e[1] - a[1]; L = math.hypot(ux, uy) or 1
+                        dev = abs((b[0] - a[0])*uy - (b[1] - a[1])*ux)/L + 0.01*math.dist(a, b)
+                        if c0 + dev < C[i + 1][j]: C[i + 1][j] = c0 + dev; P[i + 1][j] = 'd'
+                    if j < m and B[j] == 'line' and c0 + 4 < C[i][j + 1]: C[i][j + 1] = c0 + 4; P[i][j + 1] = 'i'
+            if C[n][m] < INF and (best is None or C[n][m] < best[0]): best = (C[n][m], R, P, n, m)
+        if best is None or best[0] > 12: return None
+        _, R, P, i, j = best; ops = []
+        while i or j:
+            o = P[i][j]; ops.append(o)
+            if o == 'm': i -= 1; j -= 1
+            elif o == 'd': i -= 1
+            else: j -= 1
+        ops.reverse(); pts = []; i = 0
+        for o in ops:
+            if o == 'm': pts.append(R[i]); i += 1
+            elif o == 'd': i += 1
+            else: pts.append(((pts[-1][0] if pts else R[i][0]), 'line'))
+        out.append(pts)
+    return out
 def gsig(g): return [[(p.type or 'o') for p in c.points] for c in g.contours]
 
 def main():
@@ -120,16 +159,26 @@ def main():
         MS = {w: EF.master(w, ang, FL, groups, ks[w]) for w in ('Regular', 'Bold')}
         EF.pair_fix(MS['Regular'], MS['Bold'])
         import ufoLib2
-        fixed = 0
+        fixed = 0; fixn = []
         for w in ('Regular', 'Bold'):
             base = ufoLib2.Font.open(os.path.join(EF.BUILD, f'{EF.PS}{tag}-{w}.ufo'))
             for g in MS[w]:
-                if g.name in base and gsig(base[g.name]) != gsig(g):       # lệch cấu trúc với master mặc định → giữ mặc định
-                    g.clearContours(); base[g.name].drawPoints(g.getPointPen()); fixed += 1
+                if g.name in base and gsig(base[g.name]) != gsig(g):       # lệch cấu trúc với master mặc định → khớp lại điểm; không được thì giữ mặc định
+                    rc = reconcile(g, base[g.name])
+                    if rc is not None:
+                        g.clearContours(); pen = g.getPointPen()
+                        for pts in rc:
+                            pen.beginPath()
+                            for xy, tp in pts: pen.addPoint(xy, segmentType=tp)
+                            pen.endPath()
+                    if rc is None or gsig(base[g.name]) != gsig(g):
+                        if os.environ.get('HAIR_DEBUG'): print('DEBUG', g.name, w, [[(round(p.x), round(p.y), (p.type or 'o')[0]) for p in c.points] for c in g.contours], [[(round(p.x), round(p.y), (p.type or 'o')[0]) for p in c.points] for c in base[g.name].contours])
+                        g.clearContours(); base[g.name].drawPoints(g.getPointPen()); fixed += 1; fixn.append(f'{g.name}/{w[0]}')
+                    else: fixn.append(f'{g.name}/{w[0]}:khớp lại')
             p = os.path.join(EF.BUILD, f'{EF.PS}{tag}-{w}-Hair.ufo')
             if os.path.exists(p): shutil.rmtree(p)
             MS[w].save(p)
-        print(f'HAIR{tag or " Roman"}: khớp cấu trúc {nal} chữ · giữ mặc định {len(keep)} chữ (lệch cấu trúc: {"".join(sorted(keep))}) · sửa sau dựng {fixed}')
+        print(f'HAIR{tag or " Roman"}: khớp cấu trúc {nal} chữ · giữ mặc định {len(keep)} chữ (lệch cấu trúc: {"".join(sorted(keep))}) · sửa sau dựng {fixed} {fixn}')
         ds = DesignSpaceDocument()
         for name, t_, lo, df, hi in (('Weight', 'wght', 400, 400, 700), ('Hairline', 'HAIR', HAIR_MIN, HAIR_DEF, HAIR_DEF)):
             ax = AxisDescriptor(); ax.name, ax.tag, ax.minimum, ax.default, ax.maximum = name, t_, lo, df, hi; ds.addAxis(ax)

@@ -2633,11 +2633,11 @@ def three_cap(d, cap=700.0):
     cs = parse(d)
     for c in cs:
         pts = [p for _, ps in c for p in ps]
-        stub = [p for p in pts if 0.3 < abs(p[1] - cap) < 10 and any(abs(q[0] - p[0]) < 0.5 and abs(q[1] - cap) < 0.01 for q in pts)]
+        stub = [p for p in pts if 0.3 < abs(p[1] - cap) < 60 and any(abs(q[0] - p[0]) < 0.5 and abs(q[1] - cap) < 0.01 for q in pts)]
         if not stub: continue
         x0 = stub[0][0]
         for p in pts:
-            if abs(p[0] - x0) < 0.5 and 0.3 < abs(p[1] - cap) < 10: p[1] = cap
+            if abs(p[0] - x0) < 0.5 and 0.3 < abs(p[1] - cap) < 60: p[1] = cap
         out = [c[0]]; prev = c[0][1][0]
         for k, ps in c[1:]:
             if k == 'L' and math.dist(prev, ps[-1]) < 0.01: continue
