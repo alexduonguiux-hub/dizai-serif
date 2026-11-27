@@ -1959,6 +1959,12 @@ def main():
         if horn_compat(rr['Regular'], rr['Bold']):
             for w in ('Regular', 'Bold'): G[f'2-{w}'] = rr[w]
             for w, t in TW.items(): G[f'2-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+    if 'S-Regular' in G:                                          # G64b S đồng bộ đường cong thị giác hai bụng (designer duyệt 27/11)
+        rr = {w: s_harmonize(G[f'S-{w}']) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'S-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'S-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+            print('G64b S: đồng bộ đường cong hai bụng')
     if '3-Regular' in G:                                          # G53 góc trên số 3 đúng cap
         rr = {w: three_cap(G[f'3-{w}']) for w in ('Regular', 'Bold')}
         if horn_compat(rr['Regular'], rr['Bold']):
