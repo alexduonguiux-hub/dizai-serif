@@ -1937,7 +1937,7 @@ def main():
     if '&-Regular' in G and 'S-Regular' in G:                     # G58 & Bold = & Regular + nét dày dày thêm (nét mảnh giữ chuẩn)
         def stem_(d):
             cs_ = parse(d); T_ = sorted(r[0] for p, r in _node_thick(cs_, polys(cs_)) if r); return T_[-3]
-        dl = (stem_(G['S-Bold']) - stem_(G['S-Regular']))/2
+        dl = AMP_DL*(stem_(G['S-Bold']) - stem_(G['S-Regular']))/2   # × AMP_DL: chéo / cung chỉ nhận n_x² phần nới → bù cho độ đậm bằng S 8 B
         csR = parse(G['&-Regular']); TR = _node_thick(csR, polys(csR))
         idx = [j for j, (p, r) in enumerate(TR) if r is not None and r[0] < AMP_THIN*HAIR_R[0]]
         aR = G['&-Regular']                                       # Regular giữ bản vẽ (tương phản đúng)
@@ -2898,6 +2898,7 @@ def two_flare(d, w):
 # < AMP_THIN (đo theo pháp tuyến vào mực, mép đối gần song song); ở MỌI weight dời nút vào trong để bề dày về chuẩn LINE_T (4 lượt đo —
 # nửa phần dư mỗi lượt, hai mép cùng thu). Cấu trúc R / B giống nhau → cùng chỉ số nút.
 AMP_THIN = 56.0
+AMP_DL = 1.2
 def _node_thick(cs, P):
     out = []
     for c in cs:
@@ -2914,48 +2915,55 @@ def _node_thick(cs, P):
                     if h and abs(h[1][0]*tv[0] + h[1][1]*tv[1]) < 0.72: r = (h[0], nv)
             out.append((p, r))
     return out
-def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0):
-    """G58 & đậm dựng từ & Regular: nút nét DÀY (bề dày Regular ≥ t_hi) dời ra ngoài delta (nửa phần stem tăng, như S), chuyển tiếp
-    tuyến tính t_lo → t_hi, nét mảnh giữ nguyên → giữ tương phản như mọi chữ Golden (nét mảnh không dày theo weight)"""
-    cs = parse(dR); P = polys(cs); T = _node_thick(cs, P); mv = {}
-    sm = []                                                       # nút trơn (hai tay nắm thẳng hàng, < 3°): giữ trơn sau khi dời
+def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2):
+    """G58 & đậm dựng từ & Regular (designer 27/11 "audit lại glyph &"): làm đậm NGANG giữ tương phản — mỗi nút dời ngang
+    delta · n_x · f, n = pháp tuyến ra ngoài, f = trọng số nét dày (bề dày Regular t_lo → t_hi: 0 → 1) làm trơn dọc contour (trung bình
+    với nút kề, 2 lượt) → nét đứng / chéo dày thêm 2·delta·n_x², nét ngang mảnh (n_x ≈ 0) giữ nguyên, mép ngang (chân, nhát cắt) không
+    đổi cao độ. Tay nắm dời theo pha trộn hai đầu (2/3–1/3), nút trơn giữ trơn."""
+    cs = parse(dR); P = polys(cs); T = _node_thick(cs, P)
+    sm = []
     for c in cs:
         segs = [ps for k, ps in c if k in 'LC']; n = len(segs)
         for i in range(n):
             ps, nps = segs[i], segs[(i + 1) % n]
-            if len(ps) == 3 and len(nps) == 3:
-                u1 = unit((ps[2][0] - ps[1][0], ps[2][1] - ps[1][1])); u2 = unit((nps[0][0] - ps[2][0], nps[0][1] - ps[2][1]))
+            pin = ps[1] if len(ps) == 3 else None; pout = nps[0] if len(nps) == 3 else None
+            if pin is not None and pout is not None:
+                u1 = unit((ps[2][0] - pin[0], ps[2][1] - pin[1])); u2 = unit((pout[0] - ps[2][0], pout[1] - ps[2][1]))
                 if u1 and u2 and u1[0]*u2[0] + u1[1]*u2[1] > math.cos(math.radians(3)): sm.append((ps, nps))
-    flat = {}                                                     # nút nằm trên đoạn thẳng ngang / đứng: giữ mép (chân trên đường chân, nhát cắt ngang)
+    # trọng số f theo nút (thứ tự T = thứ tự điểm cuối đoạn), làm trơn dọc từng contour
+    k_ = 0; F = []
     for c in cs:
-        cur = c[0][1][0]
-        for k, ps in c:
-            if k == 'L':
-                for q in (cur, ps[0]):
-                    if abs(q[1] - (ps[0][1] if q is cur else cur[1])) < 0.01: flat.setdefault(id(q), set()).add('h')
-                    if abs(q[0] - (ps[0][0] if q is cur else cur[0])) < 0.01: flat.setdefault(id(q), set()).add('v')
-            if ps: cur = ps[-1]
-    for p, r in T:
-        if r is None: continue
-        t, nv = r; f = min(max((t - t_lo)/(t_hi - t_lo), 0.0), 1.0)
-        if f > 0:
-            dx, dy = -nv[0]*delta*f, -nv[1]*delta*f
-            fl = flat.get(id(p), set())
-            if 'h' in fl: dy = 0.0
-            if 'v' in fl: dx = 0.0
-            mv[id(p)] = (dx, dy)
+        n = len([1 for k, ps in c if k in 'LC']); f = []
+        for j in range(n):
+            r = T[k_ + j][1]
+            f.append(min(max(((r[0] if r else t_hi) - t_lo)/(t_hi - t_lo), 0.0), 1.0) if r else None)
+        f = [x if x is not None else 0.0 for x in f]
+        for _ in range(smooth): f = [(f[j - 1] + 2*f[j] + f[(j + 1) % n])/4 for j in range(n)]
+        F += f; k_ += n
+    mv = {}; k_ = 0
+    for c in cs:
+        segs = [ps for k, ps in c if k in 'LC']; n = len(segs)
+        st = [c[0][1][0]] + [ps[-1] for ps in segs[:-1]]
+        for i in range(n):
+            ps = segs[i]; p = ps[-1]; nps = segs[(i + 1) % n]
+            a_ = ps[-2] if len(ps) == 3 else st[i]; b_ = nps[0]
+            tv = unit((b_[0] - a_[0], b_[1] - a_[1]))
+            if not tv: continue
+            nv = (tv[1], -tv[0])                                  # pháp tuyến ra ngoài (contour ngược chiều kim đồng hồ: mực bên trái)
+            if inside((p[0] + nv[0]*2, p[1] + nv[1]*2), P): nv = (-nv[0], -nv[1])
+            mv[id(p)] = (delta*nv[0]*F[k_ + i], 0.0)
+        k_ += n
     for c in cs:
         segs = [ps for k, ps in c if k in 'LC']; st = [c[0][1][0]] + [ps[-1] for ps in segs[:-1]]
         M_ = c[0][1][0]
         if segs and M_ is not segs[-1][-1] and id(segs[-1][-1]) in mv: mv[id(M_)] = mv[id(segs[-1][-1])]
         for i, ps in enumerate(segs):
-            if len(ps) == 3:                                          # tay nắm dời theo pha trộn hai đầu (biến dạng trơn dọc cung, không bướu)
+            if len(ps) == 3:
                 d0 = mv.get(id(st[i]), (0.0, 0.0)); d1 = mv.get(id(ps[2]), (0.0, 0.0))
-                ps[0][0] += (2*d0[0] + d1[0])/3; ps[0][1] += (2*d0[1] + d1[1])/3
-                ps[1][0] += (d0[0] + 2*d1[0])/3; ps[1][1] += (d0[1] + 2*d1[1])/3
+                ps[0][0] += (2*d0[0] + d1[0])/3; ps[1][0] += (d0[0] + 2*d1[0])/3
         done = set()
         for p in [M_] + [ps[-1] for ps in segs]:
-            if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; p[1] += mv[id(p)][1]; done.add(id(p))
+            if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; done.add(id(p))
     for ps, nps in sm:
         p = ps[2]; a_, b_ = ps[1], nps[0]
         u1 = unit((p[0] - a_[0], p[1] - a_[1])); u2 = unit((b_[0] - p[0], b_[1] - p[1]))
@@ -3028,6 +3036,15 @@ def pound_fix(d, w, t, Wl):
     lb = [y for y in hy if 10 < y < 120 and sum(1 for p in P if abs(p[1] - y) < 0.01) >= 3]
     if lb:
         yb = lb[0]
+        cur = c[0][1][0]                                          # cung nối thân–đế: tay nắm co giãn đứng theo (giữ dáng cung khi hạ mặt đế)
+        for k, ps in c:
+            if k == 'C':
+                a_, e_ = cur, ps[2]
+                for end, oth in ((a_, e_), (e_, a_)):
+                    if abs(end[1] - yb) < 0.01 and abs(oth[1] - yb) > 1:
+                        for h in (ps[0], ps[1]): h[1] = t + (h[1] - yb)*(oth[1] - t)/(oth[1] - yb)
+                        break
+            if ps: cur = ps[-1]
         for p in P:
             if abs(p[1] - yb) < 0.01: p[1] = t
     # loe phải đế: C từ mép cắt phải (L lên mũi) → nút trên mặt đế
