@@ -36,6 +36,7 @@ SOFT = 0.55                          # sàn mềm khe chữ gốc (× khe chuẩ
 STEM_L = 'BDEFHIKLMNPRÞ'   # S17 chữ có thân đứng bên trái
 FOOT_R, FOOT_L, FOOT_Y, MIN_GAP_FOOT = set('RKX'), set('A'), 110.0, 10.0   # S16 RA KA XA: chân serif hai chữ được sát hơn (designer 26/11 "RA, KA nên gần hơn")
 LOOSE_X = set('AVY')                  # S19 chéo nới với chữ tròn (O C G Q)
+KEQ = {'C|T': 'E|T', 'G|T': 'E|T'}     # S21 designer 27/11 "kerning CT = ET", "GT = ET"
 KSCALE = {'V|A': 1.15, 'A|V': 1.15}   # S18 designer 26/11 "VA kerning cho gần lại cỡ 15%" + "AV luôn"
 HORN_BAR = set('tf')                 # S20 designer 26/11 "chữ ứt sừng ư bị overlap lên t" (sừng dời xuống ngang tầm thanh t)
 MIN_GAP_HORN = 14.0                  # sàn khe ở vùng sừng ơ ư
@@ -301,6 +302,11 @@ def main():
                 kT = math.ceil((gE - gT0)/5)*5
                 if kT <= -10 or kT >= 5: KC[f'T|{lc}'] = kT
                 else: KC.pop(f'T|{lc}', None)
+            for key, ref in KEQ.items():                                    # S21 khe nhỏ nhất cặp = khe cặp tham chiếu (CT GT = ET)
+                a_, b2 = key.split('|'); ra, rb = ref.split('|')
+                if not all(x in sp for x in (a_, b2, ra, rb)): continue
+                gR = float(np.nanmin(pair_gap(ra, rb, KC.get(ref, 0.0)))); g0 = float(np.nanmin(pair_gap(a_, b2, 0.0)))
+                KC[key] = round(gR - g0)
             for key, f_ in KSCALE.items():                                  # S18 nhân hệ số kerning từng cặp (chặn va chạm phía dưới vẫn giữ)
                 if key in KC: KC[key] = math.floor(KC[key]*f_/5)*5
         if w not in ('Regular', 'Bold'):
