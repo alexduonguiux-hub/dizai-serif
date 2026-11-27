@@ -1917,6 +1917,12 @@ def main():
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(rr['Regular'][0], rr['Bold'][0], t)
             ffx[c] = rr['Regular'][1] + rr['Bold'][1]
     print('G52 chân loe nét chéo nắn hết gấp:', ffx)
+    if '3-Regular' in G:                                          # G53 góc trên số 3 đúng cap
+        rr = {w: three_cap(G[f'3-{w}']) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'3-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'3-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        else: print('G53 số 3: R / B lệch cấu trúc')
     json.dump(G, open(os.path.join(OUT, 'outlines.json'), 'w'))
     print('G6 lòng giãn:', {f'{b}-{w}': round(k, 3) for (b, w), k in RINGK.items()})
     print('golden:', len(G), 'glyph ·', len(low), 'ký tự chữ thường nâng x-height', XH0, '→', XH1, '· loe phóng', NF, '· nút nét mảnh dời', NT)
@@ -2294,7 +2300,7 @@ def amp_waist(d, maxl=35.0):
                 return fmt(cs)
             best = (t, cr_)
     return d
-def straighten_ll(d, maxdeg=6.0):
+def straighten_ll(d, maxdeg=8.0):
     """G44 hai đoạn thẳng nối nhau gần thẳng hàng (gãy < maxdeg, vd. mép chéo W Bold từ w_thin) → điểm giữa chiếu lên đường nối hai đầu"""
     cs = parse(d)
     for c in cs:
@@ -2620,6 +2626,25 @@ def flare_fair(d):
                 c[j][1] = [HT, HN, N2]
             nfix += 1
     return fmt(cs), nfix
+
+# ---------- G53 góc trên số 3 nằm đúng đường cap (designer 27/11 "số 3 variable bold lên bị lỗi nét"): nút đầu nét chéo lệch cap
+# (Regular −5.2, Bold +5.6 → nội suy thành bậc / gai trên thanh đỉnh) — dời lên / xuống đúng cap, bỏ đoạn đứng suy biến
+def three_cap(d, cap=700.0):
+    cs = parse(d)
+    for c in cs:
+        pts = [p for _, ps in c for p in ps]
+        stub = [p for p in pts if 0.3 < abs(p[1] - cap) < 10 and any(abs(q[0] - p[0]) < 0.5 and abs(q[1] - cap) < 0.01 for q in pts)]
+        if not stub: continue
+        x0 = stub[0][0]
+        for p in pts:
+            if abs(p[0] - x0) < 0.5 and 0.3 < abs(p[1] - cap) < 10: p[1] = cap
+        out = [c[0]]; prev = c[0][1][0]
+        for k, ps in c[1:]:
+            if k == 'L' and math.dist(prev, ps[-1]) < 0.01: continue
+            out.append([k, ps])
+            if ps: prev = ps[-1]
+        c[:] = out
+    return fmt(cs)
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
