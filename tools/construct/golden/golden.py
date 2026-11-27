@@ -1943,8 +1943,8 @@ def main():
         aR = G['&-Regular']                                       # Regular giữ bản vẽ (tương phản đúng)
         c0_ = parse(aR)
         if len(c0_) == 3 and len(c0_[0]) == 22 and c0_[0][14][0] == 'L' and len(c0_[1]) == 8:   # G62 làm trơn tay phải + góc lòng dưới
-            aR = chain_one(chain_one(aR, 0, 15, 17), 1, 1, 2)
-        aB = amp_bold(aR, dl, ky=1.0)
+            aR = no_infl(arm_inner(chain_one(chain_one(chain_one(aR, 2, 2, 3), 0, 15, 17), 1, 1, 2)))   # (+ 2 nút sát nhau ở mép trái lòng vòng trên)
+        aB = no_infl(amp_bold(aR, dl, ky=1.0))
         if horn_compat(aR, aB):
             G['&-Regular'], G['&-Bold'] = aR, aB
             for w, t in TW.items(): G[f'&-{w}'] = lerp_d(aR, aB, t)
@@ -2911,7 +2911,7 @@ def two_flare(d, w):
 # < AMP_THIN (đo theo pháp tuyến vào mực, mép đối gần song song); ở MỌI weight dời nút vào trong để bề dày về chuẩn LINE_T (4 lượt đo —
 # nửa phần dư mỗi lượt, hai mép cùng thu). Cấu trúc R / B giống nhau → cùng chỉ số nút.
 AMP_THIN = 56.0
-AMP_DL = 1.38                # (δ ≈ 30: tỉ lệ mực B/R ≈ 1.22, như 8 B)
+AMP_DL = 2.3                 # (δ ≈ 50 theo pháp tuyến, nút nét mảnh / nách giữ: mực B/R ≈ 1.17 như a)
 def _node_thick(cs, P):
     out = []
     for c in cs:
@@ -2934,6 +2934,7 @@ def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2, ky=0.0):
     với nút kề, 2 lượt) → nét đứng / chéo dày thêm 2·delta·n_x², nét ngang mảnh (n_x ≈ 0) giữ nguyên, mép ngang (chân, nhát cắt) không
     đổi cao độ. Tay nắm dời theo pha trộn hai đầu (2/3–1/3), nút trơn giữ trơn."""
     cs = parse(dR); P = polys(cs); T = _node_thick(cs, P)
+    R0 = parse(dR)                                                # bản Regular (so điểm uốn sau khi dời)
     sm = []
     for c in cs:
         segs = [ps for k, ps in c if k in 'LC']; n = len(segs)
@@ -2951,7 +2952,17 @@ def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2, ky=0.0):
             r = T[k_ + j][1]
             f.append(min(max(((r[0] if r else t_hi) - t_lo)/(t_hi - t_lo), 0.0), 1.0) if r else None)
         f = [x if x is not None else 0.0 for x in f]
+        raw = list(f)
         for _ in range(smooth): f = [(f[j - 1] + 2*f[j] + f[(j + 1) % n])/4 for j in range(n)]
+        f = [0.0 if raw[j] <= 0.0 else f[j] for j in range(n)]       # nút nét mảnh giữ nguyên (nét mảnh không dày theo weight)
+        segs_ = [ps for k, ps in c if k in 'LC']; st_ = [c[0][1][0]] + [ps[-1] for ps in segs_[:-1]]
+        for j in range(n):                                        # nút kề góc nhọn (nách): dời ít (cung ngắn vào nách không bị ép gãy)
+            ps_ = segs_[j]; p_ = ps_[-1]; nps_ = segs_[(j + 1) % n]
+            a__ = ps_[-2] if len(ps_) == 3 else st_[j]; b__ = nps_[0]
+            ti_ = unit((p_[0] - a__[0], p_[1] - a__[1])); to_ = unit((b__[0] - p_[0], b__[1] - p_[1]))
+            if ti_ and to_ and ti_[0]*to_[0] + ti_[1]*to_[1] < math.cos(math.radians(30)):
+                for jj in (j - 1, (j + 1) % n):
+                    if math.dist(segs_[jj][-1], p_) < 80: f[jj] = 0.0
         F += f; k_ += n
     flat = {}                                                     # nút trên đoạn thẳng ngang / đứng: giữ mép
     for c in cs:
@@ -2975,6 +2986,9 @@ def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2, ky=0.0):
             if inside((p[0] + nv[0]*2, p[1] + nv[1]*2), P): nv = (-nv[0], -nv[1])
             fl = flat.get(id(p), set())
             dx_, dy_ = delta*nv[0]*F[k_ + i], (delta*nv[1]*F[k_ + i]*ky if 'h' not in fl else 0.0)
+            ti = unit((p[0] - a_[0], p[1] - a_[1])); to = unit((b_[0] - p[0], b_[1] - p[1]))
+            if ti and to and ti[0]*to[0] + ti[1]*to[1] < math.cos(math.radians(30)) and not fl:
+                dx_, dy_ = 0.0, 0.0                                   # góc nhọn (nách chân / bụng): giữ chỗ — dời theo pháp tuyến trung bình làm cung kề gãy
             mv[id(p)] = (dx_ if 'v' not in fl else 0.0, dy_)
         k_ += n
     for c in cs:
@@ -2984,11 +2998,28 @@ def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2, ky=0.0):
         for i, ps in enumerate(segs):
             if len(ps) == 3:
                 d0 = mv.get(id(st[i]), (0.0, 0.0)); d1 = mv.get(id(ps[2]), (0.0, 0.0))
-                ps[0][0] += (2*d0[0] + d1[0])/3; ps[1][0] += (d0[0] + 2*d1[0])/3
-                ps[0][1] += (2*d0[1] + d1[1])/3; ps[1][1] += (d0[1] + 2*d1[1])/3
+                ps[0][0] += d0[0]; ps[0][1] += d0[1]; ps[1][0] += d1[0]; ps[1][1] += d1[1]   # tay nắm dời đúng như điểm neo → giữ tiếp tuyến (mũi chân loe, đáy bụng)
         done = set()
         for p in [M_] + [ps[-1] for ps in segs]:
             if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; p[1] += mv[id(p)][1]; done.add(id(p))
+    for c, c0 in zip(cs, R0):                                    # cung vốn một chiều cong mà sau khi dời có điểm uốn → tay nắm giữ hướng / tỉ lệ của Regular
+        cur, cur0 = c[0][1][0], c0[0][1][0]
+        for (k, ps), (k0, ps0) in zip(c, c0):
+            if k == 'C' and k0 == 'C':
+                q0 = [cur0] + ps0; q = [cur] + ps
+                k0s = [_kap(q0, t/30) for t in range(31)]; k1s = [_kap(q, t/30) for t in range(31)]
+                if min(k0s)*max(k0s) >= 0 and min(k1s)*max(k1s) < 0:     # giữ hướng tay nắm (G1), chỉ đổi độ dài → hết điểm uốn, đổi ít nhất
+                    v0 = (ps[0][0] - cur[0], ps[0][1] - cur[1]); v1 = (ps[1][0] - ps[2][0], ps[1][1] - ps[2][1]); bst = None
+                    for sa in [x/10 for x in range(2, 25)]:
+                        for sb in [x/10 for x in range(2, 25)]:
+                            q = [cur, [cur[0] + v0[0]*sa, cur[1] + v0[1]*sa], [ps[2][0] + v1[0]*sb, ps[2][1] + v1[1]*sb], ps[2]]
+                            kk = [_kap(q, t/30) for t in range(31)]
+                            if min(kk)*max(kk) < 0: continue
+                            sc_ = abs(sa - 1) + abs(sb - 1)
+                            if bst is None or sc_ < bst[0]: bst = (sc_, q)
+                    if bst: ps[0], ps[1] = bst[1][1], bst[1][2]
+            if ps: cur = ps[-1]
+            if ps0: cur0 = ps0[-1]
     for ps, nps in sm:
         p = ps[2]; a_, b_ = ps[1], nps[0]
         u1 = unit((p[0] - a_[0], p[1] - a_[1])); u2 = unit((b_[0] - p[0], b_[1] - p[1]))
@@ -3140,6 +3171,50 @@ def pound_arc(d, w):
 # ---------- G62 & làm trơn (designer 27/11 "ký tự & vẫn lỗi"): mép trong tay phải (4 cung gần thẳng, độ dốc đổi chiều → gợn) và góc
 # lòng dưới chỗ chân nối bụng (3 cung ngắn) → mỗi chuỗi thay bằng MỘT cung: giữ hai đầu + hướng tiếp tuyến hai đầu, độ dài tay nắm
 # chọn để cung sát chuỗi cũ nhất (không điểm uốn).
+def no_infl(d):
+    """cung có điểm uốn (độ cong đổi dấu, |k| > 1/3000) → giữ hướng tay nắm (G1), đổi độ dài ít nhất để hết điểm uốn"""
+    cs = parse(d)
+    for c in cs:
+        cur = c[0][1][0]
+        for k, ps in c:
+            if k == 'C':
+                q0 = [cur] + ps; kk = [_kap(q0, t/30) for t in range(31)]
+                if min(kk)*max(kk) < 0 and min(abs(min(kk)), abs(max(kk))) > 1/3000:
+                    v0 = (ps[0][0] - cur[0], ps[0][1] - cur[1]); v1 = (ps[1][0] - ps[2][0], ps[1][1] - ps[2][1]); bst = None
+                    for sa in [x/20 for x in range(2, 50)]:
+                        for sb in [x/20 for x in range(2, 50)]:
+                            q = [cur, [cur[0] + v0[0]*sa, cur[1] + v0[1]*sa], [ps[2][0] + v1[0]*sb, ps[2][1] + v1[1]*sb], ps[2]]
+                            k2 = [_kap(q, t/30) for t in range(31)]
+                            if min(k2)*max(k2) < 0 and min(abs(min(k2)), abs(max(k2))) > 1/3000: continue
+                            sc_ = abs(sa - 1) + abs(sb - 1)
+                            if bst is None or sc_ < bst[0]: bst = (sc_, q)
+                    if bst: ps[0], ps[1] = bst[1][1], bst[1][2]
+            if ps: cur = ps[-1]
+    return fmt(cs)
+def arm_inner(d):
+    """G62b & mép trong tay phải: MỘT cung một chiều cong — ở chỗ nối song song mép ngoài tay (tiếp tuyến đầu cung mép ngoài), ở đầu tay
+    theo hướng nhát cắt cũ; độ dài tay nắm chọn cho độ cong biến thiên đều nhất, không điểm uốn"""
+    cs = parse(d); c = cs[0]
+    if len(c) < 17 or c[14][0] != 'L' or c[15][0] != 'C' or c[11][0] != 'C': return d
+    P0 = c[14][1][0]; P3 = c[15][1][2]; h0 = c[15][1][0]
+    J = c[10][1][0]; a1 = c[11][1][0]
+    u0 = unit((h0[0] - P0[0], h0[1] - P0[1])); u1 = unit((a1[0] - J[0], a1[1] - J[1]))
+    if not u0 or not u1: return d
+    ch = math.dist(P0, P3); best = None
+    uc = unit((P0[0] - P3[0], P0[1] - P3[1]))                     # dây cung (từ chỗ nối lên đầu tay)
+    for m in [x/10 for x in range(0, 31)]:                        # hướng ở chỗ nối: từ hướng mép ngoài (m 0) qua dây cung (m 1) sang phía kia — ưu tiên m nhỏ
+        u1m = unit((u1[0]*(1 - m) + uc[0]*m, u1[1]*(1 - m) + uc[1]*m))
+        for a in [x/40 for x in range(2, 28)]:
+            for b in [x/40 for x in range(2, 28)]:
+                q = [P0, [P0[0] + u0[0]*a*ch, P0[1] + u0[1]*a*ch], [P3[0] + u1m[0]*b*ch, P3[1] + u1m[1]*b*ch], P3]
+                ks = [_kap(q, t/40) for t in range(41)]
+                if min(ks)*max(ks) < -1e-12 or max(abs(x) for x in ks) > 1/60.0: continue   # không điểm uốn, bán kính ≥ 60
+                sc = m*10 + sum((ks[i + 1] - ks[i])**2 for i in range(40))*1e4
+                if best is None or sc < best[0]: best = (sc, q)
+        if best is not None: break
+    if best is None: return d
+    q = best[1]; c[15][1] = [q[1], q[2], P3]
+    return fmt(cs)
 def chain_one(d, ci, i0, i1):
     """thay các đoạn C c[i0..i1] (liền nhau) của contour ci bằng một cung"""
     cs = parse(d); c = cs[ci]
@@ -3156,6 +3231,8 @@ def chain_one(d, ci, i0, i1):
             q = [P0, [P0[0] + u0[0]*a*ch, P0[1] + u0[1]*a*ch], [P3[0] + u1[0]*b*ch, P3[1] + u1[1]*b*ch], P3]
             cp = [bz(*q, t/60) for t in range(61)]
             e = sum(min(math.dist(sp, r) for r in cp)**2 for sp in samp[::2])
+            ks = [_kap(q, t/30) for t in range(31)]
+            if min(ks)*max(ks) < 0: e += 1e6                          # không điểm uốn
             if best is None or e < best[0]: best = (e, q)
     q = best[1]
     c[i0:i1 + 1] = [['C', [q[1], q[2], P3]]]
