@@ -3367,6 +3367,56 @@ def s_balance(d):
         ps[0][1] = a[1] + sy*fy*abs(ps[2][1] - a[1]); ps[1][0] = ps[2][0] - sx*fx*abs(ps[2][0] - a[0])
     return fmt(cs)
 
+# ---------- G64b S đồng bộ đường cong thị giác hai bụng (designer 27/11 "ý tôi không phải kích thước bụng mà là đường cong thị giác"): mỗi cặp
+# cung đối xứng tâm (bụng trên ↔ bụng dưới: mép ngoài nét giữa→bụng, góc ngoài, đầu nét ngoài / trong, lòng bụng, mép trong nét giữa)
+# — giữ điểm neo + hướng tiếp tuyến (liền G1), chọn độ dài tay nắm của CẢ HAI cung để (1) đồ thị độ cong (chuẩn hoá theo dây cung, theo
+# tham số) của hai cung trùng nhau, (2) mỗi cung độ cong biến thiên đều, (3) độ cong nối tiếp ở nút (G2) với cung kề.
+S_PAIRS = ((9, 2), (10, 3), (11, 4), (13, 6), (14, 7), (1, 8))
+def _kprof(q, n=16):
+    ch = math.dist(q[0], q[3]) or 1.0
+    return [_kap(q, t/n)*ch for t in range(n + 1)]
+def s_harmonize(d, it=2):
+    cs = parse(d); c = cs[0]
+    if len(c) != 16: return d
+    def st(i): return c[i - 1][1][-1] if i > 1 else c[0][1][0]
+    grid = [x/40 for x in range(6, 26)]
+    for _ in range(it):
+        for a, b in S_PAIRS:
+            if c[a][0] != 'C' or c[b][0] != 'C': continue
+            qa = [st(a)] + c[a][1]; qb = [st(b)] + c[b][1]
+            def dirs(q):
+                return unit((q[1][0] - q[0][0], q[1][1] - q[0][1])), unit((q[2][0] - q[3][0], q[2][1] - q[3][1])), math.dist(q[0], q[3])
+            ua0, ua1, cha = dirs(qa); ub0, ub1, chb = dirs(qb)
+            if not all((ua0, ua1, ub0, ub1)): continue
+            def mk(q, u0, u1, ch, l1, l2): return [q[0], [q[0][0] + u0[0]*l1*ch, q[0][1] + u0[1]*l1*ch], [q[3][0] + u1[0]*l2*ch, q[3][1] + u1[1]*l2*ch], q[3]]
+            # độ cong cung kề ở hai đầu (G2)
+            def nb(i):
+                pv = [st(i - 1)] + c[i - 1][1] if c[i - 1][0] == 'C' else None
+                nx_ = [st(i + 1)] + c[i + 1][1] if i + 1 < len(c) - 1 and c[i + 1][0] == 'C' else None
+                return (_kap(pv, 1.0) if pv else None), (_kap(nx_, 0.0) if nx_ else None)
+            na, nb_ = nb(a), nb(b)
+            PA = {(l1, l2): mk(qa, ua0, ua1, cha, l1, l2) for l1 in grid for l2 in grid}
+            PB = {(l1, l2): mk(qb, ub0, ub1, chb, l1, l2) for l1 in grid for l2 in grid}
+            KA = {k: _kprof(q) for k, q in PA.items()}; KB = {k: _kprof(q) for k, q in PB.items()}
+            def own(K, q, n_, ch):
+                sc = sum((K[i + 1] - K[i])**2 for i in range(len(K) - 1))
+                if min(K)*max(K) < 0: sc += 50
+                if n_[0] is not None: sc += 0.5*((_kap(q, 0.0) - n_[0])*ch)**2
+                if n_[1] is not None: sc += 0.5*((_kap(q, 1.0) - n_[1])*ch)**2
+                return sc
+            OA = {k: own(KA[k], PA[k], na, cha) for k in PA}; OB = {k: own(KB[k], PB[k], nb_, chb) for k in PB}
+            # tách: chọn cặp (ka, kb) — duyệt ka, với mỗi ka lấy kb tốt nhất (đồ thị độ cong gần nhau)
+            best = None
+            ka_list = sorted(OA, key=OA.get)[:60]; kb_list = sorted(OB, key=OB.get)[:60]
+            for ka in ka_list:
+                for kb in kb_list:
+                    diff = sum((x - y)**2 for x, y in zip(KA[ka], KB[kb]))
+                    sc = OA[ka] + OB[kb] + 2.0*diff
+                    if best is None or sc < best[0]: best = (sc, ka, kb)
+            _, ka, kb = best
+            c[a][1] = PA[ka][1:]; c[b][1] = PB[kb][1:]
+    return fmt(cs)
+
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
