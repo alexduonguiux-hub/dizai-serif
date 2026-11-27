@@ -3144,8 +3144,19 @@ def eight_fix(dB, dR, tgt=None):
         seen = {}; [seen.setdefault(id(p), p) for k, ps in c for p in ps]; return seen.values()
     nt = yTop - tR_top; ku = (nt - u0)/(u1 - u0)
     for p in uniq(cu): p[1] = u0 + (p[1] - u0)*ku
-    nb = yBot + tR_bot; kl = (l1 - nb)/(l1 - l0)
-    for p in uniq(cl): p[1] = l1 - (l1 - p[1])*kl
+    base_ = {id(p): p[1] for p in uniq(cl)}
+    def minbot():                                                 # bề dày đáy NHỎ NHẤT thật (dò dọc bề ngang lòng dưới)
+        d_ = fmt(csB); P_ = polys([cl])[0]; xs_ = [q[0] for q in P_]; m = 1e9
+        for k_ in range(1, 40):
+            x_ = min(xs_) + (max(xs_) - min(xs_))*k_/40; h_ = _vhits(d_, x_)
+            if len(h_) >= 4: m = min(m, h_[1] - h_[0])
+        return m
+    lo, hi = 0.7, 1.3
+    for _ in range(30):                                           # kl: giãn lòng dưới quanh đỉnh lòng → đáy mảnh nhất = tR_bot
+        kl = (lo + hi)/2
+        for p in uniq(cl): p[1] = l1 - (l1 - base_[id(p)])*kl
+        if minbot() > tR_bot: lo = kl
+        else: hi = kl
     return fmt(csB)
 # ---------- G61 £ cung trên nét mảnh (designer 27/11 "vòng bụng cong của ký tự £ nên là nét mỏng"): nút đỉnh cung trong (tiếp tuyến ngang)
 # nâng lên để đỉnh cung dày = RING_T; các điểm cùng cao độ (tay nắm ngang) nâng theo.
