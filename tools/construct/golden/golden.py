@@ -1939,6 +1939,14 @@ def main():
             if f'{c}-Regular' not in G: continue
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = hair_thin(G[f'{c}-{w}'], HAIR_R[0], LINE_T[w]/HAIR_R[0])
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
+    if '4-Regular' in G:                                          # G56 số 4: loe phải theo weight, đỉnh / đầu trái thanh không gai
+        c0 = parse(G['4-Regular'])[0]
+        Wr = c0[1][1][2][0] - c0[0][1][0][0] if c0[0][0] == 'M' and c0[1][0] == 'C' else None
+        if Wr:
+            rr = {w: four_fix(G[f'4-{w}'], w, Wr) for w in ('Regular', 'Bold')}
+            if horn_compat(rr['Regular'], rr['Bold']):
+                for w in ('Regular', 'Bold'): G[f'4-{w}'] = rr[w]
+                for w, t in TW.items(): G[f'4-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
     if '3-Regular' in G:                                          # G53 góc trên số 3 đúng cap
         rr = {w: three_cap(G[f'3-{w}']) for w in ('Regular', 'Bold')}
         if horn_compat(rr['Regular'], rr['Bold']):
@@ -2781,6 +2789,35 @@ def slash_add(src_acc, src_b, new_b):
     H = _hull(lo + hi)
     out = _op(_pp(new_b), _poly_path(H), pathops.PathOp.UNION); out.convertConicsToQuads()
     return merge_tiny(_pd(out))
+
+# ---------- G56 số 4 (designer 27/11 "sửa luôn đoạn ngắn số 4. càng bold càng bị nhỏ chân loe"): (a) loe phải thanh: mép cắt phải
+# cố định x 530 → Bold loe chỉ rộng 61 / cao 64 (Regular 99 / 114). Bề rộng loe = W_R × ARM_D[w] / ARM_D[R], mũi cao ARM_D[w] trên đáy
+# thanh (= móc E), cung co giãn theo hộp mới. (b) đỉnh: mép ngoài nét chéo chạm cap lùi ≥ 4 u so với mép phải thân (master nét mảnh
+# vượt thân → gai / đoạn dài 0). (c) mép ngoài nét chéo bắt đầu ở đầu trái thanh không thấp hơn đáy thanh + 3 (tịnh tiến cả đường).
+def four_fix(d, w, Wr):
+    cs = parse(d); c = cs[0]
+    if c[0][0] != 'M' or len(c) < 12 or c[1][0] != 'C' or c[2][0] != 'L': return d
+    N = c[0][1][0]; h1, h2, T = c[1][1]; R2 = c[2][1][0]                  # nút (mép phải thân, mặt trên thanh) → mũi loe → mép cắt phải
+    bb = R2[1]                                                            # đáy thanh
+    W0, D0 = T[0] - N[0], T[1] - N[1]
+    if W0 < 1 or D0 < 1: return d
+    W1 = Wr*ARM_D[w]/ARM_D['Regular']; D1 = bb + ARM_D[w] - N[1]
+    sx, sy = W1/W0, D1/D0
+    for p in (h1, h2, T): p[0], p[1] = N[0] + (p[0] - N[0])*sx, N[1] + (p[1] - N[1])*sy
+    for k, ps in c:                                                       # mép cắt phải dời theo mũi
+        for p in ps:
+            if abs(p[0] - (N[0] + W0)) < 0.01: p[0] = T[0]
+    # (b) (c): đoạn trái thanh → mép ngoài chéo → đỉnh
+    for i in range(len(c) - 2):
+        if c[i][0] == 'L' and c[i + 1][0] == 'L' and c[i + 2][0] == 'L':
+            P0 = c[i][1][0]; P1 = c[i + 1][1][0]; P2 = c[i + 2][1][0]
+            if abs(P0[0]) < 0.5 and P1[1] > 650 and abs(P2[1] - P1[1]) < 0.01 and P2[0] > P1[0] - 50:
+                dx, dy = P1[0] - P0[0], P1[1] - P0[1]
+                if P0[1] < bb + 3:
+                    dl = bb + 3 - P0[1]; P0[1] += dl; P1[0] -= dl*dx/dy
+                if P1[0] > P2[0] - 4: P1[0] = P2[0] - 4
+                break
+    return fmt(cs)
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
