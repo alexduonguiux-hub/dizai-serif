@@ -3310,10 +3310,33 @@ def amp_build(t_, w, legw):
     leg = pathops.Path(); leg.moveTo(*f(mid0 - hw, 182)); leg.lineTo(*f(mid0 + hw, 182)); leg.lineTo(*f(mid1 + hw, 359)); leg.lineTo(*f(mid1 - hw, 359)); leg.close()
     clip = pathops.Path(); clip.moveTo(-3000, 0); clip.lineTo(3000, 0); clip.lineTo(3000, 3000); clip.lineTo(-3000, 3000); clip.close()
     leg = _op(leg, clip, pathops.PathOp.INTERSECTION)
-    # tay: mảnh loe mẫu, nới ngang quanh trục giữa (dời mép trái sang trái) AMP_ARM·t
+    # tay: hai mép NỐI TIẾP hai mép đầu bụng (designer 27/11 "bold lên phần móc lên cảm giác không liền với nét bụng dưới"): chân tay = nhát
+    # cắt đầu bụng (y 288 Figma), mép trái từ mép lòng bụng, mép phải từ mép ngoài bụng, cùng tiếp tuyến bụng ở đó; đầu tay = nhát cắt ngang
+    # mẫu (mép trái nới da theo weight) với hướng tiếp tuyến mẫu; tay nắm chọn không điểm uốn, độ cong biến thiên đều nhất
     da = AMP_ARM*t_/S
-    d_, m_ = AMP_FIG[0]
-    arm = _svg_path(d_, m_, lambda x, y: f(x - da*max(0.0, min(1.0, (346.04 - x)/60.0)), y))
+    yc = 708 - (288 - 71)*S; bw = _pd(bowl)
+    sp0 = [sp for sp in _hspans(bw, yc - 0.5) if sp[0] > 380]; sp1 = [sp for sp in _hspans(bw, yc - 8.0) if sp[0] > 370]
+    if not sp0 or not sp1: return None
+    (xl0, xr0), (xl1, xr1) = sp0[-1], sp1[-1]
+    BL, BR = (xl0, yc), (xr0, yc)
+    uL = unit((xl0 - xl1, 7.5)); uR = unit((xr0 - xr1, 7.5))           # hướng đi lên của mép lòng / mép ngoài bụng tại nhát cắt
+    TL = f(286.2147 - da, 204.0); TR = f(346.042724609375, 204.0)
+    uTL = unit((-15.1219, -18.7695)); uTR = (math.cos(math.radians(20)), math.sin(math.radians(20)))   # mép phải tới mũi nghiêng 20° (mẫu 9° = mũi kim, QA "gai")
+    def edge(P0, u0, P3, u3):
+        ch = math.dist(P0, P3); best = None
+        for a in [x/20 for x in range(2, 16)]:
+            for b in [x/20 for x in range(2, 16)]:
+                q = [P0, [P0[0] + u0[0]*a*ch, P0[1] + u0[1]*a*ch], [P3[0] - u3[0]*b*ch, P3[1] - u3[1]*b*ch], P3]
+                ks = [_kap(q, t/30) for t in range(31)]
+                sc = sum((ks[i + 1] - ks[i])**2 for i in range(30))*1e6 + (1e3 if min(ks)*max(ks) < -1e-10 else 0)
+                if best is None or sc < best[0]: best = (sc, q)
+        return best[1]
+    qL = edge(BL, uL, TL, (-uTL[0], -uTL[1]))                         # chân trái → đầu trái
+    qR = edge(BR, uR, TR, uTR)                                        # chân phải → mũi
+    arm = pathops.Path(); arm.moveTo(BL[0], BL[1] - 2.0); arm.lineTo(*BL)
+    arm.cubicTo(*qL[1], *qL[2], *qL[3]); arm.lineTo(*TR)
+    arm.cubicTo(*qR[2], *qR[1], *qR[0]); arm.lineTo(BR[0], BR[1] - 2.0); arm.close()
+    if arm.area < 0: pass
     out = loop
     for q in (bowl, leg, arm): out = _op(out, q, pathops.PathOp.UNION)
     out = _op(out, AMP_LC[0], pathops.PathOp.DIFFERENCE)
