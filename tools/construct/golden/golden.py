@@ -1934,71 +1934,13 @@ def main():
         for w in W4: G[f'Ð-{w}'] = G[f'Đ-{w}']
         g55.append('Ð')
     print('G55 dựng lại từ chữ gốc Golden:', ''.join(g55))
-    if '&-Regular' in G and 'S-Regular' in G:                     # G58 & Bold = & Regular + nét dày dày thêm (nét mảnh giữ chuẩn)
-        def stem_(d):
-            cs_ = parse(d); T_ = sorted(r[0] for p, r in _node_thick(cs_, polys(cs_)) if r); return T_[-3]
-        dl = AMP_DL*(stem_(G['S-Bold']) - stem_(G['S-Regular']))/2   # × AMP_DL: chéo / cung chỉ nhận n_x² phần nới → bù cho độ đậm bằng S 8 B
-        csR = parse(G['&-Regular']); TR = _node_thick(csR, polys(csR))
-        idx = [j for j, (p, r) in enumerate(TR) if r is not None and r[0] < AMP_THIN*HAIR_R[0]]
-        aR = G['&-Regular']                                       # Regular giữ bản vẽ (tương phản đúng)
-        c0_ = parse(aR)
-        if len(c0_) == 3 and len(c0_[0]) == 22 and c0_[0][14][0] == 'L' and len(c0_[1]) == 8:   # G62 làm trơn tay phải + góc lòng dưới
-            aR = no_infl(arm_inner(chain_one(chain_one(chain_one(aR, 2, 2, 3), 0, 15, 17), 1, 1, 2)))   # (+ 2 nút sát nhau ở mép trái lòng vòng trên)
-        aB = no_infl(amp_bold(aR, dl, ky=1.0))
-        if horn_compat(aR, aB):
-            G['&-Regular'], G['&-Bold'] = aR, aB
-            for w, t in TW.items(): G[f'&-{w}'] = lerp_d(aR, aB, t)
-        print('G58 &: nút nét mảnh', len(idx), '· nét dày +', round(dl, 1), '/ bên')
-    g59 = []
-    def put_(ch, f_):
-        rr = {w: f_(w) for w in ('Regular', 'Bold')}
-        if not all(rr.values()): print('G59', ch, 'không dựng được'); return
-        if horn_compat(rr['Regular'], rr['Bold']):
-            for w in ('Regular', 'Bold'): G[f'{ch}-{w}'] = rr[w]
-            for w, t in TW.items(): G[f'{ch}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
-        else:                                                     # cấu trúc R / B lệch (boolean) → dựng riêng 4 weight (compat_masters ghép sau)
-            for w in ('Regular', 'Medium', 'SemiBold', 'Bold'): G[f'{ch}-{w}'] = f_(w) or G[f'{ch}-{w}']
-        g59.append(ch)
-    def hlev(d):                                                  # mức y các đoạn ngang dài (thanh)
-        out = set()
-        for c in parse(d):
-            cur = None
-            for k, ps in c:
-                if k == 'L' and cur is not None and abs(cur[1] - ps[0][1]) < 0.01 and abs(cur[0] - ps[0][0]) > 100: out.add(round(cur[1], 2))
-                if ps: cur = ps[-1]
-        return sorted(out)
-    WS_ = ('Regular', 'Medium', 'SemiBold', 'Bold')
-    if '¢-Regular' in G: put_('¢', lambda w: slash_add(O[f'¢-{w}'], O[f'c-{w}'], G[f'c-{w}']) if f'¢-{w}' in O else None)
-    if 'µ-Regular' in G: put_('µ', lambda w: micro_build(O[f'µ-{w}'], G[f'u-{w}']) if f'µ-{w}' in O else None)
-    if '¥-Regular' in G:
-        yl = [y for y in hlev(O['¥-Regular']) if 150 < y < 420]
-        if len(yl) == 4:
-            cen = [(yl[0] + yl[1])/2, (yl[2] + yl[3])/2]
-            cy_ = []                                              # góc nách tay–thân Y (nút sau điểm đầu): thanh trên nằm hẳn dưới góc ở mọi weight
-            for w in ('Regular', 'Bold'):                         # (R góc 325 < mặt thanh 333 < B góc 343 → cấu trúc R / B lệch, Medium gãy 10.8°)
-                c_ = parse(G[f'Y-{w}'])[0]
-                if c_[1][0] == 'L': cy_.append(c_[1][1][0][1])
-            if cy_:
-                sh = max(0.0, cen[1] + LINE_T['Regular']*BAR_K/2 - (min(cy_) - 6))
-                cen = [cen[0] - sh, cen[1] - sh]
-            put_('¥', lambda w: yen_build(O[f'¥-{w}'], G[f'Y-{w}'], cen, LINE_T.get(w, LINE_T['Regular'])*BAR_K) if f'¥-{w}' in O else None)
-    if '£-Regular' in G and 'L-Regular' in G:
-        WL = {}
-        for w in WS_:
-            fl = [abs(cc[i][1][2][0] - st[i][0]) for cc in parse(G[f'L-{w}']) for (i, ts, st) in _flares(cc)]
-            WL[w] = fl[0] if fl else 130.0
-        put_('£', lambda w: pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]))
-    print('G59 ký hiệu theo quy tắc Golden:', ''.join(g59))
-    if '£-Regular' in G:                                          # G61 cung trên £ mảnh
-        rr = {w: pound_arc(G[f'£-{w}'], w) for w in ('Regular', 'Bold')}
-        if horn_compat(rr['Regular'], rr['Bold']):
-            for w in ('Regular', 'Bold'): G[f'£-{w}'] = rr[w]
-            for w, t in TW.items(): G[f'£-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
-    if '8-Regular' in G:                                          # G60 số 8 Bold: đỉnh / đáy vòng = Regular
-        r8 = eight_fix(G['8-Regular'], G['8-Regular'], RING_T['Regular']); b8 = eight_fix(G['8-Bold'], G['8-Regular'], RING_T['Bold'])
-        if horn_compat(r8, b8):
-            G['8-Regular'], G['8-Bold'] = r8, b8
-            for w, t in TW.items(): G[f'8-{w}'] = lerp_d(r8, b8, t)
+    if '&-Regular' in G and 'A-Regular' in G:                     # G63 & dựng theo mẫu designer, nét mảnh / dày theo chuẩn từng weight
+        def legw_(w):
+            sp_ = _hspans(G[f'A-{w}'], 350.0); return sp_[-1][1] - sp_[-1][0]
+        LW = {w: legw_(w) for w in ('Regular', 'Bold')}
+        for w, t in (('Regular', 0.0), ('Medium', 1/3), ('SemiBold', 2/3), ('Bold', 1.0)):
+            if f'&-{w}' in G: G[f'&-{w}'] = amp_build(t, w, LW['Regular'] + (LW['Bold'] - LW['Regular'])*t)
+        print('G63 & theo mẫu: chân dày', {w: round(v) for w, v in LW.items()})
     if HAIR_R[0] < 0.999:                                         # G54 trục HAIR cho nhóm không có luật nét mảnh riêng
         for c in sorted(HT_SET - set('ÇçØøÐ')):
             if f'{c}-Regular' not in G: continue
@@ -2751,7 +2693,7 @@ def three_cap(d, cap=700.0):
 # đối diện (mép đối gần song song, |cos| > 0.7); bề dày t < HT_MAX × chuẩn nét mảnh mặc định → nút (cùng tay nắm) dời vào trong
 # (t − t·r)/2 → hai mép cùng thu, nét mảnh × r quanh đường giữa; nét dày (≥ HT_MAX) giữ nguyên.
 HT_MAX = 1.9                 # (Bold ký hiệu nguồn Serif: nét mảnh 50–60)
-HT_SET = set('ÇçØøÆŒÐðþßẞr&€£$@?¿§¶©®%‰#')   # (¢ µ ¥ dựng từ c u Y Golden — G59)
+HT_SET = set('ÇçØøÆŒÐðþßẞr€£$@?¿§¶©®%‰#')   # (¢ µ ¥ dựng từ c u Y Golden — G59)
 def hair_thin(d, r, t0=34.0):
     cs = parse(d); P = polys(cs); mv = {}
     smooth = []                                                   # nút liền tiếp tuyến (< 2°) có một phía là đoạn thẳng: nắn lại tay nắm sau khi dời
@@ -3237,6 +3179,123 @@ def chain_one(d, ci, i0, i1):
     q = best[1]
     c[i0:i1 + 1] = [['C', [q[1], q[2], P3]]]
     return fmt(cs)
+
+# ---------- G63 & dựng lại theo mẫu designer (Figma "Đìzai Serif — WIP" node 2430:3773, 27/11 "vẽ lại & theo mẫu cho chuẩn hơn"):
+# & = vòng trên (elip − elip lòng nghiêng) ∪ bụng (vòng elip, khoét góc trên phải, đầu phải nhát cắt ngang) ∪ nét chéo (hình bình hành
+# thẳng, cắt ngang hai đầu; chân cắt tại đường chân) ∪ tay phải (mảnh loe nối đầu bụng lên nhát cắt ngang). Toạ độ khung Figma → font:
+# đỉnh vòng 71 → 708, đáy bụng 353.46 → −11 (vượt), X 81.958 → 0.
+AMP_FIG = [  # (path Figma cục bộ, ma trận [[a, b, tx], [c, d, ty]])
+    ("M35.1718 95 C20.0497 76.2305 3.90285 28.8889 0 7.04775 L22.3457 0 C35.1718 50 73.9403 91.6483 95 95 L35.1718 95 Z", [[1, 0, 251.042724609375], [0, -1, 299]]),
+    ("M101.946 0 C105.291 9.34443e-06 108.598 0.138402 111.859 0.405273 L103.042 0.405273 L103.042 18.2197 C90.495 16.4361 77.7518 18.5105 66.4863 25.0146 "
+     "C36.8065 42.1505 28.6224 83.5401 48.2061 117.46 C67.7898 151.379 107.726 164.986 137.405 147.851 C152.398 139.195 161.905 124.35 165.119 107.405 "
+     "L200.868 107.405 C189.814 145.006 149.718 172.865 101.946 172.865 C45.6433 172.865 0.000243198 134.168 0 86.4326 C0 38.6973 45.6432 6.86356e-05 101.946 0 Z",
+     [[1, 0, 81.957763671875], [0, 1, 180.5947265625]]),
+    ("M0 0 L37.9231 0 L206 177 L168.077 177 L0 0 Z", [[1, 0, 143.042724609375], [0, 1, 182]]),
+    ("M74.5 0 C115.645 0 149 27.7583 149 62 C149 96.2417 115.645 124 74.5 124 C33.3548 124 0 96.2417 0 62 C0 27.7583 33.3548 0 74.5 0 Z "
+     "M108.708 43.75 C95.5912 21.0311 69.6426 11.4566 50.75 22.3643 C31.8576 33.272 27.1753 60.5312 40.292 83.25 C53.4088 105.969 79.3574 115.543 98.25 104.636 "
+     "C117.142 93.728 121.825 66.4688 108.708 43.75 Z", [[1, 0, 105], [0, 1, 71]]),
+]
+def _svg_path(dstr, m, f):
+    toks = re.findall(r'[MLCZ]|-?[\d.]+(?:e-?\d+)?', dstr); p = pathops.Path(); i = 0; cmd = None
+    def pt():
+        nonlocal i
+        x, y = float(toks[i]), float(toks[i + 1]); i += 2
+        fx, fy = m[0][0]*x + m[0][1]*y + m[0][2], m[1][0]*x + m[1][1]*y + m[1][2]
+        return f(fx, fy)
+    while i < len(toks):
+        t = toks[i]
+        if t in 'MLCZ': cmd = t; i += 1
+        if cmd == 'M': p.moveTo(*pt()); cmd = 'L'
+        elif cmd == 'L': p.lineTo(*pt())
+        elif cmd == 'C': a = pt(); b = pt(); c = pt(); p.cubicTo(*a, *b, *c)
+        elif cmd == 'Z': p.close(); cmd = None
+    return p
+def amp_from_sample():
+    s_ = (708 + 11)/(353.4599609375 - 71); x0 = 81.957763671875
+    f = lambda x, y: ((x - x0)*s_, 708 - (y - 71)*s_)
+    parts = [_svg_path(d_, m_, f) for d_, m_ in AMP_FIG]
+    clip = pathops.Path(); clip.moveTo(-3000, 0); clip.lineTo(3000, 0); clip.lineTo(3000, 3000); clip.lineTo(-3000, 3000); clip.close()
+    parts[2] = _op(parts[2], clip, pathops.PathOp.INTERSECTION)     # chân nét chéo cắt tại đường chân
+    out = parts[0]
+    for q in parts[1:]: out = _op(out, q, pathops.PathOp.UNION)
+    out.convertConicsToQuads()
+    return merge_tiny(_pd(out))
+
+# ---------- G63b & tham số theo mẫu (designer 27/11 "đảm bảo đồng bộ nét mảnh và dày như các glyph khác"): dựng lại từ CÁC HÌNH GỐC của mẫu
+# (Figma): vòng trên = elip (179.5, 133; 74.5 × 62) − lòng elip xoay 30° (39.5 × 47.5, tâm 179.5, 134.5); bụng = elip (183.9, 267.0;
+# 101.95 × 86.43) − lòng elip xoay 30° (62.05 × 70.92, cùng tâm) − chữ nhật (185–312, 181–288); nét chéo = hình bình hành; tay = mảnh loe.
+# Tham số theo weight: đỉnh / đáy vòng & bụng (nét mảnh) = RING_T (lòng co / giãn đứng + dời đứng để hai khe bằng nhau); thành hai bên
+# (nét dày) = mẫu + AMP_SIDE·t mỗi bên (elip ngoài nới ngang); nét chéo = bề ngang chân dày A cùng weight; tay nới ngang AMP_ARM·t.
+AMP_S = (708 + 11)/(353.4599609375 - 71)
+AMP_SIDE, AMP_ARM = 25.0, 30.0
+AMP_LC = [None]
+def _ell_pts(cx, cy, rx, ry, rot=0.0, n=180, kv=1.0):
+    c, s_ = math.cos(rot), math.sin(rot)
+    return [(cx + rx*math.cos(2*math.pi*i/n)*c - ry*math.sin(2*math.pi*i/n)*s_, cy + kv*(rx*math.cos(2*math.pi*i/n)*s_ + ry*math.sin(2*math.pi*i/n)*c)) for i in range(n)]
+def _ell_path(cx, cy, rx, ry, rot, f, kv=1.0):
+    k = 0.5522847498; c, s_ = math.cos(rot), math.sin(rot)
+    def P(x, y): return f(cx + x*c - y*s_, cy + kv*(x*s_ + y*c))     # (kv: co / giãn theo trục đứng màn hình — elip xoay vẫn là elip)
+    p = pathops.Path(); p.moveTo(*P(rx, 0))
+    for (x1, y1, x2, y2, x3, y3) in ((rx, k*ry, k*rx, ry, 0, ry), (-k*rx, ry, -rx, k*ry, -rx, 0), (-rx, -k*ry, -k*rx, -ry, 0, -ry), (k*rx, -ry, rx, -k*ry, rx, 0)):
+        p.cubicTo(*P(x1, y1), *P(x2, y2), *P(x3, y3))
+    p.close(); return p
+def _vgaps(O, C):
+    """khe đứng nhỏ nhất trên / dưới giữa elip ngoài O (cx, cy, rx, ry) và lòng C (điểm) — hệ y xuống"""
+    cx, cy, rx, ry = O; top = bot = 1e9
+    for x, y in C:
+        u = (x - cx)/rx
+        if abs(u) >= 1: continue
+        h = ry*math.sqrt(1 - u*u)
+        if y < cy: top = min(top, y - (cy - h))
+        else: bot = min(bot, (cy + h) - y)
+    return top, bot
+def _fit_counter(O, cc, a, b, rot, t):
+    """giãn lòng CHỈ theo trục đứng (kv) + dời đứng → khe trên = khe dưới = t (thành hai bên giữ như mẫu)"""
+    for it in range(60):
+        lo, hi = 0.5, 2.0
+        for _ in range(40):
+            kv = (lo + hi)/2
+            tp, bt = _vgaps(O, _ell_pts(cc[0], cc[1], a, b, rot, kv=kv))
+            if (tp + bt)/2 > t: lo = kv
+            else: hi = kv
+        dy = (tp - bt)/2; cc = (cc[0], cc[1] - dy)
+        if abs(dy) < 0.01: break
+    return cc, kv
+def amp_param(t_, w):
+    ring = RING_T.get(w, RING_T['Regular'] + (RING_T['Bold'] - RING_T['Regular'])*t_)
+    S = AMP_S; tt = ring/S; side = AMP_SIDE*t_/S; x0 = 81.957763671875
+    f = lambda x, y: ((x - x0)*S, 708 - (y - 71)*S)
+    rot = -math.radians(30)                                      # ma trận Figma [[.866, .5], [−.5, .866]]
+    # vòng trên
+    Ol = (179.5, 133.0, 74.5 + side, 62.0)
+    cl, kl = _fit_counter(Ol, (179.5, 134.5), 39.5, 47.5, rot, tt)
+    lc_ = _ell_path(cl[0], cl[1], 39.5, 47.5, rot, f, kl)
+    loop = _op(_ell_path(Ol[0], Ol[1], Ol[2], Ol[3], 0, f), lc_, pathops.PathOp.DIFFERENCE)
+    AMP_LC[0] = lc_                                               # lòng vòng trên: trừ lại sau khi hợp (nét chéo / đỉnh bụng không lấn vào lòng)
+    # bụng
+    Ob = (183.9, 267.03, 101.95 + side, 86.43)
+    cb, kb_ = _fit_counter(Ob, (183.9, 267.03), 62.05, 70.92, rot, tt)
+    bowl = _op(_ell_path(Ob[0], Ob[1], Ob[2], Ob[3], 0, f), _ell_path(cb[0], cb[1], 62.05, 70.92, rot, f, kb_), pathops.PathOp.DIFFERENCE)
+    cut = pathops.Path(); [None for _ in ()]
+    cut.moveTo(*f(185, 181)); cut.lineTo(*f(312 + side, 181)); cut.lineTo(*f(312 + side, 288)); cut.lineTo(*f(185, 288)); cut.close()
+    bowl = _op(bowl, cut, pathops.PathOp.DIFFERENCE)
+    return loop, bowl, f, S
+def amp_build(t_, w, legw):
+    loop, bowl, f, S = amp_param(t_, w)
+    # nét chéo: bề ngang = legw (đơn vị font), tâm theo mẫu
+    hw = legw/S/2; mid0 = 143.042724609375 + 37.9231/2; mid1 = 311.12 + 37.9231/2
+    leg = pathops.Path(); leg.moveTo(*f(mid0 - hw, 182)); leg.lineTo(*f(mid0 + hw, 182)); leg.lineTo(*f(mid1 + hw, 359)); leg.lineTo(*f(mid1 - hw, 359)); leg.close()
+    clip = pathops.Path(); clip.moveTo(-3000, 0); clip.lineTo(3000, 0); clip.lineTo(3000, 3000); clip.lineTo(-3000, 3000); clip.close()
+    leg = _op(leg, clip, pathops.PathOp.INTERSECTION)
+    # tay: mảnh loe mẫu, nới ngang quanh trục giữa (dời mép trái sang trái) AMP_ARM·t
+    da = AMP_ARM*t_/S
+    d_, m_ = AMP_FIG[0]
+    arm = _svg_path(d_, m_, lambda x, y: f(x - da*max(0.0, min(1.0, (346.04 - x)/60.0)), y))
+    out = loop
+    for q in (bowl, leg, arm): out = _op(out, q, pathops.PathOp.UNION)
+    out = _op(out, AMP_LC[0], pathops.PathOp.DIFFERENCE)
+    out.convertConicsToQuads()
+    return merge_tiny(_pd(out))
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
