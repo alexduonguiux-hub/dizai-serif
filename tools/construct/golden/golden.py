@@ -3261,6 +3261,29 @@ def _fit_counter(O, cc, a, b, rot, t):
         dy = (tp - bt)/2; cc = (cc[0], cc[1] - dy)
         if abs(dy) < 0.01: break
     return cc, kv
+def clean_tiny(d, lim=6.0):
+    """bỏ đoạn ngắn (< lim) do boolean để lại — kể cả đoạn khép contour: điểm cuối đoạn trước dời tới điểm cuối đoạn ngắn (tay nắm theo)"""
+    cs = parse(d); out = []
+    for c in cs:
+        segs = [[k, [list(p) for p in ps]] for k, ps in c if k in 'LC']
+        start = list(c[0][1][0])
+        changed = True
+        while changed and len(segs) > 3:
+            changed = False
+            n = len(segs)
+            for i in range(n):
+                a = start if i == 0 else segs[i - 1][1][-1]
+                e = segs[i][1][-1]
+                if math.dist(a, e) < lim:
+                    j = (i - 1) % n; pv = segs[j]
+                    dx, dy = e[0] - a[0], e[1] - a[1]
+                    if pv[0] == 'C': pv[1][1] = [pv[1][1][0] + dx, pv[1][1][1] + dy]
+                    pv[1][-1] = list(e)
+                    if i == 0: start = list(e)
+                    if j == n - 1: start = list(e)
+                    del segs[i]; changed = True; break
+        out.append([['M', [start]]] + segs + [['Z', []]])
+    return fmt(out)
 def amp_param(t_, w):
     ring = RING_T.get(w, RING_T['Regular'] + (RING_T['Bold'] - RING_T['Regular'])*t_)
     S = AMP_S; tt = ring/S; side = AMP_SIDE*t_/S; x0 = 81.957763671875
@@ -3295,7 +3318,7 @@ def amp_build(t_, w, legw):
     for q in (bowl, leg, arm): out = _op(out, q, pathops.PathOp.UNION)
     out = _op(out, AMP_LC[0], pathops.PathOp.DIFFERENCE)
     out.convertConicsToQuads()
-    return merge_tiny(_pd(out))
+    return clean_tiny(merge_tiny(_pd(out)), 9.0)
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
