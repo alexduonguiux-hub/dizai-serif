@@ -1971,6 +1971,13 @@ def main():
         yl = [y for y in hlev(O['¥-Regular']) if 150 < y < 420]
         if len(yl) == 4:
             cen = [(yl[0] + yl[1])/2, (yl[2] + yl[3])/2]
+            cy_ = []                                              # góc nách tay–thân Y (nút sau điểm đầu): thanh trên nằm hẳn dưới góc ở mọi weight
+            for w in ('Regular', 'Bold'):                         # (R góc 325 < mặt thanh 333 < B góc 343 → cấu trúc R / B lệch, Medium gãy 10.8°)
+                c_ = parse(G[f'Y-{w}'])[0]
+                if c_[1][0] == 'L': cy_.append(c_[1][1][0][1])
+            if cy_:
+                sh = max(0.0, cen[1] + LINE_T['Regular']*BAR_K/2 - (min(cy_) - 6))
+                cen = [cen[0] - sh, cen[1] - sh]
             put_('¥', lambda w: yen_build(O[f'¥-{w}'], G[f'Y-{w}'], cen, LINE_T.get(w, LINE_T['Regular'])*BAR_K) if f'¥-{w}' in O else None)
     if '£-Regular' in G and 'L-Regular' in G:
         WL = {}
