@@ -3343,6 +3343,30 @@ def amp_build(t_, w, legw):
     out.convertConicsToQuads()
     return clean_tiny(merge_tiny(_pd(out)), 9.0)
 
+# ---------- G64 S hai bụng cùng độ căng (designer 27/11 "2 bụng cong trên dưới của S đang cong không đồng bộ"): góc ngoài trên-trái (bụng
+# trên) và góc ngoài dưới-phải (bụng dưới) là cặp đối xứng tâm — tay nắm (theo phần chiều cao / chiều rộng góc) đặt bằng trung bình hai góc.
+# Điểm neo, hướng tiếp tuyến (đứng / ngang) giữ nguyên → liền tiếp tuyến.
+def s_balance(d):
+    cs = parse(d); c = cs[0]
+    def find(pred):
+        cur = c[0][1][0]
+        for i, (k, ps) in enumerate(c):
+            if k == 'C' and pred(cur, ps): return i, cur
+            if ps: cur = ps[-1]
+        return None, None
+    ys = [p[1] for _, ps in c for p in ps]; ymid = (max(ys) + min(ys))/2
+    # góc trên-trái: điểm đầu tiếp tuyến đứng (x nhỏ nhất), điểm cuối là đỉnh (tiếp tuyến ngang), nằm nửa trên
+    iu, su = find(lambda a, ps: abs(ps[0][0] - a[0]) < 0.5 and abs(ps[1][1] - ps[2][1]) < 0.5 and a[1] > ymid and ps[2][1] > a[1] and ps[2][0] > a[0])
+    il, sl = find(lambda a, ps: abs(ps[0][0] - a[0]) < 0.5 and abs(ps[1][1] - ps[2][1]) < 0.5 and a[1] < ymid and ps[2][1] < a[1] and ps[2][0] < a[0])
+    if iu is None or il is None: return d
+    def frac(a, ps): return abs(ps[0][1] - a[1])/abs(ps[2][1] - a[1]), abs(ps[2][0] - ps[1][0])/abs(ps[2][0] - a[0])
+    fu, fl = frac(su, c[iu][1]), frac(sl, c[il][1])
+    fy, fx = (fu[0] + fl[0])/2, (fu[1] + fl[1])/2
+    for a, i in ((su, iu), (sl, il)):
+        ps = c[i][1]; sy = 1 if ps[2][1] > a[1] else -1; sx = 1 if ps[2][0] > a[0] else -1
+        ps[0][1] = a[1] + sy*fy*abs(ps[2][1] - a[1]); ps[1][0] = ps[2][0] - sx*fx*abs(ps[2][0] - a[0])
+    return fmt(cs)
+
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
     return sig(a) == sig(b)
