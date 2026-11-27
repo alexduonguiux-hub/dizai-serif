@@ -2673,13 +2673,24 @@ def three_cap(d, cap=700.0):
 # đối diện (mép đối gần song song, |cos| > 0.7); bề dày t < HT_MAX × chuẩn nét mảnh mặc định → nút (cùng tay nắm) dời vào trong
 # (t − t·r)/2 → hai mép cùng thu, nét mảnh × r quanh đường giữa; nét dày (≥ HT_MAX) giữ nguyên.
 HT_MAX = 1.9                 # (Bold ký hiệu nguồn Serif: nét mảnh 50–60)
-HT_SET = set('ÇçØøÆŒÐðþßẞr&€£¥$¢@')
+HT_SET = set('ÇçØøÆŒÐðþßẞr&€£¥$¢@?¿§¶µ©®%‰#')
 def hair_thin(d, r, t0=34.0):
     cs = parse(d); P = polys(cs); mv = {}
+    smooth = []                                                   # nút liền tiếp tuyến (< 2°) có một phía là đoạn thẳng: nắn lại tay nắm sau khi dời
     for c in cs:
         segs = [(k, ps) for k, ps in c if k in 'LC']; n = len(segs)
         if n < 2: continue
         st = [c[0][1][0]] + [ps[-1] for _, ps in segs[:-1]]
+        for i in range(n):
+            k, ps = segs[i]; nk, nps = segs[(i + 1) % n]
+            if k == 'L' and nk == 'L':                                # hai đoạn thẳng gần thẳng hàng: giữ thẳng hàng sau khi dời
+                a = st[i]; b = nps[0]; p = ps[-1]
+                u1 = unit((p[0] - a[0], p[1] - a[1])); u2 = unit((b[0] - p[0], b[1] - p[1]))
+                if u1 and u2 and u1[0]*u2[0] + u1[1]*u2[1] > math.cos(math.radians(2)): smooth.append((st, segs, i))
+            if (k == 'L') != (nk == 'L'):
+                a = ps[-2] if k == 'C' else st[i]; b = nps[0]; p = ps[-1]
+                u1 = unit((p[0] - a[0], p[1] - a[1])); u2 = unit((b[0] - p[0], b[1] - p[1]))
+                if u1 and u2 and u1[0]*u2[0] + u1[1]*u2[1] > math.cos(math.radians(2)): smooth.append((st, segs, i))
         for i in range(n):
             k, ps = segs[i]; p = ps[-1]; nk, nps = segs[(i + 1) % n]
             a = ps[-2] if k == 'C' else st[i]; b = nps[0]
@@ -2700,6 +2711,9 @@ def hair_thin(d, r, t0=34.0):
             mv[id(p)] = (nv[0]*m, nv[1]*m)
     for c in cs:
         segs = [ps for k, ps in c if k in 'LC']
+        M_ = c[0][1][0]
+        if segs and M_ is not segs[-1][-1] and id(segs[-1][-1]) in mv and math.dist(segs[-1][-1], M_) < 0.01:
+            mv[id(M_)] = mv[id(segs[-1][-1])]                     # điểm đầu contour (M) trùng điểm cuối đoạn cuối
         st = [c[0][1][0]] + [ps[-1] for ps in segs[:-1]]
         for i, ps in enumerate(segs):
             if len(ps) == 3:
@@ -2709,6 +2723,19 @@ def hair_thin(d, r, t0=34.0):
         done = set()
         for p in [c[0][1][0]] + [ps[-1] for ps in segs]:
             if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; p[1] += mv[id(p)][1]; done.add(id(p))
+    for st, segs, i in smooth:                                    # đoạn thẳng đổi hướng → tay nắm cung kề quay theo (giữ độ dài)
+        n = len(segs); k, ps = segs[i]; nk, nps = segs[(i + 1) % n]; p = ps[-1]
+        if k == 'L' and nk == 'L':
+            a = st[i]; b = nps[0]; ux, uy = b[0] - a[0], b[1] - a[1]; L2 = ux*ux + uy*uy
+            if L2 > 1e-9:
+                t_ = ((p[0] - a[0])*ux + (p[1] - a[1])*uy)/L2; p[0], p[1] = a[0] + ux*t_, a[1] + uy*t_
+            continue
+        if k == 'L':
+            a = st[i]; u = unit((p[0] - a[0], p[1] - a[1])); h = nps[0]
+        else:
+            b = nps[0]; u = unit((p[0] - b[0], p[1] - b[1])); h = ps[1]
+        if not u: continue
+        L = math.dist(h, p); h[0], h[1] = p[0] + u[0]*L, p[1] + u[1]*L
     return fmt(cs)
 
 # ---------- G55 Ç ç Ø ø Ð = chữ gốc GOLDEN + phụ kiện (designer 27/11 "làm luôn nhóm chưa theo trục nét mảnh"): trước đây lấy nguyên
