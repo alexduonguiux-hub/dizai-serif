@@ -1934,6 +1934,51 @@ def main():
         for w in W4: G[f'Ð-{w}'] = G[f'Đ-{w}']
         g55.append('Ð')
     print('G55 dựng lại từ chữ gốc Golden:', ''.join(g55))
+    if '&-Regular' in G and 'S-Regular' in G:                     # G58 & Bold = & Regular + nét dày dày thêm (nét mảnh giữ chuẩn)
+        def stem_(d):
+            cs_ = parse(d); T_ = sorted(r[0] for p, r in _node_thick(cs_, polys(cs_)) if r); return T_[-3]
+        dl = (stem_(G['S-Bold']) - stem_(G['S-Regular']))/2
+        csR = parse(G['&-Regular']); TR = _node_thick(csR, polys(csR))
+        idx = [j for j, (p, r) in enumerate(TR) if r is not None and r[0] < AMP_THIN*HAIR_R[0]]
+        aR = G['&-Regular']                                       # Regular giữ bản vẽ (tương phản đúng)
+        aB = amp_bold(aR, dl)
+        if horn_compat(aR, aB):
+            G['&-Regular'], G['&-Bold'] = aR, aB
+            for w, t in TW.items(): G[f'&-{w}'] = lerp_d(aR, aB, t)
+        print('G58 &: nút nét mảnh', len(idx), '· nét dày +', round(dl, 1), '/ bên')
+    g59 = []
+    def put_(ch, f_):
+        rr = {w: f_(w) for w in ('Regular', 'Bold')}
+        if not all(rr.values()): print('G59', ch, 'không dựng được'); return
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'{ch}-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'{ch}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        else:                                                     # cấu trúc R / B lệch (boolean) → dựng riêng 4 weight (compat_masters ghép sau)
+            for w in ('Regular', 'Medium', 'SemiBold', 'Bold'): G[f'{ch}-{w}'] = f_(w) or G[f'{ch}-{w}']
+        g59.append(ch)
+    def hlev(d):                                                  # mức y các đoạn ngang dài (thanh)
+        out = set()
+        for c in parse(d):
+            cur = None
+            for k, ps in c:
+                if k == 'L' and cur is not None and abs(cur[1] - ps[0][1]) < 0.01 and abs(cur[0] - ps[0][0]) > 100: out.add(round(cur[1], 2))
+                if ps: cur = ps[-1]
+        return sorted(out)
+    WS_ = ('Regular', 'Medium', 'SemiBold', 'Bold')
+    if '¢-Regular' in G: put_('¢', lambda w: slash_add(O[f'¢-{w}'], O[f'c-{w}'], G[f'c-{w}']) if f'¢-{w}' in O else None)
+    if 'µ-Regular' in G: put_('µ', lambda w: micro_build(O[f'µ-{w}'], G[f'u-{w}']) if f'µ-{w}' in O else None)
+    if '¥-Regular' in G:
+        yl = [y for y in hlev(O['¥-Regular']) if 150 < y < 420]
+        if len(yl) == 4:
+            cen = [(yl[0] + yl[1])/2, (yl[2] + yl[3])/2]
+            put_('¥', lambda w: yen_build(O[f'¥-{w}'], G[f'Y-{w}'], cen, LINE_T.get(w, LINE_T['Regular'])*BAR_K) if f'¥-{w}' in O else None)
+    if '£-Regular' in G and 'L-Regular' in G:
+        WL = {}
+        for w in WS_:
+            fl = [abs(cc[i][1][2][0] - st[i][0]) for cc in parse(G[f'L-{w}']) for (i, ts, st) in _flares(cc)]
+            WL[w] = fl[0] if fl else 130.0
+        put_('£', lambda w: pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]))
+    print('G59 ký hiệu theo quy tắc Golden:', ''.join(g59))
     if HAIR_R[0] < 0.999:                                         # G54 trục HAIR cho nhóm không có luật nét mảnh riêng
         for c in sorted(HT_SET - set('ÇçØøÐ')):
             if f'{c}-Regular' not in G: continue
@@ -2686,7 +2731,7 @@ def three_cap(d, cap=700.0):
 # đối diện (mép đối gần song song, |cos| > 0.7); bề dày t < HT_MAX × chuẩn nét mảnh mặc định → nút (cùng tay nắm) dời vào trong
 # (t − t·r)/2 → hai mép cùng thu, nét mảnh × r quanh đường giữa; nét dày (≥ HT_MAX) giữ nguyên.
 HT_MAX = 1.9                 # (Bold ký hiệu nguồn Serif: nét mảnh 50–60)
-HT_SET = set('ÇçØøÆŒÐðþßẞr&€£¥$¢@?¿§¶µ©®%‰#')
+HT_SET = set('ÇçØøÆŒÐðþßẞr&€£$@?¿§¶©®%‰#')   # (¢ µ ¥ dựng từ c u Y Golden — G59)
 def hair_thin(d, r, t0=34.0):
     cs = parse(d); P = polys(cs); mv = {}
     smooth = []                                                   # nút liền tiếp tuyến (< 2°) có một phía là đoạn thẳng: nắn lại tay nắm sau khi dời
@@ -2840,6 +2885,157 @@ def two_flare(d, w):
                 N[0] = N2[0]; T[1] = T2[1]
                 return fmt(cs)
     return d
+
+# ---------- G58 & nét mảnh theo chuẩn Golden (designer 27/11 "glyph & khi bold lên các nét đều nhau chứ không giữ nét dày nét mỏng —
+# chỉnh cho đồng bộ với các glyph khác"): & lấy từ Serif, Bold nét mảnh 64–110 (S B Bold: 34). Nút nét mảnh = nút có bề dày ở Regular
+# < AMP_THIN (đo theo pháp tuyến vào mực, mép đối gần song song); ở MỌI weight dời nút vào trong để bề dày về chuẩn LINE_T (4 lượt đo —
+# nửa phần dư mỗi lượt, hai mép cùng thu). Cấu trúc R / B giống nhau → cùng chỉ số nút.
+AMP_THIN = 56.0
+def _node_thick(cs, P):
+    out = []
+    for c in cs:
+        segs = [(k, ps) for k, ps in c if k in 'LC']; n = len(segs)
+        st = [c[0][1][0]] + [ps[-1] for _, ps in segs[:-1]]
+        for i, (k, ps) in enumerate(segs):
+            p = ps[-1]; nk, nps = segs[(i + 1) % n]; a = ps[-2] if k == 'C' else st[i]; b = nps[0]
+            tv = unit((b[0] - a[0], b[1] - a[1])); r = None
+            if tv:
+                nv = (-tv[1], tv[0])
+                if not inside((p[0] + nv[0]*2, p[1] + nv[1]*2), P): nv = (-nv[0], -nv[1])
+                if inside((p[0] + nv[0]*2, p[1] + nv[1]*2), P):
+                    h = ray(p, nv, P, 1.0)
+                    if h and abs(h[1][0]*tv[0] + h[1][1]*tv[1]) < 0.72: r = (h[0], nv)
+            out.append((p, r))
+    return out
+def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0):
+    """G58 & đậm dựng từ & Regular: nút nét DÀY (bề dày Regular ≥ t_hi) dời ra ngoài delta (nửa phần stem tăng, như S), chuyển tiếp
+    tuyến tính t_lo → t_hi, nét mảnh giữ nguyên → giữ tương phản như mọi chữ Golden (nét mảnh không dày theo weight)"""
+    cs = parse(dR); P = polys(cs); T = _node_thick(cs, P); mv = {}
+    sm = []                                                       # nút trơn (hai tay nắm thẳng hàng, < 3°): giữ trơn sau khi dời
+    for c in cs:
+        segs = [ps for k, ps in c if k in 'LC']; n = len(segs)
+        for i in range(n):
+            ps, nps = segs[i], segs[(i + 1) % n]
+            if len(ps) == 3 and len(nps) == 3:
+                u1 = unit((ps[2][0] - ps[1][0], ps[2][1] - ps[1][1])); u2 = unit((nps[0][0] - ps[2][0], nps[0][1] - ps[2][1]))
+                if u1 and u2 and u1[0]*u2[0] + u1[1]*u2[1] > math.cos(math.radians(3)): sm.append((ps, nps))
+    flat = {}                                                     # nút nằm trên đoạn thẳng ngang / đứng: giữ mép (chân trên đường chân, nhát cắt ngang)
+    for c in cs:
+        cur = c[0][1][0]
+        for k, ps in c:
+            if k == 'L':
+                for q in (cur, ps[0]):
+                    if abs(q[1] - (ps[0][1] if q is cur else cur[1])) < 0.01: flat.setdefault(id(q), set()).add('h')
+                    if abs(q[0] - (ps[0][0] if q is cur else cur[0])) < 0.01: flat.setdefault(id(q), set()).add('v')
+            if ps: cur = ps[-1]
+    for p, r in T:
+        if r is None: continue
+        t, nv = r; f = min(max((t - t_lo)/(t_hi - t_lo), 0.0), 1.0)
+        if f > 0:
+            dx, dy = -nv[0]*delta*f, -nv[1]*delta*f
+            fl = flat.get(id(p), set())
+            if 'h' in fl: dy = 0.0
+            if 'v' in fl: dx = 0.0
+            mv[id(p)] = (dx, dy)
+    for c in cs:
+        segs = [ps for k, ps in c if k in 'LC']; st = [c[0][1][0]] + [ps[-1] for ps in segs[:-1]]
+        M_ = c[0][1][0]
+        if segs and M_ is not segs[-1][-1] and id(segs[-1][-1]) in mv: mv[id(M_)] = mv[id(segs[-1][-1])]
+        for i, ps in enumerate(segs):
+            if len(ps) == 3:                                          # tay nắm dời theo pha trộn hai đầu (biến dạng trơn dọc cung, không bướu)
+                d0 = mv.get(id(st[i]), (0.0, 0.0)); d1 = mv.get(id(ps[2]), (0.0, 0.0))
+                ps[0][0] += (2*d0[0] + d1[0])/3; ps[0][1] += (2*d0[1] + d1[1])/3
+                ps[1][0] += (d0[0] + 2*d1[0])/3; ps[1][1] += (d0[1] + 2*d1[1])/3
+        done = set()
+        for p in [M_] + [ps[-1] for ps in segs]:
+            if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; p[1] += mv[id(p)][1]; done.add(id(p))
+    for ps, nps in sm:
+        p = ps[2]; a_, b_ = ps[1], nps[0]
+        u1 = unit((p[0] - a_[0], p[1] - a_[1])); u2 = unit((b_[0] - p[0], b_[1] - p[1]))
+        if not u1 or not u2: continue
+        u = unit((u1[0] + u2[0], u1[1] + u2[1]))
+        if not u: continue
+        L1, L2 = math.dist(a_, p), math.dist(p, b_)
+        a_[0], a_[1] = p[0] - u[0]*L1, p[1] - u[1]*L1; b_[0], b_[1] = p[0] + u[0]*L2, p[1] + u[1]*L2
+    return fmt(cs)
+def thin_nodes(d, idx, tgt, it=4):
+    for _ in range(it):
+        cs = parse(d); P = polys(cs); T = _node_thick(cs, P)
+        mv = {}
+        for j in idx:
+            if j >= len(T) or T[j][1] is None: continue
+            p, (t, nv) = T[j]
+            if t > tgt + 0.5: mv[id(p)] = (nv[0]*(t - tgt)/2, nv[1]*(t - tgt)/2)
+        if not mv: break
+        for c in cs:
+            segs = [ps for k, ps in c if k in 'LC']; st = [c[0][1][0]] + [ps[-1] for ps in segs[:-1]]
+            M_ = c[0][1][0]
+            if segs and M_ is not segs[-1][-1] and id(segs[-1][-1]) in mv: mv[id(M_)] = mv[id(segs[-1][-1])]
+            for i, ps in enumerate(segs):
+                if len(ps) == 3:
+                    d0 = mv.get(id(st[i])); d1 = mv.get(id(ps[2]))
+                    if d0: ps[0][0] += d0[0]; ps[0][1] += d0[1]
+                    if d1: ps[1][0] += d1[0]; ps[1][1] += d1[1]
+            done = set()
+            for p in [M_] + [ps[-1] for ps in segs]:
+                if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; p[1] += mv[id(p)][1]; done.add(id(p))
+        d = fmt(cs)
+    return d
+
+# ---------- G59 ¢ µ ¥ £ theo quy tắc Golden (designer 27/11 "chân loe của ký hiệu bảng Anh và Yên đã đúng quy tắc chung chưa", "cả glyph
+# này nữa" (¢), "kiểm tra luôn" (µ)): lấy nguyên Serif → nét mảnh / thanh dày theo weight, loe không theo luật.
+#  ¢ = c Golden + thanh đứng (bao lồi hai nhát cắt đầu thanh của ¢ nguồn, như gạch Ø)
+#  µ = u Golden + thân trái kéo thẳng xuống đáy descender (dải bằng thân trái u, từ y 300 xuống đáy đuôi nguồn)
+#  ¥ = Y Golden + 2 thanh dày chuẩn nét ngang (BAR), tâm thanh theo Regular nguồn, bề ngang theo nguồn từng weight
+#  £: thanh giữa + đế = chuẩn nét ngang (tâm thanh giữa giữ; mặt trên đế hạ xuống), loe phải đế = loe L (rộng × cao như G13 / ARM_D)
+def _rect(x0, y0, x1, y1): return _poly_path([(x0, y0), (x1, y0), (x1, y1), (x0, y1)])
+def micro_build(src, du):
+    ys = [p[1] for c in parse(src) for p in pts_of(c)]; yd = min(ys)
+    sp = _hspans(du, 300.0)
+    if not sp: return None
+    x0, x1 = sp[0]
+    out = _op(_pp(du), _rect(x0, yd, x1, 300.0), pathops.PathOp.UNION); out.convertConicsToQuads()
+    return merge_tiny(_pd(out))
+def yen_build(src, dY, centers, t):
+    xs = []
+    for c in parse(src):
+        cur = None
+        for k, ps in c:
+            if k == 'L' and cur is not None and abs(cur[1] - ps[0][1]) < 0.01 and 150 < cur[1] < 420 and abs(cur[0] - ps[0][0]) > 60: xs += [cur[0], ps[0][0]]
+            if ps: cur = ps[-1]
+    if not xs: return None
+    out = _pp(dY)
+    for cy in centers: out = _op(out, _rect(min(xs), cy - t/2, max(xs), cy + t/2), pathops.PathOp.UNION)
+    out.convertConicsToQuads(); return merge_tiny(_pd(out))
+def pound_fix(d, w, t, Wl):
+    cs = parse(d); c = cs[0]; P = pts_of(c)
+    hy = sorted({round(p[1], 2) for p in P if 0 < p[1] < 420})
+    # thanh giữa: hai mức y có ≥ 3 điểm ở 250–420
+    lv = [y for y in hy if 250 < y < 420 and sum(1 for p in P if abs(p[1] - y) < 0.01) >= 3]
+    if len(lv) >= 2:
+        y0, y1 = lv[0], lv[-1]; cy = (y0 + y1)/2
+        for p in P:
+            if abs(p[1] - y0) < 0.01: p[1] = cy - t/2
+            elif abs(p[1] - y1) < 0.01: p[1] = cy + t/2
+    # mặt trên đế: mức y thấp có ≥ 3 điểm (< 120)
+    lb = [y for y in hy if 10 < y < 120 and sum(1 for p in P if abs(p[1] - y) < 0.01) >= 3]
+    if lb:
+        yb = lb[0]
+        for p in P:
+            if abs(p[1] - yb) < 0.01: p[1] = t
+    # loe phải đế: C từ mép cắt phải (L lên mũi) → nút trên mặt đế
+    for i in range(2, len(c)):
+        if c[i][0] == 'C' and c[i - 1][0] == 'L' and abs(c[i][1][2][1] - t) < 0.01:
+            T = c[i - 1][1][0]; h1, h2, N = c[i][1]; B0 = c[i - 2][1][-1]
+            if T[1] > t and T[0] > N[0] and abs(B0[1]) < 0.01 and abs(B0[0] - T[0]) < 0.01:   # mép cắt phải đứng từ đường chân
+                ad = ARM_D.get(w, ARM_D['Regular'] + (ARM_D['Bold'] - ARM_D['Regular'])*TW.get(w, 0.0))
+                W0, H0 = T[0] - N[0], T[1] - N[1]; W1, H1 = Wl, ad - t
+                if W0 < 1 or H0 < 1: break
+                N2x = T[0] - W1
+                for h in (h1, h2): h[0], h[1] = T[0] - (T[0] - h[0])*W1/W0, N[1] + (h[1] - N[1])*H1/H0
+                N[0] = N2x; T[1] = N[1] + H1
+                break
+    return fmt(cs)
 
 def horn_compat(a, b):
     sig = lambda d: [[k for k, _ in c] for c in parse(d)]
