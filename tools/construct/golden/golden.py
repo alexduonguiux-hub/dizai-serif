@@ -1941,7 +1941,10 @@ def main():
         csR = parse(G['&-Regular']); TR = _node_thick(csR, polys(csR))
         idx = [j for j, (p, r) in enumerate(TR) if r is not None and r[0] < AMP_THIN*HAIR_R[0]]
         aR = G['&-Regular']                                       # Regular giữ bản vẽ (tương phản đúng)
-        aB = amp_bold(aR, dl)
+        c0_ = parse(aR)
+        if len(c0_) == 3 and len(c0_[0]) == 22 and c0_[0][14][0] == 'L' and len(c0_[1]) == 8:   # G62 làm trơn tay phải + góc lòng dưới
+            aR = chain_one(chain_one(aR, 0, 15, 17), 1, 1, 2)
+        aB = amp_bold(aR, dl, ky=1.0)
         if horn_compat(aR, aB):
             G['&-Regular'], G['&-Bold'] = aR, aB
             for w, t in TW.items(): G[f'&-{w}'] = lerp_d(aR, aB, t)
@@ -1986,6 +1989,16 @@ def main():
             WL[w] = fl[0] if fl else 130.0
         put_('£', lambda w: pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]))
     print('G59 ký hiệu theo quy tắc Golden:', ''.join(g59))
+    if '£-Regular' in G:                                          # G61 cung trên £ mảnh
+        rr = {w: pound_arc(G[f'£-{w}'], w) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'£-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'£-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+    if '8-Regular' in G:                                          # G60 số 8 Bold: đỉnh / đáy vòng = Regular
+        r8 = eight_fix(G['8-Regular'], G['8-Regular'], RING_T['Regular']); b8 = eight_fix(G['8-Bold'], G['8-Regular'], RING_T['Bold'])
+        if horn_compat(r8, b8):
+            G['8-Regular'], G['8-Bold'] = r8, b8
+            for w, t in TW.items(): G[f'8-{w}'] = lerp_d(r8, b8, t)
     if HAIR_R[0] < 0.999:                                         # G54 trục HAIR cho nhóm không có luật nét mảnh riêng
         for c in sorted(HT_SET - set('ÇçØøÐ')):
             if f'{c}-Regular' not in G: continue
@@ -2898,7 +2911,7 @@ def two_flare(d, w):
 # < AMP_THIN (đo theo pháp tuyến vào mực, mép đối gần song song); ở MỌI weight dời nút vào trong để bề dày về chuẩn LINE_T (4 lượt đo —
 # nửa phần dư mỗi lượt, hai mép cùng thu). Cấu trúc R / B giống nhau → cùng chỉ số nút.
 AMP_THIN = 56.0
-AMP_DL = 1.2
+AMP_DL = 1.38                # (δ ≈ 30: tỉ lệ mực B/R ≈ 1.22, như 8 B)
 def _node_thick(cs, P):
     out = []
     for c in cs:
@@ -2915,7 +2928,7 @@ def _node_thick(cs, P):
                     if h and abs(h[1][0]*tv[0] + h[1][1]*tv[1]) < 0.72: r = (h[0], nv)
             out.append((p, r))
     return out
-def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2):
+def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2, ky=0.0):
     """G58 & đậm dựng từ & Regular (designer 27/11 "audit lại glyph &"): làm đậm NGANG giữ tương phản — mỗi nút dời ngang
     delta · n_x · f, n = pháp tuyến ra ngoài, f = trọng số nét dày (bề dày Regular t_lo → t_hi: 0 → 1) làm trơn dọc contour (trung bình
     với nút kề, 2 lượt) → nét đứng / chéo dày thêm 2·delta·n_x², nét ngang mảnh (n_x ≈ 0) giữ nguyên, mép ngang (chân, nhát cắt) không
@@ -2940,6 +2953,15 @@ def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2):
         f = [x if x is not None else 0.0 for x in f]
         for _ in range(smooth): f = [(f[j - 1] + 2*f[j] + f[(j + 1) % n])/4 for j in range(n)]
         F += f; k_ += n
+    flat = {}                                                     # nút trên đoạn thẳng ngang / đứng: giữ mép
+    for c in cs:
+        cur = c[0][1][0]
+        for k, ps in c:
+            if k == 'L':
+                for q, o in ((cur, ps[0]), (ps[0], cur)):
+                    if abs(q[1] - o[1]) < 0.01: flat.setdefault(id(q), set()).add('h')
+                    if abs(q[0] - o[0]) < 0.01: flat.setdefault(id(q), set()).add('v')
+            if ps: cur = ps[-1]
     mv = {}; k_ = 0
     for c in cs:
         segs = [ps for k, ps in c if k in 'LC']; n = len(segs)
@@ -2951,7 +2973,9 @@ def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2):
             if not tv: continue
             nv = (tv[1], -tv[0])                                  # pháp tuyến ra ngoài (contour ngược chiều kim đồng hồ: mực bên trái)
             if inside((p[0] + nv[0]*2, p[1] + nv[1]*2), P): nv = (-nv[0], -nv[1])
-            mv[id(p)] = (delta*nv[0]*F[k_ + i], 0.0)
+            fl = flat.get(id(p), set())
+            dx_, dy_ = delta*nv[0]*F[k_ + i], (delta*nv[1]*F[k_ + i]*ky if 'h' not in fl else 0.0)
+            mv[id(p)] = (dx_ if 'v' not in fl else 0.0, dy_)
         k_ += n
     for c in cs:
         segs = [ps for k, ps in c if k in 'LC']; st = [c[0][1][0]] + [ps[-1] for ps in segs[:-1]]
@@ -2961,9 +2985,10 @@ def amp_bold(dR, delta, t_lo=56.0, t_hi=90.0, smooth=2):
             if len(ps) == 3:
                 d0 = mv.get(id(st[i]), (0.0, 0.0)); d1 = mv.get(id(ps[2]), (0.0, 0.0))
                 ps[0][0] += (2*d0[0] + d1[0])/3; ps[1][0] += (d0[0] + 2*d1[0])/3
+                ps[0][1] += (2*d0[1] + d1[1])/3; ps[1][1] += (d0[1] + 2*d1[1])/3
         done = set()
         for p in [M_] + [ps[-1] for ps in segs]:
-            if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; done.add(id(p))
+            if id(p) in mv and id(p) not in done: p[0] += mv[id(p)][0]; p[1] += mv[id(p)][1]; done.add(id(p))
     for ps, nps in sm:
         p = ps[2]; a_, b_ = ps[1], nps[0]
         u1 = unit((p[0] - a_[0], p[1] - a_[1])); u2 = unit((b_[0] - p[0], b_[1] - p[1]))
@@ -3059,6 +3084,81 @@ def pound_fix(d, w, t, Wl):
                 for h in (h1, h2): h[0], h[1] = T[0] - (T[0] - h[0])*W1/W0, N[1] + (h[1] - N[1])*H1/H0
                 N[0] = N2x; T[1] = N[1] + H1
                 break
+    return fmt(cs)
+
+# ---------- G60 số 8 nét mảnh giữ chuẩn mọi weight (designer 27/11 "số 8 bold lên vòng trên mất nét mỏng và dày"): Bold đỉnh vòng trên
+# 69 / đáy vòng dưới 42 (Regular 41 / 33). Lòng vòng trên giãn đứng quanh đáy lòng → đỉnh dày = Regular; lòng vòng dưới giãn quanh đỉnh lòng
+# → đáy dày = Regular. Đo theo tia đứng qua giữa lòng.
+def _vhits(d, x):
+    ys = []
+    for pl in polys(parse(d)):
+        for i in range(len(pl)):
+            (x0, y0), (x1, y1) = pl[i], pl[(i + 1) % len(pl)]
+            if (x0 - x)*(x1 - x) < 0: ys.append(y0 + (x - x0)*(y1 - y0)/(x1 - x0))
+    return sorted(ys)
+def eight_fix(dB, dR, tgt=None):
+    csB = parse(dB); csR = parse(dR)
+    if len(csB) != 3 or len(csR) != 3: return dB
+    def info(cs, d):
+        cn = sorted(cs[1:], key=lambda c: max(p[1] for p in polys([c])[0]))      # [dưới, trên]
+        out = []
+        for c in cn:
+            P = polys([c])[0]; xs = [p[0] for p in P]; ys = [p[1] for p in P]; cx = (min(xs) + max(xs))/2
+            h = _vhits(d, cx); out.append((c, min(ys), max(ys), h))
+        return out
+    IB, IR = info(csB, dB), info(csR, dR)
+    (cl, l0, l1, hB), (cu, u0, u1, _) = IB
+    tR_top = IR[1][3][-1] - IR[1][2]; tR_bot = IR[0][1] - IR[0][3][0]       # Regular: đỉnh trên (mép ngoài − đỉnh lòng), đáy dưới
+    if tgt: tR_top = tR_bot = tgt                                 # (designer 27/11 "8 thường cũng bị": đỉnh / đáy = chuẩn nét mảnh cong RING_T)
+    yTop = max(p[1] for p in polys([csB[0]])[0]); yBot = min(p[1] for p in polys([csB[0]])[0])
+    def uniq(c):
+        seen = {}; [seen.setdefault(id(p), p) for k, ps in c for p in ps]; return seen.values()
+    nt = yTop - tR_top; ku = (nt - u0)/(u1 - u0)
+    for p in uniq(cu): p[1] = u0 + (p[1] - u0)*ku
+    nb = yBot + tR_bot; kl = (l1 - nb)/(l1 - l0)
+    for p in uniq(cl): p[1] = l1 - (l1 - p[1])*kl
+    return fmt(csB)
+# ---------- G61 £ cung trên nét mảnh (designer 27/11 "vòng bụng cong của ký tự £ nên là nét mỏng"): nút đỉnh cung trong (tiếp tuyến ngang)
+# nâng lên để đỉnh cung dày = RING_T; các điểm cùng cao độ (tay nắm ngang) nâng theo.
+def pound_arc(d, w):
+    cs = parse(d); c = cs[0]; P = pts_of(c)
+    ytop = max(p[1] for p in P)
+    cand = []
+    cur = c[0][1][0]
+    for k, ps in c:
+        if k == 'C':
+            N = ps[2]
+            if ytop - 200 < N[1] < ytop - 10 and abs(ps[1][1] - N[1]) < 0.01: cand.append(N[1])
+        if ps: cur = ps[-1]
+    if not cand: return d
+    yi = max(cand); ny = ytop - RING_T.get(w, RING_T['Regular'])
+    seen = set()
+    for p in P:
+        if id(p) not in seen and abs(p[1] - yi) < 0.01: p[1] = ny; seen.add(id(p))
+    return fmt(cs)
+
+# ---------- G62 & làm trơn (designer 27/11 "ký tự & vẫn lỗi"): mép trong tay phải (4 cung gần thẳng, độ dốc đổi chiều → gợn) và góc
+# lòng dưới chỗ chân nối bụng (3 cung ngắn) → mỗi chuỗi thay bằng MỘT cung: giữ hai đầu + hướng tiếp tuyến hai đầu, độ dài tay nắm
+# chọn để cung sát chuỗi cũ nhất (không điểm uốn).
+def chain_one(d, ci, i0, i1):
+    """thay các đoạn C c[i0..i1] (liền nhau) của contour ci bằng một cung"""
+    cs = parse(d); c = cs[ci]
+    if not all(c[i][0] == 'C' for i in range(i0, i1 + 1)): return d
+    P0 = c[i0 - 1][1][-1]; P3 = c[i1][1][2]
+    u0 = unit((c[i0][1][0][0] - P0[0], c[i0][1][0][1] - P0[1])); u1 = unit((c[i1][1][1][0] - P3[0], c[i1][1][1][1] - P3[1]))
+    if not u0 or not u1: return d
+    samp = []; p0 = P0
+    for i in range(i0, i1 + 1):
+        q = [p0] + c[i][1]; samp += [bz(*q, t/12) for t in range(13)]; p0 = c[i][1][2]
+    ch = math.dist(P0, P3); best = None
+    for a in [x/40 for x in range(2, 30)]:
+        for b in [x/40 for x in range(2, 30)]:
+            q = [P0, [P0[0] + u0[0]*a*ch, P0[1] + u0[1]*a*ch], [P3[0] + u1[0]*b*ch, P3[1] + u1[1]*b*ch], P3]
+            cp = [bz(*q, t/60) for t in range(61)]
+            e = sum(min(math.dist(sp, r) for r in cp)**2 for sp in samp[::2])
+            if best is None or e < best[0]: best = (e, q)
+    q = best[1]
+    c[i0:i1 + 1] = [['C', [q[1], q[2], P3]]]
     return fmt(cs)
 
 def horn_compat(a, b):
