@@ -1941,6 +1941,56 @@ def main():
         for w, t in (('Regular', 0.0), ('Medium', 1/3), ('SemiBold', 2/3), ('Bold', 1.0)):
             if f'&-{w}' in G: G[f'&-{w}'] = amp_build(t, w, LW['Regular'] + (LW['Bold'] - LW['Regular'])*t)
         print('G63 & theo mẫu: chân dày', {w: round(v) for w, v in LW.items()})
+    g59 = []
+    def put_(ch, f_):
+        rr = {w: f_(w) for w in ('Regular', 'Bold')}
+        if not all(rr.values()): print('G59', ch, 'không dựng được'); return
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'{ch}-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'{ch}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+        else:                                                     # cấu trúc R / B lệch (boolean) → dựng riêng 4 weight (compat_masters ghép sau)
+            for w in ('Regular', 'Medium', 'SemiBold', 'Bold'): G[f'{ch}-{w}'] = f_(w) or G[f'{ch}-{w}']
+        g59.append(ch)
+    def hlev(d):                                                  # mức y các đoạn ngang dài (thanh)
+        out = set()
+        for c in parse(d):
+            cur = None
+            for k, ps in c:
+                if k == 'L' and cur is not None and abs(cur[1] - ps[0][1]) < 0.01 and abs(cur[0] - ps[0][0]) > 100: out.add(round(cur[1], 2))
+                if ps: cur = ps[-1]
+        return sorted(out)
+    WS_ = ('Regular', 'Medium', 'SemiBold', 'Bold')
+    if '¢-Regular' in G: put_('¢', lambda w: slash_add(O[f'¢-{w}'], O[f'c-{w}'], G[f'c-{w}']) if f'¢-{w}' in O else None)
+    if 'µ-Regular' in G: put_('µ', lambda w: micro_build(O[f'µ-{w}'], G[f'u-{w}']) if f'µ-{w}' in O else None)
+    if '¥-Regular' in G:
+        yl = [y for y in hlev(O['¥-Regular']) if 150 < y < 420]
+        if len(yl) == 4:
+            cen = [(yl[0] + yl[1])/2, (yl[2] + yl[3])/2]
+            cy_ = []                                              # góc nách tay–thân Y (nút sau điểm đầu): thanh trên nằm hẳn dưới góc ở mọi weight
+            for w in ('Regular', 'Bold'):                         # (R góc 325 < mặt thanh 333 < B góc 343 → cấu trúc R / B lệch, Medium gãy 10.8°)
+                c_ = parse(G[f'Y-{w}'])[0]
+                if c_[1][0] == 'L': cy_.append(c_[1][1][0][1])
+            if cy_:
+                sh = max(0.0, cen[1] + LINE_T['Regular']*BAR_K/2 - (min(cy_) - 6))
+                cen = [cen[0] - sh, cen[1] - sh]
+            put_('¥', lambda w: yen_build(O[f'¥-{w}'], G[f'Y-{w}'], cen, LINE_T.get(w, LINE_T['Regular'])*BAR_K) if f'¥-{w}' in O else None)
+    if '£-Regular' in G and 'L-Regular' in G:
+        WL = {}
+        for w in WS_:
+            fl = [abs(cc[i][1][2][0] - st[i][0]) for cc in parse(G[f'L-{w}']) for (i, ts, st) in _flares(cc)]
+            WL[w] = fl[0] if fl else 130.0
+        put_('£', lambda w: pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]))
+    print('G59 ký hiệu theo quy tắc Golden:', ''.join(g59))
+    if '£-Regular' in G:                                          # G61 cung trên £ mảnh
+        rr = {w: pound_arc(G[f'£-{w}'], w) for w in ('Regular', 'Bold')}
+        if horn_compat(rr['Regular'], rr['Bold']):
+            for w in ('Regular', 'Bold'): G[f'£-{w}'] = rr[w]
+            for w, t in TW.items(): G[f'£-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+    if '8-Regular' in G:                                          # G60 số 8 Bold: đỉnh / đáy vòng = Regular
+        r8 = eight_fix(G['8-Regular'], G['8-Regular'], RING_T['Regular']); b8 = eight_fix(G['8-Bold'], G['8-Regular'], RING_T['Bold'])
+        if horn_compat(r8, b8):
+            G['8-Regular'], G['8-Bold'] = r8, b8
+            for w, t in TW.items(): G[f'8-{w}'] = lerp_d(r8, b8, t)
     if HAIR_R[0] < 0.999:                                         # G54 trục HAIR cho nhóm không có luật nét mảnh riêng
         for c in sorted(HT_SET - set('ÇçØøÐ')):
             if f'{c}-Regular' not in G: continue
