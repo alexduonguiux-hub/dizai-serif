@@ -2004,6 +2004,19 @@ def main():
         if horn_compat(r8, b8):
             G['8-Regular'], G['8-Bold'] = r8, b8
             for w, t in TW.items(): G[f'8-{w}'] = lerp_d(r8, b8, t)
+    if '%-Regular' in G and '0-Regular' in G:                     # G66 % ‰: tương phản như 0, khe vòng–xiên đều
+        def _thk(d):
+            cs = [polys([c])[0] for c in parse(d)]; cs.sort(key=lambda P: -(max(p[0] for p in P) - min(p[0] for p in P)))
+            o_, i_ = cs[0], cs[1]
+            return max(min(math.hypot(p[0] - q[0], p[1] - q[1]) for q in o_[::2]) for p in i_[::2])
+        rk = _thk(G['0-Bold'])/_thk(G['0-Regular'])
+        res, inf = pct_fix(G, O, RING_T, rk)
+        for ch, rr in res.items():
+            if horn_compat(rr['Regular'], rr['Bold']):
+                for w in ('Regular', 'Bold'): G[f'{ch}-{w}'] = rr[w]
+                for w, t in TW.items(): G[f'{ch}-{w}'] = lerp_d(rr['Regular'], rr['Bold'], t)
+            else: print('G66', ch, 'R/B không tương thích')
+        print('G66 % ‰:', {k: (tuple(round(x, 1) for x in v) if isinstance(v, tuple) else (round(v, 1) if v is not None else v)) for k, v in inf.items()}, 'k0', round(rk, 3))
     if HAIR_R[0] < 0.999:                                         # G54 trục HAIR cho nhóm không có luật nét mảnh riêng
         for c in sorted(HT_SET - set('ÇçØøÐ')):
             if f'{c}-Regular' not in G: continue
@@ -2763,6 +2776,102 @@ def three_cap(d, cap=700.0):
 # (t − t·r)/2 → hai mép cùng thu, nét mảnh × r quanh đường giữa; nét dày (≥ HT_MAX) giữ nguyên.
 HT_MAX = 1.9                 # (Bold ký hiệu nguồn Serif: nét mảnh 50–60)
 HT_SET = set('ÇçØøÆŒÐðþßẞr€£@?¿§¶©®%‰#')   # (¢ µ ¥ dựng từ c u Y Golden — G59)
+# ---- G66 % ‰: vòng có tương phản dày–mảnh như số 0 (designer 28/11 "kiểm tra lại glyph %", "số 0 đầu tiên xa thanh chéo hơn", "sửa luôn ‰")
+PCT_TH = -math.pi/3                                               # trục lòng nghiêng 60° (giữ hướng lòng cũ, cùng chiều lòng 0)
+PCT_BK = 0.85                                                     # bán trục nhỏ lòng Bold ≥ 0.85 × Regular (lòng nhỏ giữ theo Regular)
+def _pct_ell(cx, cy, a, b, th, rev=False):
+    K = 0.5523; c, s = math.cos(th), math.sin(th)
+    P = lambda x, y: (cx + c*x - s*y, cy + s*x + c*y)
+    pts = [(a, 0), (0, b), (-a, 0), (0, -b)]
+    hs = [((a, K*b), (K*a, b)), ((-K*a, b), (-a, K*b)), ((-a, -K*b), (-K*a, -b)), ((K*a, -b), (a, -K*b))]
+    if rev: pts = [(x, -y) for x, y in pts]; hs = [((x1, -y1), (x2, -y2)) for (x1, y1), (x2, y2) in hs]
+    d = 'M%.2f %.2f' % P(*pts[0])
+    for i in range(4): d += 'C%.2f %.2f %.2f %.2f %.2f %.2f' % (*P(*hs[i][0]), *P(*hs[i][1]), *P(*pts[(i + 1) % 4]))
+    return d + 'Z'
+def _pct_np(cx, cy, a, b, th, n=360):
+    import numpy as np
+    t = np.linspace(0, 2*np.pi, n, endpoint=False); c, s = math.cos(th), math.sin(th); x = a*np.cos(t); y = b*np.sin(t)
+    return np.c_[cx + c*x - s*y, cy + s*x + c*y]
+def _pct_gap(rx, ry, a, b, n=360):
+    import numpy as np
+    o = _pct_np(0, 0, rx, ry, 0, n); i_ = _pct_np(0, 0, a, b, PCT_TH, n)
+    d = np.sqrt(((i_[:, None, :] - o[None, :, :])**2).sum(-1)).min(1); return float(d.min()), float(d.max())
+def pct_counter(rx, ry, thin, thick, a0, b0):
+    """bán trục lòng (a, b) để nét mảnh nhỏ nhất = thin, nét dày lớn nhất = thick (đo vuông góc giữa vòng ngoài và lòng)"""
+    from scipy.optimize import minimize
+    f = lambda v: sum((g - t)**2 for g, t in zip(_pct_gap(rx, ry, v[0], v[1], 240), (thin, thick)))
+    r = minimize(f, [a0, b0], method='Nelder-Mead', options={'xatol': .02, 'fatol': .001}); return float(r.x[0]), float(r.x[1])
+def _pct_sgap(P, a, b):
+    import numpy as np
+    a = np.array(a, float); b = np.array(b, float); ab = b - a; t = np.clip(((P - a) @ ab)/(ab @ ab), 0, 1)
+    return float(np.hypot(*(P - (a + t[:, None]*ab)).T).min())
+def pct_geo(src):
+    """đọc khung %: vòng trên / dưới (bán trục, tâm), thanh xiên (x đáy trái, bề ngang, độ xiên)"""
+    cs = parse(src); bb = []
+    for c in cs:
+        P = polys([c])[0]; xs = [p[0] for p in P]; ys = [p[1] for p in P]; bb.append((min(xs), max(xs), min(ys), max(ys), c))
+    rings = sorted([b for b in bb if b[3] - b[2] > 250 and b[3] - b[2] < 330 and b[1] - b[0] > 150], key=lambda b: b[2])
+    sl = [b for b in bb if b[3] - b[2] > 700][0]
+    pts = [ps[-1] for k, ps in sl[4] if ps]; bot = sorted(p[0] for p in pts if p[1] < 0); top = sorted(p[0] for p in pts if p[1] > 700)
+    lo, up = rings[0], rings[-1]
+    return dict(rx=(up[1] - up[0])/2, ry=(up[3] - up[2])/2, cy_up=(up[2] + up[3])/2, cy_lo=(lo[2] + lo[3])/2, x_up=up[0], x_lo=lo[0],
+                s0=bot[0], sw=bot[-1] - bot[0], dx=top[0] - bot[0], ylo=sl[2], yhi=sl[3])
+def pct_build(g, rx, a, b, xo, s0, n_lo=1, ring_gap=0.0):
+    """dựng lại %: hai (‰: ba) vòng ellipse + thanh xiên song song; lòng ellipse nghiêng PCT_TH"""
+    up = (g['x_up'] + rx, g['cy_up']); los = [(xo + rx + k*(2*rx + ring_gap), g['cy_lo']) for k in range(n_lo)]
+    sl = 'M%.2f %.2fL%.2f %.2fL%.2f %.2fL%.2f %.2fZ' % (s0, g['ylo'], s0 + g['sw'], g['ylo'], s0 + g['sw'] + g['dx'], g['yhi'], s0 + g['dx'], g['yhi'])
+    parts = [_pct_ell(*c, rx, g['ry'], 0) for c in los] + [_pct_ell(*up, rx, g['ry'], 0), sl]
+    parts += [_pct_ell(*up, a, b, PCT_TH, rev=True)] + [_pct_ell(*c, a, b, PCT_TH, rev=True) for c in los]
+    return ' '.join(parts)
+def pct_fix(G, O_, RT, ref_thick):
+    """G66: Regular giữ nét dày hiện có, nét mảnh = RING_T; Bold nét dày = Regular × (0 Bold / 0 Regular), nét mảnh = RING_T;
+    vòng Bold nới ngang cho lòng ≥ PCT_BK × lòng Regular; thanh xiên đặt cho khe vòng trên = khe vòng dưới = khe Regular (đo vuông góc)"""
+    out = {}
+    gR = pct_geo(G['%-Regular']); gB = pct_geo(G['%-Bold'])
+    _, thR = _pct_gap(gR['rx'], gR['ry'], *_pct_ab(G['%-Regular'], gR))
+    aR, bR = pct_counter(gR['rx'], gR['ry'], RT['Regular'], thR, 109, 57)
+    thB = thR*ref_thick
+    rxB = gB['rx']; aB, bB = pct_counter(rxB, gB['ry'], RT['Bold'], thB, 110, 45)
+    while bB < PCT_BK*bR and rxB < gB['rx'] + 60:
+        rxB += 1.0; aB, bB = pct_counter(rxB, gB['ry'], RT['Bold'], thB, aB, bB)
+    def place(g, rx):                                                 # khe đều: x đáy thanh để khe vòng trên = tgt, rồi x vòng dưới
+        ring = lambda cx, cy: _pct_np(cx, cy, rx, g['ry'], 0, 360)
+        def gu(s0): return _pct_sgap(ring(g['x_up'] + rx, g['cy_up']), (s0, g['ylo']), (s0 + g['dx'], g['yhi']))
+        def gl(s0, xo): return _pct_sgap(ring(xo + rx, g['cy_lo']), (s0 + g['sw'], g['ylo']), (s0 + g['sw'] + g['dx'], g['yhi']))
+        return gu, gl
+    def bis(f, tgt, lo, hi):
+        for _ in range(60):
+            m = (lo + hi)/2
+            if (f(m) - tgt)*(f(lo) - tgt) > 0: lo = m
+            else: hi = m
+        return (lo + hi)/2
+    gu, gl = place(gR, gR['rx'])
+    tgt = (gu(gR['s0']) + gl(gR['s0'], gR['x_lo']))/2                # khe Regular = trung bình hai khe cũ
+    s0R = bis(gu, tgt, gR['s0'] - 120, gR['s0'] + 120)
+    xoR = bis(lambda x: gl(s0R, x), tgt, gR['x_lo'] - 120, gR['x_lo'] + 120)
+    gu, gl = place(gB, rxB)
+    s0B = bis(gu, tgt, gB['s0'] - 120, gB['s0'] + 160)
+    xoB = bis(lambda x: gl(s0B, x), tgt, gB['x_lo'] - 120, gB['x_lo'] + 200)
+    rgap = None
+    if '‰-Regular' in G:                                              # khe giữa hai vòng dưới ‰ = Regular
+        cs = sorted([polys([c])[0] for c in parse(G['‰-Regular'])], key=lambda P: min(p[0] for p in P))
+        lows = sorted([P for P in cs if max(p[1] for p in P) < 330 and max(p[0] for p in P) - min(p[0] for p in P) > 150], key=lambda P: min(p[0] for p in P))
+        if len(lows) >= 2: rgap = min(p[0] for p in lows[1]) - max(p[0] for p in lows[0])
+    for ch, n in (('%', 1), ('‰', 2)):
+        if f'{ch}-Regular' not in G or (n == 2 and rgap is None): continue
+        out[ch] = {'Regular': pct_build(gR, gR['rx'], aR, bR, xoR, s0R, n, rgap or 0.0), 'Bold': pct_build(gB, rxB, aB, bB, xoB, s0B, n, rgap or 0.0)}
+    info = dict(thR=thR, thB=thB, rxB=rxB, R=(aR, bR), B=(aB, bB), gap=tgt, s0=(s0R, s0B), xo=(xoR, xoB), rgap=rgap)
+    return out, info
+def _pct_ab(src, g):
+    """bán trục lòng hiện có (vòng trên): nửa khoảng cách hai điểm xa nhất / gần nhất tới tâm"""
+    cx, cy = g['x_up'] + g['rx'], g['cy_up']; best = None
+    for c in parse(src):
+        P = polys([c])[0]
+        xs = [p[0] for p in P]; ys = [p[1] for p in P]
+        if min(xs) > g['x_up'] and max(xs) < g['x_up'] + 2*g['rx'] and min(ys) > g['cy_up'] - g['ry'] and max(ys) < g['cy_up'] + g['ry']:
+            r = [math.hypot(p[0] - cx, p[1] - cy) for p in P]; best = (max(r), min(r))
+    return best
+
 def hair_thin(d, r, t0=34.0):
     cs = parse(d); P = polys(cs); mv = {}
     smooth = []                                                   # nút liền tiếp tuyến (< 2°) có một phía là đoạn thẳng: nắn lại tay nắm sau khi dời
