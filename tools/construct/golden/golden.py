@@ -1984,6 +1984,15 @@ def main():
             sp_ = _hspans(G[f'L-{w}'], 300.0); LS[w] = (sp_[0][1] - sp_[0][0]) if sp_ else None
         put_('£', lambda w: pound_stem(pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]), LS[w]) if LS[w] else
              pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]))
+    if '$-Regular' in G and 'S-Regular' in G:                     # G65 $ = S Golden + thanh đứng (designer 28/11 chọn)
+        put_('$', lambda w: slash_add(O[f'$-{w}'], O[f'S-{w}'], G[f'S-{w}']) if f'$-{w}' in O else None)
+    LST = {}
+    for w in WS_:
+        sp_ = _hspans(G[f'l-{w}'], 300.0) if f'l-{w}' in G else None; LST[w] = (sp_[0][1] - sp_[0][0]) if sp_ else None
+    for ch in '†‡':                                               # G65 thân † ‡ = 0.6 × thân l (designer 28/11)
+        if f'{ch}-Regular' in G: put_(ch, lambda w, ch=ch: dagger_widen(G[f'{ch}-{w}'], 300.0, 0.6*LST[w]) if LST[w] else None)
+    if '¶-Regular' in G:                                          # G65 hai thân ¶ = 0.6 × thân l
+        put_('¶', lambda w: stems_widen(G[f'¶-{w}'], 300.0, 0.6*LST[w]) if LST[w] else None)
     print('G59 ký hiệu theo quy tắc Golden:', ''.join(g59))
     if '£-Regular' in G:                                          # G61 cung trên £ mảnh
         rr = {w: pound_arc(G[f'£-{w}'], w) for w in ('Regular', 'Bold')}
@@ -2753,7 +2762,7 @@ def three_cap(d, cap=700.0):
 # đối diện (mép đối gần song song, |cos| > 0.7); bề dày t < HT_MAX × chuẩn nét mảnh mặc định → nút (cùng tay nắm) dời vào trong
 # (t − t·r)/2 → hai mép cùng thu, nét mảnh × r quanh đường giữa; nét dày (≥ HT_MAX) giữ nguyên.
 HT_MAX = 1.9                 # (Bold ký hiệu nguồn Serif: nét mảnh 50–60)
-HT_SET = set('ÇçØøÆŒÐðþßẞr€£$@?¿§¶©®%‰#')   # (¢ µ ¥ dựng từ c u Y Golden — G59)
+HT_SET = set('ÇçØøÆŒÐðþßẞr€£@?¿§¶©®%‰#')   # (¢ µ ¥ dựng từ c u Y Golden — G59)
 def hair_thin(d, r, t0=34.0):
     cs = parse(d); P = polys(cs); mv = {}
     smooth = []                                                   # nút liền tiếp tuyến (< 2°) có một phía là đoạn thẳng: nắn lại tay nắm sau khi dời
@@ -3080,6 +3089,37 @@ def yen_build(src, dY, centers, t):
     out = _pp(dY)
     for cy in centers: out = _op(out, _rect(min(xs), cy - t/2, max(xs), cy + t/2), pathops.PathOp.UNION)
     out.convertConicsToQuads(); return merge_tiny(_pd(out))
+def stems_widen(d, yref, tgt, edges=None):
+    """G65 thân đứng của ký hiệu (¶) = tgt: mỗi khoảng mực đo ngang ở yref — mép trái / phải (mọi điểm, cả tay nắm, đúng trên đường mép đứng)
+    nới đều ra hai phía"""
+    sp = _hspans(d, yref)
+    if not sp: return d
+    cs = parse(d); seen = set()
+    for xl, xr in sp:
+        dl = (tgt - (xr - xl))/2
+        if dl <= 0.3: continue
+        for c in cs:
+            for k, ps in c:
+                for p in ps:
+                    if id(p) in seen: continue
+                    if abs(p[0] - xl) < 0.6: p[0] -= dl; seen.add(id(p))
+                    elif abs(p[0] - xr) < 0.6: p[0] += dl; seen.add(id(p))
+    return fmt(cs)
+def dagger_widen(d, yref, tgt):
+    """G65 thân † ‡ = tgt: co giãn ngang quanh trục thân (giữ dáng thon) — chỉ các điểm trong vùng thân (|x − tâm| ≤ nửa bề ngang + 2),
+    tay ngang giữ nguyên chiều dài (đầu tay dời ra đúng bằng mép thân)"""
+    sp = _hspans(d, yref)
+    if not sp: return d
+    xl, xr = sp[0]; cx = (xl + xr)/2; h = (xr - xl)/2; k = tgt/(xr - xl)
+    cs = parse(d); seen = set()
+    for c in cs:
+        for kk, ps in c:
+            for p in ps:
+                if id(p) in seen: continue
+                seen.add(id(p)); u = p[0] - cx
+                if abs(u) <= h*1.6 + 2: p[0] = cx + u*k
+                else: p[0] += (h*k - h)*(1 if u > 0 else -1)
+    return fmt(cs)
 def pound_stem(d, tgt):
     """G59b thân £ = thân L cùng weight (designer 28/11 "nét dày của £ chưa đủ dày"): mép thân trái / phải (đo ngang ở y 420) nới đều ra hai
     phía; mọi điểm (cả tay nắm) nằm đúng trên hai đường mép đứng dời theo → góc nối đế, thanh giữa, cung trên đi theo"""
