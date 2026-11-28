@@ -2018,7 +2018,7 @@ def main():
             else: print('G66', ch, 'R/B không tương thích')
         print('G66 % ‰:', {k: (tuple(round(x, 1) for x in v) if isinstance(v, tuple) else (round(v, 1) if v is not None else v)) for k, v in inf.items()}, 'k0', round(rk, 3))
     if HAIR_R[0] < 0.999:                                         # G54 trục HAIR cho nhóm không có luật nét mảnh riêng
-        for c in sorted(HT_SET - set('ÇçØøÐ')):
+        for c in sorted(HT_SET - set('ÇçØøÐ%‰')):                  # % ‰: G66 dựng với RING_T đã nhân HAIR
             if f'{c}-Regular' not in G: continue
             for w in ('Regular', 'Bold'): G[f'{c}-{w}'] = hair_thin(G[f'{c}-{w}'], HAIR_R[0], LINE_T[w]/HAIR_R[0])
             for w, t in TW.items(): G[f'{c}-{w}'] = lerp_d(G[f'{c}-Regular'], G[f'{c}-Bold'], t)
