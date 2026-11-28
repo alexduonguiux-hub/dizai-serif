@@ -1979,7 +1979,11 @@ def main():
         for w in WS_:
             fl = [abs(cc[i][1][2][0] - st[i][0]) for cc in parse(G[f'L-{w}']) for (i, ts, st) in _flares(cc)]
             WL[w] = fl[0] if fl else 130.0
-        put_('£', lambda w: pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]))
+        LS = {}
+        for w in WS_:
+            sp_ = _hspans(G[f'L-{w}'], 300.0); LS[w] = (sp_[0][1] - sp_[0][0]) if sp_ else None
+        put_('£', lambda w: pound_stem(pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]), LS[w]) if LS[w] else
+             pound_fix(G[f'£-{w}'], w, LINE_T.get(w, LINE_T['Regular'])*BAR_K, WL[w]))
     print('G59 ký hiệu theo quy tắc Golden:', ''.join(g59))
     if '£-Regular' in G:                                          # G61 cung trên £ mảnh
         rr = {w: pound_arc(G[f'£-{w}'], w) for w in ('Regular', 'Bold')}
@@ -3076,6 +3080,21 @@ def yen_build(src, dY, centers, t):
     out = _pp(dY)
     for cy in centers: out = _op(out, _rect(min(xs), cy - t/2, max(xs), cy + t/2), pathops.PathOp.UNION)
     out.convertConicsToQuads(); return merge_tiny(_pd(out))
+def pound_stem(d, tgt):
+    """G59b thân £ = thân L cùng weight (designer 28/11 "nét dày của £ chưa đủ dày"): mép thân trái / phải (đo ngang ở y 420) nới đều ra hai
+    phía; mọi điểm (cả tay nắm) nằm đúng trên hai đường mép đứng dời theo → góc nối đế, thanh giữa, cung trên đi theo"""
+    sp = [x for x in _hspans(d, 420.0)]
+    if not sp: return d
+    xl, xr = sp[0]; dl = (tgt - (xr - xl))/2
+    if dl <= 0.3: return d
+    cs = parse(d); seen = set()
+    for c in cs:
+        for k, ps in c:
+            for p in ps:
+                if id(p) in seen or p[1] < 20: continue
+                if abs(p[0] - xl) < 0.6: p[0] -= dl; seen.add(id(p))
+                elif abs(p[0] - xr) < 0.6: p[0] += dl; seen.add(id(p))
+    return fmt(cs)
 def pound_fix(d, w, t, Wl):
     cs = parse(d); c = cs[0]; P = pts_of(c)
     hy = sorted({round(p[1], 2) for p in P if 0 < p[1] < 420})
